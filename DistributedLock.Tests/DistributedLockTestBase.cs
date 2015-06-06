@@ -1,4 +1,5 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Medallion.Shell;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -135,6 +136,81 @@ namespace Medallion.Threading.Tests
                 var safeName = this.GetSafeLockName(name);
                 TestHelper.AssertDoesNotThrow(() => this.CreateLock(safeName).Acquire().Dispose());
             }
+        }
+
+
+        [TestMethod]
+        public void TestCrossProcess()
+        {
+            var type = this.CreateLock("a").GetType().Name.Replace("DistributedLock", string.Empty).ToLowerInvariant();
+
+            var command = this.RunLockTaker(type, "cpl");
+            command.Task.Wait(TimeSpan.FromSeconds(.5)).ShouldEqual(false);
+
+            var @lock = this.CreateLock("cpl");
+            @lock.TryAcquire().ShouldEqual(null);
+
+            command.StandardInput.WriteLine("done");
+            command.StandardInput.Flush();
+
+            using (var handle = @lock.TryAcquire(TimeSpan.FromSeconds(10)))
+            {
+                Assert.IsNotNull(handle);
+            }
+        }
+
+        [TestMethod]
+        public void TestCrossProcessAbandonment()
+        {
+            var type = this.CreateLock("a").GetType().Name.Replace("DistributedLock", string.Empty).ToLowerInvariant();
+
+            foreach (var method in new[] { "abandon", "kill" })
+            {
+                var name = "cpl-" + method;
+                var command = this.RunLockTaker(type, name);
+                command.Task.Wait(TimeSpan.FromSeconds(.5)).ShouldEqual(false);
+
+                var @lock = this.CreateLock(name);
+
+                var acquireTask = @lock.TryAcquireAsync(TimeSpan.FromSeconds(10));
+                acquireTask.Wait(TimeSpan.FromSeconds(.1)).ShouldEqual(false);
+
+                if (method == "abandon")
+                {
+                    command.StandardInput.WriteLine("abandon");
+                    command.StandardInput.Flush();
+                }
+                else
+                {
+                    command.Kill();
+                }
+
+                using (var handle = acquireTask.Result)
+                {
+                    Assert.IsNotNull(handle, method);
+                }
+            }
+        }
+
+        private static readonly List<Command> Commands = new List<Command>();
+
+        private Command RunLockTaker(params string[] args)
+        {
+            var command = Command.Run("DistributedLockTaker", args);
+            Commands.Add(command);
+            return command;
+        }
+
+        [ClassCleanup]
+        public static void CleanupCommands()
+        {
+            Commands.ForEach(c =>
+            {
+                if (!c.Task.IsCompleted)
+                {
+                    c.Kill();
+                }
+            });
         }
 
         internal abstract IDistributedLock CreateLock(string name);

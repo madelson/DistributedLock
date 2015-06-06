@@ -35,6 +35,10 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="MedallionShell, Version=1.0.2.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\MedallionShell.1.0.2\lib\net45\MedallionShell.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
   </ItemGroup>
@@ -58,10 +62,17 @@
     <Compile Include="TestHelper.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\DistributedLockTaker\DistributedLockTaker.csproj">
+      <Project>{6219cf2c-a3f8-4453-be20-79efc32987d9}</Project>
+      <Name>DistributedLockTaker</Name>
+    </ProjectReference>
     <ProjectReference Include="..\DistributedLock\DistributedLock.csproj">
       <Project>{c1f56b68-c2ee-48e5-a99b-b40d397ae34f}</Project>
       <Name>DistributedLock</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

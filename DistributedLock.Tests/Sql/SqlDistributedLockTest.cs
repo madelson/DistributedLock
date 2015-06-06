@@ -1,4 +1,5 @@
-﻿using Medallion.Threading.Sql;
+﻿using Medallion.Shell;
+using Medallion.Threading.Sql;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
