@@ -41,7 +41,6 @@
   <ItemGroup>
     <Compile Include="DistributedLockHelpers.cs" />
     <Compile Include="IDistributedLock.cs" />
-    <Compile Include="MutexDistributedLock.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Sql\SqlDistributedLock.cs" />
     <Compile Include="Sql\SqlHelpers.cs" />
