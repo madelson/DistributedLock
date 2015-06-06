@@ -11,10 +11,18 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading.Sql
 {
+    /// <summary>
+    /// Implements a distributed lock using a SQL server application lock
+    /// (see https://msdn.microsoft.com/en-us/library/ms189823.aspx)
+    /// </summary>
     public sealed class SqlDistributedLock : IDistributedLock
     {
         private readonly string lockName, connectionString;
 
+        /// <summary>
+        /// Creates a lock with name <paramref name="lockName"/>, using the given
+        /// <paramref name="connectionString"/> to connect to the database
+        /// </summary>
         public SqlDistributedLock(string lockName, string connectionString)
         {
             if (lockName == null)
@@ -29,6 +37,19 @@ namespace Medallion.Threading.Sql
         }
 
         #region ---- Public API ----
+        /// <summary>
+        /// Attempts to acquire the lock synchronously. Usage:
+        /// <code>
+        ///     using (var handle = myLock.TryAcquire(...))
+        ///     {
+        ///         if (handle != null) { /* we have the lock! */ }
+        ///     }
+        ///     // dispose releases the lock if we took it
+        /// </code>
+        /// </summary>
+        /// <param name="timeout">How long to wait before giving up on acquiring the lock. Defaults to 0</param>
+        /// <param name="cancellationToken">Specifies a token by which the wait can be canceled</param>
+        /// <returns>An <see cref="IDisposable"/> "handle" which can be used to release the lock, or null if the lock was not taken</returns>
         public IDisposable TryAcquire(TimeSpan timeout = default(TimeSpan), CancellationToken cancellationToken = default(CancellationToken))
         {
             if (cancellationToken.CanBeCanceled)
@@ -77,11 +98,37 @@ namespace Medallion.Threading.Sql
             }
         }
 
+        /// <summary>
+        /// Acquires the lock synchronously, failing with <see cref="TimeoutException"/> if the wait times out
+        /// <code>
+        ///     using (myLock.Acquire(...))
+        ///     {
+        ///         // we have the lock
+        ///     }
+        ///     // dispose releases the lock
+        /// </code>
+        /// </summary>
+        /// <param name="timeout">How long to wait before giving up on acquiring the lock. Defaults to <see cref="Timeout.InfiniteTimeSpan"/></param>
+        /// <param name="cancellationToken">Specifies a token by which the wait can be canceled</param>
+        /// <returns>An <see cref="IDisposable"/> "handle" which can be used to release the lock</returns>
         public IDisposable Acquire(TimeSpan? timeout = null, CancellationToken cancellationToken = default(CancellationToken))
         {
             return DistributedLockHelpers.Acquire(this, timeout, cancellationToken);
         }
 
+        /// <summary>
+        /// Attempts to acquire the lock asynchronously. Usage:
+        /// <code>
+        ///     using (var handle = await myLock.TryAcquireAsync(...))
+        ///     {
+        ///         if (handle != null) { /* we have the lock! */ }
+        ///     }
+        ///     // dispose releases the lock if we took it
+        /// </code>
+        /// </summary>
+        /// <param name="timeout">How long to wait before giving up on acquiring the lock. Defaults to 0</param>
+        /// <param name="cancellationToken">Specifies a token by which the wait can be canceled</param>
+        /// <returns>An <see cref="IDisposable"/> "handle" which can be used to release the lock, or null if the lock was not taken</returns>
         public Task<IDisposable> TryAcquireAsync(TimeSpan timeout = default(TimeSpan), CancellationToken cancellationToken = default(CancellationToken))
         {
             var timeoutMillis = timeout.ToInt32Timeout();
@@ -91,6 +138,19 @@ namespace Medallion.Threading.Sql
             return this.InternalTryAcquireAsync(timeoutMillis, cancellationToken);
         }
 
+        /// <summary>
+        /// Acquires the lock asynchronously, failing with <see cref="TimeoutException"/> if the wait times out
+        /// <code>
+        ///     using (await myLock.AcquireAsync(...))
+        ///     {
+        ///         // we have the lock
+        ///     }
+        ///     // dispose releases the lock
+        /// </code>
+        /// </summary>
+        /// <param name="timeout">How long to wait before giving up on acquiring the lock. Defaults to <see cref="Timeout.InfiniteTimeSpan"/></param>
+        /// <param name="cancellationToken">Specifies a token by which the wait can be canceled</param>
+        /// <returns>An <see cref="IDisposable"/> "handle" which can be used to release the lock</returns>
         public Task<IDisposable> AcquireAsync(TimeSpan? timeout = null, CancellationToken cancellationToken = default(CancellationToken))
         {
             return DistributedLockHelpers.AcquireAsync(this, timeout, cancellationToken);
@@ -101,6 +161,9 @@ namespace Medallion.Threading.Sql
         /// </summary>
         public static int MaxLockNameLength { get { return 255; } }
 
+        /// <summary>
+        /// Given <paramref name="baseLockName"/>, constructs a lock name which is safe for use with <see cref="SqlDistributedLock"/>
+        /// </summary>
         public static string GetSafeLockName(string baseLockName)
         {
             return DistributedLockHelpers.ToSafeLockName(baseLockName, MaxLockNameLength, s => s);
