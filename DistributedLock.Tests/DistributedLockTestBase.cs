@@ -138,7 +138,6 @@ namespace Medallion.Threading.Tests
             }
         }
 
-
         [TestMethod]
         public void TestCrossProcess()
         {
@@ -162,33 +161,56 @@ namespace Medallion.Threading.Tests
         [TestMethod]
         public void TestCrossProcessAbandonment()
         {
+            this.CrossProcessAbandonmentHelper(asyncWait: false, kill: false);
+        }
+
+        [TestMethod]
+        public void TestCrossProcessAbandonmentAsync()
+        {
+            this.CrossProcessAbandonmentHelper(asyncWait: true, kill: false);
+        }
+
+        [TestMethod]
+        public void TestCrossProcessAbandonmentWithKill()
+        {
+            this.CrossProcessAbandonmentHelper(asyncWait: false, kill: true);
+        }
+
+        [TestMethod]
+        public void TestCrossProcessAbandonmentWithKillAsync()
+        {
+            this.CrossProcessAbandonmentHelper(asyncWait: true, kill: true);
+        }
+
+        
+        private void CrossProcessAbandonmentHelper(bool asyncWait, bool kill) 
+        {
             var type = this.CreateLock("a").GetType().Name.Replace("DistributedLock", string.Empty).ToLowerInvariant();
 
-            foreach (var method in new[] { "abandon", "kill" })
+            var name = "cpl-" + asyncWait + "-" + kill;
+            var command = this.RunLockTaker(type, name);
+            command.Task.Wait(TimeSpan.FromSeconds(.5)).ShouldEqual(false);
+
+            var @lock = this.CreateLock(name);
+
+            var acquireTask = asyncWait
+                ? @lock.TryAcquireAsync(TimeSpan.FromSeconds(10))
+                : Task.Run(() => @lock.TryAcquire(TimeSpan.FromSeconds(10)));
+            acquireTask.Wait(TimeSpan.FromSeconds(.1)).ShouldEqual(false);
+
+            if (kill)
             {
-                var name = "cpl-" + method;
-                var command = this.RunLockTaker(type, name);
-                command.Task.Wait(TimeSpan.FromSeconds(.5)).ShouldEqual(false);
+                command.Kill();
+            }
+            else
+            {
+                command.StandardInput.WriteLine("abandon");
+                command.StandardInput.Flush();
+            }
 
-                var @lock = this.CreateLock(name);
-
-                var acquireTask = @lock.TryAcquireAsync(TimeSpan.FromSeconds(10));
-                acquireTask.Wait(TimeSpan.FromSeconds(.1)).ShouldEqual(false);
-
-                if (method == "abandon")
-                {
-                    command.StandardInput.WriteLine("abandon");
-                    command.StandardInput.Flush();
-                }
-                else
-                {
-                    command.Kill();
-                }
-
-                using (var handle = acquireTask.Result)
-                {
-                    Assert.IsNotNull(handle, method);
-                }
+            using (var handle = acquireTask.Result)
+            {
+                Assert.IsNotNull(handle);
             }
         }
 
