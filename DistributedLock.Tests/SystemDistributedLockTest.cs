@@ -54,7 +54,7 @@ namespace Medallion.Threading.Tests
 
         internal override IDistributedLock CreateLock(string name)
         {
-            return new SystemDistributedLock(name);
+            return new SystemDistributedLock(name, abandonmentCheckFrequency: TimeSpan.FromSeconds(.3));
         }
 
         internal override string GetSafeLockName(string name)

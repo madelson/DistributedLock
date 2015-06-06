@@ -14,10 +14,12 @@ namespace Medallion.Threading
     public sealed class SystemDistributedLock : IDistributedLock
     {
         private const string GlobalPrefix = @"Global\";
+        private static readonly TimeSpan DefaultAbandonmentCheckFrequency = TimeSpan.FromSeconds(2);
 
         private readonly string lockName;
+        private readonly TimeSpan abandonmentCheckFrequency;
 
-        public SystemDistributedLock(string lockName)
+        public SystemDistributedLock(string lockName, TimeSpan? abandonmentCheckFrequency = default(TimeSpan?))
         {
             // note that just Global\ is not a valid name
             if (string.IsNullOrEmpty(lockName))
@@ -27,6 +29,19 @@ namespace Medallion.Threading
             // from http://stackoverflow.com/questions/18392175/net-system-wide-eventwaithandle-name-allowed-characters
             if (lockName.IndexOf('\\') >= 0)
                 throw new FormatException(@"lockName: must not contain '\'");
+
+            if (abandonmentCheckFrequency.HasValue)
+            {
+                // must be a valid timeout
+                var abandonmentCheckFrequencyMillis = abandonmentCheckFrequency.Value.ToInt32Timeout("abandonmentCheckFrequency");
+                if (abandonmentCheckFrequencyMillis == 0)
+                    throw new ArgumentOutOfRangeException("abandonmentCheckFrequency: must be non-zero");
+                this.abandonmentCheckFrequency = abandonmentCheckFrequency.Value;
+            }
+            else
+            {
+                this.abandonmentCheckFrequency = DefaultAbandonmentCheckFrequency;
+            }
 
             this.lockName = GlobalPrefix + lockName;
         }
@@ -42,41 +57,58 @@ namespace Medallion.Threading
         public IDisposable TryAcquire(TimeSpan timeout = default(TimeSpan), CancellationToken cancellationToken = default(CancellationToken))
         {
             var timeoutMillis = timeout.ToInt32Timeout();
-
+            var abandonmentCheckFrequencyMillis = this.abandonmentCheckFrequency.ToInt32Timeout();
+            
             var @event = this.CreateEvent();
             var cleanup = true;
             try
             {
-                // cancellation case
-                if (cancellationToken.CanBeCanceled)
+                if (abandonmentCheckFrequencyMillis <= 0)
                 {
-                    // ensures that if we are already canceled upon entering this method
-                    // we will cancel, not wait
-                    cancellationToken.ThrowIfCancellationRequested();
-
-                    // cancellable wait based on
-                    // http://www.thomaslevesque.com/2015/06/04/async-and-cancellation-support-for-wait-handles/
-                    var index = WaitHandle.WaitAny(new[] { @event, cancellationToken.WaitHandle }, timeoutMillis);
-                    switch (index)
+                    // no abandonment check: just acquire once
+                    if (TryAcquireOnce(@event, timeoutMillis, cancellationToken))
                     {
-                        case WaitHandle.WaitTimeout: // timeout
-                            @event.Dispose();
-                            return null;
-                        case 0: // event
+                        cleanup = false;
+                        return new EventScope(@event);
+                    }
+                    return null;
+                }
+
+                if (timeoutMillis < 0)
+                {
+                    // infinite timeout: just loop forever with the abandonment check
+                    while (true)
+                    {
+                        if (TryAcquireOnce(@event, abandonmentCheckFrequencyMillis, cancellationToken))
+                        {
                             cleanup = false;
                             return new EventScope(@event);
-                        default: // canceled
-                            cancellationToken.ThrowIfCancellationRequested();
-                            throw new InvalidOperationException("Should never get here");
+                        }
+
+                        // refresh the event in case it was abandoned by the original owner
+                        @event.Dispose();
+                        @event = this.CreateEvent();
                     }
                 }
 
-                // normal case
-                if (@event.WaitOne(timeoutMillis))
+                // fixed timeout: loop in abandonment check chunks
+                var elapsedMillis = 0;
+                do
                 {
-                    cleanup = false;
-                    return new EventScope(@event);
+                    var nextWaitMillis = Math.Min(abandonmentCheckFrequencyMillis, timeoutMillis - elapsedMillis);
+                    if (TryAcquireOnce(@event, nextWaitMillis, cancellationToken))
+                    {
+                        cleanup = false;
+                        return new EventScope(@event);
+                    }
+
+                    elapsedMillis += nextWaitMillis;
+
+                    // refresh the event in case it was abandoned by the original owner
+                    @event.Dispose();
+                    @event = this.CreateEvent();
                 }
+                while (elapsedMillis < timeoutMillis);
 
                 return null;
             }
@@ -140,6 +172,35 @@ namespace Medallion.Threading
                     @event.Dispose();
                 }
             }
+        }
+
+        private static bool TryAcquireOnce(EventWaitHandle @event, int timeoutMillis, CancellationToken cancellationToken)
+        {
+            // cancellation case
+            if (cancellationToken.CanBeCanceled)
+            {
+                // ensures that if we are already canceled upon entering this method
+                // we will cancel, not wait
+                cancellationToken.ThrowIfCancellationRequested();
+
+                // cancellable wait based on
+                // http://www.thomaslevesque.com/2015/06/04/async-and-cancellation-support-for-wait-handles/
+                var index = WaitHandle.WaitAny(new[] { @event, cancellationToken.WaitHandle }, timeoutMillis);
+                switch (index)
+                {
+                    case WaitHandle.WaitTimeout: // timeout
+                        @event.Dispose();
+                        return false;
+                    case 0: // event
+                        return true;
+                    default: // canceled
+                        cancellationToken.ThrowIfCancellationRequested();
+                        throw new InvalidOperationException("Should never get here");
+                }
+            }
+
+            // normal case
+            return @event.WaitOne(timeoutMillis);
         }
 
         private EventWaitHandle CreateEvent()
