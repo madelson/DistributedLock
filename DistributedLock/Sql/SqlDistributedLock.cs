@@ -35,10 +35,11 @@ namespace Medallion.Threading.Sql
             }
 
             // synchronous mode
-            var timeoutMillis = ToInt32Timeout(timeout);
+            var timeoutMillis = timeout.ToInt32Timeout();
 
             DbConnection connection = null;
             DbTransaction transaction = null;
+            var cleanup = true;
             try
             {
                 connection = this.CreateConnection();
@@ -50,22 +51,26 @@ namespace Medallion.Threading.Sql
                 {
                     command.ExecuteNonQuery();
                     var exitCode = (int)returnValue.Value;
-                    return ParseExitCode(exitCode)
-                        ? new LockScope(transaction)
-                        : default(IDisposable);
+                    if (ParseExitCode(exitCode))
+                    {
+                        cleanup = false;
+                        return new LockScope(transaction);
+                    }
+                    return null;
                 }
             }
             catch
             {
-                if (transaction != null)
-                {
-                    transaction.Dispose();
-                }
-                if (connection != null)
-                {
-                    connection.Dispose();
-                }
+                // in case we fail to create lock scope or something
+                cleanup = true;
                 throw;
+            }
+            finally
+            {
+                if (cleanup)
+                {
+                    Cleanup(transaction, connection);
+                }
             }
         }
 
@@ -76,7 +81,7 @@ namespace Medallion.Threading.Sql
 
         public Task<IDisposable> TryAcquireAsync(TimeSpan timeout = default(TimeSpan), CancellationToken cancellationToken = default(CancellationToken))
         {
-            var timeoutMillis = ToInt32Timeout(timeout);
+            var timeoutMillis = timeout.ToInt32Timeout();
 
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -98,6 +103,7 @@ namespace Medallion.Threading.Sql
         {
             DbConnection connection = null;
             DbTransaction transaction = null;
+            var cleanup = true;
             try
             {
                 connection = this.CreateConnection();
@@ -110,37 +116,39 @@ namespace Medallion.Threading.Sql
                 {
                     await command.ExecuteNonQueryAndPropagateCancellationAsync(cancellationToken).ConfigureAwait(false);
                     var exitCode = (int)returnValue.Value;
-                    return ParseExitCode(exitCode)
-                        ? new LockScope(transaction)
-                        : default(IDisposable);
+                    if (ParseExitCode(exitCode))
+                    {
+                        cleanup = false;
+                        return new LockScope(transaction);
+                    }
+                    return null;
                 }
             }
             catch
             {
-                if (transaction != null)
-                {
-                    transaction.Dispose();
-                }
-                if (connection != null)
-                {
-                    connection.Dispose();
-                }
-
+                // just in case we failed to create scope or something
+                cleanup = true;
                 throw;
+            }
+            finally
+            {
+                if (cleanup)
+                {
+                    Cleanup(transaction, connection);
+                }
             }
         }
 
-        private static int ToInt32Timeout(TimeSpan timeout)
+        private static void Cleanup(DbTransaction transaction, DbConnection connection)
         {
-            // based on http://referencesource.microsoft.com/#mscorlib/system/threading/Tasks/Task.cs,959427ac16fa52fa
-
-            var totalMilliseconds = (long)timeout.TotalMilliseconds;
-            if (totalMilliseconds < -1 || totalMilliseconds > int.MaxValue)
+            if (transaction != null)
             {
-                throw new ArgumentOutOfRangeException("timeout");
+                transaction.Dispose();
             }
-
-            return (int)totalMilliseconds;
+            if (connection != null)
+            {
+                connection.Dispose();
+            }
         }
 
         internal static void ValidateLockName(string lockName)
