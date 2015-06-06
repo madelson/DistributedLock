@@ -9,8 +9,6 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading
 {
-    // TODO abandonment: wait for shorter times and reconstitute the event at that point
-
     public sealed class SystemDistributedLock : IDistributedLock
     {
         private const string GlobalPrefix = @"Global\";
@@ -134,9 +132,9 @@ namespace Medallion.Threading
 
         public Task<IDisposable> TryAcquireAsync(TimeSpan timeout = default(TimeSpan), CancellationToken cancellationToken = default(CancellationToken))
         {
-            timeout.ToInt32Timeout(); // validate
+            var timeoutMillis = timeout.ToInt32Timeout();
 
-            return this.InternalTryAcquireAsync(timeout, cancellationToken);
+            return this.InternalTryAcquireAsync(timeoutMillis, cancellationToken);
         }
 
         public Task<IDisposable> AcquireAsync(TimeSpan? timeout = null, CancellationToken cancellationToken = default(CancellationToken))
@@ -145,17 +143,60 @@ namespace Medallion.Threading
         }
         #endregion
 
-        private async Task<IDisposable> InternalTryAcquireAsync(TimeSpan timeout, CancellationToken cancellationToken)
+        private async Task<IDisposable> InternalTryAcquireAsync(int timeoutMillis, CancellationToken cancellationToken)
         {
+            var abandonmentCheckFrequencyMillis = this.abandonmentCheckFrequency.ToInt32Timeout();
+
             var @event = this.CreateEvent();
             var cleanup = true;
             try
             {
-                if (await @event.WaitOneAsync(timeout, cancellationToken).ConfigureAwait(false))
+                if (abandonmentCheckFrequencyMillis <= 0)
                 {
-                    cleanup = false;
-                    return new EventScope(@event);
+                    // no abandonment check: just acquire once
+                    if (await @event.WaitOneAsync(TimeSpan.FromMilliseconds(timeoutMillis), cancellationToken).ConfigureAwait(false))
+                    {
+                        cleanup = false;
+                        return new EventScope(@event);
+                    }
+                    return null;
                 }
+
+                if (timeoutMillis < 0)
+                {
+                    // infinite timeout: just loop forever with the abandonment check
+                    while (true)
+                    {
+                        if (await @event.WaitOneAsync(this.abandonmentCheckFrequency, cancellationToken).ConfigureAwait(false))
+                        {
+                            cleanup = false;
+                            return new EventScope(@event);
+                        }
+
+                        // refresh the event in case it was abandoned by the original owner
+                        @event.Dispose();
+                        @event = this.CreateEvent();
+                    }
+                }
+
+                // fixed timeout: loop in abandonment check chunks
+                var elapsedMillis = 0;
+                do
+                {
+                    var nextWaitMillis = Math.Min(abandonmentCheckFrequencyMillis, timeoutMillis - elapsedMillis);
+                    if (await @event.WaitOneAsync(TimeSpan.FromMilliseconds(nextWaitMillis), cancellationToken).ConfigureAwait(false))
+                    {
+                        cleanup = false;
+                        return new EventScope(@event);
+                    }
+
+                    elapsedMillis += nextWaitMillis;
+
+                    // refresh the event in case it was abandoned by the original owner
+                    @event.Dispose();
+                    @event = this.CreateEvent();
+                }
+                while (elapsedMillis < timeoutMillis);
 
                 return null;
             }
