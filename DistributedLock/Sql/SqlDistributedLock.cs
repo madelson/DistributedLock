@@ -17,7 +17,10 @@ namespace Medallion.Threading.Sql
 
         public SqlDistributedLock(string lockName, string connectionString)
         {
-            ValidateLockName(lockName);
+            if (lockName == null)
+                throw new ArgumentNullException("lockName");
+            if (lockName.Length > MaxLockNameLength)
+                throw new FormatException("lockName: must be at most " + MaxLockNameLength + " characters");
             if (string.IsNullOrEmpty(connectionString))
                 throw new ArgumentNullException("connectionString");
 
@@ -154,14 +157,6 @@ namespace Medallion.Threading.Sql
             {
                 connection.Dispose();
             }
-        }
-
-        internal static void ValidateLockName(string lockName)
-        {
-            if (lockName == null)
-                throw new ArgumentNullException("lockName");
-            if (lockName.Length > MaxLockNameLength)
-                throw new FormatException("lockName: must be at most " + MaxLockNameLength + " characters");
         }
 
         private static bool ParseExitCode(int exitCode)

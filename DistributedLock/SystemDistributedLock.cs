@@ -45,13 +45,6 @@ namespace Medallion.Threading
         }
 
         #region ---- Public API ----
-        public static int MaxLockNameLength { get { return 260 - GlobalPrefix.Length; } }
-
-        public static string GetSafeLockName(string baseLockName)
-        {
-            return DistributedLockHelpers.ToSafeLockName(baseLockName, MaxLockNameLength, s => s.Length == 0 ? "EMPTY" : s.Replace('\\', '_'));
-        }
-
         public IDisposable TryAcquire(TimeSpan timeout = default(TimeSpan), CancellationToken cancellationToken = default(CancellationToken))
         {
             var timeoutMillis = timeout.ToInt32Timeout();
@@ -140,6 +133,13 @@ namespace Medallion.Threading
         public Task<IDisposable> AcquireAsync(TimeSpan? timeout = null, CancellationToken cancellationToken = default(CancellationToken))
         {
             return DistributedLockHelpers.AcquireAsync(this, timeout, cancellationToken);
+        }
+
+        public static int MaxLockNameLength { get { return 260 - GlobalPrefix.Length; } }
+
+        public static string GetSafeLockName(string baseLockName)
+        {
+            return DistributedLockHelpers.ToSafeLockName(baseLockName, MaxLockNameLength, s => s.Length == 0 ? "EMPTY" : s.Replace('\\', '_'));
         }
         #endregion
 
