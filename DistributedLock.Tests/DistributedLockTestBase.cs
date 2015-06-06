@@ -80,6 +80,30 @@ namespace Medallion.Threading.Tests
         }
 
         [TestMethod]
+        public void TestTimeouts()
+        {
+            var @lock = this.CreateLock("timeout");
+            using (@lock.Acquire())
+            {
+                var syncAcquireTask = Task.Run(() => @lock.Acquire(TimeSpan.FromSeconds(.1)));
+                syncAcquireTask.ContinueWith(_ => { }).Wait(TimeSpan.FromSeconds(.2)).ShouldEqual(true, "sync acquire");
+                Assert.IsInstanceOfType(syncAcquireTask.Exception.InnerException, typeof(TimeoutException), "sync acquire");
+
+                var asyncAcquireTask = @lock.AcquireAsync(TimeSpan.FromSeconds(.1));
+                asyncAcquireTask.ContinueWith(_ => { }).Wait(TimeSpan.FromSeconds(.2)).ShouldEqual(true, "async acquire");
+                Assert.IsInstanceOfType(asyncAcquireTask.Exception.InnerException, typeof(TimeoutException), "async acquire");
+
+                var syncTryAcquireTask = Task.Run(() => @lock.TryAcquire(TimeSpan.FromSeconds(.1)));
+                syncTryAcquireTask.Wait(TimeSpan.FromSeconds(.2)).ShouldEqual(true, "sync tryAcquire");
+                syncTryAcquireTask.Result.ShouldEqual(null, "sync tryAcquire");
+
+                var asyncTryAcquireTask = @lock.TryAcquireAsync(TimeSpan.FromSeconds(.1));
+                asyncTryAcquireTask.Wait(TimeSpan.FromSeconds(.2)).ShouldEqual(true, "async tryAcquire");
+                asyncTryAcquireTask.Result.ShouldEqual(null, "async tryAcquire");
+            }
+        }
+
+        [TestMethod]
         public void CancellationTest()
         {
             var @lock = this.CreateLock("gerald");
