@@ -31,21 +31,7 @@ namespace Medallion.Threading.Sql
             if (cancellationToken.CanBeCanceled)
             {
                 // use the async version since that supports cancellation
-                var tryAcquireTask = this.TryAcquireAsync(timeout, cancellationToken);
-                try
-                {
-                    tryAcquireTask.Wait();
-                }
-                catch (AggregateException ex)
-                {
-                    // attempt to prevent the throwing of aggregate exceptions
-                    if (ex.InnerExceptions.Count == 1)
-                    {
-                        // rethrow the inner exception without losing stack trace
-                        ExceptionDispatchInfo.Capture(ex.InnerException).Throw();
-                    }
-                    throw; // otherwise just rethrow
-                }
+                return DistributedLockHelpers.TryAcquireWithAsyncCancellation(this, timeout, cancellationToken);
             }
 
             // synchronous mode
@@ -85,10 +71,7 @@ namespace Medallion.Threading.Sql
 
         public IDisposable Acquire(TimeSpan? timeout = null, CancellationToken cancellationToken = default(CancellationToken))
         {
-            var handle = this.TryAcquire(timeout ?? Timeout.InfiniteTimeSpan, cancellationToken);
-            ValidateTryAcquireResult(handle, timeout);
-
-            return handle;
+            return DistributedLockHelpers.Acquire(this, timeout, cancellationToken);
         }
 
         public Task<IDisposable> TryAcquireAsync(TimeSpan timeout = default(TimeSpan), CancellationToken cancellationToken = default(CancellationToken))
@@ -102,8 +85,7 @@ namespace Medallion.Threading.Sql
 
         public Task<IDisposable> AcquireAsync(TimeSpan? timeout = null, CancellationToken cancellationToken = default(CancellationToken))
         {
-            var tryAcquireTask = this.TryAcquireAsync(timeout ?? Timeout.InfiniteTimeSpan, cancellationToken);
-            return ValidateTryAcquireResultAsync(tryAcquireTask, timeout);
+            return DistributedLockHelpers.AcquireAsync(this, timeout, cancellationToken);
         }
         
         /// <summary>
@@ -111,26 +93,6 @@ namespace Medallion.Threading.Sql
         /// </summary>
         public static int MaxLockNameLength { get { return 255; } }
         #endregion
-
-        private static async Task<IDisposable> ValidateTryAcquireResultAsync(Task<IDisposable> tryAcquireTask, TimeSpan? timeout)
-        {
-            var handle = await tryAcquireTask.ConfigureAwait(false);
-            ValidateTryAcquireResult(handle, timeout);
-
-            return handle;
-        }
-
-        private static void ValidateTryAcquireResult(IDisposable handle, TimeSpan? timeout)
-        {
-            if (handle == null)
-            {
-                if (timeout.HasValue && timeout >= TimeSpan.Zero)
-                    throw new TimeoutException("Timeout exceeded when trying to acquire the lock");
-
-                // should never get here
-                throw new InvalidOperationException("Failed to acquire the lock");
-            }
-        }
 
         private async Task<IDisposable> InternalTryAcquireAsync(int timeoutMillis, CancellationToken cancellationToken)
         {

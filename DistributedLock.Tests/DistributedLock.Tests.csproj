@@ -56,7 +56,7 @@
     <Compile Include="TestHelper.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\SqlDistributedLock\DistributedLock.csproj">
+    <ProjectReference Include="..\DistributedLock\DistributedLock.csproj">
       <Project>{c1f56b68-c2ee-48e5-a99b-b40d397ae34f}</Project>
       <Name>DistributedLock</Name>
     </ProjectReference>
