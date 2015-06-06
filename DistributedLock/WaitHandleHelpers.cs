@@ -42,7 +42,13 @@ namespace Medallion.Threading
             finally
             {
                 if (registeredHandle != null)
-                    registeredHandle.Unregister(handle);
+                {
+                    // this is different from the referenced site, but I think this is more correct:
+                    // the handle passed to unregister is a handle to be signaled, not the one to unregister
+                    // (that one is already captured by the registered handle). See
+                    // http://referencesource.microsoft.com/#mscorlib/system/threading/threadpool.cs,065408fc096354fd
+                    registeredHandle.Unregister(null);
+                }
                 tokenRegistration.Dispose();
             }
         }

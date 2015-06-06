@@ -36,7 +36,7 @@ namespace Medallion.Threading
 
         public IDisposable TryAcquire(TimeSpan timeout = default(TimeSpan), CancellationToken cancellationToken = default(CancellationToken))
         {
-            var timeoutMillis = timeout.ToInt32Timeout(); 
+            var timeoutMillis = timeout.ToInt32Timeout();
 
             var @event = this.CreateEvent();
             var cleanup = true;
@@ -45,6 +45,10 @@ namespace Medallion.Threading
                 // cancellation case
                 if (cancellationToken.CanBeCanceled)
                 {
+                    // ensures that if we are already canceled upon entering this method
+                    // we will cancel, not wait
+                    cancellationToken.ThrowIfCancellationRequested();
+
                     // cancellable wait based on
                     // http://www.thomaslevesque.com/2015/06/04/async-and-cancellation-support-for-wait-handles/
                     var index = WaitHandle.WaitAny(new[] { @event, cancellationToken.WaitHandle }, timeoutMillis);
@@ -141,7 +145,7 @@ namespace Medallion.Threading
             security.AddAccessRule(
                 new EventWaitHandleAccessRule(
                     new SecurityIdentifier(WellKnownSidType.WorldSid, domainSid: null), 
-                    EventWaitHandleRights.Synchronize | EventWaitHandleRights.Modify, 
+                    EventWaitHandleRights.FullControl, // doesn't seem to work without this :-/
                     AccessControlType.Allow
                 )
             );
