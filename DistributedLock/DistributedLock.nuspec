@@ -23,6 +23,6 @@
     </dependencies>
   </metadata>
   <files>
-    <file src="bin/Debug/MedallionShell.XML" />
+    <file src="bin/Debug/DistributedLock.XML" />
   </files>
 </package>
