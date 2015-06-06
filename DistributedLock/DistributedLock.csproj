@@ -45,6 +45,8 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Sql\SqlDistributedLock.cs" />
     <Compile Include="Sql\SqlHelpers.cs" />
+    <Compile Include="SystemDistributedLock.cs" />
+    <Compile Include="WaitHandleHelpers.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
