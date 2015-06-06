@@ -1,0 +1,28 @@
+﻿<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>DistributedLock</id>
+    <version>$version$</version>
+    <title>DistributedLock</title>
+    <authors>Michael Adelson</authors>
+    <licenseUrl>https://raw.githubusercontent.com/madelson/DistributedLock/master/License.txt</licenseUrl>
+    <projectUrl>https://github.com/madelson/DistributedLock</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <summary>
+      Provides easy-to-use and robust wrappers for named system-wide locks (using WaitHandles) as well as fully distributed locks (using SQLServer)
+    </summary>
+    <description>
+      Provides easy-to-use and robust wrappers for named system-wide locks (using WaitHandles) as well as fully distributed locks (using SQLServer)
+    </description>
+    <releaseNotes>
+      Initial release
+    </releaseNotes>
+    <copyright>Copyright 2015 Michael Adelson</copyright>
+    <tags>distributed lock async waithandle mutext sql sqlserver</tags>
+    <dependencies>
+    </dependencies>
+  </metadata>
+  <files>
+    <file src="bin/Debug/MedallionShell.XML" />
+  </files>
+</package>

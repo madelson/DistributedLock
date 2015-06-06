@@ -50,6 +50,7 @@
     <Compile Include="WaitHandleHelpers.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="DistributedLock.nuspec" />
     <None Include="TODO.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
