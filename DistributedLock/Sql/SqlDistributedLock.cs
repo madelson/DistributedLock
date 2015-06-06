@@ -273,8 +273,12 @@ namespace Medallion.Threading.Sql
             command.Transaction = transaction;
             command.CommandText = "dbo.sp_getapplock";
             command.CommandType = CommandType.StoredProcedure;
-            // command timeout is in seconds. We always wait at least the lock timeout plus a buffer
-            command.CommandTimeout = (timeoutMillis / 1000) + 30;
+            command.CommandTimeout = timeoutMillis >= 0
+                  // command timeout is in seconds. We always wait at least the lock timeout plus a buffer 
+                  ? (timeoutMillis / 1000) + 30
+                  // otherwise timeout is infinite so we use the infinite timeout of 0
+                  // (see https://msdn.microsoft.com/en-us/library/system.data.sqlclient.sqlcommand.commandtimeout%28v=vs.110%29.aspx)
+                  : 0;
 
             command.Parameters.Add(CreateParameter(command, "Resource", lockName));
             command.Parameters.Add(CreateParameter(command, "LockMode", "Exclusive"));
