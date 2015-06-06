@@ -38,12 +38,8 @@ namespace Medallion.Threading.Tests.Sql
             Func<WeakReference> abandonLock = () => new WeakReference(@lock.Acquire());
 
             var weakHandle = abandonLock();
-            for (var i = 0; i < 1; ++i)
-            {
-                GC.Collect();
-                GC.WaitForPendingFinalizers();
-            }
-
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
             // this is needed because the pool reclaims the SqlConnection but doesn't close it
             SqlConnection.ClearAllPools();
 
