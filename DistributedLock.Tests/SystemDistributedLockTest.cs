@@ -41,9 +41,25 @@ namespace Medallion.Threading.Tests
             }
         }
 
+        [TestMethod]
+        public void TestGetSafeLockNameCompat()
+        {
+            this.GetSafeLockName("").ShouldEqual("EMPTYz4PhNX7vuL3xVChQ1m2AB9Yg5AULVxXcg/SpIdNs6c5H0NE8XYXysP+DGNKHfuwvY7kxvUdBeoGlODJ6+SfaPg==");
+            this.GetSafeLockName("abc").ShouldEqual("abc");
+            this.GetSafeLockName("\\").ShouldEqual("_CgzRFsLFf7El/ZraEx9sqWRYeplYohSBSmI9sYIe1c4y2u7ECFoU4x2QCjV7HiVJMZsuDMLIz7r8akpKr+viAw==");
+            this.GetSafeLockName(new string('a', SystemDistributedLock.MaxLockNameLength)).ShouldEqual(new string('a', SystemDistributedLock.MaxLockNameLength));
+            this.GetSafeLockName(new string('\\', SystemDistributedLock.MaxLockNameLength)).ShouldEqual("_____________________________________________________________________________________________________________________________________________________________________Y7DJXlpJeJjeX5XAOWV+ka/3ONBj5dHhKWcSH4pd5AC9YHFm+l1gBArGpBSBn3WcX00ArcDtKw7g24kJaHLifQ==");
+            this.GetSafeLockName(new string('x', SystemDistributedLock.MaxLockNameLength + 1)).ShouldEqual("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxsrCnXZ1XHiT//dOSBfAU0iC4Gtnlr0dQACBUK8Ev2OdRYJ9jcvbiqVCv/rjyPemTW9AvOonkdr0B2bG04gmeYA==");
+        }
+
         internal override IDistributedLock CreateLock(string name)
         {
             return new SystemDistributedLock(name);
+        }
+
+        internal override string GetSafeLockName(string name)
+        {
+            return SystemDistributedLock.GetSafeLockName(name);
         }
     }
 }

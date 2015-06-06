@@ -97,6 +97,11 @@ namespace Medallion.Threading.Sql
         /// The maximum allowed length for lock names. See https://msdn.microsoft.com/en-us/library/ms189823.aspx
         /// </summary>
         public static int MaxLockNameLength { get { return 255; } }
+
+        public static string GetSafeLockName(string baseLockName)
+        {
+            return DistributedLockHelpers.ToSafeLockName(baseLockName, MaxLockNameLength, s => s);
+        }
         #endregion
 
         private async Task<IDisposable> InternalTryAcquireAsync(int timeoutMillis, CancellationToken cancellationToken)

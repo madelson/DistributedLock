@@ -125,6 +125,20 @@ namespace Medallion.Threading.Tests
             tasks.ForEach(t => t.Result.ShouldEqual(0));
         }
 
+        [TestMethod]
+        public void TestGetSafeLockName()
+        {
+            TestHelper.AssertThrows<ArgumentNullException>(() => this.GetSafeLockName(null));
+
+            foreach (var name in new[] { string.Empty, new string('a', 1000), @"\\\\\", new string('\\', 1000) })
+            {
+                var safeName = this.GetSafeLockName(name);
+                TestHelper.AssertDoesNotThrow(() => this.CreateLock(safeName).Acquire().Dispose());
+            }
+        }
+
         internal abstract IDistributedLock CreateLock(string name);
+
+        internal abstract string GetSafeLockName(string name);
     }
 }

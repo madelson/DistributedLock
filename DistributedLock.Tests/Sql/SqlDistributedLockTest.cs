@@ -32,6 +32,17 @@ namespace Medallion.Threading.Tests.Sql
         }
 
         [TestMethod]
+        public void TestGetSafeLockNameCompat()
+        {
+            this.GetSafeLockName("").ShouldEqual("");
+            this.GetSafeLockName("abc").ShouldEqual("abc");
+            this.GetSafeLockName("\\").ShouldEqual("\\");
+            this.GetSafeLockName(new string('a', SqlDistributedLock.MaxLockNameLength)).ShouldEqual(new string('a', SqlDistributedLock.MaxLockNameLength));
+            this.GetSafeLockName(new string('\\', SqlDistributedLock.MaxLockNameLength)).ShouldEqual(@"\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\");
+            this.GetSafeLockName(new string('x', SqlDistributedLock.MaxLockNameLength + 1)).ShouldEqual("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxA3SOHbN+Zq/qt/fpO9dxauQ3kVj8wfeEbknAYembWJG1Xuf4CL0Dmx3u+dAWHzkFMdjQhlRnlAXtiH7ZMFjjsg==");
+        }
+
+        [TestMethod]
         public void TestGarbageCollection()
         {
             var @lock = new SqlDistributedLock("gc_test", ConnectionString);
@@ -53,6 +64,11 @@ namespace Medallion.Threading.Tests.Sql
         internal override IDistributedLock CreateLock(string name)
         {
             return new SqlDistributedLock(name, ConnectionString);
+        }
+
+        internal override string GetSafeLockName(string name)
+        {
+            return SqlDistributedLock.GetSafeLockName(name);
         }
     }
 }
