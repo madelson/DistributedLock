@@ -2,3 +2,4 @@
 object hold an object which keys into a conditional weak table that holds the transaction)
 * Consider providing a hook into when we lose connection to SQL (connection state changed event)
 * Consider an option for using distributed transactions w/transaction scope instead of holding connections open (probably bad because we don't know where else the scope will flow)
+* Expose security options for event wait handles
