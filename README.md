@@ -4,7 +4,7 @@ DistributedLock is a lightweight .NET library that makes it easy to set up and u
 
 ## System-wide locks
 
-System-wide locks are great for synchronizing between processes or .NET application domains. Here's all you need to do:
+System-wide locks are great for synchronizing between processes or .NET application domains:
 
 ```C#
 var myLock = new SystemDistributedLock("SystemLock");
