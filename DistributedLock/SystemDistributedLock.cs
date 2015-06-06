@@ -9,6 +9,9 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading
 {
+    /// <summary>
+    /// Implements a system-/OS-scoped distributed lock using .NET <see cref="EventWaitHandle"/>s
+    /// </summary>
     public sealed class SystemDistributedLock : IDistributedLock
     {
         private const string GlobalPrefix = @"Global\";
@@ -17,6 +20,11 @@ namespace Medallion.Threading
         private readonly string lockName;
         private readonly TimeSpan abandonmentCheckFrequency;
 
+        /// <summary>
+        /// Creates an instance of <see cref="SystemDistributedLock"/> named <paramref name="lockName"/>.
+        /// <paramref name="abandonmentCheckFrequency"/> specifies how long the lock should wait before checking
+        /// if the underlying <see cref="EventWaitHandle"/> has been abandoned (defaults to 2 seconds)
+        /// </summary>
         public SystemDistributedLock(string lockName, TimeSpan? abandonmentCheckFrequency = default(TimeSpan?))
         {
             // note that just Global\ is not a valid name
@@ -45,6 +53,19 @@ namespace Medallion.Threading
         }
 
         #region ---- Public API ----
+        /// <summary>
+        /// Attempts to acquire the lock synchronously. Usage:
+        /// <code>
+        ///     using (var handle = myLock.TryAcquire(...))
+        ///     {
+        ///         if (handle != null) { /* we have the lock! */ }
+        ///     }
+        ///     // dispose releases the lock if we took it
+        /// </code>
+        /// </summary>
+        /// <param name="timeout">How long to wait before giving up on acquiring the lock. Defaults to 0</param>
+        /// <param name="cancellationToken">Specifies a token by which the wait can be canceled</param>
+        /// <returns>An <see cref="IDisposable"/> "handle" which can be used to release the lock, or null if the lock was not taken</returns>
         public IDisposable TryAcquire(TimeSpan timeout = default(TimeSpan), CancellationToken cancellationToken = default(CancellationToken))
         {
             var timeoutMillis = timeout.ToInt32Timeout();
@@ -118,11 +139,37 @@ namespace Medallion.Threading
             }
         }
 
+        /// <summary>
+        /// Acquires the lock synchronously, failing with <see cref="TimeoutException"/> if the wait times out
+        /// <code>
+        ///     using (myLock.Acquire(...))
+        ///     {
+        ///         // we have the lock
+        ///     }
+        ///     // dispose releases the lock
+        /// </code>
+        /// </summary>
+        /// <param name="timeout">How long to wait before giving up on acquiring the lock. Defaults to <see cref="Timeout.InfiniteTimeSpan"/></param>
+        /// <param name="cancellationToken">Specifies a token by which the wait can be canceled</param>
+        /// <returns>An <see cref="IDisposable"/> "handle" which can be used to release the lock</returns>
         public IDisposable Acquire(TimeSpan? timeout = null, CancellationToken cancellationToken = default(CancellationToken))
         {
             return DistributedLockHelpers.Acquire(this, timeout, cancellationToken);
         }
 
+        /// <summary>
+        /// Attempts to acquire the lock asynchronously. Usage:
+        /// <code>
+        ///     using (var handle = await myLock.TryAcquireAsync(...))
+        ///     {
+        ///         if (handle != null) { /* we have the lock! */ }
+        ///     }
+        ///     // dispose releases the lock if we took it
+        /// </code>
+        /// </summary>
+        /// <param name="timeout">How long to wait before giving up on acquiring the lock. Defaults to 0</param>
+        /// <param name="cancellationToken">Specifies a token by which the wait can be canceled</param>
+        /// <returns>An <see cref="IDisposable"/> "handle" which can be used to release the lock, or null if the lock was not taken</returns>
         public Task<IDisposable> TryAcquireAsync(TimeSpan timeout = default(TimeSpan), CancellationToken cancellationToken = default(CancellationToken))
         {
             var timeoutMillis = timeout.ToInt32Timeout();
@@ -130,13 +177,33 @@ namespace Medallion.Threading
             return this.InternalTryAcquireAsync(timeoutMillis, cancellationToken);
         }
 
+        /// <summary>
+        /// Acquires the lock asynchronously, failing with <see cref="TimeoutException"/> if the wait times out
+        /// <code>
+        ///     using (await myLock.AcquireAsync(...))
+        ///     {
+        ///         // we have the lock
+        ///     }
+        ///     // dispose releases the lock
+        /// </code>
+        /// </summary>
+        /// <param name="timeout">How long to wait before giving up on acquiring the lock. Defaults to <see cref="Timeout.InfiniteTimeSpan"/></param>
+        /// <param name="cancellationToken">Specifies a token by which the wait can be canceled</param>
+        /// <returns>An <see cref="IDisposable"/> "handle" which can be used to release the lock</returns>
         public Task<IDisposable> AcquireAsync(TimeSpan? timeout = null, CancellationToken cancellationToken = default(CancellationToken))
         {
             return DistributedLockHelpers.AcquireAsync(this, timeout, cancellationToken);
         }
 
+        /// <summary>
+        /// The maximum allowed length for lock names
+        /// </summary>
+        // 260 based on LINQPad experimentation
         public static int MaxLockNameLength { get { return 260 - GlobalPrefix.Length; } }
 
+        /// <summary>
+        /// Given <paramref name="baseLockName"/>, constructs a lock name which is safe for use with <see cref="SystemDistributedLock"/>
+        /// </summary>
         public static string GetSafeLockName(string baseLockName)
         {
             return DistributedLockHelpers.ToSafeLockName(baseLockName, MaxLockNameLength, s => s.Length == 0 ? "EMPTY" : s.Replace('\\', '_'));
