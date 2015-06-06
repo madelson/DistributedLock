@@ -139,6 +139,28 @@ namespace Medallion.Threading.Tests
         }
 
         [TestMethod]
+        public void TestCanceledAlreadyThrowsForSyncAndDoesNotThrowForAsync()
+        {
+            using (var source = new CancellationTokenSource())
+            {
+                source.Cancel();
+
+                var @lock = this.CreateLock("already-canceled");
+
+                TestHelper.AssertThrows<OperationCanceledException>(() => @lock.Acquire(cancellationToken: source.Token));
+                TestHelper.AssertThrows<OperationCanceledException>(() => @lock.TryAcquire(cancellationToken: source.Token));
+
+                var acquireTask = @lock.AcquireAsync(cancellationToken: source.Token);
+                acquireTask.ContinueWith(_ => { }).Wait(TimeSpan.FromSeconds(10)).ShouldEqual(true);
+                acquireTask.IsCanceled.ShouldEqual(true, "acquire");
+
+                var tryAcquireTask = @lock.TryAcquireAsync(cancellationToken: source.Token);
+                tryAcquireTask.ContinueWith(_ => { }).Wait(TimeSpan.FromSeconds(10)).ShouldEqual(true);
+                tryAcquireTask.IsCanceled.ShouldEqual(true, "tryAcquire");
+            }
+        }
+
+        [TestMethod]
         public void TestCrossProcess()
         {
             var type = this.CreateLock("a").GetType().Name.Replace("DistributedLock", string.Empty).ToLowerInvariant();
@@ -181,8 +203,7 @@ namespace Medallion.Threading.Tests
         {
             this.CrossProcessAbandonmentHelper(asyncWait: true, kill: true);
         }
-
-        
+  
         private void CrossProcessAbandonmentHelper(bool asyncWait, bool kill) 
         {
             var type = this.CreateLock("a").GetType().Name.Replace("DistributedLock", string.Empty).ToLowerInvariant();

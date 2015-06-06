@@ -133,8 +133,6 @@ namespace Medallion.Threading.Sql
         {
             var timeoutMillis = timeout.ToInt32Timeout();
 
-            cancellationToken.ThrowIfCancellationRequested();
-
             return this.InternalTryAcquireAsync(timeoutMillis, cancellationToken);
         }
 
@@ -172,6 +170,9 @@ namespace Medallion.Threading.Sql
 
         private async Task<IDisposable> InternalTryAcquireAsync(int timeoutMillis, CancellationToken cancellationToken)
         {
+            // it's important that this happens in the async method so that we cancel instead of throwing
+            cancellationToken.ThrowIfCancellationRequested();
+
             DbConnection connection = null;
             DbTransaction transaction = null;
             var cleanup = true;
