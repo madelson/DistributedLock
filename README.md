@@ -113,6 +113,6 @@ using (myLock.Acquire(cancellationToken: token))
 ```
 
 ## Release notes
-- 1.0.0 Initial release
-- 1.0.1 Minor fix when using infinite timeouts
 - 1.1.0 Added support for SQL distributed locks scoped to existing connections/transactions
+- 1.0.1 Minor fix when using infinite timeouts
+- 1.0.0 Initial release
