@@ -57,7 +57,9 @@
   <ItemGroup>
     <Compile Include="DistributedLockTestBase.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Sql\SqlConnectionScopedDistributedLockTest.cs" />
     <Compile Include="Sql\SqlDistributedLockTest.cs" />
+    <Compile Include="Sql\SqlTransactionScopedDistributedLockTest.cs" />
     <Compile Include="SystemDistributedLockTest.cs" />
     <Compile Include="TestHelper.cs" />
   </ItemGroup>

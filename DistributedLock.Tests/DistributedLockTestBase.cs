@@ -23,7 +23,7 @@ namespace Medallion.Threading.Tests
 
                 using (var nestedHandle = @lock.TryAcquire())
                 {
-                    Assert.IsNull(nestedHandle);
+                    (nestedHandle == null).ShouldEqual(!this.IsReentrant);
                 }
 
                 using (var nestedHandle2 = lock2.TryAcquire())
@@ -50,7 +50,7 @@ namespace Medallion.Threading.Tests
 
                 using (var nestedHandle = @lock.TryAcquireAsync().Result)
                 {
-                    Assert.IsNull(nestedHandle);
+                    (nestedHandle == null).ShouldEqual(!this.IsReentrant);
                 }
 
                 using (var nestedHandle2 = lock2.TryAcquireAsync().Result)
@@ -83,7 +83,8 @@ namespace Medallion.Threading.Tests
         public void TestTimeouts()
         {
             var @lock = this.CreateLock("timeout");
-            using (@lock.Acquire())
+            // acquire with a different lock instance to avoid reentrancy mattering
+            using (this.CreateLock("timeout").Acquire())
             {
                 var syncAcquireTask = Task.Run(() => @lock.Acquire(TimeSpan.FromSeconds(.1)));
                 syncAcquireTask.ContinueWith(_ => { }).Wait(TimeSpan.FromSeconds(.2)).ShouldEqual(true, "sync acquire");
@@ -109,7 +110,7 @@ namespace Medallion.Threading.Tests
             var @lock = this.CreateLock("gerald");
 
             var source = new CancellationTokenSource();
-            using (var handle = @lock.Acquire())
+            using (var handle = this.CreateLock("gerald").Acquire())
             {
                 var blocked = @lock.AcquireAsync(cancellationToken: source.Token);
                 blocked.Wait(TimeSpan.FromSeconds(.1)).ShouldEqual(false);
@@ -259,26 +260,42 @@ namespace Medallion.Threading.Tests
             }
         }
 
-        private static readonly List<Command> Commands = new List<Command>();
-
         private Command RunLockTaker(params string[] args)
         {
             var command = Command.Run("DistributedLockTaker", args);
-            Commands.Add(command);
+            this.AddCleanupAction(() => 
+            {
+                if (!command.Task.IsCompleted)
+                {
+                    command.Kill();
+                }
+            });
             return command;
         }
 
-        [ClassCleanup]
-        public static void CleanupCommands()
+        private static readonly Queue<Action> CleanupActions = new Queue<Action>();
+
+        protected void AddCleanupAction(Action action) 
         {
-            Commands.ForEach(c =>
+            lock (CleanupActions) 
             {
-                if (!c.Task.IsCompleted)
-                {
-                    c.Kill();
-                }
-            });
+                CleanupActions.Enqueue(action);
+            }
         }
+
+        [ClassCleanup]
+        public static void Cleanup()
+        {
+            lock (CleanupActions) 
+            {
+                while (CleanupActions.Count > 0) 
+                {
+                    CleanupActions.Dequeue()();
+                }
+            }
+        }
+
+        internal virtual bool IsReentrant { get { return false; } }
 
         internal abstract IDistributedLock CreateLock(string name);
 

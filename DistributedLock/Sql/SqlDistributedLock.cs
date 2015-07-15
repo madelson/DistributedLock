@@ -19,21 +19,56 @@ namespace Medallion.Threading.Sql
     {
         private readonly string lockName, connectionString;
 
+        private readonly DbConnection connection;
+        private readonly DbTransaction transaction;
+
         /// <summary>
         /// Creates a lock with name <paramref name="lockName"/>, using the given
         /// <paramref name="connectionString"/> to connect to the database
         /// </summary>
         public SqlDistributedLock(string lockName, string connectionString)
+            : this(lockName)
+        {
+            if (string.IsNullOrEmpty(connectionString))
+                throw new ArgumentNullException("connectionString");
+
+            this.connectionString = connectionString;
+        }
+
+        /// <summary>
+        /// Creates a lock with name <paramref name="lockName"/> which, when acquired,
+        /// will be scoped to the given <see cref="connection"/>
+        /// </summary>
+        public SqlDistributedLock(string lockName, DbConnection connection)
+            : this(lockName)
+        {
+            if (connection == null)
+                throw new ArgumentNullException("connection");
+
+            this.connection = connection;
+        }
+
+        /// <summary>
+        /// Creates a lock with name <paramref name="lockName"/> which, when acquired,
+        /// will be scoped to the given <paramref name="transaction"/>
+        /// </summary>
+        public SqlDistributedLock(string lockName, DbTransaction transaction)
+            : this(lockName)
+        {
+            if (transaction == null)
+                throw new ArgumentNullException("transaction");
+
+            this.transaction = transaction;
+        }
+
+        private SqlDistributedLock(string lockName)
         {
             if (lockName == null)
                 throw new ArgumentNullException("lockName");
             if (lockName.Length > MaxLockNameLength)
                 throw new FormatException("lockName: must be at most " + MaxLockNameLength + " characters");
-            if (string.IsNullOrEmpty(connectionString))
-                throw new ArgumentNullException("connectionString");
 
             this.lockName = lockName;
-            this.connectionString = connectionString;
         }
 
         #region ---- Public API ----
@@ -66,19 +101,26 @@ namespace Medallion.Threading.Sql
             var cleanup = true;
             try
             {
-                connection = this.CreateConnection();
-                connection.Open();
-                
-                transaction = CreateTransaction(connection);
+                connection = this.GetConnection();
+                if (this.connectionString != null)
+                {
+                    connection.Open();
+                }
+                else if (connection == null)
+                    throw new InvalidOperationException("The transaction had been disposed");
+                else if (connection.State != ConnectionState.Open)
+                    throw new InvalidOperationException("The connection is not open");
+
+                transaction = this.GetTransaction(connection);
                 SqlParameter returnValue;
-                using (var command = CreateCommand(transaction, this.lockName, timeoutMillis, out returnValue))
+                using (var command = CreateAcquireCommand(connection, transaction, this.lockName, timeoutMillis, out returnValue))
                 {
                     command.ExecuteNonQuery();
                     var exitCode = (int)returnValue.Value;
                     if (ParseExitCode(exitCode))
                     {
                         cleanup = false;
-                        return new LockScope(transaction);
+                        return new LockScope(this, transaction);
                     }
                     return null;
                 }
@@ -93,7 +135,7 @@ namespace Medallion.Threading.Sql
             {
                 if (cleanup)
                 {
-                    Cleanup(transaction, connection);
+                    this.Cleanup(transaction, connection);
                 }
             }
         }
@@ -178,20 +220,27 @@ namespace Medallion.Threading.Sql
             var cleanup = true;
             try
             {
-                connection = this.CreateConnection();
+                connection = this.GetConnection();
 
-                await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+                if (this.connectionString != null)
+                {
+                    await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+                }
+                else if (connection == null)
+                    throw new InvalidOperationException("The transaction had been disposed");
+                else if (connection.State != ConnectionState.Open)
+                    throw new InvalidOperationException("The connection is not open");
 
-                transaction = CreateTransaction(connection);
+                transaction = this.GetTransaction(connection);
                 SqlParameter returnValue;
-                using (var command = CreateCommand(transaction, this.lockName, timeoutMillis, out returnValue))
+                using (var command = CreateAcquireCommand(connection, transaction, this.lockName, timeoutMillis, out returnValue))
                 {
                     await command.ExecuteNonQueryAndPropagateCancellationAsync(cancellationToken).ConfigureAwait(false);
                     var exitCode = (int)returnValue.Value;
                     if (ParseExitCode(exitCode))
                     {
                         cleanup = false;
-                        return new LockScope(transaction);
+                        return new LockScope(this, transaction);
                     }
                     return null;
                 }
@@ -206,20 +255,52 @@ namespace Medallion.Threading.Sql
             {
                 if (cleanup)
                 {
-                    Cleanup(transaction, connection);
+                    this.Cleanup(transaction, connection);
                 }
             }
         }
 
-        private static void Cleanup(DbTransaction transaction, DbConnection connection)
+        private void Cleanup(DbTransaction transaction, DbConnection connection)
         {
-            if (transaction != null)
+            // dispose connection and transaction unless they are externally owned
+            if (this.connectionString != null)
             {
-                transaction.Dispose();
+                if (transaction != null)
+                {
+                    transaction.Dispose();
+                }
+                if (connection != null)
+                {
+                    connection.Dispose();
+                }
             }
-            if (connection != null)
+        }
+
+        private void ReleaseLock(DbTransaction transaction)
+        {
+            if (this.connectionString != null)
             {
+                // if we own the connection, just dispose the connection & transaction
+                var connection = transaction.Connection;
+                transaction.Dispose();
                 connection.Dispose();
+            }
+            else 
+            {
+                // otherwise issue the release command
+
+                var connection = this.GetConnection();
+                // if the connection/transaction was closed, the lock was already released so we're good!
+                if (connection != null && connection.State == ConnectionState.Open)
+                {
+                    SqlParameter returnValue;
+                    using (var command = CreateReleaseCommand(connection, this.transaction, this.lockName, out returnValue))
+                    {
+                        command.ExecuteNonQuery();
+                        var exitCode = (int)returnValue.Value;
+                        ParseExitCode(exitCode);
+                    }
+                }
             }
         }
 
@@ -253,23 +334,27 @@ namespace Medallion.Threading.Sql
 
         private static string GetErrorMessage(int exitCode, string type)
         {
-            return string.Format("The request to acquire the distribute lock failed with exit code {0} ({1})", exitCode, type);
+            return string.Format("The request for the distribute lock failed with exit code {0} ({1})", exitCode, type);
         }
 
-        private DbConnection CreateConnection()
+        private DbConnection GetConnection()
         {
-            return new SqlConnection(this.connectionString);
+            return this.connectionString != null ? new SqlConnection(this.connectionString)
+                : this.connection != null ? this.connection
+                : this.transaction.Connection;
         }
 
-        private static DbTransaction CreateTransaction(DbConnection connection)
+        private DbTransaction GetTransaction(DbConnection connection)
         {
-            // the isolation level of the transaction doesn't matter, since we're using sp_getapplock
-            return connection.BeginTransaction(IsolationLevel.ReadUncommitted);
+            // when creating a transaction, the isolation level doesn't matter, since we're using sp_getapplock
+            return this.connectionString != null ? connection.BeginTransaction(IsolationLevel.ReadUncommitted)
+                : this.connection != null ? null
+                : this.transaction;
         }
 
-        private static DbCommand CreateCommand(DbTransaction transaction, string lockName, int timeoutMillis, out SqlParameter returnValue)
+        private static DbCommand CreateAcquireCommand(DbConnection connection, DbTransaction transaction, string lockName, int timeoutMillis, out SqlParameter returnValue)
         {
-            var command = transaction.Connection.CreateCommand();
+            var command = connection.CreateCommand();
             command.Transaction = transaction;
             command.CommandText = "dbo.sp_getapplock";
             command.CommandType = CommandType.StoredProcedure;
@@ -282,7 +367,21 @@ namespace Medallion.Threading.Sql
 
             command.Parameters.Add(CreateParameter(command, "Resource", lockName));
             command.Parameters.Add(CreateParameter(command, "LockMode", "Exclusive"));
+            command.Parameters.Add(CreateParameter(command, "LockOwner", transaction != null ? "Transaction" : "Session"));
             command.Parameters.Add(CreateParameter(command, "LockTimeout", timeoutMillis));
+            command.Parameters.Add(returnValue = new SqlParameter { Direction = ParameterDirection.ReturnValue });
+
+            return command;
+        }
+
+        private static DbCommand CreateReleaseCommand(DbConnection connection, DbTransaction transaction, string lockName, out SqlParameter returnValue)
+        {
+            var command = connection.CreateCommand();
+            command.Transaction = transaction;
+            command.CommandText = "dbo.sp_releaseapplock";
+            command.CommandType = CommandType.StoredProcedure;
+            command.Parameters.Add(CreateParameter(command, "Resource", lockName));
+            command.Parameters.Add(CreateParameter(command, "LockOwner", transaction != null ? "Transaction" : "Session"));
             command.Parameters.Add(returnValue = new SqlParameter { Direction = ParameterDirection.ReturnValue });
 
             return command;
@@ -298,22 +397,24 @@ namespace Medallion.Threading.Sql
 
         private sealed class LockScope : IDisposable
         {
+            private SqlDistributedLock @lock;
             private DbTransaction transaction;
 
-            public LockScope(DbTransaction transaction)
+            public LockScope(SqlDistributedLock @lock, DbTransaction transaction)
             {
+                this.@lock = @lock;
                 this.transaction = transaction;
             }
 
             void IDisposable.Dispose()
             {
-                var transaction = Interlocked.Exchange(ref this.transaction, null);
-                if (transaction != null)
+                var @lock = Interlocked.Exchange(ref this.@lock, null);
+                if (@lock != null)
                 {
-                    var connection = transaction.Connection;
-                    transaction.Dispose();
-                    connection.Dispose();
-                }
+                    var transaction = this.transaction;
+                    this.transaction = null;
+                    @lock.ReleaseLock(transaction);
+                }                
             }
         }
     }

@@ -3,6 +3,7 @@ using Medallion.Threading.Sql;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
+using System.Data.Common;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Reflection;
@@ -15,7 +16,7 @@ namespace Medallion.Threading.Tests.Sql
     [TestClass]
     public class SqlDistributedLockTest : DistributedLockTestBase
     {
-        private static readonly string ConnectionString = new SqlConnectionStringBuilder
+        internal static readonly string ConnectionString = new SqlConnectionStringBuilder
             {
                 DataSource = @".\SQLEXPRESS",
                 InitialCatalog = "master",
@@ -27,7 +28,9 @@ namespace Medallion.Threading.Tests.Sql
         public void TestBadConstructorArguments()
         {
             TestHelper.AssertThrows<ArgumentNullException>(() => new SqlDistributedLock(null, ConnectionString));
-            TestHelper.AssertThrows<ArgumentNullException>(() => new SqlDistributedLock("a", null));
+            TestHelper.AssertThrows<ArgumentNullException>(() => new SqlDistributedLock("a", default(string)));
+            TestHelper.AssertThrows<ArgumentNullException>(() => new SqlDistributedLock("a", default(DbTransaction)));
+            TestHelper.AssertThrows<ArgumentNullException>(() => new SqlDistributedLock("a", default(DbConnection)));
             TestHelper.AssertThrows<FormatException>(() => new SqlDistributedLock(new string('a', SqlDistributedLock.MaxLockNameLength + 1), ConnectionString));
             TestHelper.AssertDoesNotThrow(() => new SqlDistributedLock(new string('a', SqlDistributedLock.MaxLockNameLength), ConnectionString));
         }
