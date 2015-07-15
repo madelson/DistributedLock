@@ -31,6 +31,8 @@ using (myLock.Acquire())
 }
 ```
 
+As of version 1.1.0, `SqlDistributedLock`s can now be scoped to existing `DbTransaction` and/or `DbConnection` objects as an alternative to passing a connection string directly (in which case the lock manages its own connection).
+
 ## Naming locks
 
 For all types of locks, the name of the lock defines its identity within its scope. While in general most names will work, the names are ultimately constrained by the underlying technologies used for locking. If you don't want to worry (particularly if when generating names dynamically), you can use the GetSafeLockName method each lock type to convert an arbitrary string into a consistent valid lock name:
@@ -109,3 +111,8 @@ using (myLock.Acquire(cancellationToken: token))
 	// this block of code is protected by the lock!
 }
 ```
+
+## Release notes
+- 1.0.0 Initial release
+- 1.0.1 Minor fix when using infinite timeouts
+- 1.1.0 Added support for SQL distributed locks scoped to existing connections/transactions

@@ -17,8 +17,12 @@ namespace Medallion.Threading.Sql
     /// </summary>
     public sealed class SqlDistributedLock : IDistributedLock
     {
-        private readonly string lockName, connectionString;
+        private readonly string lockName;
+        
+        // depending on the mode we're in, only one of connection string, 
+        // connection, and transaction is ever populated
 
+        private readonly string connectionString;
         private readonly DbConnection connection;
         private readonly DbTransaction transaction;
 
@@ -37,7 +41,9 @@ namespace Medallion.Threading.Sql
 
         /// <summary>
         /// Creates a lock with name <paramref name="lockName"/> which, when acquired,
-        /// will be scoped to the given <see cref="connection"/>
+        /// will be scoped to the given <see cref="connection"/>. The <paramref name="connection"/> is
+        /// assumed to be externally managed: the <see cref="SqlDistributedLock"/> will not attempt to open,
+        /// close, or dispose it
         /// </summary>
         public SqlDistributedLock(string lockName, DbConnection connection)
             : this(lockName)
@@ -50,7 +56,9 @@ namespace Medallion.Threading.Sql
 
         /// <summary>
         /// Creates a lock with name <paramref name="lockName"/> which, when acquired,
-        /// will be scoped to the given <paramref name="transaction"/>
+        /// will be scoped to the given <paramref name="transaction"/>. The <paramref name="transaction"/> and its
+        /// <see cref="DbTransaction.Connection"/> are assumed to be externally managed: the <see cref="SqlDistributedLock"/> will 
+        /// not attempt to open, close, commit, roll back, or dispose them
         /// </summary>
         public SqlDistributedLock(string lockName, DbTransaction transaction)
             : this(lockName)

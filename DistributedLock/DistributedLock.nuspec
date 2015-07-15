@@ -15,7 +15,7 @@
       Provides easy-to-use and robust wrappers for named system-wide locks (using WaitHandles) as well as fully distributed locks (using SQLServer)
     </description>
     <releaseNotes>
-      1.0.1 Minor fix when using infinite timeouts
+      1.1.0 Added support for SQL locks scoped to existing connections and transactions
     </releaseNotes>
     <copyright>Copyright 2015 Michael Adelson</copyright>
     <tags>distributed lock async waithandle mutext sql sqlserver</tags>
