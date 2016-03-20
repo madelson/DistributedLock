@@ -4,21 +4,61 @@ using System.Data;
 using System.Data.Common;
 using System.Data.SqlClient;
 using System.Linq;
-using System.Runtime.ExceptionServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Medallion.Threading.Sql
 {
-    /// <summary>
-    /// Implements a distributed lock using a SQL server application lock
-    /// (see https://msdn.microsoft.com/en-us/library/ms189823.aspx)
-    /// </summary>
-    public sealed class SqlDistributedLock : IDistributedLock
+    internal sealed class SqlApplicationLock
     {
+        public enum Mode
+        {
+            Mutex,
+            Read,
+            UpgradeableRead,
+            Write,
+        }
+
+        private enum SqlLockMode
+        {
+            NoLock = -10000,
+            Update = -10001,
+            SharedIntentExclusive = -10002,
+            IntentShared = -10003,
+            IntentExclusive = -10004,
+            UpdateIntentExclusive = -10005,
+            Shared = -10006,
+            Exclusive = -10007,
+        }
+
+        /// <summary>
+        /// The maximum allowed length for lock names. See https://msdn.microsoft.com/en-us/library/ms189823.aspx
+        /// </summary>
+        public const int MaxLockNameLength = 255;
+
+        private static readonly string CheckedGetAppLockQuery = $@"
+            DECLARE @CurrentMode NVARCHAR(32) = APPLOCK_MODE('public', @LockName, @LockOwner);
+            IF (
+                    (@LockMode IN ('{SqlLockMode.Shared}', '{SqlLockMode.Update}') AND @CurrentMode = '{SqlLockMode.NoLock}')
+                    OR (@LockMode = '{SqlLockMode.Exclusive}' AND @CurrentMode IN ('{SqlLockMode.NoLock}', '{SqlLockMode.Update}'))
+               )
+                @Result = CASE @CurrentMode {string.Join(
+                    " ", 
+                    Enum.GetValues(typeof(SqlLockMode))
+                        .Cast<SqlLockMode>()
+                        .Select(m => $"WHEN '{m.ToString()}' THEN {(int)m}")
+                )} END;
+            ELSE
+                EXEC @Result = sp_getapplock
+                    @Resource = @Resource
+                    , @LockMode = @LockMode
+                    , @LockOwner = @LockOwner
+                    , @LockTimeout = @LockTimeout;
+        ";
+
         private readonly string lockName;
-        
+
         // depending on the mode we're in, only one of connection string, 
         // connection, and transaction is ever populated
 
@@ -30,27 +70,21 @@ namespace Medallion.Threading.Sql
         /// Creates a lock with name <paramref name="lockName"/>, using the given
         /// <paramref name="connectionString"/> to connect to the database
         /// </summary>
-        public SqlDistributedLock(string lockName, string connectionString)
+        public SqlApplicationLock(string lockName, string connectionString)
             : this(lockName)
         {
-            if (string.IsNullOrEmpty(connectionString))
-                throw new ArgumentNullException(nameof(connectionString));
-
             this.connectionString = connectionString;
         }
 
         /// <summary>
         /// Creates a lock with name <paramref name="lockName"/> which, when acquired,
         /// will be scoped to the given <see cref="connection"/>. The <paramref name="connection"/> is
-        /// assumed to be externally managed: the <see cref="SqlDistributedLock"/> will not attempt to open,
+        /// assumed to be externally managed: the <see cref="SqlApplicationLock"/> will not attempt to open,
         /// close, or dispose it
         /// </summary>
-        public SqlDistributedLock(string lockName, DbConnection connection)
+        public SqlApplicationLock(string lockName, DbConnection connection)
             : this(lockName)
         {
-            if (connection == null)
-                throw new ArgumentNullException(nameof(connection));
-
             this.connection = connection;
         }
 
@@ -60,47 +94,19 @@ namespace Medallion.Threading.Sql
         /// <see cref="DbTransaction.Connection"/> are assumed to be externally managed: the <see cref="SqlDistributedLock"/> will 
         /// not attempt to open, close, commit, roll back, or dispose them
         /// </summary>
-        public SqlDistributedLock(string lockName, DbTransaction transaction)
+        public SqlApplicationLock(string lockName, DbTransaction transaction)
             : this(lockName)
         {
-            if (transaction == null)
-                throw new ArgumentNullException(nameof(transaction));
-
             this.transaction = transaction;
         }
 
-        private SqlDistributedLock(string lockName)
+        private SqlApplicationLock(string lockName)
         {
-            if (lockName == null)
-                throw new ArgumentNullException(nameof(lockName));
-            if (lockName.Length > MaxLockNameLength)
-                throw new FormatException(nameof(lockName) + ": must be at most " + MaxLockNameLength + " characters");
-
             this.lockName = lockName;
         }
 
-        #region ---- Public API ----
-        /// <summary>
-        /// Attempts to acquire the lock synchronously. Usage:
-        /// <code>
-        ///     using (var handle = myLock.TryAcquire(...))
-        ///     {
-        ///         if (handle != null) { /* we have the lock! */ }
-        ///     }
-        ///     // dispose releases the lock if we took it
-        /// </code>
-        /// </summary>
-        /// <param name="timeout">How long to wait before giving up on acquiring the lock. Defaults to 0</param>
-        /// <param name="cancellationToken">Specifies a token by which the wait can be canceled</param>
-        /// <returns>An <see cref="IDisposable"/> "handle" which can be used to release the lock, or null if the lock was not taken</returns>
-        public IDisposable TryAcquire(TimeSpan timeout = default(TimeSpan), CancellationToken cancellationToken = default(CancellationToken))
+        public IDisposable TryAcquire(Mode mode, TimeSpan timeout)
         {
-            if (cancellationToken.CanBeCanceled)
-            {
-                // use the async version since that supports cancellation
-                return DistributedLockHelpers.TryAcquireWithAsyncCancellation(this, timeout, cancellationToken);
-            }
-
             // synchronous mode
             var timeoutMillis = timeout.ToInt32Timeout();
 
@@ -121,7 +127,7 @@ namespace Medallion.Threading.Sql
 
                 transaction = this.GetTransaction(connection);
                 SqlParameter returnValue;
-                using (var command = CreateAcquireCommand(connection, transaction, this.lockName, timeoutMillis, out returnValue))
+                using (var command = CreateAcquireCommand(connection, transaction, this.lockName, timeoutMillis, mode, out returnValue))
                 {
                     command.ExecuteNonQuery();
                     var exitCode = (int)returnValue.Value;
@@ -148,77 +154,14 @@ namespace Medallion.Threading.Sql
             }
         }
 
-        /// <summary>
-        /// Acquires the lock synchronously, failing with <see cref="TimeoutException"/> if the wait times out
-        /// <code>
-        ///     using (myLock.Acquire(...))
-        ///     {
-        ///         // we have the lock
-        ///     }
-        ///     // dispose releases the lock
-        /// </code>
-        /// </summary>
-        /// <param name="timeout">How long to wait before giving up on acquiring the lock. Defaults to <see cref="Timeout.InfiniteTimeSpan"/></param>
-        /// <param name="cancellationToken">Specifies a token by which the wait can be canceled</param>
-        /// <returns>An <see cref="IDisposable"/> "handle" which can be used to release the lock</returns>
-        public IDisposable Acquire(TimeSpan? timeout = null, CancellationToken cancellationToken = default(CancellationToken))
-        {
-            return DistributedLockHelpers.Acquire(this, timeout, cancellationToken);
-        }
-
-        /// <summary>
-        /// Attempts to acquire the lock asynchronously. Usage:
-        /// <code>
-        ///     using (var handle = await myLock.TryAcquireAsync(...))
-        ///     {
-        ///         if (handle != null) { /* we have the lock! */ }
-        ///     }
-        ///     // dispose releases the lock if we took it
-        /// </code>
-        /// </summary>
-        /// <param name="timeout">How long to wait before giving up on acquiring the lock. Defaults to 0</param>
-        /// <param name="cancellationToken">Specifies a token by which the wait can be canceled</param>
-        /// <returns>An <see cref="IDisposable"/> "handle" which can be used to release the lock, or null if the lock was not taken</returns>
-        public Task<IDisposable> TryAcquireAsync(TimeSpan timeout = default(TimeSpan), CancellationToken cancellationToken = default(CancellationToken))
+        public Task<IDisposable> TryAcquireAsync(Mode mode, TimeSpan timeout, CancellationToken cancellationToken)
         {
             var timeoutMillis = timeout.ToInt32Timeout();
 
-            return this.InternalTryAcquireAsync(timeoutMillis, cancellationToken);
+            return this.InternalTryAcquireAsync(mode, timeoutMillis, cancellationToken);
         }
-
-        /// <summary>
-        /// Acquires the lock asynchronously, failing with <see cref="TimeoutException"/> if the wait times out
-        /// <code>
-        ///     using (await myLock.AcquireAsync(...))
-        ///     {
-        ///         // we have the lock
-        ///     }
-        ///     // dispose releases the lock
-        /// </code>
-        /// </summary>
-        /// <param name="timeout">How long to wait before giving up on acquiring the lock. Defaults to <see cref="Timeout.InfiniteTimeSpan"/></param>
-        /// <param name="cancellationToken">Specifies a token by which the wait can be canceled</param>
-        /// <returns>An <see cref="IDisposable"/> "handle" which can be used to release the lock</returns>
-        public Task<IDisposable> AcquireAsync(TimeSpan? timeout = null, CancellationToken cancellationToken = default(CancellationToken))
-        {
-            return DistributedLockHelpers.AcquireAsync(this, timeout, cancellationToken);
-        }
-        
-        /// <summary>
-        /// The maximum allowed length for lock names. See https://msdn.microsoft.com/en-us/library/ms189823.aspx
-        /// </summary>
-        public static int MaxLockNameLength { get { return 255; } }
-
-        /// <summary>
-        /// Given <paramref name="baseLockName"/>, constructs a lock name which is safe for use with <see cref="SqlDistributedLock"/>
-        /// </summary>
-        public static string GetSafeLockName(string baseLockName)
-        {
-            return DistributedLockHelpers.ToSafeLockName(baseLockName, MaxLockNameLength, s => s);
-        }
-        #endregion
-
-        private async Task<IDisposable> InternalTryAcquireAsync(int timeoutMillis, CancellationToken cancellationToken)
+                
+        private async Task<IDisposable> InternalTryAcquireAsync(Mode mode, int timeoutMillis, CancellationToken cancellationToken)
         {
             // it's important that this happens in the async method so that we cancel instead of throwing
             cancellationToken.ThrowIfCancellationRequested();
@@ -241,7 +184,7 @@ namespace Medallion.Threading.Sql
 
                 transaction = this.GetTransaction(connection);
                 SqlParameter returnValue;
-                using (var command = CreateAcquireCommand(connection, transaction, this.lockName, timeoutMillis, out returnValue))
+                using (var command = CreateAcquireCommand(connection, transaction, this.lockName, timeoutMillis, mode, out returnValue))
                 {
                     await command.ExecuteNonQueryAndPropagateCancellationAsync(cancellationToken).ConfigureAwait(false);
                     var exitCode = (int)returnValue.Value;
@@ -293,7 +236,7 @@ namespace Medallion.Threading.Sql
                 transaction.Dispose();
                 connection.Dispose();
             }
-            else 
+            else
             {
                 // otherwise issue the release command
 
@@ -333,6 +276,16 @@ namespace Medallion.Threading.Sql
                 case -999: // parameter / unknown
                     throw new ArgumentException(GetErrorMessage(exitCode, "parameter validation or other error"));
 
+                case (int)SqlLockMode.Exclusive:
+                case (int)SqlLockMode.IntentExclusive:
+                case (int)SqlLockMode.IntentShared:
+                case (int)SqlLockMode.NoLock:
+                case (int)SqlLockMode.Shared:
+                case (int)SqlLockMode.SharedIntentExclusive:
+                case (int)SqlLockMode.Update:
+                case (int)SqlLockMode.UpdateIntentExclusive:
+                    throw new InvalidOperationException($"The current lock state '{(SqlLockMode)exitCode}' is not valid for the current operation");
+
                 default:
                     if (exitCode <= 0)
                         throw new InvalidOperationException(GetErrorMessage(exitCode, "unknown"));
@@ -342,7 +295,7 @@ namespace Medallion.Threading.Sql
 
         private static string GetErrorMessage(int exitCode, string type)
         {
-            return string.Format("The request for the distribute lock failed with exit code {0} ({1})", exitCode, type);
+            return $"The request for the distribute lock failed with exit code {exitCode} ({type})";
         }
 
         private DbConnection GetConnection()
@@ -360,12 +313,46 @@ namespace Medallion.Threading.Sql
                 : this.transaction;
         }
 
-        private static DbCommand CreateAcquireCommand(DbConnection connection, DbTransaction transaction, string lockName, int timeoutMillis, out SqlParameter returnValue)
+        private static DbCommand CreateAcquireCommand(
+            DbConnection connection, 
+            DbTransaction transaction, 
+            string lockName, 
+            int timeoutMillis, 
+            Mode mode,
+            out SqlParameter returnValue)
         {
             var command = connection.CreateCommand();
             command.Transaction = transaction;
-            command.CommandText = "dbo.sp_getapplock";
-            command.CommandType = CommandType.StoredProcedure;
+            if (mode == Mode.Mutex)
+            {
+                command.CommandText = "dbo.sp_getapplock";
+                command.CommandType = CommandType.StoredProcedure;
+                command.Parameters.Add(CreateParameter(command, "LockMode", SqlLockMode.Exclusive.ToString()));
+                command.Parameters.Add(returnValue = new SqlParameter { Direction = ParameterDirection.ReturnValue });
+            }
+            else
+            {
+                command.CommandText = CheckedGetAppLockQuery;
+                command.CommandType = CommandType.Text;
+                SqlLockMode lockMode;
+                switch (mode)
+                {
+                    case Mode.Read:
+                        lockMode = SqlLockMode.Shared;
+                        break;
+                    case Mode.UpgradeableRead:
+                        lockMode = SqlLockMode.Update;
+                        break;
+                    case Mode.Write:
+                        lockMode = SqlLockMode.Exclusive;
+                        break;
+                    default:
+                        throw new ArgumentException($"Unexpected mode {mode}", nameof(mode));
+                }
+                command.Parameters.Add(CreateParameter(command, "LockMode", lockMode.ToString()));
+                command.Parameters.Add(returnValue = new SqlParameter { ParameterName = "Result", Direction = ParameterDirection.Output });
+            }
+
             command.CommandTimeout = timeoutMillis >= 0
                   // command timeout is in seconds. We always wait at least the lock timeout plus a buffer 
                   ? (timeoutMillis / 1000) + 30
@@ -374,11 +361,9 @@ namespace Medallion.Threading.Sql
                   : 0;
 
             command.Parameters.Add(CreateParameter(command, "Resource", lockName));
-            command.Parameters.Add(CreateParameter(command, "LockMode", "Exclusive"));
             command.Parameters.Add(CreateParameter(command, "LockOwner", transaction != null ? "Transaction" : "Session"));
             command.Parameters.Add(CreateParameter(command, "LockTimeout", timeoutMillis));
-            command.Parameters.Add(returnValue = new SqlParameter { Direction = ParameterDirection.ReturnValue });
-
+            
             return command;
         }
 
@@ -405,10 +390,10 @@ namespace Medallion.Threading.Sql
 
         private sealed class LockScope : IDisposable
         {
-            private SqlDistributedLock @lock;
+            private SqlApplicationLock @lock;
             private DbTransaction transaction;
 
-            public LockScope(SqlDistributedLock @lock, DbTransaction transaction)
+            public LockScope(SqlApplicationLock @lock, DbTransaction transaction)
             {
                 this.@lock = @lock;
                 this.transaction = transaction;
@@ -422,7 +407,7 @@ namespace Medallion.Threading.Sql
                     var transaction = this.transaction;
                     this.transaction = null;
                     @lock.ReleaseLock(transaction);
-                }                
+                }
             }
         }
     }
