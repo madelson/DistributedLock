@@ -105,11 +105,10 @@ namespace Medallion.Threading.Sql
             this.lockName = lockName;
         }
 
-        public IDisposable TryAcquire(Mode mode, TimeSpan timeout)
+        public IDisposable TryAcquire(Mode mode, int timeoutMillis)
         {
             // synchronous mode
-            var timeoutMillis = timeout.ToInt32Timeout();
-
+            
             DbConnection connection = null;
             DbTransaction transaction = null;
             var cleanup = true;
@@ -154,14 +153,7 @@ namespace Medallion.Threading.Sql
             }
         }
 
-        public Task<IDisposable> TryAcquireAsync(Mode mode, TimeSpan timeout, CancellationToken cancellationToken)
-        {
-            var timeoutMillis = timeout.ToInt32Timeout();
-
-            return this.InternalTryAcquireAsync(mode, timeoutMillis, cancellationToken);
-        }
-                
-        private async Task<IDisposable> InternalTryAcquireAsync(Mode mode, int timeoutMillis, CancellationToken cancellationToken)
+        public async Task<IDisposable> TryAcquireAsync(Mode mode, int timeoutMillis, CancellationToken cancellationToken)
         {
             // it's important that this happens in the async method so that we cancel instead of throwing
             cancellationToken.ThrowIfCancellationRequested();
