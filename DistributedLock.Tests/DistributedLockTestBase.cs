@@ -186,6 +186,26 @@ namespace Medallion.Threading.Tests
         }
 
         [TestMethod]
+        public void TestLockAbandonment()
+        {
+            if (!this.SupportsInProcessAbandonment) { return; }
+
+            var lockName = this.GetSafeLockName("abandoned_" + this.GetType().Name);
+            new Action<string>(name => this.CreateLock(name).Acquire())(lockName);
+
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            System.Data.SqlClient.SqlConnection.ClearAllPools();
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+
+            using (var handle = this.CreateLock(lockName).TryAcquire())
+            {
+                Assert.IsNotNull(handle, this.GetType().Name);
+            }
+        }
+
+        [TestMethod]
         public void TestCrossProcess()
         {
             var type = this.CreateLock("a").GetType().Name.Replace("DistributedLock", string.Empty).ToLowerInvariant();
@@ -295,7 +315,8 @@ namespace Medallion.Threading.Tests
             }
         }
 
-        internal virtual bool IsReentrant { get { return false; } }
+        internal virtual bool IsReentrant => false;
+        internal virtual bool SupportsInProcessAbandonment => true;
 
         internal abstract IDistributedLock CreateLock(string name);
 
