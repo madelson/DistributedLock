@@ -20,48 +20,64 @@ namespace Medallion.Threading.Sql
             this.fallbackLock = new OwnedConnectionDistributedLock(lockName: lockName, connectionString: connectionString);
         }
 
-        public IDisposable TryAcquire(int timeoutMillis)
+        public IDisposable TryAcquire(int timeoutMillis, SqlApplicationLock.Mode mode, IDisposable contextHandle)
         {
-            var pooledResult = SharedConnectionLockPool.Get(this.connectionString).TryAcquire(this.lockName);
-            if (pooledResult.HasValue)
+            // cannot multiplex for updates, since we cannot predict whether or not there will be a request to elevate
+            // to an exclusive lock which asks for a long timeout
+            if (mode != SqlApplicationLock.Mode.Update && contextHandle == null)
             {
-                // if we got a non-null value back, then we succeeded in using the shared connection. This
-                // result is valid if (a) it acquired the lock or (b) we weren't willing to wait anyway
-                // (since we never block on acquiring on the shared connection)
-
-                var handle = pooledResult.Value.Handle;
-                if (handle != null || timeoutMillis == 0)
+                var pooledResult = SharedConnectionLockPool.Get(this.connectionString).TryAcquire(this.lockName, mode);
+                if (pooledResult.HasValue)
                 {
-                    return handle;
+                    // if we got a non-null value back, then we succeeded in using the shared connection. This
+                    // result is valid if (a) it acquired the lock or (b) we weren't willing to wait anyway
+                    // (since we never block on acquiring on the shared connection) AND we weren't looking to take
+                    // a shared lock (if the pooled connection is already holding a shared version of the same lock,
+                    // then it won't try to take that lock again. However, we might be able to take it on a different
+                    // connection)
+
+                    var handle = pooledResult.Value.Handle;
+                    if (handle != null || (timeoutMillis == 0 && mode != SqlApplicationLock.Mode.Shared))
+                    {
+                        return handle;
+                    }
                 }
             }
 
             // otherwise, fall back to our fallback lock
-            return this.fallbackLock.TryAcquire(timeoutMillis);
+            return this.fallbackLock.TryAcquire(timeoutMillis, mode, contextHandle);
         }
 
-        public async Task<IDisposable> TryAcquireAsync(int timeoutMillis, CancellationToken cancellationToken)
+        public async Task<IDisposable> TryAcquireAsync(int timeoutMillis, SqlApplicationLock.Mode mode, CancellationToken cancellationToken, IDisposable contextHandle)
         {
             // manually check for cancellation since the shared lock does not support it
             cancellationToken.ThrowIfCancellationRequested();
 
-            var pooledResult = await SharedConnectionLockPool.Get(this.connectionString)
-                .TryAcquireAsync(this.lockName).ConfigureAwait(false);
-            if (pooledResult.HasValue)
+            // cannot multiplex for updates, since we cannot predict whether or not there will be a request to elevate
+            // to an exclusive lock which asks for a long timeout
+            if (mode != SqlApplicationLock.Mode.Update && contextHandle == null)
             {
-                // if we got a non-null value back, then we succeeded in using the shared connection. This
-                // result is valid if (a) it acquired the lock or (b) we weren't willing to wait anyway
-                // (since we never block on acquiring on the shared connection)
-
-                var handle = pooledResult.Value.Handle;
-                if (handle != null || timeoutMillis == 0)
+                var pooledResult = await SharedConnectionLockPool.Get(this.connectionString)
+                    .TryAcquireAsync(this.lockName, mode).ConfigureAwait(false);
+                if (pooledResult.HasValue)
                 {
-                    return handle;
+                    // if we got a non-null value back, then we succeeded in using the shared connection. This
+                    // result is valid if (a) it acquired the lock or (b) we weren't willing to wait anyway
+                    // (since we never block on acquiring on the shared connection) AND we weren't looking to take
+                    // a shared lock (if the pooled connection is already holding a shared version of the same lock,
+                    // then it won't try to take that lock again. However, we might be able to take it on a different
+                    // connection)
+
+                    var handle = pooledResult.Value.Handle;
+                    if (handle != null || (timeoutMillis == 0 && mode != SqlApplicationLock.Mode.Shared))
+                    {
+                        return handle;
+                    }
                 }
             }
 
             // otherwise, fall back to our fallback lock
-            return await this.fallbackLock.TryAcquireAsync(timeoutMillis, cancellationToken).ConfigureAwait(false);
+            return await this.fallbackLock.TryAcquireAsync(timeoutMillis, mode, cancellationToken, contextHandle).ConfigureAwait(false);
         }
     }
 }

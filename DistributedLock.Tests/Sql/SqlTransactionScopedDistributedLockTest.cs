@@ -147,6 +147,8 @@ namespace Medallion.Threading.Tests.Sql
             return SqlDistributedLock.GetSafeLockName(name);
         }
 
-        internal override bool IsReentrant { get { return true; } }
+        internal override bool IsReentrant => true;
+        // from my testing, it appears that abandoning a SqlTransaction does not cause it to be released
+        internal override bool SupportsInProcessAbandonment => false;
     }
 }

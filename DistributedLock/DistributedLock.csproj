@@ -54,6 +54,7 @@
     <Compile Include="Sql\SqlApplicationLock.cs" />
     <Compile Include="Sql\SqlDistributedLock.cs" />
     <Compile Include="Sql\SqlDistributedLockConnectionStrategy.cs" />
+    <Compile Include="Sql\SqlDistributedReaderWriterLock.cs" />
     <Compile Include="Sql\SqlHelpers.cs" />
     <Compile Include="Sql\InternalLocks\TransactionScopedSqlDistributedLock.cs" />
     <Compile Include="SystemDistributedLock.cs" />

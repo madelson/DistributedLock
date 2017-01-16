@@ -31,6 +31,8 @@ namespace Medallion.Threading.Tests.Sql
             TestHelper.AssertThrows<ArgumentNullException>(() => new SqlDistributedLock("a", default(string)));
             TestHelper.AssertThrows<ArgumentNullException>(() => new SqlDistributedLock("a", default(DbTransaction)));
             TestHelper.AssertThrows<ArgumentNullException>(() => new SqlDistributedLock("a", default(DbConnection)));
+            TestHelper.AssertThrows<ArgumentException>(() => new SqlDistributedLock("a", ConnectionString, (SqlDistributedLockConnectionStrategy)(-1)));
+            TestHelper.AssertThrows<ArgumentException>(() => new SqlDistributedLock("a", ConnectionString, (SqlDistributedLockConnectionStrategy)4));
             TestHelper.AssertThrows<FormatException>(() => new SqlDistributedLock(new string('a', SqlDistributedLock.MaxLockNameLength + 1), ConnectionString));
             TestHelper.AssertDoesNotThrow(() => new SqlDistributedLock(new string('a', SqlDistributedLock.MaxLockNameLength), ConnectionString));
         }

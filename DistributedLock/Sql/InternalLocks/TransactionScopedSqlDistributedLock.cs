@@ -21,20 +21,20 @@ namespace Medallion.Threading.Sql
             this.transaction = transaction;
         }
 
-        public IDisposable TryAcquire(int timeoutMillis)
+        public IDisposable TryAcquire(int timeoutMillis, SqlApplicationLock.Mode mode, IDisposable contextHandle)
         {
             this.CheckConnection();
 
-            return SqlApplicationLock.ExecuteAcquireCommand(this.transaction, this.lockName, timeoutMillis)
+            return SqlApplicationLock.ExecuteAcquireCommand(this.transaction, this.lockName, timeoutMillis, mode)
                 ? new LockScope(this)
                 : null;
         }
 
-        public async Task<IDisposable> TryAcquireAsync(int timeoutMillis, CancellationToken cancellationToken)
+        public async Task<IDisposable> TryAcquireAsync(int timeoutMillis, SqlApplicationLock.Mode mode, CancellationToken cancellationToken, IDisposable contextHandle)
         {
             this.CheckConnection();
 
-            return await SqlApplicationLock.ExecuteAcquireCommandAsync(this.transaction, this.lockName, timeoutMillis, cancellationToken).ConfigureAwait(false)
+            return await SqlApplicationLock.ExecuteAcquireCommandAsync(this.transaction, this.lockName, timeoutMillis, mode, cancellationToken).ConfigureAwait(false)
                 ? new LockScope(this)
                 : null;
         }

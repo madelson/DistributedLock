@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.Common;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -13,7 +14,7 @@ namespace Medallion.Threading.Sql
     /// </summary>
     internal interface IInternalSqlDistributedLock
     {
-        IDisposable TryAcquire(int timeoutMillis);
-        Task<IDisposable> TryAcquireAsync(int timeoutMillis, CancellationToken cancellationToken);
+        IDisposable TryAcquire(int timeoutMillis, SqlApplicationLock.Mode mode, IDisposable contextHandle);
+        Task<IDisposable> TryAcquireAsync(int timeoutMillis, SqlApplicationLock.Mode mode, CancellationToken cancellationToken, IDisposable contextHandle);
     }
 }

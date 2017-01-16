@@ -30,14 +30,6 @@ namespace Medallion.Threading
             return ValidateTryAcquireResultAsync(tryAcquireTask, timeout);
         }
 
-        private static async Task<IDisposable> ValidateTryAcquireResultAsync(Task<IDisposable> tryAcquireTask, TimeSpan? timeout)
-        {
-            var handle = await tryAcquireTask.ConfigureAwait(false);
-            ValidateTryAcquireResult(handle, timeout);
-
-            return handle;
-        }
-
         public static IDisposable Acquire(IDistributedLock @lock, TimeSpan? timeout, CancellationToken cancellationToken)
         {
             var handle = @lock.TryAcquire(timeout ?? Timeout.InfiniteTimeSpan, cancellationToken);
@@ -46,9 +38,21 @@ namespace Medallion.Threading
             return handle;
         }
 
-        private static void ValidateTryAcquireResult(IDisposable handle, TimeSpan? timeout)
+        public static async Task<THandle> ValidateTryAcquireResultAsync<THandle>(Task<THandle> tryAcquireTask, TimeSpan? timeout)
+            where THandle : class, IDisposable
         {
-            if (handle == null)
+            var handle = await tryAcquireTask.ConfigureAwait(false);
+            ValidateTryAcquireResult(handle, timeout);
+
+            return handle;
+        }
+
+        public static void ValidateTryAcquireResult(IDisposable handle, TimeSpan? timeout) =>
+            ValidateTryAcquireResult(succeeded: handle != null, timeout: timeout);
+
+        public static void ValidateTryAcquireResult(bool succeeded, TimeSpan? timeout)
+        {
+            if (!succeeded)
             {
                 if (timeout.HasValue && timeout >= TimeSpan.Zero)
                     throw new TimeoutException("Timeout exceeded when trying to acquire the lock");

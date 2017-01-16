@@ -18,14 +18,19 @@ namespace Medallion.Threading.Sql
             this.connectionString = connectionString;
         }
 
-        public IDisposable TryAcquire(int timeoutMillis)
+        public IDisposable TryAcquire(int timeoutMillis, SqlApplicationLock.Mode mode, IDisposable contextHandle)
         {
+            if (contextHandle != null)
+            {
+                return this.CreateContextLock(contextHandle).TryAcquire(timeoutMillis, mode, contextHandle: null);
+            }
+
             IDisposable result = null;
             var connection = new SqlConnection(this.connectionString);
             try
             {
                 connection.Open();
-                if (SqlApplicationLock.ExecuteAcquireCommand(connection, this.lockName, timeoutMillis))
+                if (SqlApplicationLock.ExecuteAcquireCommand(connection, this.lockName, timeoutMillis, mode))
                 {
                     result = new LockScope(connection, this.lockName);
                 }    
@@ -42,14 +47,19 @@ namespace Medallion.Threading.Sql
             return result;
         }
 
-        public async Task<IDisposable> TryAcquireAsync(int timeoutMillis, CancellationToken cancellationToken)
+        public async Task<IDisposable> TryAcquireAsync(int timeoutMillis, SqlApplicationLock.Mode mode, CancellationToken cancellationToken, IDisposable contextHandle)
         {
+            if (contextHandle != null)
+            {
+                return await this.CreateContextLock(contextHandle).TryAcquireAsync(timeoutMillis, mode, cancellationToken, contextHandle: null).ConfigureAwait(false);
+            }
+
             IDisposable result = null;
             var connection = new SqlConnection(this.connectionString);
             try
             {
                 await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
-                if (await SqlApplicationLock.ExecuteAcquireCommandAsync(connection, this.lockName, timeoutMillis, cancellationToken).ConfigureAwait(false))
+                if (await SqlApplicationLock.ExecuteAcquireCommandAsync(connection, this.lockName, timeoutMillis, mode, cancellationToken).ConfigureAwait(false))
                 {
                     result = new LockScope(connection, this.lockName);
                 }
@@ -66,6 +76,14 @@ namespace Medallion.Threading.Sql
             return result;
         }
 
+        private IInternalSqlDistributedLock CreateContextLock(IDisposable contextHandle)
+        {
+            var connection = ((LockScope)contextHandle).Connection;
+            if (connection == null) { throw new ObjectDisposedException(nameof(contextHandle), "the provided handle is already disposed"); }
+
+            return new ConnectionScopedSqlDistributedLock(this.lockName, connection);
+        }
+
         private sealed class LockScope : IDisposable
         {
             private SqlConnection connection;
@@ -76,6 +94,8 @@ namespace Medallion.Threading.Sql
                 this.connection = connection;
                 this.lockName = lockName;
             }
+
+            public SqlConnection Connection => Volatile.Read(ref this.connection);
 
             public void Dispose()
             {

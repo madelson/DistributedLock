@@ -29,7 +29,7 @@ namespace Medallion.Threading.Sql.ConnectionPooling
             this.connection = new SqlConnection(connectionString);
         }
         
-        public PooledConnectionLockResult? TryAcquire(string lockName)
+        public PooledConnectionLockResult? TryAcquire(string lockName, SqlApplicationLock.Mode mode)
         {
             if (@lock.Wait(TimeSpan.Zero))
             {
@@ -48,7 +48,7 @@ namespace Medallion.Threading.Sql.ConnectionPooling
 
                     if (this.connection.State != ConnectionState.Open) { this.connection.Open(); }
 
-                    if (!SqlApplicationLock.ExecuteAcquireCommand(this.connection, lockName, AcquireCommandTimeoutMillis))
+                    if (!SqlApplicationLock.ExecuteAcquireCommand(this.connection, lockName, AcquireCommandTimeoutMillis, mode))
                     {
                         return new PooledConnectionLockResult();
                     }
@@ -79,7 +79,7 @@ namespace Medallion.Threading.Sql.ConnectionPooling
             }
         }
 
-        public async Task<PooledConnectionLockResult?> TryAcquireAsync(string lockName)
+        public async Task<PooledConnectionLockResult?> TryAcquireAsync(string lockName, SqlApplicationLock.Mode mode)
         {
             if (await @lock.WaitAsync(TimeSpan.Zero).ConfigureAwait(false))
             {
@@ -93,7 +93,7 @@ namespace Medallion.Threading.Sql.ConnectionPooling
                         await this.connection.OpenAsync().ConfigureAwait(false);
                     }
 
-                    if (!await SqlApplicationLock.ExecuteAcquireCommandAsync(this.connection, lockName, AcquireCommandTimeoutMillis, CancellationToken.None))
+                    if (!await SqlApplicationLock.ExecuteAcquireCommandAsync(this.connection, lockName, AcquireCommandTimeoutMillis, mode, CancellationToken.None))
                     {
                         return new PooledConnectionLockResult();
                     }
@@ -181,7 +181,7 @@ namespace Medallion.Threading.Sql.ConnectionPooling
                 this.@lock = @lock;
                 this.lockName = lockName;
             }
-
+            
             public void Dispose()
             {
                 var @lock = Interlocked.Exchange(ref this.@lock, null);

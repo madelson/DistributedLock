@@ -20,20 +20,20 @@ namespace Medallion.Threading.Sql
             this.connection = connection;
         }
 
-        public IDisposable TryAcquire(int timeoutMillis)
+        public IDisposable TryAcquire(int timeoutMillis, SqlApplicationLock.Mode mode, IDisposable contextHandle)
         {
             this.CheckConnection();
 
-            return SqlApplicationLock.ExecuteAcquireCommand(this.connection, this.lockName, timeoutMillis)
+            return SqlApplicationLock.ExecuteAcquireCommand(this.connection, this.lockName, timeoutMillis, mode)
                 ? new LockScope(this)
                 : null;
         }
 
-        public async Task<IDisposable> TryAcquireAsync(int timeoutMillis, CancellationToken cancellationToken)
+        public async Task<IDisposable> TryAcquireAsync(int timeoutMillis, SqlApplicationLock.Mode mode, CancellationToken cancellationToken, IDisposable contextHandle)
         {
             this.CheckConnection();
 
-            return await SqlApplicationLock.ExecuteAcquireCommandAsync(this.connection, this.lockName, timeoutMillis, cancellationToken).ConfigureAwait(false)
+            return await SqlApplicationLock.ExecuteAcquireCommandAsync(this.connection, this.lockName, timeoutMillis, mode, cancellationToken).ConfigureAwait(false)
                 ? new LockScope(this)
                 : null;
         }
@@ -63,7 +63,7 @@ namespace Medallion.Threading.Sql
             {
                 this.@lock = @lock;
             }
-
+            
             public void Dispose() => Interlocked.Exchange(ref this.@lock, null)?.Release();
         }
     }

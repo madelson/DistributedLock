@@ -19,8 +19,13 @@ namespace Medallion.Threading.Sql
             this.connectionString = connectionString;
         }
 
-        public IDisposable TryAcquire(int timeoutMillis)
+        public IDisposable TryAcquire(int timeoutMillis, SqlApplicationLock.Mode mode, IDisposable contextHandle)
         {
+            if (contextHandle != null)
+            {
+                return this.CreateContextLock(contextHandle).TryAcquire(timeoutMillis, mode, contextHandle: null);
+            }
+
             IDisposable result = null;
             var connection = new SqlConnection(this.connectionString);
             SqlTransaction transaction = null;
@@ -29,7 +34,7 @@ namespace Medallion.Threading.Sql
                 connection.Open();
                 // when creating a transaction, the isolation level doesn't matter, since we're using sp_getapplock
                 transaction = connection.BeginTransaction(IsolationLevel.ReadUncommitted);
-                if (SqlApplicationLock.ExecuteAcquireCommand(transaction, this.lockName, timeoutMillis))
+                if (SqlApplicationLock.ExecuteAcquireCommand(transaction, this.lockName, timeoutMillis, mode))
                 {
                     result = new LockScope(transaction);
                 }
@@ -47,8 +52,13 @@ namespace Medallion.Threading.Sql
             return result;
         }
 
-        public async Task<IDisposable> TryAcquireAsync(int timeoutMillis, CancellationToken cancellationToken)
+        public async Task<IDisposable> TryAcquireAsync(int timeoutMillis, SqlApplicationLock.Mode mode, CancellationToken cancellationToken, IDisposable contextHandle = null)
         {
+            if (contextHandle != null)
+            {
+                return await this.CreateContextLock(contextHandle).TryAcquireAsync(timeoutMillis, mode, cancellationToken, contextHandle: null).ConfigureAwait(false);
+            }
+
             IDisposable result = null;
             var connection = new SqlConnection(this.connectionString);
             SqlTransaction transaction = null;
@@ -57,7 +67,7 @@ namespace Medallion.Threading.Sql
                 await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
                 // when creating a transaction, the isolation level doesn't matter, since we're using sp_getapplock
                 transaction = connection.BeginTransaction(IsolationLevel.ReadUncommitted);
-                if (await SqlApplicationLock.ExecuteAcquireCommandAsync(transaction, this.lockName, timeoutMillis, cancellationToken).ConfigureAwait(false))
+                if (await SqlApplicationLock.ExecuteAcquireCommandAsync(transaction, this.lockName, timeoutMillis, mode, cancellationToken).ConfigureAwait(false))
                 {
                     result = new LockScope(transaction);
                 }
@@ -74,6 +84,14 @@ namespace Medallion.Threading.Sql
 
             return result;
         }
+
+        private IInternalSqlDistributedLock CreateContextLock(IDisposable contextHandle)
+        {
+            var transaction = ((LockScope)contextHandle).Transaction;
+            if (transaction == null) { throw new ObjectDisposedException(nameof(contextHandle), "the provided handle is already disposed"); }
+
+            return new TransactionScopedSqlDistributedLock(this.lockName, transaction);
+        } 
 
         private sealed class LockScope : IDisposable
         {
@@ -83,6 +101,8 @@ namespace Medallion.Threading.Sql
             {
                 this.transaction = transaction;
             }
+
+            public SqlTransaction Transaction => Volatile.Read(ref this.transaction);
 
             public void Dispose()
             {

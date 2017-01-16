@@ -12,20 +12,27 @@ namespace Medallion.Threading.Sql
 {
     internal static class SqlApplicationLock
     {
-        public static bool ExecuteAcquireCommand(ConnectionOrTransaction connectionOrTransaction, string lockName, int timeoutMillis)
+        public enum Mode
+        {
+            Shared,
+            Update,
+            Exclusive,
+        }
+
+        public static bool ExecuteAcquireCommand(ConnectionOrTransaction connectionOrTransaction, string lockName, int timeoutMillis, Mode mode)
         {
             DbParameter returnValue;
-            using (var command = CreateAcquireCommand(connectionOrTransaction, lockName, timeoutMillis, out returnValue))
+            using (var command = CreateAcquireCommand(connectionOrTransaction, lockName, timeoutMillis, mode, out returnValue))
             {
                 command.ExecuteNonQuery();
                 return ParseExitCode((int)returnValue.Value);
             }
         }
 
-        public static async Task<bool> ExecuteAcquireCommandAsync(ConnectionOrTransaction connectionOrTransaction, string lockName, int timeoutMillis, CancellationToken cancellationToken)
+        public static async Task<bool> ExecuteAcquireCommandAsync(ConnectionOrTransaction connectionOrTransaction, string lockName, int timeoutMillis, Mode mode, CancellationToken cancellationToken)
         {
             DbParameter returnValue;
-            using (var command = CreateAcquireCommand(connectionOrTransaction, lockName, timeoutMillis, out returnValue))
+            using (var command = CreateAcquireCommand(connectionOrTransaction, lockName, timeoutMillis, mode, out returnValue))
             {
                 await command.ExecuteNonQueryAndPropagateCancellationAsync(cancellationToken).ConfigureAwait(false);
                 return ParseExitCode((int)returnValue.Value);
@@ -42,7 +49,12 @@ namespace Medallion.Threading.Sql
             }
         }
 
-        public static DbCommand CreateAcquireCommand(ConnectionOrTransaction connectionOrTransaction, string lockName, int timeoutMillis, out DbParameter returnValue)
+        public static DbCommand CreateAcquireCommand(
+            ConnectionOrTransaction connectionOrTransaction, 
+            string lockName, 
+            int timeoutMillis, 
+            Mode mode,
+            out DbParameter returnValue)
         {
             var command = connectionOrTransaction.Connection.CreateCommand();
             command.Transaction = connectionOrTransaction.Transaction;
@@ -56,7 +68,7 @@ namespace Medallion.Threading.Sql
                   : 0;
 
             command.Parameters.Add(CreateParameter(command, "Resource", lockName));
-            command.Parameters.Add(CreateParameter(command, "LockMode", "Exclusive"));
+            command.Parameters.Add(CreateParameter(command, "LockMode", GetModeString(mode)));
             command.Parameters.Add(CreateParameter(command, "LockOwner", command.Transaction != null ? "Transaction" : "Session"));
             command.Parameters.Add(CreateParameter(command, "LockTimeout", timeoutMillis));
 
@@ -122,6 +134,17 @@ namespace Medallion.Threading.Sql
             parameter.ParameterName = name;
             parameter.Value = value;
             return parameter;
+        }
+
+        private static string GetModeString(Mode mode)
+        {
+            switch (mode)
+            {
+                case Mode.Shared: return "Shared";
+                case Mode.Update: return "Update";
+                case Mode.Exclusive: return "Exclusive";
+                default: throw new ArgumentException(nameof(mode));
+            }
         }
     }
 

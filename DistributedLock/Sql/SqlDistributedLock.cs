@@ -99,7 +99,7 @@ namespace Medallion.Threading.Sql
                 // use the async version since that supports cancellation
                 ? DistributedLockHelpers.TryAcquireWithAsyncCancellation(this, timeout, cancellationToken)
                 // synchronous mode
-                : this.internalLock.TryAcquire(timeout.ToInt32Timeout());
+                : this.internalLock.TryAcquire(timeout.ToInt32Timeout(), SqlApplicationLock.Mode.Exclusive, contextHandle: null);
         }
 
         /// <summary>
@@ -135,7 +135,7 @@ namespace Medallion.Threading.Sql
         /// <returns>An <see cref="IDisposable"/> "handle" which can be used to release the lock, or null if the lock was not taken</returns>
         public Task<IDisposable> TryAcquireAsync(TimeSpan timeout = default(TimeSpan), CancellationToken cancellationToken = default(CancellationToken))
         {
-            return this.internalLock.TryAcquireAsync(timeout.ToInt32Timeout(), cancellationToken);
+            return this.internalLock.TryAcquireAsync(timeout.ToInt32Timeout(), SqlApplicationLock.Mode.Exclusive, cancellationToken, contextHandle: null);
         }
 
         /// <summary>
@@ -170,7 +170,7 @@ namespace Medallion.Threading.Sql
         }
         #endregion
 
-        private static IInternalSqlDistributedLock CreateInternalLock(string lockName, string connectionString, SqlDistributedLockConnectionStrategy connectionStrategy)
+        internal static IInternalSqlDistributedLock CreateInternalLock(string lockName, string connectionString, SqlDistributedLockConnectionStrategy connectionStrategy)
         {
             switch (connectionStrategy) 
             {
