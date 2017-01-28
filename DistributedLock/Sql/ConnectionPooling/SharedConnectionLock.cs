@@ -58,7 +58,7 @@ namespace Medallion.Threading.Sql.ConnectionPooling
 
                     for (var i = 0; i < purgedLockNames.Count; ++i)
                     {
-                        DbParameter ignored; // note: we don't check the exit code; this is just best-effort cleanup
+                        IDbDataParameter ignored; // note: we don't check the exit code; this is just best-effort cleanup
                         using (var releaseCommand = SqlApplicationLock.CreateReleaseCommand(this.connection, purgedLockNames[i], out ignored))
                         {
                             releaseCommand.ExecuteNonQuery();
@@ -103,10 +103,10 @@ namespace Medallion.Threading.Sql.ConnectionPooling
 
                     for (var i = 0; i < purgedLockNames.Count; ++i)
                     {
-                        DbParameter ignored; // note: we don't check the exit code; this is just best-effort cleanup
+                        IDbDataParameter ignored; // note: we don't check the exit code; this is just best-effort cleanup
                         using (var releaseCommand = SqlApplicationLock.CreateReleaseCommand(this.connection, purgedLockNames[i], out ignored))
                         {
-                            await releaseCommand.ExecuteNonQueryAsync().ConfigureAwait(false);
+                            await releaseCommand.ExecuteNonQueryAsync(CancellationToken.None).ConfigureAwait(false);
                         }
                     }
 

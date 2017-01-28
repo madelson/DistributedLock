@@ -21,7 +21,7 @@ namespace Medallion.Threading.Sql
 
         public static bool ExecuteAcquireCommand(ConnectionOrTransaction connectionOrTransaction, string lockName, int timeoutMillis, Mode mode)
         {
-            DbParameter returnValue;
+            IDbDataParameter returnValue;
             using (var command = CreateAcquireCommand(connectionOrTransaction, lockName, timeoutMillis, mode, out returnValue))
             {
                 command.ExecuteNonQuery();
@@ -31,17 +31,17 @@ namespace Medallion.Threading.Sql
 
         public static async Task<bool> ExecuteAcquireCommandAsync(ConnectionOrTransaction connectionOrTransaction, string lockName, int timeoutMillis, Mode mode, CancellationToken cancellationToken)
         {
-            DbParameter returnValue;
+            IDbDataParameter returnValue;
             using (var command = CreateAcquireCommand(connectionOrTransaction, lockName, timeoutMillis, mode, out returnValue))
             {
-                await command.ExecuteNonQueryAndPropagateCancellationAsync(cancellationToken).ConfigureAwait(false);
+                await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
                 return ParseExitCode((int)returnValue.Value);
             }
         }
 
         public static void ExecuteReleaseCommand(ConnectionOrTransaction connectionOrTransaction, string lockName)
         {
-            DbParameter returnValue;
+            IDbDataParameter returnValue;
             using (var command = CreateReleaseCommand(connectionOrTransaction, lockName, out returnValue))
             {
                 command.ExecuteNonQuery();
@@ -49,12 +49,12 @@ namespace Medallion.Threading.Sql
             }
         }
 
-        public static DbCommand CreateAcquireCommand(
+        public static IDbCommand CreateAcquireCommand(
             ConnectionOrTransaction connectionOrTransaction, 
             string lockName, 
             int timeoutMillis, 
             Mode mode,
-            out DbParameter returnValue)
+            out IDbDataParameter returnValue)
         {
             var command = connectionOrTransaction.Connection.CreateCommand();
             command.Transaction = connectionOrTransaction.Transaction;
@@ -79,7 +79,7 @@ namespace Medallion.Threading.Sql
             return command;
         }
 
-        public static DbCommand CreateReleaseCommand(ConnectionOrTransaction connectionOrTransaction, string lockName, out DbParameter returnValue)
+        public static IDbCommand CreateReleaseCommand(ConnectionOrTransaction connectionOrTransaction, string lockName, out IDbDataParameter returnValue)
         {
             var command = connectionOrTransaction.Connection.CreateCommand();
             command.Transaction = connectionOrTransaction.Transaction;
@@ -128,7 +128,7 @@ namespace Medallion.Threading.Sql
             return string.Format("The request for the distribute lock failed with exit code {0} ({1})", exitCode, type);
         }
 
-        private static DbParameter CreateParameter(DbCommand command, string name, object value)
+        private static IDbDataParameter CreateParameter(IDbCommand command, string name, object value)
         {
             var parameter = command.CreateParameter();
             parameter.ParameterName = name;
@@ -152,21 +152,25 @@ namespace Medallion.Threading.Sql
     {
         private object connectionOrTransaction;
 
-        public DbTransaction Transaction => this.connectionOrTransaction as DbTransaction;
-        public DbConnection Connection => this.Transaction?.Connection ?? (this.connectionOrTransaction as DbConnection);
+        public IDbTransaction Transaction => this.connectionOrTransaction as IDbTransaction;
+        public IDbConnection Connection => this.Transaction?.Connection ?? (this.connectionOrTransaction as IDbConnection);
 
-        public static implicit operator ConnectionOrTransaction(DbTransaction transaction)
-        {
-            if (transaction == null) { throw new ArgumentNullException(nameof(transaction)); }
-
-            return new ConnectionOrTransaction { connectionOrTransaction = transaction };
-        }
-
-        public static implicit operator ConnectionOrTransaction(DbConnection connection)
+        public ConnectionOrTransaction(IDbConnection connection)
         {
             if (connection == null) { throw new ArgumentNullException(nameof(connection)); }
 
-            return new ConnectionOrTransaction { connectionOrTransaction = connection };
+            this.connectionOrTransaction = connection;
         }
+
+        public ConnectionOrTransaction(IDbTransaction transaction)
+        {
+            if (transaction == null) { throw new ArgumentNullException(nameof(transaction)); }
+
+            this.connectionOrTransaction = transaction;
+        }
+
+        public static implicit operator ConnectionOrTransaction(DbTransaction transaction) => new ConnectionOrTransaction(transaction);
+
+        public static implicit operator ConnectionOrTransaction(DbConnection connection) => new ConnectionOrTransaction(connection);
     }
 }

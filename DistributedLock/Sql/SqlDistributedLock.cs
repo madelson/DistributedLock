@@ -50,6 +50,28 @@ namespace Medallion.Threading.Sql
         /// close, or dispose it
         /// </summary>
         public SqlDistributedLock(string lockName, DbConnection connection)
+            : this(lockName, (IDbConnection)connection)
+        {
+        }
+
+        /// <summary>
+        /// Creates a lock with name <paramref name="lockName"/> which, when acquired,
+        /// will be scoped to the given <paramref name="transaction"/>. The <paramref name="transaction"/> and its
+        /// <see cref="DbTransaction.Connection"/> are assumed to be externally managed: the <see cref="SqlDistributedLock"/> will 
+        /// not attempt to open, close, commit, roll back, or dispose them
+        /// </summary>
+        public SqlDistributedLock(string lockName, DbTransaction transaction)
+            : this(lockName, (IDbTransaction)transaction)
+        {
+        }
+
+        /// <summary>
+        /// Creates a lock with name <paramref name="lockName"/> which, when acquired,
+        /// will be scoped to the given <paramref name="connection"/>. The <paramref name="connection"/> is
+        /// assumed to be externally managed: the <see cref="SqlDistributedLock"/> will not attempt to open,
+        /// close, or dispose it
+        /// </summary>
+        public SqlDistributedLock(string lockName, IDbConnection connection)
             : this(lockName, new ConnectionScopedSqlDistributedLock(lockName, connection))
         {
             if (connection == null)
@@ -62,7 +84,7 @@ namespace Medallion.Threading.Sql
         /// <see cref="DbTransaction.Connection"/> are assumed to be externally managed: the <see cref="SqlDistributedLock"/> will 
         /// not attempt to open, close, commit, roll back, or dispose them
         /// </summary>
-        public SqlDistributedLock(string lockName, DbTransaction transaction)
+        public SqlDistributedLock(string lockName, IDbTransaction transaction)
             : this(lockName, new TransactionScopedSqlDistributedLock(lockName, transaction))
         {
             if (transaction == null)

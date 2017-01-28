@@ -12,9 +12,9 @@ namespace Medallion.Threading.Sql
     internal sealed class ConnectionScopedSqlDistributedLock : IInternalSqlDistributedLock
     {
         private readonly string lockName;
-        private readonly DbConnection connection;
+        private readonly IDbConnection connection;
 
-        public ConnectionScopedSqlDistributedLock(string lockName, DbConnection connection)
+        public ConnectionScopedSqlDistributedLock(string lockName, IDbConnection connection)
         {
             this.lockName = lockName;
             this.connection = connection;
@@ -24,7 +24,7 @@ namespace Medallion.Threading.Sql
         {
             this.CheckConnection();
 
-            return SqlApplicationLock.ExecuteAcquireCommand(this.connection, this.lockName, timeoutMillis, mode)
+            return SqlApplicationLock.ExecuteAcquireCommand(new ConnectionOrTransaction(this.connection), this.lockName, timeoutMillis, mode)
                 ? new LockScope(this)
                 : null;
         }
@@ -33,7 +33,7 @@ namespace Medallion.Threading.Sql
         {
             this.CheckConnection();
 
-            return await SqlApplicationLock.ExecuteAcquireCommandAsync(this.connection, this.lockName, timeoutMillis, mode, cancellationToken).ConfigureAwait(false)
+            return await SqlApplicationLock.ExecuteAcquireCommandAsync(new ConnectionOrTransaction(this.connection), this.lockName, timeoutMillis, mode, cancellationToken).ConfigureAwait(false)
                 ? new LockScope(this)
                 : null;
         }
@@ -52,7 +52,7 @@ namespace Medallion.Threading.Sql
                 return;
             }
 
-            SqlApplicationLock.ExecuteReleaseCommand(this.connection, this.lockName);
+            SqlApplicationLock.ExecuteReleaseCommand(new ConnectionOrTransaction(this.connection), this.lockName);
         }
 
         private sealed class LockScope : IDisposable

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.Common;
 using System.Linq;
 using System.Runtime.ExceptionServices;
@@ -51,7 +52,7 @@ namespace Medallion.Threading.Sql
         /// assumed to be externally managed: the <see cref="SqlDistributedReaderWriterLock"/> will not attempt to open,
         /// close, or dispose it
         /// </summary>
-        public SqlDistributedReaderWriterLock(string lockName, DbConnection connection)
+        public SqlDistributedReaderWriterLock(string lockName, IDbConnection connection)
             : this(lockName, new ConnectionScopedSqlDistributedLock(lockName, connection))
         {
             if (connection == null) { throw new ArgumentNullException(nameof(connection)); }
@@ -63,7 +64,7 @@ namespace Medallion.Threading.Sql
         /// <see cref="DbTransaction.Connection"/> are assumed to be externally managed: the <see cref="SqlDistributedLock"/> will 
         /// not attempt to open, close, commit, roll back, or dispose them
         /// </summary>
-        public SqlDistributedReaderWriterLock(string lockName, DbTransaction transaction)
+        public SqlDistributedReaderWriterLock(string lockName, IDbTransaction transaction)
             : this(lockName, new TransactionScopedSqlDistributedLock(lockName, transaction))
         {
             if (transaction == null) { throw new ArgumentNullException(nameof(transaction)); }
