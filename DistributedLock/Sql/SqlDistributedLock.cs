@@ -1,4 +1,4 @@
-﻿using Medallion.Threading.Sql.ConnectionPooling;
+﻿using Medallion.Threading.Sql.ConnectionMultiplexing;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -201,8 +201,8 @@ namespace Medallion.Threading.Sql
                     return new OwnedConnectionDistributedLock(lockName: lockName, connectionString: connectionString);
                 case SqlDistributedLockConnectionStrategy.Transaction:
                     return new OwnedTransactionSqlDistributedLock(lockName: lockName, connectionString: connectionString);
-                case SqlDistributedLockConnectionStrategy.OptimisticConnectionPooling:
-                    return new OptimisticConnectionPoolingSqlDistributedLock(lockName: lockName, connectionString: connectionString);
+                case SqlDistributedLockConnectionStrategy.OptimisticConnectionMultiplexing:
+                    return new OptimisticConnectionMultiplexingSqlDistributedLock(lockName: lockName, connectionString: connectionString);
                 default:
                     throw new ArgumentException(nameof(connectionStrategy));
             }

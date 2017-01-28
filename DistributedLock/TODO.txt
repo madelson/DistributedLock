@@ -8,9 +8,9 @@ object hold an object which keys into a conditional weak table that holds the tr
 * v2 idea: remove DbConnection/DbTransaction constructors in favor of just the interface constructors
 
 * 1.2:
-	* support IDbConnection/Transaction
-	* support .NET Core if we can
-	* Rename pooling stuff to "multiplexing"
+	* support IDbConnection/Transaction - DONE
+	* support .NET Core if we can - DONE
+	* Rename pooling stuff to "multiplexing" - DONE
 	* Revamp multiplexing to:
 		- be smarter about lock modes (e. g. why not allow multiple of the same shared lock?)
 		- use more than one connection: we're going to allocate anyway so we might as well simply allocate as many as we need and free them

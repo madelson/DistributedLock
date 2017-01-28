@@ -44,11 +44,11 @@
     <Compile Include="DistributedLockHelpers.cs" />
     <Compile Include="IDistributedLock.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Sql\ConnectionPooling\SharedConnectionLock.cs" />
-    <Compile Include="Sql\ConnectionPooling\SharedConnectionLockPool.cs" />
+    <Compile Include="Sql\ConnectionMultiplexing\MultiplexedConnectionLock.cs" />
+    <Compile Include="Sql\ConnectionMultiplexing\MultiplexedConnectionLockPool.cs" />
     <Compile Include="Sql\InternalLocks\ConnectionScopedSqlDistributedLock.cs" />
     <Compile Include="Sql\IInternalSqlDistributedLock.cs" />
-    <Compile Include="Sql\InternalLocks\OptimisticConnectionPoolingSqlDistributedLock.cs" />
+    <Compile Include="Sql\InternalLocks\OptimisticConnectionMultiplexingSqlDistributedLock.cs" />
     <Compile Include="Sql\InternalLocks\OwnedConnectionDistributedLock.cs" />
     <Compile Include="Sql\InternalLocks\OwnedTransactionSqlDistributedLock.cs" />
     <Compile Include="Sql\SqlApplicationLock.cs" />

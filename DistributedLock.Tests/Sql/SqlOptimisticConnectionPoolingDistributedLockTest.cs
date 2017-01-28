@@ -12,7 +12,7 @@ namespace Medallion.Threading.Tests.Sql
     public class SqlOptimisticConnectionPoolingDistributedLockTest : DistributedLockTestBase
     {
         internal override IDistributedLock CreateLock(string name)
-            => new SqlDistributedLock(name, SqlDistributedLockTest.ConnectionString, SqlDistributedLockConnectionStrategy.OptimisticConnectionPooling);
+            => new SqlDistributedLock(name, SqlDistributedLockTest.ConnectionString, SqlDistributedLockConnectionStrategy.OptimisticConnectionMultiplexing);
 
         internal override string GetSafeLockName(string name) => SqlDistributedLock.GetSafeLockName(name);
     }

@@ -5,16 +5,16 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Medallion.Threading.Sql.ConnectionPooling
+namespace Medallion.Threading.Sql.ConnectionMultiplexing
 {
-    internal static class SharedConnectionLockPool
+    internal static class MultiplexedConnectionLockPool
     {
         private static readonly Hashtable WeakPooledConnectionLocksByConnectionString = new Hashtable();
         private static int writesUntilNextPurge = 1;
 
-        public static SharedConnectionLock Get(string connectionString)
+        public static MultiplexedConnectionLock Get(string connectionString)
         {
-            WeakReference<SharedConnectionLock> existingReference;
+            WeakReference<MultiplexedConnectionLock> existingReference;
             var existing = TryGet(connectionString, out existingReference);
             if (existing != null) { return existing; }
 
@@ -23,7 +23,7 @@ namespace Medallion.Threading.Sql.ConnectionPooling
                 existing = TryGet(connectionString, out existingReference);
                 if (existing != null) { return existing; }
 
-                var @lock = new SharedConnectionLock(connectionString);
+                var @lock = new MultiplexedConnectionLock(connectionString);
 
                 // if we have a dead reference, then just point it at a new lock. Since we
                 // aren't growing the dictionary, we don't need to consider purging
@@ -39,8 +39,8 @@ namespace Medallion.Threading.Sql.ConnectionPooling
                     List<object> keysToRemove = null;
                     foreach (DictionaryEntry entry in WeakPooledConnectionLocksByConnectionString)
                     {
-                        SharedConnectionLock target;
-                        if (!((WeakReference<SharedConnectionLock>)entry.Value).TryGetTarget(out target))
+                        MultiplexedConnectionLock target;
+                        if (!((WeakReference<MultiplexedConnectionLock>)entry.Value).TryGetTarget(out target))
                         {
                             (keysToRemove ?? (keysToRemove = new List<object>())).Add(entry.Key);
                         }
@@ -50,15 +50,15 @@ namespace Medallion.Threading.Sql.ConnectionPooling
                 }
 
                 // Add() is safe because we checked for an existing reference above
-                WeakPooledConnectionLocksByConnectionString.Add(connectionString, new WeakReference<SharedConnectionLock>(@lock));
+                WeakPooledConnectionLocksByConnectionString.Add(connectionString, new WeakReference<MultiplexedConnectionLock>(@lock));
                 return @lock;
             }
         }
 
-        private static SharedConnectionLock TryGet(string connectionString, out WeakReference<SharedConnectionLock> reference)
+        private static MultiplexedConnectionLock TryGet(string connectionString, out WeakReference<MultiplexedConnectionLock> reference)
         {
-            reference = (WeakReference<SharedConnectionLock>)WeakPooledConnectionLocksByConnectionString[connectionString];
-            SharedConnectionLock result;
+            reference = (WeakReference<MultiplexedConnectionLock>)WeakPooledConnectionLocksByConnectionString[connectionString];
+            MultiplexedConnectionLock result;
             if (reference != null && reference.TryGetTarget(out result))
             {
                 return result;

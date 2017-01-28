@@ -72,7 +72,7 @@ namespace Medallion.Threading.Tests.Sql
     public sealed class SqlOptimisticConnectionPoolingDistributedReaderWriterLockTest : SqlDistributedReaderWriterLockTestBase
     {
         internal override SqlDistributedReaderWriterLock CreateReaderWriterLock(string name) =>
-            new SqlDistributedReaderWriterLock(name, SqlDistributedLockTest.ConnectionString, SqlDistributedLockConnectionStrategy.OptimisticConnectionPooling);
+            new SqlDistributedReaderWriterLock(name, SqlDistributedLockTest.ConnectionString, SqlDistributedLockConnectionStrategy.OptimisticConnectionMultiplexing);
 
         internal override bool UseWriteLockAsExclusive() => false; // random choice
     }

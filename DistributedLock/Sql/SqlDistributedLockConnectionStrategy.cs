@@ -42,6 +42,6 @@ namespace Medallion.Threading.Sql
         /// particularly applicable to cases where <see cref="SqlDistributedLock.TryAcquire(TimeSpan, System.Threading.CancellationToken)"/>
         /// semantics are used with a zero-length timeout.
         /// </summary>
-        OptimisticConnectionPooling = 3,
+        OptimisticConnectionMultiplexing = 3,
     }
 }

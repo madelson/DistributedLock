@@ -1,4 +1,4 @@
-﻿using Medallion.Threading.Sql.ConnectionPooling;
+﻿using Medallion.Threading.Sql.ConnectionMultiplexing;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,12 +8,12 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading.Sql
 {
-    internal sealed class OptimisticConnectionPoolingSqlDistributedLock : IInternalSqlDistributedLock
+    internal sealed class OptimisticConnectionMultiplexingSqlDistributedLock : IInternalSqlDistributedLock
     {
         private readonly string lockName, connectionString;
         private readonly IInternalSqlDistributedLock fallbackLock;
 
-        public OptimisticConnectionPoolingSqlDistributedLock(string lockName, string connectionString)
+        public OptimisticConnectionMultiplexingSqlDistributedLock(string lockName, string connectionString)
         {
             this.lockName = lockName;
             this.connectionString = connectionString;
@@ -26,7 +26,7 @@ namespace Medallion.Threading.Sql
             // to an exclusive lock which asks for a long timeout
             if (mode != SqlApplicationLock.Mode.Update && contextHandle == null)
             {
-                var pooledResult = SharedConnectionLockPool.Get(this.connectionString).TryAcquire(this.lockName, mode);
+                var pooledResult = MultiplexedConnectionLockPool.Get(this.connectionString).TryAcquire(this.lockName, mode);
                 if (pooledResult.HasValue)
                 {
                     // if we got a non-null value back, then we succeeded in using the shared connection. This
@@ -57,7 +57,7 @@ namespace Medallion.Threading.Sql
             // to an exclusive lock which asks for a long timeout
             if (mode != SqlApplicationLock.Mode.Update && contextHandle == null)
             {
-                var pooledResult = await SharedConnectionLockPool.Get(this.connectionString)
+                var pooledResult = await MultiplexedConnectionLockPool.Get(this.connectionString)
                     .TryAcquireAsync(this.lockName, mode).ConfigureAwait(false);
                 if (pooledResult.HasValue)
                 {

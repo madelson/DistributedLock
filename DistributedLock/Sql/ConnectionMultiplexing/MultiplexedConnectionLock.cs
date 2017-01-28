@@ -8,9 +8,9 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Medallion.Threading.Sql.ConnectionPooling
+namespace Medallion.Threading.Sql.ConnectionMultiplexing
 {
-    internal sealed class SharedConnectionLock
+    internal sealed class MultiplexedConnectionLock
     {
         // always use 0, since this is meant to be optimistic. We don't want to use a longer
         // wait that would block use of the shared connection
@@ -24,7 +24,7 @@ namespace Medallion.Threading.Sql.ConnectionPooling
         private int writesUntilNextPurge = 1;
         private readonly SqlConnection connection;
 
-        public SharedConnectionLock(string connectionString)
+        public MultiplexedConnectionLock(string connectionString)
         {
             this.connection = new SqlConnection(connectionString);
         }
@@ -173,10 +173,10 @@ namespace Medallion.Threading.Sql.ConnectionPooling
 
         private sealed class LockScope : IDisposable
         {
-            private SharedConnectionLock @lock;
+            private MultiplexedConnectionLock @lock;
             private readonly string lockName;
 
-            public LockScope(SharedConnectionLock @lock, string lockName)
+            public LockScope(MultiplexedConnectionLock @lock, string lockName)
             {
                 this.@lock = @lock;
                 this.lockName = lockName;
