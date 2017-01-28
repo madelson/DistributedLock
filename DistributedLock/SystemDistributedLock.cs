@@ -331,9 +331,9 @@ namespace Medallion.Threading
                 // allow only one thread to hold the lock
                 mode: EventResetMode.AutoReset,
                 name: this.lockName,
-                createdNew: out ignored,
-                eventSecurity: security
+                createdNew: out ignored
             );
+            @event.SetAccessControl(security);
 
             return @event;
         }

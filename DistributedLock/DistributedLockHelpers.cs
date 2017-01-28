@@ -92,7 +92,7 @@ namespace Medallion.Threading
                 return baseLockName;
             }
 
-            using (var sha = new SHA512Managed())
+            using (var sha = SHA512.Create())
             {
                 var hash = Convert.ToBase64String(sha.ComputeHash(Encoding.UTF8.GetBytes(baseLockName)));
 

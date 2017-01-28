@@ -1,0 +1,39 @@
+﻿<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>DistributedLock</id>
+    <version>1.2.0</version>
+    <title>DistributedLock</title>
+    <authors>Michael Adelson</authors>
+    <licenseUrl>https://raw.githubusercontent.com/madelson/DistributedLock/master/License.txt</licenseUrl>
+    <projectUrl>https://github.com/madelson/DistributedLock</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <summary>
+      Provides easy-to-use and robust wrappers for named system-wide locks (using WaitHandles) as well as fully distributed locks (using SQLServer)
+    </summary>
+    <description>
+      Provides easy-to-use and robust wrappers for named system-wide locks (using WaitHandles) as well as fully distributed locks (using SQLServer)
+    </description>
+    <releaseNotes>
+      1.1.0 Added support for SQL locks scoped to existing connections and transactions
+    </releaseNotes>
+    <copyright>Copyright 2016 Michael Adelson</copyright>
+    <tags>distributed lock async waithandle mutex sql sqlserver reader writer</tags>
+    <dependencies>
+	  <group targetFramework="net45"></group>
+      <group targetFramework="netstandard1.3">
+        <dependency id="NETStandard.Library" version="1.6.0"/>
+        <dependency id="System.Data.SqlClient" version="4.3.0"/>
+		<dependency id="System.Collections.NonGeneric" version="4.3.0"/>
+		<dependency id="System.Threading.AccessControl" version="4.3.0"/>
+		<dependency id="System.Threading.ThreadPool" version="4.3.0"/>
+      </group>
+    </dependencies>
+  </metadata>
+  <files>
+	<file src="DistributedLock\bin\Debug\DistributedLock.dll" target="lib\net45"/>
+    <file src="DistributedLock\bin\Debug\DistributedLock.XML" target="lib\net45"/>
+    <file src="DistributedLock.NetCore\bin\Debug\netstandard1.3\DistributedLock.dll" target="lib\netstandard1.3"/>
+    <file src="DistributedLock.NetCore\bin\Debug\netstandard1.3\DistributedLock.XML" target="lib\netstandard1.3"/>
+  </files>
+</package>
