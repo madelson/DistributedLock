@@ -16,7 +16,7 @@ DistributedLock is available for download as a [NuGet package](https://www.nuget
 - [Async](#async)
 - [Timeouts](#timeouts)
 - [Cancellation](#cancellation)
-- [Connection management)(#connection-management)
+- [Connection management](#connection-management)
 
 ## System-wide locks
 
