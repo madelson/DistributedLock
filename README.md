@@ -4,15 +4,19 @@ DistributedLock is a lightweight .NET library that makes it easy to set up and u
 
 DistributedLock is available for download as a [NuGet package](https://www.nuget.org/packages/DistributedLock). [![NuGet Status](http://img.shields.io/nuget/v/DistributedLock.svg?style=flat)](https://www.nuget.org/packages/DistributedLock/)
 
+[Release notes](#release-notes)
+
 ## Features
 
 - [System-wide locks](#system-wide-locks)
 - [Fully-distributed locks](#fully-distributed-locks)
 - [Reader-writer locks](#reader-writer-locks)
+- [Safe naming](#naming-locks)
 - [Try Semantics](#trylock)
 - [Async](#async)
 - [Timeouts](#timeouts)
 - [Cancellation](#cancellation)
+- [Connection management)(#connection-management)
 
 ## System-wide locks
 
@@ -41,7 +45,7 @@ using (myLock.Acquire())
 }
 ```
 
-As of version 1.1.0, `SqlDistributedLock`s can now be scoped to existing `DbTransaction` and/or `DbConnection` objects as an alternative to passing a connection string directly (in which case the lock manages its own connection).
+As of version 1.1.0, `SqlDistributedLock`s can now be scoped to existing `IDbTransaction` and/or `IDbConnection` objects as an alternative to passing a connection string directly (in which case the lock manages its own connection).
 
 ## Reader-writer locks
 
@@ -84,7 +88,6 @@ class DistributedCache
 	}
 }
 ``` 
-
 
 ## Naming locks
 
@@ -163,6 +166,18 @@ using (myLock.Acquire(cancellationToken: token))
 	// this block of code is protected by the lock!
 }
 ```
+
+### Connection management
+
+When using SQL-based locks, DistributedLock exposes several options for managing the underlying connection/transaction that scopes the lock:
+- Explicit: you can pass in the IDbConnection/IDbTransaction instance that provides lock scope. This is useful when you don't have access to a connection string or
+when you want the locking to be tied closely to other SQL operations being performed.
+- Connection: the lock internally manages a `SqlConnection` instance. The lock is released by calling [sp_releaseapplock](https://msdn.microsoft.com/en-us/library/ms178602.aspx) after which the connection is disposed. This is the default mode.
+- Transaction: the lock internally manages a `SqlTransaction` instance. The lock is released by disposing the transaction
+- Connection Multiplexing: the library internally manages a pool of `SqlConnection` instances, each of which may be used to hold multiple locks
+simultaneously. This is particularly helpful for high-load scenarios since it can drastically reduce load on the underlying connection pool.
+
+Most of the time, you'll want to use the default connection strategy. See more details about the various strategies [here](https://github.com/madelson/DistributedLock/blob/version-1.2/DistributedLock/Sql/SqlDistributedLockConnectionStrategy.cs).
 
 ## Release notes
 - 1.2.0

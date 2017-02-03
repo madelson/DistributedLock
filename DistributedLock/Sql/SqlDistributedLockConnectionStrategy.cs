@@ -16,6 +16,7 @@ namespace Medallion.Threading.Sql
         /// Specifies the default strategy. Currently, this is equivalent to <see cref="Connection"/>
         /// </summary>
         Default = 0,
+
         /// <summary>
         /// Uses a connection-scoped lock. This is marginally more expensive than <see cref="Transaction"/> 
         /// due to the need for an explicit sp_releaseapplock call, but has the benefit of not maintaining
@@ -23,6 +24,7 @@ namespace Medallion.Threading.Sql
         /// recovery model
         /// </summary>
         Connection = 1,
+
         /// <summary>
         /// Uses a transaction-scoped lock. This is marginally less expensive than <see cref="Connection"/>
         /// because releasing the lock requires only disposing the underlying <see cref="SqlTransaction"/>.
@@ -30,13 +32,16 @@ namespace Medallion.Threading.Sql
         /// problematic for databases using the full recovery model
         /// </summary>
         Transaction = 2,
+
         /// <summary>
-        /// Tries to "optimistically" re-use a single shared connection for all active locks held on the same
-        /// connection string. This is done in a way so that locking operations never block trying to acquire
-        /// access to the shared connection or waiting to acquire the lock on the shared connection. Instead, we
-        /// are simply "optimistic" in hoping that both the shared connection and the lock are available immediately,
-        /// which will be true in many applications. If the shared connection cannot be used, this strategy falls
-        /// back to <see cref="Connection"/>.
+        /// This mode takes advantage of the fact that while "holding" a lock a connection is essentially idle. Thus,
+        /// rather than creating a new connection for each held lock it is often possible to multiplex a shared connection
+        /// so that that connection can hold multiple locks at the same time.
+        /// 
+        /// This is implemented in such a way that releasing a lock held on such a connection will never be blocked by an
+        /// Acquire() call that is waiting to acquire a lock on that same connection. For this reason, the multiplexing
+        /// strategy is "optimistic": if the lock can't be acquired instantaneously on the shared connection, a new (shareable) 
+        /// connection will be allocated.
         /// 
         /// This option can improve performance and avoid connection pool starvation in high-load scenarios. It is also
         /// particularly applicable to cases where <see cref="SqlDistributedLock.TryAcquire(TimeSpan, System.Threading.CancellationToken)"/>
