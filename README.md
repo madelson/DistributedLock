@@ -8,6 +8,11 @@ DistributedLock is available for download as a [NuGet package](https://www.nuget
 
 - [System-wide locks](#system-wide-locks)
 - [Fully-distributed locks](#fully-distributed-locks)
+- [Reader-writer locks](#reader-writer-locks)
+- [Try Semantics](#trylock)
+- [Async](#async)
+- [Timeouts](#timeouts)
+- [Cancellation](#cancellation)
 
 ## System-wide locks
 
@@ -22,7 +27,7 @@ using (myLock.Acquire())
 }
 ```
 
-## Fully distributed locks
+## Fully-distributed locks
 
 DistributedLock allows you to easily leverage MSFT SQLServer's <a href="https://msdn.microsoft.com/en-us/library/ms189823.aspx">application lock</a> functionality to provide synchronization between machines in a distributed environment. To use this functionality, you'll need a SQLServer connection string:
 
@@ -38,12 +43,54 @@ using (myLock.Acquire())
 
 As of version 1.1.0, `SqlDistributedLock`s can now be scoped to existing `DbTransaction` and/or `DbConnection` objects as an alternative to passing a connection string directly (in which case the lock manages its own connection).
 
+## Reader-writer locks
+
+DistributedLock contains an implementation of a distributed [reader-writer lock](https://en.wikipedia.org/wiki/Readers%E2%80%93writer_lock) with an API similar to the framework's non-distributed [ReaderWriterLockSlim](https://msdn.microsoft.com/en-us/library/system.threading.readerwriterlockslim(v=vs.110).aspx) class. Since the implementation is based on [SQLServer application locks](https://msdn.microsoft.com/en-us/library/ms189823.aspx), this can be used to synchronize across different machines.
+
+The reader-writer lock allows for *multiple readers or one writer.* Furthermore, at most one reader can be in *upgradeable read mode*, which allows for upgrading from read mode to write mode without relinquishing the read lock. Here's an example showing how a reader-writer lock could synchronize access to a distributed cache:
+
+```C#
+class DistributedCache
+{
+	private readonly SqlDistributedReaderWriterLock cacheLock = 
+		new SqlDistributedReaderWriterLock(connectionString);
+		
+	public string Get(string key)
+	{
+		using (this.cacheLock.AcquireReadLock())
+		{
+			return /* read from cache */
+		}
+	}
+	
+	public void Add(string key, string value)
+	{
+		using (this.cacheLock.AcquireWriteLock())
+		{
+			/* write to cache */
+		}
+	}
+	
+	public void AddOrUpdate(string key, string value)
+	{
+		using (var upgradeableHandle = this.cache.AcquireUpgradeableReadLock())
+		{
+			if (/* read from cache */) { return; }
+			
+			upgradeableHandle.UpgradeToWriteLock();
+			
+			/* write to cache */
+		}
+	}
+}
+``` 
+
+
 ## Naming locks
 
 For all types of locks, the name of the lock defines its identity within its scope. While in general most names will work, the names are ultimately constrained by the underlying technologies used for locking. If you don't want to worry (particularly if when generating names dynamically), you can use the GetSafeLockName method each lock type to convert an arbitrary string into a consistent valid lock name:
 
 ```C#
-
 string baseName = // arbitrary logic
 var lockName = SqlDistributedLock.GetSafeLockName(baseName);
 var myLock = new SqlDistributedLock(lockName);
@@ -119,7 +166,8 @@ using (myLock.Acquire(cancellationToken: token))
 
 ## Release notes
 - 1.2.0
-	- Added a SQL-based distributed reader/writer lock
+	- Added a SQL-based distributed reader-writer lock
+	- .NET Core support via .NET Standard
 	- Changed the default locking scope for SQL distributed lock to be a connection rather than a transaction, avoiding cases where long-running transactions can block backups
 	- Allowed for customization of the SQL distributed lock connection strategy when connecting via a connection string
 	- Added a new connection strategy which allows for multiplexing multiple held locks onto one connection
