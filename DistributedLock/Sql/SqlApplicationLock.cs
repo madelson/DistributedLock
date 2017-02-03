@@ -49,6 +49,16 @@ namespace Medallion.Threading.Sql
             }
         }
 
+        public static async Task ExecuteReleaseCommandAsync(ConnectionOrTransaction connectionOrTransaction, string lockName)
+        {
+            IDbDataParameter returnValue;
+            using (var command = CreateReleaseCommand(connectionOrTransaction, lockName, out returnValue))
+            {
+                await command.ExecuteNonQueryAsync(CancellationToken.None);
+                ParseExitCode((int)returnValue.Value);
+            }
+        }
+
         public static IDbCommand CreateAcquireCommand(
             ConnectionOrTransaction connectionOrTransaction, 
             string lockName, 
