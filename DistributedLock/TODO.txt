@@ -3,6 +3,7 @@ object hold an object which keys into a conditional weak table that holds the tr
 * Consider providing a hook into when we lose connection to SQL (connection state changed event)
 * Consider an option for using distributed transactions w/transaction scope instead of holding connections open (probably bad because we don't know where else the scope will flow)
 * Expose security options for event wait handles
+* Make multiplexing smarter about holding the same lock multiple times (see note in MultiplexedConnectionLock where we check if the lock is already held)
 * v2 idea: expose ReleaseAsync option by not just returning IDisposable
 * v2 idea: use awaitabledisposable pattern for async returns
 * v2 idea: remove DbConnection/DbTransaction constructors in favor of just the interface constructors
@@ -11,8 +12,5 @@ object hold an object which keys into a conditional weak table that holds the tr
 	* support IDbConnection/Transaction - DONE
 	* support .NET Core if we can - DONE
 	* Rename pooling stuff to "multiplexing" - DONE
-	* Revamp multiplexing to:
-		- be smarter about lock modes (e. g. why not allow multiple of the same shared lock?)
-		- use more than one connection: we're going to allocate anyway so we might as well simply allocate as many as we need and free them
-			when there are no usages left
+	* Revamp multiplexing to use more than one connection: we're going to allocate anyway so we might as well simply allocate as many as we need and free them when there are no usages left - DONE
 	* Document changes via README, publish NuGet

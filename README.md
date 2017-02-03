@@ -113,6 +113,12 @@ using (myLock.Acquire(cancellationToken: token))
 ```
 
 ## Release notes
+- 1.2.0
+	- Added a SQL-based distributed reader/writer lock
+	- Changed the default locking scope for SQL distributed lock to be a connection rather than a transaction, avoiding cases where long-running transactions can block backups
+	- Allowed for customization of the SQL distributed lock connection strategy when connecting via a connection string
+	- Added a new connection strategy which allows for multiplexing multiple held locks onto one connection
+	- Added IDbConnection/IDbTransaction constructors (https://github.com/madelson/DistributedLock/issues/3)
 - 1.1.0 Added support for SQL distributed locks scoped to existing connections/transactions
 - 1.0.1 Minor fix when using infinite timeouts
 - 1.0.0 Initial release
