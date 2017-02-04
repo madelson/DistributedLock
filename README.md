@@ -1,6 +1,6 @@
 # DistributedLock
 
-DistributedLock is a lightweight .NET library that makes it easy to set up and use system-wide or fully distributed locks.
+DistributedLock is a lightweight .NET library that makes it easy to set up and use system-wide or fully-distributed locks.
 
 DistributedLock is available for download as a [NuGet package](https://www.nuget.org/packages/DistributedLock). [![NuGet Status](http://img.shields.io/nuget/v/DistributedLock.svg?style=flat)](https://www.nuget.org/packages/DistributedLock/)
 

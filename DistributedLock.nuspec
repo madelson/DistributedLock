@@ -9,22 +9,21 @@
     <projectUrl>https://github.com/madelson/DistributedLock</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <summary>
-      Provides easy-to-use and robust wrappers for named system-wide locks (using WaitHandles) as well as fully distributed locks (using SQLServer)
+      Provides easy-to-use and robust fully distributed locks (using SQLServer) as well as wrappers for named system-wide locks (using WaitHandles)
     </summary>
     <description>
-      Provides easy-to-use and robust wrappers for named system-wide locks (using WaitHandles) as well as fully distributed locks (using SQLServer)
+      Provides easy-to-use and robust fully distributed locks (using SQLServer) as well as wrappers for named system-wide locks (using WaitHandles)
     </description>
     <releaseNotes>
-      1.1.0 Added support for SQL locks scoped to existing connections and transactions
+      1.2.0 adds reader-writer locks, .NET Core support, new connection management options and IDbConnection/IDbTransaction support  
     </releaseNotes>
-    <copyright>Copyright 2016 Michael Adelson</copyright>
+    <copyright>Copyright 2017 Michael Adelson</copyright>
     <tags>distributed lock async waithandle mutex sql sqlserver reader writer</tags>
     <dependencies>
 	  <group targetFramework="net45"></group>
       <group targetFramework="netstandard1.3">
         <dependency id="NETStandard.Library" version="1.6.0"/>
         <dependency id="System.Data.SqlClient" version="4.3.0"/>
-		<dependency id="System.Collections.NonGeneric" version="4.3.0"/>
 		<dependency id="System.Threading.AccessControl" version="4.3.0"/>
 		<dependency id="System.Threading.ThreadPool" version="4.3.0"/>
       </group>
