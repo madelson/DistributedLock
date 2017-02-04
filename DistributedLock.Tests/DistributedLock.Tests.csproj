@@ -35,8 +35,8 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="MedallionShell, Version=1.0.2.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\MedallionShell.1.0.2\lib\net45\MedallionShell.dll</HintPath>
+    <Reference Include="MedallionShell, Version=1.2.1.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\MedallionShell.1.2.1\lib\net45\MedallionShell.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
@@ -59,6 +59,11 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Sql\SqlConnectionScopedDistributedLockTest.cs" />
     <Compile Include="Sql\SqlDistributedLockTest.cs" />
+    <Compile Include="Sql\SqlDistributedReaderWriterLockTests.cs" />
+    <Compile Include="Sql\SqlDistributedReaderWriterLockTestBase.cs" />
+    <Compile Include="Sql\SqlOptimisticConnectionMultiplexingDistributedLockTest.cs" />
+    <Compile Include="Sql\SqlOwnedConnectionDistributedLockTest.cs" />
+    <Compile Include="Sql\SqlOwnedTransactionDistributedLockTest.cs" />
     <Compile Include="Sql\SqlTransactionScopedDistributedLockTest.cs" />
     <Compile Include="SystemDistributedLockTest.cs" />
     <Compile Include="TestHelper.cs" />

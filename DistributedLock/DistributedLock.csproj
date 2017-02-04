@@ -44,13 +44,23 @@
     <Compile Include="DistributedLockHelpers.cs" />
     <Compile Include="IDistributedLock.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Sql\ConnectionMultiplexing\MultiplexedConnectionLock.cs" />
+    <Compile Include="Sql\ConnectionMultiplexing\MultiplexedConnectionLockPool.cs" />
+    <Compile Include="Sql\InternalLocks\ConnectionScopedSqlDistributedLock.cs" />
+    <Compile Include="Sql\IInternalSqlDistributedLock.cs" />
+    <Compile Include="Sql\InternalLocks\OptimisticConnectionMultiplexingSqlDistributedLock.cs" />
+    <Compile Include="Sql\InternalLocks\OwnedConnectionDistributedLock.cs" />
+    <Compile Include="Sql\InternalLocks\OwnedTransactionSqlDistributedLock.cs" />
+    <Compile Include="Sql\SqlApplicationLock.cs" />
     <Compile Include="Sql\SqlDistributedLock.cs" />
+    <Compile Include="Sql\SqlDistributedLockConnectionStrategy.cs" />
+    <Compile Include="Sql\SqlDistributedReaderWriterLock.cs" />
     <Compile Include="Sql\SqlHelpers.cs" />
+    <Compile Include="Sql\InternalLocks\TransactionScopedSqlDistributedLock.cs" />
     <Compile Include="SystemDistributedLock.cs" />
     <Compile Include="WaitHandleHelpers.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="DistributedLock.nuspec" />
     <None Include="TODO.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

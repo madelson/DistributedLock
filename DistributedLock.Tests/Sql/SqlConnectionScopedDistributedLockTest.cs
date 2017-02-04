@@ -59,7 +59,7 @@ namespace Medallion.Threading.Tests.Sql
             SqlConnection.ClearAllPools();
 
             var connection = new SqlConnection(SqlDistributedLockTest.ConnectionString);
-            connection.Open();;
+            connection.Open();
             this.AddCleanupAction(connection.Dispose);
             return new SqlDistributedLock(name, connection);
         }
@@ -69,6 +69,8 @@ namespace Medallion.Threading.Tests.Sql
             return SqlDistributedLock.GetSafeLockName(name);
         }
 
-        internal override bool IsReentrant { get { return true; } }
+        internal override bool IsReentrant => true;
+        // from my testing, it appears that abandoning a SqlConnection does not cause it to be released
+        internal override bool SupportsInProcessAbandonment => false;
     }
 }

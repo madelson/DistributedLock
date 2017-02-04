@@ -1,0 +1,27 @@
+﻿{
+  "title": "DistributedLock",
+  "version": "1.2",
+
+  "dependencies": {
+    "NETStandard.Library": "1.6.0",
+    "System.Data.SqlClient": "4.3.0",
+    "System.Threading.AccessControl": "4.3.0",
+    "System.Threading.ThreadPool": "4.3.0"
+  },
+
+  "frameworks": {
+    "netstandard1.3": {
+    }
+  },
+
+  "buildOptions": {
+    "compile": {
+      "include": "../DistributedLock/**/*.cs"
+    },
+    "outputName": "DistributedLock",
+    "define": [ "NETCORE" ],
+    "optimize": true,
+    "xmlDoc": true
+  }
+
+}

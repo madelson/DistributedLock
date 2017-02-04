@@ -29,6 +29,9 @@ namespace DistributedLockTaker.cs
                 case "sql":
                     handle = new SqlDistributedLock(name, ConnectionString).Acquire();
                     break;
+                case "sqlreaderwriterlock":
+                    handle = new SqlDistributedReaderWriterLock(name, ConnectionString).AcquireWriteLock();
+                    break;
                 case "system":
                     handle = new SystemDistributedLock(name).Acquire();
                     break;

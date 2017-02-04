@@ -23,7 +23,7 @@ namespace Medallion.Threading.Tests
 
                 using (var nestedHandle = @lock.TryAcquire())
                 {
-                    (nestedHandle == null).ShouldEqual(!this.IsReentrant);
+                    (nestedHandle == null).ShouldEqual(!this.IsReentrant, this.GetType() + ": reentrancy mis-stated");
                 }
 
                 using (var nestedHandle2 = lock2.TryAcquire())
@@ -186,12 +186,32 @@ namespace Medallion.Threading.Tests
         }
 
         [TestMethod]
+        public void TestLockAbandonment()
+        {
+            if (!this.SupportsInProcessAbandonment) { return; }
+
+            var lockName = this.GetSafeLockName("abandoned_" + this.GetType().Name);
+            new Action<string>(name => this.CreateLock(name).Acquire())(lockName);
+
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            System.Data.SqlClient.SqlConnection.ClearAllPools();
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+
+            using (var handle = this.CreateLock(lockName).TryAcquire())
+            {
+                Assert.IsNotNull(handle, this.GetType().Name);
+            }
+        }
+
+        [TestMethod]
         public void TestCrossProcess()
         {
             var type = this.CreateLock("a").GetType().Name.Replace("DistributedLock", string.Empty).ToLowerInvariant();
 
             var command = this.RunLockTaker(type, "cpl");
-            command.Task.Wait(TimeSpan.FromSeconds(.5)).ShouldEqual(false);
+            command.Task.Wait(TimeSpan.FromSeconds(.5)).ShouldEqual(false, this.GetType().ToString());
 
             var @lock = this.CreateLock("cpl");
             @lock.TryAcquire().ShouldEqual(null);
@@ -235,7 +255,7 @@ namespace Medallion.Threading.Tests
 
             var name = "cpl-" + asyncWait + "-" + kill;
             var command = this.RunLockTaker(type, name);
-            command.Task.Wait(TimeSpan.FromSeconds(.5)).ShouldEqual(false);
+            command.Task.Wait(TimeSpan.FromSeconds(.5)).ShouldEqual(false, this.GetType().ToString());
 
             var @lock = this.CreateLock(name);
 
@@ -262,7 +282,7 @@ namespace Medallion.Threading.Tests
 
         private Command RunLockTaker(params string[] args)
         {
-            var command = Command.Run("DistributedLockTaker", args);
+            var command = Command.Run("DistributedLockTaker", args, o => o.ThrowOnError(true));
             this.AddCleanupAction(() => 
             {
                 if (!command.Task.IsCompleted)
@@ -295,7 +315,8 @@ namespace Medallion.Threading.Tests
             }
         }
 
-        internal virtual bool IsReentrant { get { return false; } }
+        internal virtual bool IsReentrant => false;
+        internal virtual bool SupportsInProcessAbandonment => true;
 
         internal abstract IDistributedLock CreateLock(string name);
 
