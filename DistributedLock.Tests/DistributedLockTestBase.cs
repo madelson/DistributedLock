@@ -46,7 +46,7 @@ namespace Medallion.Threading.Tests
 
             using (var handle = @lock.TryAcquireAsync().Result)
             {
-                Assert.IsNotNull(handle);
+                Assert.IsNotNull(handle, this.GetType().Name);
 
                 using (var nestedHandle = @lock.TryAcquireAsync().Result)
                 {

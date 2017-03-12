@@ -48,5 +48,15 @@ namespace Medallion.Threading.Sql
         /// semantics are used with a zero-length timeout.
         /// </summary>
         OptimisticConnectionMultiplexing = 3,
+
+        /// <summary>
+        /// Using SQL Azure as a distributed lock provider can be challenging due to Azure's aggressive connection governor
+        /// which proactively kills idle connections. Using this strategy, the lock attempts to account for this by issuing
+        /// periodic no-op "keepalive" queries on the locking connection to prevent it from becoming idle. Note that this still
+        /// does not guarantee protection for the connection from all conditions where the governor might kill it.
+        /// 
+        /// For more information, see the dicussion on https://github.com/madelson/DistributedLock/issues/5
+        /// </summary>
+        Azure = 4,
     }
 }

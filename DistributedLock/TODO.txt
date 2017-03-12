@@ -7,3 +7,10 @@ object hold an object which keys into a conditional weak table that holds the tr
 * v2 idea: expose ReleaseAsync option by not just returning IDisposable
 * v2 idea: use awaitabledisposable pattern for async returns
 * v2 idea: remove DbConnection/DbTransaction constructors in favor of just the interface constructors
+* v2 idea: keepalive as part of cleanup for multiplexed connections (potentially allow for all connection strategies)
+	- potentially we should just detect Azure (http://stackoverflow.com/questions/21582195/how-to-test-if-database-is-hosted-on-sql-azure)
+	- would need to be opt-in for passed in transactions/connections
+* v2 idea: cancellationtoken which can trigger if the connection is lost. Basically would do cancellable WAITFOR which hopefully fails on killed spid
+	- this will also be opt-in for passed-in trasnaction/connections
+	- this could be part of the same concept as keepalive
+* v2: UpgradeToWriteLock(Async) should return void/Task not bool/Task<bool>

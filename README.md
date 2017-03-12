@@ -173,20 +173,22 @@ When using SQL-based locks, DistributedLock exposes several options for managing
 - Explicit: you can pass in the IDbConnection/IDbTransaction instance that provides lock scope. This is useful when you don't have access to a connection string or
 when you want the locking to be tied closely to other SQL operations being performed.
 - Connection: the lock internally manages a `SqlConnection` instance. The lock is released by calling [sp_releaseapplock](https://msdn.microsoft.com/en-us/library/ms178602.aspx) after which the connection is disposed. This is the default mode.
-- Transaction: the lock internally manages a `SqlTransaction` instance. The lock is released by disposing the transaction
-- Connection Multiplexing: the library internally manages a pool of `SqlConnection` instances, each of which may be used to hold multiple locks
+- Transaction: the lock internally manages a `SqlTransaction` instance. The lock is released by disposing the transaction.
+- Connection Multiplexing: the library internally manages a pool of `SqlConnection` instances, each of which may be used to hold multiple locks.
 simultaneously. This is particularly helpful for high-load scenarios since it can drastically reduce load on the underlying connection pool.
+- Azure: similar to the "Connection" strategy, but also automatically issues periodic background queries on the underlying connection to keep it from looking idle to the Azure connection governor. See [#5](https://github.com/madelson/DistributedLock/issues/5) for more details.
 
 Most of the time, you'll want to use the default connection strategy. See more details about the various strategies [here](https://github.com/madelson/DistributedLock/blob/version-1.2/DistributedLock/Sql/SqlDistributedLockConnectionStrategy.cs).
 
 ## Release notes
+- 1.3.0 Added an Azure connection strategy to keep lock connections from becoming idle and being reclaimed by Azure's connection governor ([#5](https://github.com/madelson/DistributedLock/issues/5))
 - 1.2.0
 	- Added a SQL-based distributed reader-writer lock
 	- .NET Core support via .NET Standard
 	- Changed the default locking scope for SQL distributed lock to be a connection rather than a transaction, avoiding cases where long-running transactions can block backups
 	- Allowed for customization of the SQL distributed lock connection strategy when connecting via a connection string
 	- Added a new connection strategy which allows for multiplexing multiple held locks onto one connection
-	- Added IDbConnection/IDbTransaction constructors (https://github.com/madelson/DistributedLock/issues/3)
+	- Added IDbConnection/IDbTransaction constructors ([#3](https://github.com/madelson/DistributedLock/issues/3))
 - 1.1.0 Added support for SQL distributed locks scoped to existing connections/transactions
 - 1.0.1 Minor fix when using infinite timeouts
 - 1.0.0 Initial release

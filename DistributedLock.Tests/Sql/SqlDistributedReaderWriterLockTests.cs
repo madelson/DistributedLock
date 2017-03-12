@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Medallion.Threading.Sql;
 using System.Data.Common;
 using System.Data.SqlClient;
+using System.Threading;
 
 namespace Medallion.Threading.Tests.Sql
 {
@@ -267,5 +268,96 @@ namespace Medallion.Threading.Tests.Sql
         internal override bool SupportsInProcessAbandonment => false;
 
         internal override bool UseWriteLockAsExclusive() => false; // random choice
+    }
+
+    [TestClass]
+    public class SqlAzureDistributedReaderWriterLockTestBase : SqlDistributedReaderWriterLockTestBase
+    {
+        [TestMethod]
+        public void TestAzureStrategyProtectsFromIdleSessionKiller()
+        {
+            var originalInterval = KeepaliveHelper.Interval;
+            try
+            {
+                KeepaliveHelper.Interval = TimeSpan.FromSeconds(.1);
+
+                using (var idleSessionKiller = new IdleSessionKiller(SqlDistributedLockTest.ConnectionString, idleTimeout: TimeSpan.FromSeconds(.25)))
+                {
+                    var @lock = this.CreateReaderWriterLock(nameof(TestAzureStrategyProtectsFromIdleSessionKiller));
+                    var handle = @lock.AcquireReadLock();
+                    Thread.Sleep(TimeSpan.FromSeconds(1));
+                    TestHelper.AssertDoesNotThrow(() => handle.Dispose());
+                }
+            }
+            finally
+            {
+                KeepaliveHelper.Interval = originalInterval;
+            }
+        }
+
+        /// <summary>
+        /// Tests the logic where upgrading a connection stops and restarts the keepalive
+        /// </summary>
+        [TestMethod]
+        public void TestAzureStrategyProtectsFromIdleSessionKillerAfterFailedUpgrade()
+        {
+            var originalInterval = KeepaliveHelper.Interval;
+            try
+            {
+                KeepaliveHelper.Interval = TimeSpan.FromSeconds(.1);
+
+                var readLockHolder = this.CreateReaderWriterLock(nameof(TestAzureStrategyProtectsFromIdleSessionKillerAfterFailedUpgrade));
+                using (new IdleSessionKiller(SqlDistributedLockTest.ConnectionString, idleTimeout: TimeSpan.FromSeconds(.25)))
+                using (readLockHolder.AcquireReadLock())
+                {
+                    var @lock = this.CreateReaderWriterLock(nameof(TestAzureStrategyProtectsFromIdleSessionKillerAfterFailedUpgrade));
+                    var handle = @lock.AcquireUpgradeableReadLock();
+                    handle.TryUpgradeToWriteLock().ShouldEqual(false);
+                    handle.TryUpgradeToWriteLockAsync().Result.ShouldEqual(false);
+                    Thread.Sleep(TimeSpan.FromSeconds(1));
+                    TestHelper.AssertDoesNotThrow(() => handle.Dispose());
+                }
+            }
+            finally
+            {
+                KeepaliveHelper.Interval = originalInterval;
+            }
+        }
+
+        /// <summary>
+        /// Demonstrates that we don't multi-thread the connection despite the <see cref="KeepaliveHelper"/>
+        /// </summary>
+        [TestMethod]
+        public void ThreadSafetyExercise()
+        {
+            var originalInterval = KeepaliveHelper.Interval;
+            try
+            {
+                KeepaliveHelper.Interval = TimeSpan.FromMilliseconds(1);
+
+                TestHelper.AssertDoesNotThrow(() =>
+                {
+                    var @lock = this.CreateReaderWriterLock(nameof(ThreadSafetyExercise));
+                    for (var i = 0; i < 100; ++i)
+                    {
+                        using (var handle = @lock.AcquireUpgradeableReadLockAsync().Result)
+                        {
+                            Thread.Sleep(1);
+                            handle.UpgradeToWriteLock();
+                            Thread.Sleep(1);
+                        }
+                    }
+                });
+            }
+            finally
+            {
+                KeepaliveHelper.Interval = originalInterval;
+            }
+        }
+
+        internal override SqlDistributedReaderWriterLock CreateReaderWriterLock(string name)
+        {
+            return new SqlDistributedReaderWriterLock(name, SqlDistributedLockTest.ConnectionString, SqlDistributedLockConnectionStrategy.Azure);
+        }
     }
 }

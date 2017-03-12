@@ -48,9 +48,11 @@
     <Compile Include="Sql\ConnectionMultiplexing\MultiplexedConnectionLockPool.cs" />
     <Compile Include="Sql\InternalLocks\ConnectionScopedSqlDistributedLock.cs" />
     <Compile Include="Sql\IInternalSqlDistributedLock.cs" />
+    <Compile Include="Sql\InternalLocks\AzureSqlDistributedLock.cs" />
     <Compile Include="Sql\InternalLocks\OptimisticConnectionMultiplexingSqlDistributedLock.cs" />
     <Compile Include="Sql\InternalLocks\OwnedConnectionDistributedLock.cs" />
     <Compile Include="Sql\InternalLocks\OwnedTransactionSqlDistributedLock.cs" />
+    <Compile Include="Sql\KeepaliveHelper.cs" />
     <Compile Include="Sql\SqlApplicationLock.cs" />
     <Compile Include="Sql\SqlDistributedLock.cs" />
     <Compile Include="Sql\SqlDistributedLockConnectionStrategy.cs" />

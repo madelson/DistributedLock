@@ -221,9 +221,9 @@ namespace Medallion.Threading.Sql
             /// </summary>
             public bool UpgradeToWriteLock(TimeSpan? timeout = null, CancellationToken cancellationToken = default(CancellationToken))
             {
-                var handle = this.TryUpgradeToWriteLock(timeout ?? Timeout.InfiniteTimeSpan, cancellationToken);
-                DistributedLockHelpers.ValidateTryAcquireResult(handle, timeout);
-                return handle;
+                var succeeded = this.TryUpgradeToWriteLock(timeout ?? Timeout.InfiniteTimeSpan, cancellationToken);
+                DistributedLockHelpers.ValidateTryAcquireResult(succeeded, timeout);
+                return succeeded;
             }
 
             /// <summary>

@@ -22,8 +22,8 @@ using System.Runtime.InteropServices;
 // The following GUID is for the ID of the typelib if this project is exposed to COM
 [assembly: Guid("6d4ab3bb-206b-46f6-9d66-6416a3432fba")]
 
-[assembly: AssemblyInformationalVersion("1.2.0")]
-[assembly: AssemblyVersion("1.2.0.0")]
+[assembly: AssemblyInformationalVersion("1.3.0")]
+[assembly: AssemblyVersion("1.3.0.0")]
 [assembly: AssemblyFileVersion("1.0.0.0")]
 
 [assembly: InternalsVisibleTo("DistributedLock.Tests")]

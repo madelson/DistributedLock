@@ -203,6 +203,8 @@ namespace Medallion.Threading.Sql
                     return new OwnedTransactionSqlDistributedLock(lockName: lockName, connectionString: connectionString);
                 case SqlDistributedLockConnectionStrategy.OptimisticConnectionMultiplexing:
                     return new OptimisticConnectionMultiplexingSqlDistributedLock(lockName: lockName, connectionString: connectionString);
+                case SqlDistributedLockConnectionStrategy.Azure:
+                    return new AzureSqlDistributedLock(lockName: lockName, connectionString: connectionString);
                 default:
                     throw new ArgumentException(nameof(connectionStrategy));
             }

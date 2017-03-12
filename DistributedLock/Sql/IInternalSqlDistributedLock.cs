@@ -14,6 +14,10 @@ namespace Medallion.Threading.Sql
     /// </summary>
     internal interface IInternalSqlDistributedLock
     {
+        // the contextHandle argument to these methods is used when acquiring a nested lock, such as upgrading
+        // from an upgradeable read lock to a write lock. This allows the implementation to use the same connection
+        // for the nested lock
+
         IDisposable TryAcquire(int timeoutMillis, SqlApplicationLock.Mode mode, IDisposable contextHandle);
         Task<IDisposable> TryAcquireAsync(int timeoutMillis, SqlApplicationLock.Mode mode, CancellationToken cancellationToken, IDisposable contextHandle);
     }

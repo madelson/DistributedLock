@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>DistributedLock</id>
-    <version>1.2.0</version>
+    <version>1.3.0</version>
     <title>DistributedLock</title>
     <authors>Michael Adelson</authors>
     <licenseUrl>https://raw.githubusercontent.com/madelson/DistributedLock/master/License.txt</licenseUrl>
@@ -15,10 +15,10 @@
       Provides easy-to-use and robust fully distributed locks (using SQLServer) as well as wrappers for named system-wide locks (using WaitHandles)
     </description>
     <releaseNotes>
-      1.2.0 adds reader-writer locks, .NET Core support, new connection management options and IDbConnection/IDbTransaction support  
+      1.3.0 adds support for keeping long-running lock-holding connections alive when running against SQL Azure  
     </releaseNotes>
     <copyright>Copyright 2017 Michael Adelson</copyright>
-    <tags>distributed lock async waithandle mutex sql sqlserver reader writer</tags>
+    <tags>distributed lock async waithandle mutex sql sqlserver reader writer azure</tags>
     <dependencies>
 	  <group targetFramework="net45"></group>
       <group targetFramework="netstandard1.3">

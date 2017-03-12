@@ -20,7 +20,10 @@ namespace Medallion.Threading.Tests.Sql
             {
                 DataSource = @".\SQLEXPRESS",
                 InitialCatalog = "master",
-                IntegratedSecurity = true
+                IntegratedSecurity = true,
+                ApplicationName = nameof(SqlDistributedLockTest),
+                // set a high pool size so that we don't empty the pool through things like lock abandonment tests
+                MaxPoolSize = 10000,
             }
             .ConnectionString;
 
@@ -32,7 +35,7 @@ namespace Medallion.Threading.Tests.Sql
             TestHelper.AssertThrows<ArgumentNullException>(() => new SqlDistributedLock("a", default(DbTransaction)));
             TestHelper.AssertThrows<ArgumentNullException>(() => new SqlDistributedLock("a", default(DbConnection)));
             TestHelper.AssertThrows<ArgumentException>(() => new SqlDistributedLock("a", ConnectionString, (SqlDistributedLockConnectionStrategy)(-1)));
-            TestHelper.AssertThrows<ArgumentException>(() => new SqlDistributedLock("a", ConnectionString, (SqlDistributedLockConnectionStrategy)4));
+            TestHelper.AssertThrows<ArgumentException>(() => new SqlDistributedLock("a", ConnectionString, (SqlDistributedLockConnectionStrategy)5));
             TestHelper.AssertThrows<FormatException>(() => new SqlDistributedLock(new string('a', SqlDistributedLock.MaxLockNameLength + 1), ConnectionString));
             TestHelper.AssertDoesNotThrow(() => new SqlDistributedLock(new string('a', SqlDistributedLock.MaxLockNameLength), ConnectionString));
         }
