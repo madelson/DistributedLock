@@ -1,15 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.26403.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DistributedLock", "DistributedLock\DistributedLock.csproj", "{C1F56B68-C2EE-48E5-A99B-B40D397AE34F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DistributedLock", "DistributedLock\DistributedLock.csproj", "{C1F56B68-C2EE-48E5-A99B-B40D397AE34F}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DistributedLock.Tests", "DistributedLock.Tests\DistributedLock.Tests.csproj", "{DDAD6899-3EF5-49BC-A41D-D46F50751457}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DistributedLockTaker", "DistributedLockTaker\DistributedLockTaker.csproj", "{6219CF2C-A3F8-4453-BE20-79EFC32987D9}"
-EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "DistributedLock.NetCore", "DistributedLock.NetCore\DistributedLock.NetCore.xproj", "{DE234924-70AD-4675-9BFD-D08017126CA1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
