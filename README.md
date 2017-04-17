@@ -181,6 +181,7 @@ simultaneously. This is particularly helpful for high-load scenarios since it ca
 Most of the time, you'll want to use the default connection strategy. See more details about the various strategies [here](https://github.com/madelson/DistributedLock/blob/version-1.2/DistributedLock/Sql/SqlDistributedLockConnectionStrategy.cs).
 
 ## Release notes
+- 1.3.1 Minor fix to avoid "leaking" isolation level changes in transaction-based locks ([#8](https://github.com/madelson/DistributedLock/issues/8)). Also switched to the VS2017 project file format
 - 1.3.0 Added an Azure connection strategy to keep lock connections from becoming idle and being reclaimed by Azure's connection governor ([#5](https://github.com/madelson/DistributedLock/issues/5))
 - 1.2.0
 	- Added a SQL-based distributed reader-writer lock

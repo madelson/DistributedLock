@@ -33,7 +33,7 @@ namespace Medallion.Threading.Sql
             {
                 connection.Open();
                 // when creating a transaction, the isolation level doesn't matter, since we're using sp_getapplock
-                transaction = connection.BeginTransaction(IsolationLevel.ReadUncommitted);
+                transaction = connection.BeginTransaction();
                 if (SqlApplicationLock.ExecuteAcquireCommand(transaction, this.lockName, timeoutMillis, mode))
                 {
                     result = new LockScope(transaction);
@@ -66,7 +66,7 @@ namespace Medallion.Threading.Sql
             {
                 await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
                 // when creating a transaction, the isolation level doesn't matter, since we're using sp_getapplock
-                transaction = connection.BeginTransaction(IsolationLevel.ReadUncommitted);
+                transaction = connection.BeginTransaction();
                 if (await SqlApplicationLock.ExecuteAcquireCommandAsync(transaction, this.lockName, timeoutMillis, mode, cancellationToken).ConfigureAwait(false))
                 {
                     result = new LockScope(transaction);
