@@ -174,7 +174,7 @@ When using SQL-based locks, DistributedLock exposes several options for managing
 when you want the locking to be tied closely to other SQL operations being performed.
 - Connection: the lock internally manages a `SqlConnection` instance. The lock is released by calling [sp_releaseapplock](https://msdn.microsoft.com/en-us/library/ms178602.aspx) after which the connection is disposed. This is the default mode.
 - Transaction: the lock internally manages a `SqlTransaction` instance. The lock is released by disposing the transaction.
-- Connection Multiplexing: the library internally manages a pool of `SqlConnection` instances, each of which may be used to hold multiple locks.
+- Connection Multiplexing: the library internally manages a pool of `SqlConnection` instances, each of which may be used to hold multiple locks
 simultaneously. This is particularly helpful for high-load scenarios since it can drastically reduce load on the underlying connection pool.
 - Azure: similar to the "Connection" strategy, but also automatically issues periodic background queries on the underlying connection to keep it from looking idle to the Azure connection governor. See [#5](https://github.com/madelson/DistributedLock/issues/5) for more details.
 
