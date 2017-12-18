@@ -32,6 +32,9 @@ namespace DistributedLockTaker.cs
                 case "sqlreaderwriterlock":
                     handle = new SqlDistributedReaderWriterLock(name, ConnectionString).AcquireWriteLock();
                     break;
+                case "sqldistributedsemaphore":
+                    handle = new SqlDistributedSemaphore(name, maxCount: 1, connectionString: ConnectionString).Acquire();
+                    break;
                 case "system":
                     handle = new SystemDistributedLock(name).Acquire();
                     break;

@@ -5,7 +5,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <RootNamespace>Medallion</RootNamespace>
+    <RootNamespace>Medallion.Threading</RootNamespace>
     <Version>1.3.1</Version>
     <Authors>Michael Adelson</Authors>
     <Description>Provides easy-to-use and robust fully distributed locks (using SQLServer) as well as wrappers for named system-wide locks (using WaitHandles)</Description>
@@ -28,7 +28,7 @@
     <TreatSpecificWarningsAsErrors />
     <WarningLevel>0</WarningLevel>
     <DefineConstants>TRACE;DEBUG</DefineConstants>
-    <Optimize>True</Optimize>
+    <Optimize>false</Optimize>
     <AssemblyVersion>1.3.1.0</AssemblyVersion>
   </PropertyGroup>
 

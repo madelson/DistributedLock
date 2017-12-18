@@ -77,10 +77,10 @@ namespace Medallion.Threading.Sql
                   // (see https://msdn.microsoft.com/en-us/library/system.data.sqlclient.sqlcommand.commandtimeout%28v=vs.110%29.aspx)
                   : 0;
 
-            command.Parameters.Add(CreateParameter(command, "Resource", lockName));
-            command.Parameters.Add(CreateParameter(command, "LockMode", GetModeString(mode)));
-            command.Parameters.Add(CreateParameter(command, "LockOwner", command.Transaction != null ? "Transaction" : "Session"));
-            command.Parameters.Add(CreateParameter(command, "LockTimeout", timeoutMillis));
+            command.Parameters.Add(command.CreateParameter("Resource", lockName));
+            command.Parameters.Add(command.CreateParameter("LockMode", GetModeString(mode)));
+            command.Parameters.Add(command.CreateParameter("LockOwner", command.Transaction != null ? "Transaction" : "Session"));
+            command.Parameters.Add(command.CreateParameter("LockTimeout", timeoutMillis));
 
             returnValue = command.CreateParameter();
             returnValue.Direction = ParameterDirection.ReturnValue;
@@ -95,8 +95,8 @@ namespace Medallion.Threading.Sql
             command.Transaction = connectionOrTransaction.Transaction;
             command.CommandText = "dbo.sp_releaseapplock";
             command.CommandType = CommandType.StoredProcedure;
-            command.Parameters.Add(CreateParameter(command, "Resource", lockName));
-            command.Parameters.Add(CreateParameter(command, "LockOwner", command.Transaction != null ? "Transaction" : "Session"));
+            command.Parameters.Add(command.CreateParameter("Resource", lockName));
+            command.Parameters.Add(command.CreateParameter("LockOwner", command.Transaction != null ? "Transaction" : "Session"));
 
             returnValue = command.CreateParameter();
             returnValue.Direction = ParameterDirection.ReturnValue;
@@ -136,14 +136,6 @@ namespace Medallion.Threading.Sql
         private static string GetErrorMessage(int exitCode, string type)
         {
             return string.Format("The request for the distribute lock failed with exit code {0} ({1})", exitCode, type);
-        }
-
-        private static IDbDataParameter CreateParameter(IDbCommand command, string name, object value)
-        {
-            var parameter = command.CreateParameter();
-            parameter.ParameterName = name;
-            parameter.Value = value;
-            return parameter;
         }
 
         private static string GetModeString(Mode mode)

@@ -63,6 +63,8 @@
     <Compile Include="Sql\SqlDistributedLockTest.cs" />
     <Compile Include="Sql\SqlDistributedReaderWriterLockTests.cs" />
     <Compile Include="Sql\SqlDistributedReaderWriterLockTestBase.cs" />
+    <Compile Include="Sql\SqlDistributedSemaphoreTestBase.cs" />
+    <Compile Include="Sql\SqlDistributedSemaphoreTests.cs" />
     <Compile Include="Sql\SqlOptimisticConnectionMultiplexingDistributedLockTest.cs" />
     <Compile Include="Sql\SqlOwnedConnectionDistributedLockTest.cs" />
     <Compile Include="Sql\SqlOwnedTransactionDistributedLockTest.cs" />
