@@ -14,7 +14,9 @@ namespace Medallion.Threading.Sql
         public SqlDistributedSemaphore(string semaphoreName, int maxCount, string connectionString)
         {
             if (semaphoreName == null) { throw new ArgumentNullException(nameof(semaphoreName)); }
-            if (maxCount < 0) { throw new ArgumentOutOfRangeException(nameof(maxCount), maxCount, "must be non-negative"); }
+            if (maxCount <= 0) { throw new ArgumentOutOfRangeException(nameof(maxCount), maxCount, "must be positive"); }
+            // todo may be checked elsewhere later
+            if (connectionString == null) { throw new ArgumentNullException(nameof(connectionString)); }
 
             this._helper = new SemaphoreHelper(semaphoreName, maxCount);
             this._connectionString = connectionString;

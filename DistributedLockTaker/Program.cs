@@ -26,16 +26,19 @@ namespace DistributedLockTaker.cs
             IDisposable handle = null;
             switch (type)
             {
-                case "sql":
+                case "SqlDistributedLock":
                     handle = new SqlDistributedLock(name, ConnectionString).Acquire();
                     break;
-                case "sqlreaderwriterlock":
+                case "SqlReaderWriterLockDistributedLock":
                     handle = new SqlDistributedReaderWriterLock(name, ConnectionString).AcquireWriteLock();
                     break;
-                case "sqldistributedsemaphore":
+                case "SqlDistributedSemaphore":
                     handle = new SqlDistributedSemaphore(name, maxCount: 1, connectionString: ConnectionString).Acquire();
                     break;
-                case "system":
+                case "SqlDistributedSemaphore10":
+                    handle = new SqlDistributedSemaphore(name, maxCount: 10, connectionString: ConnectionString).Acquire();
+                    break;
+                case "SystemDistributedLock":
                     handle = new SystemDistributedLock(name).Acquire();
                     break;
                 default:

@@ -208,9 +208,7 @@ namespace Medallion.Threading.Tests
         [TestMethod]
         public void TestCrossProcess()
         {
-            var type = this.CreateLock("a").GetType().Name.Replace("DistributedLock", string.Empty).ToLowerInvariant();
-
-            var command = this.RunLockTaker(type, "cpl");
+            var command = this.RunLockTaker(this.CrossProcessLockType, "cpl");
             command.Task.Wait(TimeSpan.FromSeconds(.5)).ShouldEqual(false, this.GetType().ToString());
 
             var @lock = this.CreateLock("cpl");
@@ -251,10 +249,8 @@ namespace Medallion.Threading.Tests
   
         private void CrossProcessAbandonmentHelper(bool asyncWait, bool kill) 
         {
-            var type = this.CreateLock("a").GetType().Name.Replace("DistributedLock", string.Empty).ToLowerInvariant();
-
             var name = "cpl-" + asyncWait + "-" + kill;
-            var command = this.RunLockTaker(type, name);
+            var command = this.RunLockTaker(this.CrossProcessLockType, name);
             command.Task.Wait(TimeSpan.FromSeconds(.5)).ShouldEqual(false, this.GetType().ToString());
 
             var @lock = this.CreateLock(name);
@@ -317,6 +313,7 @@ namespace Medallion.Threading.Tests
 
         internal virtual bool IsReentrant => false;
         internal virtual bool SupportsInProcessAbandonment => true;
+        internal virtual string CrossProcessLockType => this.CreateLock("a").GetType().Name;
 
         internal abstract IDistributedLock CreateLock(string name);
 
