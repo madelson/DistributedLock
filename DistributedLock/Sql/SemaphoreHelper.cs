@@ -391,7 +391,7 @@ CODA:
 
                 SELECT @waiterNumber = ISNULL(MAX(CAST(RIGHT(name, (LEN(name) - (LEN(@{SemaphoreNameParameter}) + 2))) AS INT) + 1), 0),
                     @waiterCount = COUNT(*)
-                FROM tempdb.sys.tables
+                FROM tempdb.sys.tables WITH(NOLOCK)
                 WHERE name LIKE '##' + REPLACE(REPLACE(REPLACE(@{SemaphoreNameParameter}, '\', '\\'), '_', '\_'), '%', '\%') + '%' ESCAPE '\'
 
                 SET @{MarkerTableNameParameter} = 'tempdb..##' + @{SemaphoreNameParameter} + CAST(@waiterNumber AS NVARCHAR(MAX))
