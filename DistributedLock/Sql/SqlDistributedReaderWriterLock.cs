@@ -86,8 +86,8 @@ namespace Medallion.Threading.Sql
         public IDisposable TryAcquireReadLock(TimeSpan timeout = default(TimeSpan), CancellationToken cancellationToken = default(CancellationToken))
         {
             return cancellationToken.CanBeCanceled
-                ? this.TryAcquireWithAsyncCancellation(timeout.ToInt32Timeout(), SqlApplicationLock.Mode.Shared, cancellationToken)
-                : this.internalLock.TryAcquire(timeout.ToInt32Timeout(), SqlApplicationLock.Mode.Shared, contextHandle: null);
+                ? this.TryAcquireWithAsyncCancellation(timeout.ToInt32Timeout(), SqlApplicationLock.SharedLock, cancellationToken)
+                : this.internalLock.TryAcquire(timeout.ToInt32Timeout(), SqlApplicationLock.SharedLock, contextHandle: null);
         }
 
         /// <summary>
@@ -105,7 +105,7 @@ namespace Medallion.Threading.Sql
         /// </summary>
         public Task<IDisposable> TryAcquireReadLockAsync(TimeSpan timeout = default(TimeSpan), CancellationToken cancellationToken = default(CancellationToken))
         {
-            return this.internalLock.TryAcquireAsync(timeout.ToInt32Timeout(), SqlApplicationLock.Mode.Shared, cancellationToken, contextHandle: null);
+            return this.internalLock.TryAcquireAsync(timeout.ToInt32Timeout(), SqlApplicationLock.SharedLock, cancellationToken, contextHandle: null);
         }
 
         /// <summary>
@@ -123,8 +123,8 @@ namespace Medallion.Threading.Sql
         public UpgradeableHandle TryAcquireUpgradeableReadLock(TimeSpan timeout = default(TimeSpan), CancellationToken cancellationToken = default(CancellationToken))
         {
             var handle = cancellationToken.CanBeCanceled
-                ? this.TryAcquireWithAsyncCancellation(timeout.ToInt32Timeout(), SqlApplicationLock.Mode.Update, cancellationToken, contextHandle: null)
-                : this.internalLock.TryAcquire(timeout.ToInt32Timeout(), SqlApplicationLock.Mode.Update, contextHandle: null);
+                ? this.TryAcquireWithAsyncCancellation(timeout.ToInt32Timeout(), SqlApplicationLock.UpdateLock, cancellationToken, contextHandle: null)
+                : this.internalLock.TryAcquire(timeout.ToInt32Timeout(), SqlApplicationLock.UpdateLock, contextHandle: null);
 
             return handle != null ? new InternalUpgradeableHandle(this, handle) : null;
         }
@@ -162,8 +162,8 @@ namespace Medallion.Threading.Sql
         public IDisposable TryAcquireWriteLock(TimeSpan timeout = default(TimeSpan), CancellationToken cancellationToken = default(CancellationToken))
         {
             return cancellationToken.CanBeCanceled
-                ? this.TryAcquireWithAsyncCancellation(timeout.ToInt32Timeout(), SqlApplicationLock.Mode.Exclusive, cancellationToken, contextHandle: null)
-                : this.internalLock.TryAcquire(timeout.ToInt32Timeout(), SqlApplicationLock.Mode.Exclusive, contextHandle: null);
+                ? this.TryAcquireWithAsyncCancellation(timeout.ToInt32Timeout(), SqlApplicationLock.ExclusiveLock, cancellationToken, contextHandle: null)
+                : this.internalLock.TryAcquire(timeout.ToInt32Timeout(), SqlApplicationLock.ExclusiveLock, contextHandle: null);
         }
 
         /// <summary>
@@ -181,7 +181,7 @@ namespace Medallion.Threading.Sql
         /// </summary>
         public Task<IDisposable> TryAcquireWriteLockAsync(TimeSpan timeout = default(TimeSpan), CancellationToken cancellationToken = default(CancellationToken))
         {
-            return this.internalLock.TryAcquireAsync(timeout.ToInt32Timeout(), SqlApplicationLock.Mode.Exclusive, cancellationToken, contextHandle: null);
+            return this.internalLock.TryAcquireAsync(timeout.ToInt32Timeout(), SqlApplicationLock.ExclusiveLock, cancellationToken, contextHandle: null);
         }
 
         /// <summary>
@@ -254,9 +254,9 @@ namespace Medallion.Threading.Sql
         }
         #endregion
 
-        private IDisposable TryAcquireWithAsyncCancellation(int timeoutMillis, SqlApplicationLock.Mode mode, CancellationToken cancellationToken, IDisposable contextHandle = null)
+        private IDisposable TryAcquireWithAsyncCancellation(int timeoutMillis, ISqlSynchronizationStrategy<object> strategy, CancellationToken cancellationToken, IDisposable contextHandle = null)
         {
-            var tryAcquireTask = this.internalLock.TryAcquireAsync(timeoutMillis, mode, cancellationToken, contextHandle);
+            var tryAcquireTask = this.internalLock.TryAcquireAsync(timeoutMillis, strategy, cancellationToken, contextHandle);
             try
             {
                 return tryAcquireTask.Result;
@@ -275,7 +275,7 @@ namespace Medallion.Threading.Sql
 
         private async Task<UpgradeableHandle> TryAcquireUpgradeableReadLockAsync(int timeoutMillis, CancellationToken cancellationToken)
         {
-            var handle = await this.internalLock.TryAcquireAsync(timeoutMillis, SqlApplicationLock.Mode.Update, cancellationToken, contextHandle: null).ConfigureAwait(false);
+            var handle = await this.internalLock.TryAcquireAsync(timeoutMillis, SqlApplicationLock.UpdateLock, cancellationToken, contextHandle: null).ConfigureAwait(false);
             return handle != null ? new InternalUpgradeableHandle(this, handle) : null;
         }
 
@@ -295,8 +295,8 @@ namespace Medallion.Threading.Sql
                 this.CheckHandles();
 
                 this.upgradedHandle = cancellationToken.CanBeCanceled
-                    ? this.@lock.TryAcquireWithAsyncCancellation(timeout.ToInt32Timeout(), SqlApplicationLock.Mode.Exclusive, cancellationToken, contextHandle: this.baseHandle)
-                    : this.@lock.internalLock.TryAcquire(timeout.ToInt32Timeout(), SqlApplicationLock.Mode.Exclusive, contextHandle: this.baseHandle);
+                    ? this.@lock.TryAcquireWithAsyncCancellation(timeout.ToInt32Timeout(), SqlApplicationLock.ExclusiveLock, cancellationToken, contextHandle: this.baseHandle)
+                    : this.@lock.internalLock.TryAcquire(timeout.ToInt32Timeout(), SqlApplicationLock.ExclusiveLock, contextHandle: this.baseHandle);
                 return this.upgradedHandle != null;
             }
 
@@ -309,7 +309,7 @@ namespace Medallion.Threading.Sql
 
             private async Task<bool> TryUpgradeToWriteLockAsync(int timeoutMillis, CancellationToken cancellationToken)
             {
-                this.upgradedHandle = await this.@lock.internalLock.TryAcquireAsync(timeoutMillis, SqlApplicationLock.Mode.Exclusive, cancellationToken, contextHandle: this.baseHandle).ConfigureAwait(false);
+                this.upgradedHandle = await this.@lock.internalLock.TryAcquireAsync(timeoutMillis, SqlApplicationLock.ExclusiveLock, cancellationToken, contextHandle: this.baseHandle).ConfigureAwait(false);
                 return this.upgradedHandle != null;
             }
 

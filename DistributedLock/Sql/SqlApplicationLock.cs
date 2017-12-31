@@ -10,16 +10,54 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading.Sql
 {
+    // todo refactor to be non-static
     internal static class SqlApplicationLock
     {
-        public enum Mode
+        public static readonly ISqlSynchronizationStrategy<object> SharedLock = new SynchronizationStrategy(Mode.Shared),
+            UpdateLock = new SynchronizationStrategy(Mode.Update),
+            ExclusiveLock = new SynchronizationStrategy(Mode.Exclusive);
+
+        private static readonly object Cookie = new object();
+
+        private sealed class SynchronizationStrategy : ISqlSynchronizationStrategy<object>
+        {
+            private readonly Mode mode;
+
+            public SynchronizationStrategy(Mode mode)
+            {
+                this.mode = mode;
+            }
+
+            bool ISqlSynchronizationStrategy<object>.IsUpgradeable => this.mode == Mode.Update;
+
+            void ISqlSynchronizationStrategy<object>.Release(ConnectionOrTransaction connectionOrTransaction, string resourceName, object lockCookie)
+            {
+                ExecuteReleaseCommand(connectionOrTransaction, resourceName);
+            }
+
+            object ISqlSynchronizationStrategy<object>.TryAcquire(ConnectionOrTransaction connectionOrTransaction, string resourceName, int timeoutMillis)
+            {
+                return ExecuteAcquireCommand(connectionOrTransaction, resourceName, timeoutMillis, this.mode)
+                    ? Cookie
+                    : null;
+            }
+
+            async Task<object> ISqlSynchronizationStrategy<object>.TryAcquireAsync(ConnectionOrTransaction connectionOrTransaction, string resourceName, int timeoutMillis, CancellationToken cancellationToken)
+            {
+                return await ExecuteAcquireCommandAsync(connectionOrTransaction, resourceName, timeoutMillis, this.mode, cancellationToken).ConfigureAwait(false)
+                    ? Cookie
+                    : null;
+            }
+        }
+
+        private enum Mode
         {
             Shared,
             Update,
             Exclusive,
         }
 
-        public static bool ExecuteAcquireCommand(ConnectionOrTransaction connectionOrTransaction, string lockName, int timeoutMillis, Mode mode)
+        private static bool ExecuteAcquireCommand(ConnectionOrTransaction connectionOrTransaction, string lockName, int timeoutMillis, Mode mode)
         {
             IDbDataParameter returnValue;
             using (var command = CreateAcquireCommand(connectionOrTransaction, lockName, timeoutMillis, mode, out returnValue))
@@ -29,7 +67,7 @@ namespace Medallion.Threading.Sql
             }
         }
 
-        public static async Task<bool> ExecuteAcquireCommandAsync(ConnectionOrTransaction connectionOrTransaction, string lockName, int timeoutMillis, Mode mode, CancellationToken cancellationToken)
+        private static async Task<bool> ExecuteAcquireCommandAsync(ConnectionOrTransaction connectionOrTransaction, string lockName, int timeoutMillis, Mode mode, CancellationToken cancellationToken)
         {
             IDbDataParameter returnValue;
             using (var command = CreateAcquireCommand(connectionOrTransaction, lockName, timeoutMillis, mode, out returnValue))
@@ -39,7 +77,7 @@ namespace Medallion.Threading.Sql
             }
         }
 
-        public static void ExecuteReleaseCommand(ConnectionOrTransaction connectionOrTransaction, string lockName)
+        private static void ExecuteReleaseCommand(ConnectionOrTransaction connectionOrTransaction, string lockName)
         {
             IDbDataParameter returnValue;
             using (var command = CreateReleaseCommand(connectionOrTransaction, lockName, out returnValue))
@@ -49,17 +87,7 @@ namespace Medallion.Threading.Sql
             }
         }
 
-        public static async Task ExecuteReleaseCommandAsync(ConnectionOrTransaction connectionOrTransaction, string lockName)
-        {
-            IDbDataParameter returnValue;
-            using (var command = CreateReleaseCommand(connectionOrTransaction, lockName, out returnValue))
-            {
-                await command.ExecuteNonQueryAsync(CancellationToken.None);
-                ParseExitCode((int)returnValue.Value);
-            }
-        }
-
-        public static IDbCommand CreateAcquireCommand(
+        private static IDbCommand CreateAcquireCommand(
             ConnectionOrTransaction connectionOrTransaction, 
             string lockName, 
             int timeoutMillis, 
@@ -89,7 +117,7 @@ namespace Medallion.Threading.Sql
             return command;
         }
 
-        public static IDbCommand CreateReleaseCommand(ConnectionOrTransaction connectionOrTransaction, string lockName, out IDbDataParameter returnValue)
+        private static IDbCommand CreateReleaseCommand(ConnectionOrTransaction connectionOrTransaction, string lockName, out IDbDataParameter returnValue)
         {
             var command = connectionOrTransaction.Connection.CreateCommand();
             command.Transaction = connectionOrTransaction.Transaction;

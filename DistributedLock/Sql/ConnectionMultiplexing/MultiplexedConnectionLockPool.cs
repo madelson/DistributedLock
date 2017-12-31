@@ -20,11 +20,12 @@ namespace Medallion.Threading.Sql.ConnectionMultiplexing
         private readonly Dictionary<string, Queue<MultiplexedConnectionLock>> connectionStringPools = new Dictionary<string, Queue<MultiplexedConnectionLock>>();
         private Task cleanupTask = Task.FromResult(false);
         
-        public IDisposable TryAcquire(
+        public IDisposable TryAcquire<TLockCookie>(
             string connectionString,
             string lockName,
             int timeoutMillis,
-            SqlApplicationLock.Mode mode)
+            ISqlSynchronizationStrategy<TLockCookie> strategy)
+            where TLockCookie : class
         {
             // opportunistic phase: see if we can use a connection that is already holding a lock
             // to acquire the current lock
@@ -33,7 +34,7 @@ namespace Medallion.Threading.Sql.ConnectionMultiplexing
             {
                 try
                 {
-                    var opportunisticResult = existingLock.TryAcquire(lockName, timeoutMillis, mode, opportunistic: true);
+                    var opportunisticResult = existingLock.TryAcquire(lockName, timeoutMillis, strategy, opportunistic: true);
                     if (opportunisticResult.Handle != null) { return opportunisticResult.Handle; }
                     
                     switch (opportunisticResult.Retry)
@@ -41,7 +42,7 @@ namespace Medallion.Threading.Sql.ConnectionMultiplexing
                         case MultiplexedConnectionLockRetry.NoRetry:
                             return null;
                         case MultiplexedConnectionLockRetry.RetryOnThisLock:
-                            var result = existingLock.TryAcquire(lockName, timeoutMillis, mode, opportunistic: false);
+                            var result = existingLock.TryAcquire(lockName, timeoutMillis, strategy, opportunistic: false);
                             return result.Handle;
                         case MultiplexedConnectionLockRetry.Retry:
                             break;
@@ -61,7 +62,7 @@ namespace Medallion.Threading.Sql.ConnectionMultiplexing
             IDisposable handle = null;
             try
             {
-                handle = @lock.TryAcquire(lockName, timeoutMillis, mode, opportunistic: false).Handle;
+                handle = @lock.TryAcquire(lockName, timeoutMillis, strategy, opportunistic: false).Handle;
             }
             finally
             {
@@ -72,12 +73,13 @@ namespace Medallion.Threading.Sql.ConnectionMultiplexing
             return handle;
         }
 
-        public async Task<IDisposable> TryAcquireAsync(
+        public async Task<IDisposable> TryAcquireAsync<TLockCookie>(
             string connectionString,
             string lockName,
             int timeoutMillis,
-            SqlApplicationLock.Mode mode,
+            ISqlSynchronizationStrategy<TLockCookie> strategy,
             CancellationToken cancellationToken)
+            where TLockCookie : class
         {
             // opportunistic phase: see if we can use a connection that is already holding a lock
             // to acquire the current lock
@@ -86,7 +88,7 @@ namespace Medallion.Threading.Sql.ConnectionMultiplexing
             {
                 try
                 {
-                    var opportunisticResult = await existingLock.TryAcquireAsync(lockName, timeoutMillis, mode, cancellationToken, opportunistic: true).ConfigureAwait(false);
+                    var opportunisticResult = await existingLock.TryAcquireAsync(lockName, timeoutMillis, strategy, cancellationToken, opportunistic: true).ConfigureAwait(false);
                     if (opportunisticResult.Handle != null) { return opportunisticResult.Handle; }
 
                     switch (opportunisticResult.Retry)
@@ -94,7 +96,7 @@ namespace Medallion.Threading.Sql.ConnectionMultiplexing
                         case MultiplexedConnectionLockRetry.NoRetry:
                             return null;
                         case MultiplexedConnectionLockRetry.RetryOnThisLock:
-                            var result = await existingLock.TryAcquireAsync(lockName, timeoutMillis, mode, cancellationToken, opportunistic: false).ConfigureAwait(false);
+                            var result = await existingLock.TryAcquireAsync(lockName, timeoutMillis, strategy, cancellationToken, opportunistic: false).ConfigureAwait(false);
                             return result.Handle;
                         case MultiplexedConnectionLockRetry.Retry:
                             break;
@@ -114,7 +116,7 @@ namespace Medallion.Threading.Sql.ConnectionMultiplexing
             IDisposable handle = null;
             try
             {
-                handle = (await @lock.TryAcquireAsync(lockName, timeoutMillis, mode, cancellationToken, opportunistic: false).ConfigureAwait(false)).Handle;
+                handle = (await @lock.TryAcquireAsync(lockName, timeoutMillis, strategy, cancellationToken, opportunistic: false).ConfigureAwait(false)).Handle;
             }
             finally
             {

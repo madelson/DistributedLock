@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading.Sql
 {
+    // todo can we combine this with ConnectionScoped to make ConnectionOrTransactionScoped?
     internal sealed class TransactionScopedSqlDistributedLock : IInternalSqlDistributedLock
     {
         private readonly string lockName;
@@ -21,22 +22,22 @@ namespace Medallion.Threading.Sql
             this.transaction = transaction;
         }
 
-        public IDisposable TryAcquire(int timeoutMillis, SqlApplicationLock.Mode mode, IDisposable contextHandle)
+        public IDisposable TryAcquire<TLockCookie>(int timeoutMillis, ISqlSynchronizationStrategy<TLockCookie> strategy, IDisposable contextHandle)
+            where TLockCookie : class
         {
             this.CheckConnection();
 
-            return SqlApplicationLock.ExecuteAcquireCommand(new ConnectionOrTransaction(this.transaction), this.lockName, timeoutMillis, mode)
-                ? new LockScope(this)
-                : null;
+            var lockCookie = strategy.TryAcquire(new ConnectionOrTransaction(this.transaction), this.lockName, timeoutMillis);
+            return lockCookie != null ? new LockScope<TLockCookie>(this, strategy, lockCookie) : null;
         }
 
-        public async Task<IDisposable> TryAcquireAsync(int timeoutMillis, SqlApplicationLock.Mode mode, CancellationToken cancellationToken, IDisposable contextHandle)
+        public async Task<IDisposable> TryAcquireAsync<TLockCookie>(int timeoutMillis, ISqlSynchronizationStrategy<TLockCookie> strategy, CancellationToken cancellationToken, IDisposable contextHandle)
+            where TLockCookie : class
         {
             this.CheckConnection();
 
-            return await SqlApplicationLock.ExecuteAcquireCommandAsync(new ConnectionOrTransaction(this.transaction), this.lockName, timeoutMillis, mode, cancellationToken).ConfigureAwait(false)
-                ? new LockScope(this)
-                : null;
+            var lockCookie = await strategy.TryAcquireAsync(new ConnectionOrTransaction(this.transaction), this.lockName, timeoutMillis, cancellationToken).ConfigureAwait(false);
+            return lockCookie != null ? new LockScope<TLockCookie>(this, strategy, lockCookie) : null;
         }
 
         private void CheckConnection()
@@ -47,7 +48,8 @@ namespace Medallion.Threading.Sql
                 throw new InvalidOperationException("The connection is not open");
         }
 
-        private void Release()
+        private void Release<TLockCookie>(ISqlSynchronizationStrategy<TLockCookie> strategy, TLockCookie lockCookie)
+            where TLockCookie : class
         {
             if (this.transaction.Connection?.IsClosedOrBroken() ?? true)
             {
@@ -55,19 +57,33 @@ namespace Medallion.Threading.Sql
                 return;
             }
 
-            SqlApplicationLock.ExecuteReleaseCommand(new ConnectionOrTransaction(this.transaction), this.lockName);
+            strategy.Release(new ConnectionOrTransaction(this.transaction), this.lockName, lockCookie);
         }
 
-        private sealed class LockScope : IDisposable
+        private sealed class LockScope<TLockCookie> : IDisposable
+            where TLockCookie : class
         {
             private TransactionScopedSqlDistributedLock @lock;
+            private ISqlSynchronizationStrategy<TLockCookie> strategy;
+            private TLockCookie lockCookie;
 
-            public LockScope(TransactionScopedSqlDistributedLock @lock)
+            public LockScope(TransactionScopedSqlDistributedLock @lock, ISqlSynchronizationStrategy<TLockCookie> strategy, TLockCookie lockCookie)
             {
                 this.@lock = @lock;
+                this.strategy = strategy;
+                this.lockCookie = lockCookie;
             }
 
-            public void Dispose() => Interlocked.Exchange(ref this.@lock, null)?.Release();
+            public void Dispose()
+            {
+                var @lock = Interlocked.Exchange(ref this.@lock, null);
+                if (@lock != null)
+                {
+                    @lock.Release(this.strategy, this.lockCookie);
+                    this.strategy = null;
+                    this.lockCookie = null;
+                }
+            }
         }
     }
 }

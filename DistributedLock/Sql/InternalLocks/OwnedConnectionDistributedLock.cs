@@ -18,11 +18,12 @@ namespace Medallion.Threading.Sql
             this.connectionString = connectionString;
         }
 
-        public IDisposable TryAcquire(int timeoutMillis, SqlApplicationLock.Mode mode, IDisposable contextHandle)
+        public IDisposable TryAcquire<TLockCookie>(int timeoutMillis, ISqlSynchronizationStrategy<TLockCookie> strategy, IDisposable contextHandle)
+            where TLockCookie : class
         {
             if (contextHandle != null)
             {
-                return this.CreateContextLock(contextHandle).TryAcquire(timeoutMillis, mode, contextHandle: null);
+                return this.CreateContextLock<TLockCookie>(contextHandle).TryAcquire(timeoutMillis, strategy, contextHandle: null);
             }
 
             IDisposable result = null;
@@ -30,9 +31,10 @@ namespace Medallion.Threading.Sql
             try
             {
                 connection.Open();
-                if (SqlApplicationLock.ExecuteAcquireCommand(connection, this.lockName, timeoutMillis, mode))
+                var lockCookie = strategy.TryAcquire(connection, this.lockName, timeoutMillis);
+                if (lockCookie != null)
                 {
-                    result = new LockScope(connection, this.lockName);
+                    result = new LockScope<TLockCookie>(connection, strategy, this.lockName, lockCookie);
                 }    
             }
             finally
@@ -47,11 +49,12 @@ namespace Medallion.Threading.Sql
             return result;
         }
 
-        public async Task<IDisposable> TryAcquireAsync(int timeoutMillis, SqlApplicationLock.Mode mode, CancellationToken cancellationToken, IDisposable contextHandle)
+        public async Task<IDisposable> TryAcquireAsync<TLockCookie>(int timeoutMillis, ISqlSynchronizationStrategy<TLockCookie> strategy, CancellationToken cancellationToken, IDisposable contextHandle)
+            where TLockCookie : class
         {
             if (contextHandle != null)
             {
-                return await this.CreateContextLock(contextHandle).TryAcquireAsync(timeoutMillis, mode, cancellationToken, contextHandle: null).ConfigureAwait(false);
+                return await this.CreateContextLock<TLockCookie>(contextHandle).TryAcquireAsync(timeoutMillis, strategy, cancellationToken, contextHandle: null).ConfigureAwait(false);
             }
 
             IDisposable result = null;
@@ -59,9 +62,10 @@ namespace Medallion.Threading.Sql
             try
             {
                 await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
-                if (await SqlApplicationLock.ExecuteAcquireCommandAsync(connection, this.lockName, timeoutMillis, mode, cancellationToken).ConfigureAwait(false))
+                var lockCookie = await strategy.TryAcquireAsync(connection, this.lockName, timeoutMillis, cancellationToken).ConfigureAwait(false);
+                if (lockCookie != null)
                 {
-                    result = new LockScope(connection, this.lockName);
+                    result = new LockScope<TLockCookie>(connection, strategy, this.lockName, lockCookie);
                 }
             }
             finally
@@ -76,23 +80,30 @@ namespace Medallion.Threading.Sql
             return result;
         }
 
-        private IInternalSqlDistributedLock CreateContextLock(IDisposable contextHandle)
+        private IInternalSqlDistributedLock CreateContextLock<TLockCookie>(IDisposable contextHandle)
+            where TLockCookie : class
         {
-            var connection = ((LockScope)contextHandle).Connection;
+            var connection = ((LockScope<TLockCookie>)contextHandle).Connection;
             if (connection == null) { throw new ObjectDisposedException(nameof(contextHandle), "the provided handle is already disposed"); }
 
             return new ConnectionScopedSqlDistributedLock(this.lockName, connection);
         }
 
-        private sealed class LockScope : IDisposable
+        // todo could use releaseaction
+        private sealed class LockScope<TLockCookie> : IDisposable
+            where TLockCookie : class
         {
             private SqlConnection connection;
             private readonly string lockName;
+            private ISqlSynchronizationStrategy<TLockCookie> strategy;
+            private TLockCookie lockCookie;
 
-            public LockScope(SqlConnection connection, string lockName)
+            public LockScope(SqlConnection connection, ISqlSynchronizationStrategy<TLockCookie> strategy, string lockName, TLockCookie lockCookie)
             {
                 this.connection = connection;
+                this.strategy = strategy;
                 this.lockName = lockName;
+                this.lockCookie = lockCookie;
             }
 
             public SqlConnection Connection => Volatile.Read(ref this.connection);
@@ -102,18 +113,20 @@ namespace Medallion.Threading.Sql
                 var connection = Interlocked.Exchange(ref this.connection, null);
                 if (connection != null && !connection.IsClosedOrBroken())
                 {
-                    ReleaseLock(connection, this.lockName);
+                    ReleaseLock(connection, this.strategy, this.lockName, this.lockCookie);
+                    this.strategy = null;
+                    this.lockCookie = null;
                 }
             }
 
-            private static void ReleaseLock(SqlConnection connection, string lockName)
+            private static void ReleaseLock(SqlConnection connection, ISqlSynchronizationStrategy<TLockCookie> strategy, string lockName, TLockCookie lockCookie)
             {
                 try
                 {
                     // explicit release is required due to connection pooling. For a pooled connection,
                     // simply calling Dispose() will not release the lock: it just returns the connection
                     // to the pool
-                    SqlApplicationLock.ExecuteReleaseCommand(connection, lockName);
+                    strategy.Release(connection, lockName, lockCookie);
                 }
                 finally
                 {
