@@ -261,6 +261,7 @@ CODA:
         }
         #endregion
 
+        // TODO everything should be case-sensitive here to match sp_getapplock's behavior (we should add a common test for this)
         #region ---- Naming ----
         private static string ToSafeName(string semaphoreName)
         {
