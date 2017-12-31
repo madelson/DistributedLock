@@ -80,6 +80,18 @@ namespace Medallion.Threading.Tests
         }
 
         [TestMethod]
+        public void TestDisposeHandleIsIdempotent()
+        {
+            var @lock = this.CreateLock(nameof(TestDisposeHandleIsIdempotent));
+            var handle = @lock.Acquire(TimeSpan.FromSeconds(30));
+            Assert.IsNotNull(handle);
+            handle.Dispose();
+            var handle2 = @lock.Acquire(TimeSpan.FromSeconds(30));
+            TestHelper.AssertDoesNotThrow(() => handle.Dispose());
+            TestHelper.AssertDoesNotThrow(() => handle2.Dispose());
+        }
+
+        [TestMethod]
         public void TestTimeouts()
         {
             var @lock = this.CreateLock("timeout");
