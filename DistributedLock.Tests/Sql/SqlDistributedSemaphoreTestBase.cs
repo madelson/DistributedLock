@@ -28,7 +28,7 @@ namespace Medallion.Threading.Tests.Sql
                 var threads = Enumerable.Range(0, Threads)
                     .Select(_ => new Thread(() =>
                     {
-                        var semaphore = this.Create(nameof(TestConcurrencyHandling), MaxCount);
+                        var semaphore = this.CreateSemaphore(nameof(TestConcurrencyHandling), MaxCount);
 
                         barrier.SignalAndWait();
                         for (var i = 0; i < Trials; ++i)
@@ -53,8 +53,8 @@ namespace Medallion.Threading.Tests.Sql
         [TestMethod]
         public void TestDrain()
         {
-            var semaphore = this.Create(nameof(TestDrain), maxCount: 4);
-            var semaphore2 = this.Create(nameof(TestDrain), maxCount: 4);
+            var semaphore = this.CreateSemaphore(nameof(TestDrain), maxCount: 4);
+            var semaphore2 = this.CreateSemaphore(nameof(TestDrain), maxCount: 4);
 
             var handles = new List<IDisposable> { semaphore.Acquire(LongTimeout) };
             TestHelper.AssertDoesNotThrow(() => semaphore2.Acquire().Dispose());
@@ -72,7 +72,7 @@ namespace Medallion.Threading.Tests.Sql
         [TestMethod]
         public void TestHighTicketCount()
         {
-            var semaphore = this.Create($"s{new string('o', 1000)} many tickets!", int.MaxValue);
+            var semaphore = this.CreateSemaphore($"s{new string('o', 1000)} many tickets!", int.MaxValue);
             var handles = Enumerable.Range(0, 100)
                 .Select(_ => semaphore.Acquire(LongTimeout))
                 .ToList();
@@ -90,13 +90,13 @@ namespace Medallion.Threading.Tests.Sql
             // 3-semaphore holds tickets 1&2 (no), 1&3 (yes), or 2&3 (yes). This test serves to document
             // the behavior that is more well-defined
 
-            var semaphore2 = this.Create(nameof(TestSameNameDifferentCounts), 2);
-            var semaphore3 = this.Create(nameof(TestSameNameDifferentCounts), 3);
+            var semaphore2 = this.CreateSemaphore(nameof(TestSameNameDifferentCounts), 2);
+            var semaphore3 = this.CreateSemaphore(nameof(TestSameNameDifferentCounts), 3);
 
             var handle1 = semaphore2.Acquire(LongTimeout);
             var handle2 = semaphore3.Acquire(LongTimeout);
-            semaphore2.TryAcquire().ShouldEqual(null);
             var handle3 = semaphore3.Acquire(LongTimeout);
+            semaphore2.TryAcquire().ShouldEqual(null);
             semaphore3.TryAcquire().ShouldEqual(null);
 
             handle1.Dispose();
@@ -109,12 +109,10 @@ namespace Medallion.Threading.Tests.Sql
             // todo test error when doing getcurrentcount
         }
         
-        // todo getcurrentcount tests
+        protected virtual SqlDistributedSemaphore CreateSemaphore(string name, int maxCount) => new SqlDistributedSemaphore(name, maxCount, SqlDistributedLockTest.ConnectionString);
 
-        private SqlDistributedSemaphore Create(string name, int maxCount) => new SqlDistributedSemaphore(name, maxCount, SqlDistributedLockTest.ConnectionString);
+        internal sealed override IDistributedLock CreateLock(string name) => this.CreateSemaphore(name, maxCount: 1);
 
-        internal override IDistributedLock CreateLock(string name) => Create(name, maxCount: 1);
-
-        internal override string GetSafeLockName(string name) => name ?? throw new ArgumentNullException(name);
+        internal sealed override string GetSafeLockName(string name) => name ?? throw new ArgumentNullException(nameof(name));
     }
 }

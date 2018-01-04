@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -8,20 +9,69 @@ namespace Medallion.Threading.Sql
 {
     public class SqlDistributedSemaphore : IDistributedLock
     {
-        private readonly SemaphoreHelper _helper;
-        private readonly string _connectionString;
+        private readonly IInternalSqlDistributedLock internalLock;
+        private readonly SqlSemaphore strategy;
 
+        #region ---- Constructors ----
+        /// <summary>
+        /// Creates a semaphore with name <paramref name="semaphoreName"/> that can be acquired up to <paramref name="maxCount"/> 
+        /// times concurrently. Uses the given <paramref name="connectionString"/> to connect to the database.
+        /// 
+        /// Uses <see cref="SqlDistributedLockConnectionStrategy.Default"/>
+        /// </summary>
         public SqlDistributedSemaphore(string semaphoreName, int maxCount, string connectionString)
+            : this(semaphoreName, maxCount, connectionString, SqlDistributedLockConnectionStrategy.Default)
         {
-            if (semaphoreName == null) { throw new ArgumentNullException(nameof(semaphoreName)); }
-            if (maxCount <= 0) { throw new ArgumentOutOfRangeException(nameof(maxCount), maxCount, "must be positive"); }
-            // todo may be checked elsewhere later
-            if (connectionString == null) { throw new ArgumentNullException(nameof(connectionString)); }
-
-            this._helper = new SemaphoreHelper(semaphoreName, maxCount);
-            this._connectionString = connectionString;
         }
 
+        /// <summary>
+        /// Creates a semaphore with name <paramref name="semaphoreName"/> that can be acquired up to <paramref name="maxCount"/> 
+        /// times concurrently. Uses the given <paramref name="connectionString"/> to connect to the database via the strategy
+        /// specified by <paramref name="connectionStrategy"/>
+        /// </summary>
+        public SqlDistributedSemaphore(string semaphoreName, int maxCount, string connectionString, SqlDistributedLockConnectionStrategy connectionStrategy)
+            : this(semaphoreName, maxCount, name => SqlDistributedLock.CreateInternalLock(name, connectionString, connectionStrategy))
+        {
+            if (string.IsNullOrEmpty(connectionString)) { throw new ArgumentNullException(nameof(connectionString)); }
+        }
+
+        /// <summary>
+        /// Creates a semaphore with name <paramref name="semaphoreName"/> that can be acquired up to <paramref name="maxCount"/> 
+        /// times concurrently. When acquired, the semaphore will be scoped to the given <paramref name="connection"/>. 
+        /// The <paramref name="connection"/> is assumed to be externally managed: the <see cref="SqlDistributedSemaphore"/> will 
+        /// not attempt to open, close, or dispose it
+        /// </summary>
+        public SqlDistributedSemaphore(string semaphoreName, int maxCount, IDbConnection connection)
+            : this(semaphoreName, maxCount, name => new ConnectionScopedSqlDistributedLock(name, connection))
+        {
+            if (connection == null) { throw new ArgumentNullException(nameof(connection)); }
+        }
+
+        /// <summary>
+        /// Creates a semaphore with name <paramref name="semaphoreName"/> that can be acquired up to <paramref name="maxCount"/> 
+        /// times concurrently. When acquired, the semaphore will be scoped to the given <paramref name="transaction"/>. 
+        /// The <paramref name="transaction"/> and its <see cref="IDbTransaction.Connection"/> are assumed to be externally managed: 
+        /// the <see cref="SqlDistributedSemaphore"/> will not attempt to open, close, commit, roll back, or dispose them
+        /// </summary>
+        public SqlDistributedSemaphore(string semaphoreName, int maxCount, IDbTransaction transaction)
+            // todo move ToSafeName call to inner method; pass through func<name, iinternal>
+            : this(semaphoreName, maxCount, name => new TransactionScopedSqlDistributedLock(name, transaction))
+        {
+            if (transaction == null) { throw new ArgumentNullException(nameof(transaction)); }
+        }
+
+        private SqlDistributedSemaphore(string semaphoreName, int maxCount, Func<string, IInternalSqlDistributedLock> createInternalLockFromName)
+        {
+            if (semaphoreName == null) { throw new ArgumentNullException("lockName"); }
+            if (maxCount < 1) { throw new ArgumentOutOfRangeException(nameof(maxCount), maxCount, "must be positive"); }
+
+            this.strategy = new SqlSemaphore(maxCount);
+            this.internalLock = createInternalLockFromName(SqlSemaphore.ToSafeName(semaphoreName));
+        }
+        #endregion
+
+        #region ---- Public API ----
+        // todo all acquire doc comments
         /// <summary>
         /// Attempts to acquire the lock synchronously. Usage:
         /// <code>
@@ -37,13 +87,11 @@ namespace Medallion.Threading.Sql
         /// <returns>An <see cref="IDisposable"/> "handle" which can be used to release the lock, or null if the lock was not taken</returns>
         public IDisposable TryAcquire(TimeSpan timeout = default(TimeSpan), CancellationToken cancellationToken = default(CancellationToken))
         {
-            // TODO change this to not always go async
-            return DistributedLockHelpers.TryAcquireWithAsyncCancellation(this, timeout, cancellationToken);
-            //return cancellationToken.CanBeCanceled
-            //    // use the async version since that supports cancellation
-            //    ? DistributedLockHelpers.TryAcquireWithAsyncCancellation(this, timeout, cancellationToken)
-            //    // synchronous mode
-            //    : this.TryAcquireAsync(timeout).Task.Result;
+            return cancellationToken.CanBeCanceled
+                // use the async version since that supports cancellation
+                ? DistributedLockHelpers.TryAcquireWithAsyncCancellation(this, timeout, cancellationToken)
+                // synchronous mode
+                : this.internalLock.TryAcquire(timeout.ToInt32Timeout(), this.strategy, contextHandle: null);
         }
 
         /// <summary>
@@ -80,15 +128,7 @@ namespace Medallion.Threading.Sql
         /// <returns>An <see cref="IDisposable"/> "handle" which can be used to release the lock, or null if the lock was not taken</returns>
         public AwaitableDisposable<IDisposable> TryAcquireAsync(TimeSpan timeout = default(TimeSpan), CancellationToken cancellationToken = default(CancellationToken))
         {
-            return new AwaitableDisposable<IDisposable>(InternalTryAcquireAsync(timeout.ToInt32Timeout()));
-
-            async Task<IDisposable> InternalTryAcquireAsync(int timeoutMillis)
-            {
-                // todo add better cleanup or switch to using internalocks structure
-                var connection = new System.Data.SqlClient.SqlConnection(this._connectionString);
-                await connection.OpenAsync().ConfigureAwait(false);
-                return await this._helper.TryAcquireAsync(connection, timeoutMillis, cancellationToken);
-            }
+            return new AwaitableDisposable<IDisposable>(this.internalLock.TryAcquireAsync(timeout.ToInt32Timeout(), this.strategy, cancellationToken, contextHandle: null));
         }
 
         /// <summary>
@@ -108,17 +148,9 @@ namespace Medallion.Threading.Sql
         {
             return new AwaitableDisposable<IDisposable>(DistributedLockHelpers.AcquireAsync(this, timeout, cancellationToken));
         }
+        #endregion
 
-        public Task<int> GetCurrentCountAsync()
-        {
-            throw new NotImplementedException();
-        }
-
-        public int GetCurrentCount()
-        {
-            throw new NotImplementedException();
-        }
-        
+        #region ---- IDistributedLock Compat Layer (for Testing) ----
         Task<IDisposable> IDistributedLock.TryAcquireAsync(TimeSpan timeout, CancellationToken cancellationToken)
         {
             return this.TryAcquireAsync(timeout, cancellationToken).Task;
@@ -128,5 +160,6 @@ namespace Medallion.Threading.Sql
         {
             return this.AcquireAsync(timeout, cancellationToken).Task;
         }
+        #endregion
     }
 }

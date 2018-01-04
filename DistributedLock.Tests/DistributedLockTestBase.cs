@@ -14,12 +14,12 @@ namespace Medallion.Threading.Tests
         [TestMethod]
         public void BasicTest()
         {
-            var @lock = this.CreateLock("ralph");
-            var lock2 = this.CreateLock("ralph2");
+            var @lock = this.CreateLock(nameof(BasicTest) + this.GetType().Name);
+            var lock2 = this.CreateLock(nameof(BasicTest) + "2" + this.GetType().Name);
 
             using (var handle = @lock.TryAcquire())
             {
-                Assert.IsNotNull(handle);
+                Assert.IsNotNull(handle, this.GetType() + ": should be able to acquire new lock");
 
                 using (var nestedHandle = @lock.TryAcquire())
                 {
@@ -28,21 +28,21 @@ namespace Medallion.Threading.Tests
 
                 using (var nestedHandle2 = lock2.TryAcquire())
                 {
-                    Assert.IsNotNull(nestedHandle2);
+                    Assert.IsNotNull(nestedHandle2, this.GetType() + ": should be able to acquire a different lock");
                 }
             }
 
             using (var handle = @lock.TryAcquire())
             {
-                Assert.IsNotNull(handle);
+                Assert.IsNotNull(handle, this.GetType() + ": should be able to re-acquire after releasing");
             }
         }
 
         [TestMethod]
         public void BasicAsyncTest()
         {
-            var @lock = this.CreateLock("ralph");
-            var lock2 = this.CreateLock("ralph2");
+            var @lock = this.CreateLock(nameof(BasicAsyncTest) + this.GetType().Name);
+            var lock2 = this.CreateLock(nameof(BasicAsyncTest) + "2" + this.GetType().Name);
 
             using (var handle = @lock.TryAcquireAsync().Result)
             {
@@ -82,7 +82,7 @@ namespace Medallion.Threading.Tests
         [TestMethod]
         public void TestDisposeHandleIsIdempotent()
         {
-            var @lock = this.CreateLock(nameof(TestDisposeHandleIsIdempotent));
+            var @lock = this.CreateLock(nameof(TestDisposeHandleIsIdempotent) + this.GetType().Name);
             var handle = @lock.Acquire(TimeSpan.FromSeconds(30));
             Assert.IsNotNull(handle);
             handle.Dispose();
@@ -94,9 +94,10 @@ namespace Medallion.Threading.Tests
         [TestMethod]
         public void TestTimeouts()
         {
-            var @lock = this.CreateLock("timeout");
+            var lockName = nameof(TestTimeouts) + this.GetType().Name;
+            var @lock = this.CreateLock(lockName);
             // acquire with a different lock instance to avoid reentrancy mattering
-            using (this.CreateLock("timeout").Acquire())
+            using (this.CreateLock(lockName).Acquire())
             {
                 var syncAcquireTask = Task.Run(() => @lock.Acquire(TimeSpan.FromSeconds(.1)));
                 syncAcquireTask.ContinueWith(_ => { }).Wait(TimeSpan.FromSeconds(.2)).ShouldEqual(true, "sync acquire");
@@ -119,10 +120,11 @@ namespace Medallion.Threading.Tests
         [TestMethod]
         public void CancellationTest()
         {
-            var @lock = this.CreateLock("gerald");
+            var lockName = nameof(CancellationTest) + this.GetType().Name;
+            var @lock = this.CreateLock(lockName);
 
             var source = new CancellationTokenSource();
-            using (var handle = this.CreateLock("gerald").Acquire())
+            using (var handle = this.CreateLock(lockName).Acquire())
             {
                 var blocked = @lock.AcquireAsync(cancellationToken: source.Token);
                 blocked.Wait(TimeSpan.FromSeconds(.1)).ShouldEqual(false);
@@ -143,7 +145,7 @@ namespace Medallion.Threading.Tests
             var counter = 0;
             var tasks = Enumerable.Range(1, 100).Select(async _ =>
                 {
-                    var @lock = this.CreateLock("parallel_test");
+                    var @lock = this.CreateLock("parallel_test" + this.GetType().Name);
                     using (await @lock.AcquireAsync())
                     {
                         // increment going in
@@ -158,7 +160,7 @@ namespace Medallion.Threading.Tests
                 })
                 .ToList();
 
-            Task.WaitAll(tasks.ToArray<Task>(), TimeSpan.FromSeconds(30)).ShouldEqual(true);
+            Task.WaitAll(tasks.ToArray<Task>(), TimeSpan.FromSeconds(30)).ShouldEqual(true, this.GetType().Name);
 
             tasks.ForEach(t => t.Result.ShouldEqual(0));
         }
@@ -171,7 +173,7 @@ namespace Medallion.Threading.Tests
             foreach (var name in new[] { string.Empty, new string('a', 1000), @"\\\\\", new string('\\', 1000) })
             {
                 var safeName = this.GetSafeLockName(name);
-                TestHelper.AssertDoesNotThrow(() => this.CreateLock(safeName).Acquire().Dispose());
+                TestHelper.AssertDoesNotThrow(() => this.CreateLock(safeName).Acquire(TimeSpan.FromSeconds(10)).Dispose());
             }
         }
 

@@ -75,8 +75,7 @@ namespace Medallion.Threading.Tests.Sql
                 for (var i = 0; i < 1000; ++i)
                 {
                     var lockName = $"{nameof(TestHighConcurrencyWithSmallPool)}_{random.Next(20)}";
-                    IDisposable existingHandle;
-                    if (heldLocks.TryGetValue(lockName, out existingHandle))
+                    if (heldLocks.TryGetValue(lockName, out var existingHandle))
                     {
                         existingHandle.Dispose();
                         heldLocks.Remove(lockName);

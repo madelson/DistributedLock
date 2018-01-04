@@ -134,6 +134,7 @@ namespace Medallion.Threading.Tests.Sql
         }
 
         internal override bool IsReentrant => true;
+        // todo is this just because of the cleanup action?
         // from my testing, it appears that abandoning a SqlConnection does not cause it to be released
         internal override bool SupportsInProcessAbandonment => false;
 
@@ -264,6 +265,7 @@ namespace Medallion.Threading.Tests.Sql
         }
 
         internal override bool IsReentrant => true;
+        // todo is this just because of the cleanup action?
         // from my testing, it appears that abandoning a SqlTransaction does not cause it to be released
         internal override bool SupportsInProcessAbandonment => false;
 

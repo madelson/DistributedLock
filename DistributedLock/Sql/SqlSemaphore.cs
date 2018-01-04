@@ -8,151 +8,60 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading.Sql
 {
-    // potentially simpler approach:
-    // take init lock
-    // count tickets and get max ticket id
-    // if (count < maxCount)
-    //      take hold lock (loop through each with no wait. We MUST find one since there is space; return error if not)
-    //      release init lock
-    //      return taken hold lock
-    // else
-    //      myTicket = maxTicketId + 1
-    //      create table ##myTicket
-    //      release init lock
-    // if (try take spinWaitLock (we know there's contention if we reach here so if we time out it's over))
-    //      spin to take hold lock until timeout
-    //      if success, set taken hold lock
-    //      release spinWaitLock
-    // finally 
-    //      return takenHoldLock, ticket
-    //
-    // to release:
-    //      release takenHoldLock
-    //      drop table ticket
-
-    // approach
-    // todo need to do something with checking for number of holders + waiters here
-    // take quick-lock
-    // find ## tables of the form name_{count} and store them in a # table
-    // create your own marker ## table and take wait_lock for it
-    // release quick-lock
-    // take each wait-lock in # table ordered by desc
-    // spin taking hold-locks
-    // finally
-    // release wait-locks
-    // delete ## table
-
-    /* IDEA
-     
-DECLARE @initializationLockName NVARCHAR(255) = 'abc'
-DECLARE @baseWaitLockName NVARCHAR(MAX) = 'abc_wait'
-DECLARE @baseWaitLockNameChars INT = LEN(@baseWaitLockName)
-DECLARE @baseHoldLockName NVARCHAR(255) = 'abc_hold'
-DECLARE @maxCount INT = 3
-DECLARE @lockResult INT;
-
-CREATE TABLE #distributedSemaphoreHelper (id INT PRIMARY KEY, waitLockName NVARCHAR(255))
-
-EXEC @lockResult = sys.sp_getapplock @initializationLockName, 'Exclusive', 'Session', -1
-IF @lockResult < 0 GOTO CODA
-
-INSERT INTO #distributedSemaphoreHelper (id, waitLockName)
-SELECT CAST(SUBSTRING(name, @baseWaitLockNameChars, 1000) AS INT) AS id, name AS waitLockName
-FROM sys.tables
-WHERE name LIKE @baseWaitLockName + '%[0-9]'
-
-DECLARE @waitLockName NVARCHAR(255) = @baseWaitLockName + (SELECT CAST(MAX(id) + 1 AS NVARCHAR(MAX)) FROM #distributedSemaphoreHelper)
-EXEC('CREATE TABLE ' + @waitLockName + ' (_ BIT)');
-EXEC @lockResult = sys.sp_getapplock @waitLockName, 'Exclusive', 'Session', -1
-IF @lockResult < 0 GOTO CODA
-
-EXEC sys.sp_releaseapplock @initializationLockName, 'Session'
-
-DECLARE @nextWaitLock NVARCHAR(255)
-DECLARE waitLocks CURSOR LOCAL FAST_FORWARD FOR
-	SELECT waitLockName FROM #distributedSemaphoreHelper ORDER BY id DESC
-
-OPEN waitLocks
-FETCH waitLocks INTO @nextWaitLock
-WHILE @@FETCH_STATUS = 0
-BEGIN
-	EXEC @lockResult = sys.sp_getapplock @nextWaitLock, 'Exclusive', 'Session', -1 -- todo timeout
-	IF @lockResult < 0 GOTO CODA
-	FETCH waitLocks INTO @nextWaitLock
-END
-
-WHILE 1 = 1
-BEGIN
-	DECLARE @i INT = 0
-	WHILE @i < @maxCount
-	BEGIN
-		DECLARE @holdLockName NVARCHAR(255) = @baseHoldLockName + CAST(@i AS NVARCHAR(MAX))
-		EXEC @lockResult = sys.sp_getapplock @holdLockName, 'Exclusive', 'Session'
-		IF @lockResult >= 0 GOTO CODA -- todo probably set success = true here
-	END
-
-	WAITFOR DELAY '00:00:00.005'
-END
-
-CODA:
--- release all wait locks
--- drop all temp tables
--- return selected hold lock so we can release it later
-
-
-    */
-
-    internal sealed class SemaphoreHelper
+    internal sealed class SqlSemaphore : ISqlSynchronizationStrategy<SqlSemaphore.Cookie>
     {
         private static readonly string AcquireSql = CreateAcquireQuery(),
             ReleaseSql = CreateReleaseQuery();
-
-        private readonly string _safeName;
+        
         private readonly int _maxCount;
 
-        public SemaphoreHelper(string semaphoreName, int maxCount)
+        public SqlSemaphore(int maxCount)
         {
-            this._safeName = ToSafeName(semaphoreName);
             this._maxCount = maxCount;
         }
 
         #region ---- Execution ----
-        public IDisposable TryAcquire(
-            ConnectionOrTransaction connectionOrTransaction,
-            int timeoutMillis,
-            CancellationToken cancellationToken)
+        public Cookie TryAcquire(ConnectionOrTransaction connectionOrTransaction, string resourceName, int timeoutMillis)
         {
             using (var command = this.CreateAcquireCommand(
                 connectionOrTransaction,
+                resourceName,
                 timeoutMillis,
                 resultCode: out var resultCode,
                 ticket: out var ticket,
                 markerTable: out var markerTable))
             {
-                command.ExecuteNonQueryAsync(cancellationToken);
-                return this.ProcessAcquireResult(connectionOrTransaction, resultCode: resultCode, ticket: ticket, markerTableName: markerTable);
+                // todo on timeout this should release the init lock. Alternatively, we could give the init lock a long but lesser
+                // timeout so that that would not happen
+                command.ExecuteNonQuery();
+                return ProcessAcquireResult(resultCode: resultCode, ticket: ticket, markerTableName: markerTable);
             }
         }
 
-        public async Task<IDisposable> TryAcquireAsync(
-            ConnectionOrTransaction connectionOrTransaction, 
-            int timeoutMillis, 
-            CancellationToken cancellationToken)
+        public async Task<Cookie> TryAcquireAsync(ConnectionOrTransaction connectionOrTransaction, string resourceName, int timeoutMillis, CancellationToken cancellationToken)
         {
             using (var command = this.CreateAcquireCommand(
-                connectionOrTransaction, 
-                timeoutMillis, 
-                resultCode: out var resultCode, 
-                ticket: out var ticket, 
+                connectionOrTransaction,
+                resourceName,
+                timeoutMillis,
+                resultCode: out var resultCode,
+                ticket: out var ticket,
                 markerTable: out var markerTable))
             {
                 await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
-                return this.ProcessAcquireResult(connectionOrTransaction, resultCode: resultCode, ticket: ticket, markerTableName: markerTable);
+                return ProcessAcquireResult(resultCode: resultCode, ticket: ticket, markerTableName: markerTable);
             }
         }
 
-        private LockHandle ProcessAcquireResult(
-            ConnectionOrTransaction connectionOrTransaction, 
+        public void Release(ConnectionOrTransaction connectionOrTransaction, string resourceName, Cookie lockCookie)
+        {
+            using (var command = this.CreateReleaseCommand(connectionOrTransaction, ticket: lockCookie.Ticket, markerTable: lockCookie.MarkerTable))
+            {
+                command.ExecuteNonQuery();
+            }
+        }
+        
+        private static Cookie ProcessAcquireResult(
             IDbDataParameter resultCode,
             IDbDataParameter ticket,
             IDbDataParameter markerTableName)
@@ -160,22 +69,40 @@ CODA:
             switch ((int)resultCode.Value)
             {
                 case 0:
-                    return new LockHandle(this, connectionOrTransaction, (string)ticket.Value, (string)markerTableName.Value);
+                    return new Cookie(ticket: (string)ticket.Value, markerTable: (string)markerTableName.Value);
                 case LockTimeout:
                     return null;
+                case FailedToAcquireWithSpaceRemaining:
+                    // todo better error message
+                    throw new InvalidOperationException(nameof(FailedToAcquireWithSpaceRemaining));
                 default:
+                    // todo
                     throw new NotImplementedException(resultCode.Value.ToString());
             }
         }
 
+        bool ISqlSynchronizationStrategy<Cookie>.IsUpgradeable => false;
+
+        public sealed class Cookie
+        {
+            public Cookie(string ticket, string markerTable)
+            {
+                this.Ticket = ticket;
+                this.MarkerTable = markerTable;
+            }
+
+            public string Ticket { get; }
+            public string MarkerTable { get; }
+        }
+
         private sealed class LockHandle : IDisposable
         {
-            private SemaphoreHelper _helper;
+            private SqlSemaphore _helper;
             private ConnectionOrTransaction _connectionOrTransaction;
             private string _ticket, _markerTable;
 
             public LockHandle(
-                SemaphoreHelper helper, 
+                SqlSemaphore helper, 
                 ConnectionOrTransaction connectionOrTransaction, 
                 string ticket, 
                 string markerTable)
@@ -204,7 +131,8 @@ CODA:
 
         #region ---- Command Creation ----
         private IDbCommand CreateAcquireCommand(
-            ConnectionOrTransaction connectionOrTransaction, 
+            ConnectionOrTransaction connectionOrTransaction,
+            string semaphoreName,
             int timeoutMillis,
             out IDbDataParameter resultCode,
             out IDbDataParameter ticket,
@@ -222,7 +150,7 @@ CODA:
               // (see https://msdn.microsoft.com/en-us/library/system.data.sqlclient.sqlcommand.commandtimeout%28v=vs.110%29.aspx)
               : 0;
 
-            command.Parameters.Add(command.CreateParameter(SemaphoreNameParameter, this._safeName));
+            command.Parameters.Add(command.CreateParameter(SemaphoreNameParameter, semaphoreName));
             command.Parameters.Add(command.CreateParameter(MaxCountParameter, this._maxCount));
             command.Parameters.Add(command.CreateParameter(TimeoutMillisParameter, timeoutMillis));
 
@@ -261,9 +189,10 @@ CODA:
         }
         #endregion
 
-        // TODO everything should be case-sensitive here to match sp_getapplock's behavior (we should add a common test for this)
+        // TODO everything should be case-SENSITIVE here to match sp_getapplock's behavior (we should add a common test for this)
+        // TODO change to SHA2; it's faster and more secure
         #region ---- Naming ----
-        private static string ToSafeName(string semaphoreName)
+        public static string ToSafeName(string semaphoreName)
         {
             // note: this is documented as being 128, but for temp tables it's actually 116
             const int MaxTableNameLength = 116;
@@ -315,6 +244,7 @@ CODA:
 
         private static string HashName(string name)
         {
+            // todo use SHA2
             using (var md5 = MD5.Create())
             {
                 var hashBytes = md5.ComputeHash(Encoding.UTF8.GetBytes(name.ToUpperInvariant()));
@@ -339,14 +269,13 @@ CODA:
             LockTimeout = -2,
             LockDeadlock = -3,
             LockCancel = -4,
-            GenericLockError = -5;
+            GenericLockError = -50; // todo
 
         private static string CreateAcquireQuery()
         {
-            // todo figure out cancellation story. The problem is that canceling after creating the table
-            // or taking one of the locks leaks the cancel. To address, we can instead run the first query with
-            // no cancellation support select out the marker table as we get it them so that we can clean it up later.
-            // Still need to figure out the best approach for the busy wait (e. g. manually running cleanup post-cancel)
+            // todo to improve cancellation story we should run 2 queries. The first will be the first part: non-blocking that should always succeed
+            // in at least creating the table. This query should not be cancellable since we wouldn't know which table(s) would be created on it. The
+            // second query will actually block/spin and should be cancellable. In the catch for that we can attempt cleanup.
 
             string GetSpinWaitSql(bool checkExpiry)
             {
@@ -354,7 +283,11 @@ CODA:
                 // todo instead of always looping from 0 and waiting on count-1, we should loop from rand [0, count)
                 // and just wait on the countth lock. This is important for reentrance since if you own the last lock
                 // then you'll spin without sleeping if we skip it
-                return $@"                    
+                
+                // todo comments
+
+                return $@"    
+                    SET @waitCount = 0
                     SET @i = 0
                     WHILE @i < @{MaxCountParameter}
                     BEGIN
@@ -365,37 +298,50 @@ CODA:
                                     IF DATEADD(ms, @lockTimeoutMillis, SYSUTCDATETIME()) > @expiry SET @lockTimeoutMillis = 1"
                                 : string.Empty
                         )}
-                        EXEC @lockResult = sys.sp_getapplock @{TicketLockNameParameter}, 'Exclusive', 'Session', {(checkExpiry ? "@lockTimeoutMillis" : "0")}
-                        IF @lockResult >= 0
+
+                        IF APPLOCK_MODE('public', @{TicketLockNameParameter}, 'Session') = 'NoLock'
                         BEGIN
-                            SET @{ResultCodeParameter} = {Success}
-                            GOTO CODA
+                            EXEC @lockResult = sys.sp_getapplock @{TicketLockNameParameter}, 'Exclusive', 'Session', {(checkExpiry ? "@lockTimeoutMillis" : "0")}
+                            IF @lockResult >= 0
+                            BEGIN
+                                SET @{ResultCodeParameter} = {Success}
+                                GOTO CODA
+                            END
+                            IF @lockResult < -1 GOTO CODA
+                            SET @waitCount = @waitCount + 1
                         END
-                        IF @lockResult < -1 GOTO CODA
                         SET @i = @i + 1
                     END";
             }
 
+            // todo combine declares
+
+            // todo for transaction locks we should do all locking at the transaction level.
+            // We can use DECLARE @lockScope NVARCHAR(32) = CASE @@TRANCOUNT WHEN 0 THEN 'Transaction' ELSE 'Session' END
+
+            const string SpidCountSeparator = "s";
+
             return $@"
                 DECLARE @lockResult INT
-                DECLARE @initializationLock NVARCHAR(MAX) = @{SemaphoreNameParameter} + '_init'
+                DECLARE @initializationLock NVARCHAR(MAX) = 'init_' + @{SemaphoreNameParameter} + '_init'
                 DECLARE @waiterNumber INT
                 DECLARE @waiterCount INT
                 DECLARE @i INT
                 DECLARE @markerTableSql NVARCHAR(MAX)
                 DECLARE @expiry DATETIME2
                 DECLARE @lockTimeoutMillis INT
-                DECLARE @busyWaitLock NVARCHAR(MAX) = @{SemaphoreNameParameter} + '_busyWait'
+                DECLARE @busyWaitLock NVARCHAR(MAX) = 'bw_' + @{SemaphoreNameParameter} + '_busyWait'
+                DECLARE @waitCount INT
 
                 EXEC @lockResult = sys.sp_getapplock @initializationLock, 'Exclusive', 'Session', -1
                 IF @lockResult < 0 GOTO CODA
 
-                SELECT @waiterNumber = ISNULL(MAX(CAST(RIGHT(name, (LEN(name) - (LEN(@{SemaphoreNameParameter}) + 2))) AS INT) + 1), 0),
+                SELECT @waiterNumber = ISNULL(MAX(CAST(SUBSTRING(name, CHARINDEX('{SpidCountSeparator}', name, LEN(@{SemaphoreNameParameter})) + 1, LEN(name)) AS INT) + 1), 0),
                     @waiterCount = COUNT(*)
-                FROM tempdb.sys.tables WITH(NOLOCK)
+                FROM (SELECT * FROM tempdb.sys.tables WITH(NOLOCK)) x
                 WHERE name LIKE '##' + REPLACE(REPLACE(REPLACE(@{SemaphoreNameParameter}, '\', '\\'), '_', '\_'), '%', '\%') + '%' ESCAPE '\'
 
-                SET @{MarkerTableNameParameter} = 'tempdb..##' + @{SemaphoreNameParameter} + CAST(@waiterNumber AS NVARCHAR(MAX))
+                SET @{MarkerTableNameParameter} = 'tempdb..##' + @{SemaphoreNameParameter} + CAST(@@SPID AS NVARCHAR(MAX)) + '{SpidCountSeparator}' + CAST(@waiterNumber AS NVARCHAR(MAX))
                 SET @markerTableSql = 'CREATE TABLE ' + @{MarkerTableNameParameter} + ' (_ BIT)'
                 EXEC sp_executeSql @markerTableSql
 
@@ -418,7 +364,13 @@ CODA:
                 BEGIN
                     {GetSpinWaitSql(checkExpiry: true)}
 
-                    IF SYSUTCDATETIME() > @expiry GOTO CODA
+                    IF SYSUTCDATETIME() > @expiry
+                    BEGIN
+                        SET @{ResultCodeParameter} = {LockTimeout}
+                        GOTO CODA
+                    END
+                    IF @waitCount = 0
+                        WAITFOR DELAY '00:00:00.005'
                 END
 
                 CODA:

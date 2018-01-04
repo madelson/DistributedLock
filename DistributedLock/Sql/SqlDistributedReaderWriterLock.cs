@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.Common;
 using System.Linq;
 using System.Runtime.ExceptionServices;
 using System.Text;
@@ -61,7 +60,7 @@ namespace Medallion.Threading.Sql
         /// <summary>
         /// Creates a lock with name <paramref name="lockName"/> which, when acquired,
         /// will be scoped to the given <paramref name="transaction"/>. The <paramref name="transaction"/> and its
-        /// <see cref="DbTransaction.Connection"/> are assumed to be externally managed: the <see cref="SqlDistributedLock"/> will 
+        /// <see cref="IDbTransaction.Connection"/> are assumed to be externally managed: the <see cref="SqlDistributedReaderWriterLock"/> will 
         /// not attempt to open, close, commit, roll back, or dispose them
         /// </summary>
         public SqlDistributedReaderWriterLock(string lockName, IDbTransaction transaction)
