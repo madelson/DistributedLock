@@ -36,7 +36,7 @@ namespace Medallion.Threading.Tests
             return null; // never gets here
         }
 
-        public static void AssertDoesNotThrow(Action action)
+        public static void AssertDoesNotThrow(Action action, string message = null)
         {
             try
             {
@@ -44,7 +44,7 @@ namespace Medallion.Threading.Tests
             }
             catch (Exception ex)
             {
-                Assert.Fail("Failed with " + ex);
+                Assert.Fail("Failed with " + ex + (message != null ? ": " + message : string.Empty));
             }
         }
     }

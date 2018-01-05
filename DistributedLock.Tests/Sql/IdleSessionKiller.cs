@@ -35,6 +35,7 @@ namespace Medallion.Threading.Tests.Sql
                             findIdleSessionsCommand.CommandText = @"
                                 SELECT session_id FROM sys.dm_exec_sessions
                                 WHERE session_id != @@SPID
+                                    AND login_name != 'sa'
                                     AND (last_request_start_time IS NULL OR last_request_start_time <= @expirationDate)
                                     AND (last_request_end_time IS NULL OR last_request_end_time <= @expirationDate)";
                             findIdleSessionsCommand.Parameters.Add(new SqlParameter("expirationDate", expirationDate));

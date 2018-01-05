@@ -299,9 +299,9 @@ namespace Medallion.Threading.Sql
                                 : string.Empty
                         )}
 
-                        IF APPLOCK_MODE('public', @{TicketLockNameParameter}, 'Session') = 'NoLock'
+                        IF APPLOCK_MODE('public', @{TicketLockNameParameter}, @lockScope) = 'NoLock'
                         BEGIN
-                            EXEC @lockResult = sys.sp_getapplock @{TicketLockNameParameter}, 'Exclusive', 'Session', {(checkExpiry ? "@lockTimeoutMillis" : "0")}
+                            EXEC @lockResult = sys.sp_getapplock @{TicketLockNameParameter}, 'Exclusive', @lockScope, {(checkExpiry ? "@lockTimeoutMillis" : "0")}
                             IF @lockResult >= 0
                             BEGIN
                                 SET @{ResultCodeParameter} = {Success}
@@ -315,10 +315,8 @@ namespace Medallion.Threading.Sql
             }
 
             // todo combine declares
-
-            // todo for transaction locks we should do all locking at the transaction level.
-            // We can use DECLARE @lockScope NVARCHAR(32) = CASE @@TRANCOUNT WHEN 0 THEN 'Transaction' ELSE 'Session' END
-
+            
+            // todo factor this into the length calcs
             const string SpidCountSeparator = "s";
 
             return $@"
@@ -332,8 +330,9 @@ namespace Medallion.Threading.Sql
                 DECLARE @lockTimeoutMillis INT
                 DECLARE @busyWaitLock NVARCHAR(MAX) = 'bw_' + @{SemaphoreNameParameter} + '_busyWait'
                 DECLARE @waitCount INT
+                DECLARE @lockScope NVARCHAR(32) = CASE @@TRANCOUNT WHEN 0 THEN 'Session' ELSE 'Transaction' END
 
-                EXEC @lockResult = sys.sp_getapplock @initializationLock, 'Exclusive', 'Session', -1
+                EXEC @lockResult = sys.sp_getapplock @initializationLock, 'Exclusive', @lockScope, -1
                 IF @lockResult < 0 GOTO CODA
 
                 SELECT @waiterNumber = ISNULL(MAX(CAST(SUBSTRING(name, CHARINDEX('{SpidCountSeparator}', name, LEN(@{SemaphoreNameParameter})) + 1, LEN(name)) AS INT) + 1), 0),
@@ -353,11 +352,11 @@ namespace Medallion.Threading.Sql
                     GOTO CODA
                 END
                 
-                EXEC sys.sp_releaseapplock @initializationLock, 'Session'
+                EXEC sys.sp_releaseapplock @initializationLock, @lockScope
 
                 SET @expiry = CASE WHEN @{TimeoutMillisParameter} < 0 THEN NULL ELSE DATEADD(ms, @{TimeoutMillisParameter}, SYSUTCDATETIME()) END
                 
-                EXEC @lockResult = sys.sp_getapplock @busyWaitLock, 'Exclusive', 'Session', @{TimeoutMillisParameter}
+                EXEC @lockResult = sys.sp_getapplock @busyWaitLock, 'Exclusive', @lockScope, @{TimeoutMillisParameter}
                 IF @lockResult < 0 GOTO CODA
 
                 WHILE 1 = 1
@@ -374,10 +373,10 @@ namespace Medallion.Threading.Sql
                 END
 
                 CODA:
-                IF APPLOCK_MODE('public', @initializationLock, 'Session') != 'NoLock'
-                    EXEC sys.sp_releaseapplock @initializationLock, 'Session'
-                IF APPLOCK_MODE('public', @busyWaitLock, 'Session') != 'NoLock'
-                    EXEC sys.sp_releaseapplock @busyWaitLock, 'Session'
+                IF APPLOCK_MODE('public', @initializationLock, @lockScope) != 'NoLock'
+                    EXEC sys.sp_releaseapplock @initializationLock, @lockScope
+                IF APPLOCK_MODE('public', @busyWaitLock, @lockScope) != 'NoLock'
+                    EXEC sys.sp_releaseapplock @busyWaitLock, @lockScope
                 IF @{ResultCodeParameter} IS NULL
                     SET @{ResultCodeParameter} = CASE @lockResult 
                         WHEN -1 THEN {LockTimeout}
@@ -398,8 +397,10 @@ namespace Medallion.Threading.Sql
 
         private static string CreateReleaseQuery()
         {
+            // todo probably best to check release exit code here
             return $@"
-                EXEC sp_releaseAppLock @{TicketLockNameParameter}, 'Session'
+                DECLARE @lockScope NVARCHAR(32) = CASE @@TRANCOUNT WHEN 0 THEN 'Session' ELSE 'Transaction' END
+                EXEC sp_releaseAppLock @{TicketLockNameParameter}, @lockScope
                 DECLARE @markerTableSql NVARCHAR(MAX) = 'DROP TABLE ' + @{MarkerTableNameParameter}
                 EXEC sp_executeSql @markerTableSql";
         }

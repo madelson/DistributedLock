@@ -36,7 +36,7 @@ namespace DistributedLockTaker.cs
                     handle = new SqlDistributedSemaphore(name, maxCount: 1, connectionString: ConnectionString).Acquire();
                     break;
                 case "SqlDistributedSemaphore10":
-                    handle = new SqlDistributedSemaphore(name, maxCount: 10, connectionString: ConnectionString).Acquire();
+                    handle = new SqlDistributedSemaphore(name + "_mostlyDrained", maxCount: 10, connectionString: ConnectionString).Acquire();
                     break;
                 case "SystemDistributedLock":
                     handle = new SystemDistributedLock(name).Acquire();

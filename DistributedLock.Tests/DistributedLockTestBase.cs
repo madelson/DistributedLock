@@ -173,7 +173,7 @@ namespace Medallion.Threading.Tests
             foreach (var name in new[] { string.Empty, new string('a', 1000), @"\\\\\", new string('\\', 1000) })
             {
                 var safeName = this.GetSafeLockName(name);
-                TestHelper.AssertDoesNotThrow(() => this.CreateLock(safeName).Acquire(TimeSpan.FromSeconds(10)).Dispose());
+                TestHelper.AssertDoesNotThrow(() => this.CreateLock(safeName).Acquire(TimeSpan.FromSeconds(10)).Dispose(), $"{this.GetType().Name}: could not acquire '{name}'");
             }
         }
 
@@ -222,18 +222,19 @@ namespace Medallion.Threading.Tests
         [TestMethod]
         public void TestCrossProcess()
         {
-            var command = this.RunLockTaker(this.CrossProcessLockType, "cpl");
+            var lockName = "cpl" + this.GetType().Name;
+            var command = this.RunLockTaker(this.CrossProcessLockType, lockName);
             command.Task.Wait(TimeSpan.FromSeconds(.5)).ShouldEqual(false, this.GetType().ToString());
 
-            var @lock = this.CreateLock("cpl");
-            @lock.TryAcquire().ShouldEqual(null);
+            var @lock = this.CreateLock(lockName);
+            @lock.TryAcquire().ShouldEqual(null, this.GetType().Name);
 
             command.StandardInput.WriteLine("done");
             command.StandardInput.Flush();
 
             using (var handle = @lock.TryAcquire(TimeSpan.FromSeconds(10)))
             {
-                Assert.IsNotNull(handle);
+                Assert.IsNotNull(handle, this.GetType().Name);
             }
         }
 
@@ -263,7 +264,7 @@ namespace Medallion.Threading.Tests
   
         private void CrossProcessAbandonmentHelper(bool asyncWait, bool kill) 
         {
-            var name = "cpl-" + asyncWait + "-" + kill;
+            var name = this.GetSafeLockName($"cpl-{asyncWait}-{kill}-{this.GetType().Name}");
             var command = this.RunLockTaker(this.CrossProcessLockType, name);
             command.Task.Wait(TimeSpan.FromSeconds(.5)).ShouldEqual(false, this.GetType().ToString());
 
@@ -272,7 +273,7 @@ namespace Medallion.Threading.Tests
             var acquireTask = asyncWait
                 ? @lock.TryAcquireAsync(TimeSpan.FromSeconds(10))
                 : Task.Run(() => @lock.TryAcquire(TimeSpan.FromSeconds(10)));
-            acquireTask.Wait(TimeSpan.FromSeconds(.1)).ShouldEqual(false);
+            acquireTask.Wait(TimeSpan.FromSeconds(.1)).ShouldEqual(false, this.GetType().Name);
 
             if (kill)
             {
@@ -286,7 +287,7 @@ namespace Medallion.Threading.Tests
 
             using (var handle = acquireTask.Result)
             {
-                Assert.IsNotNull(handle);
+                Assert.IsNotNull(handle, this.GetType().Name);
             }
         }
 
@@ -327,7 +328,7 @@ namespace Medallion.Threading.Tests
 
         internal virtual bool IsReentrant => false;
         internal virtual bool SupportsInProcessAbandonment => true;
-        internal virtual string CrossProcessLockType => this.CreateLock("a").GetType().Name;
+        internal virtual string CrossProcessLockType => this.CreateLock(Guid.NewGuid().ToString()).GetType().Name;
 
         internal abstract IDistributedLock CreateLock(string name);
 

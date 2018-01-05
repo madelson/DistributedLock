@@ -49,7 +49,10 @@ namespace Medallion.Threading.Tests.Sql
 
         internal override IDistributedLock CreateLock(string name)
         {
-            var semaphore = new SqlDistributedSemaphore(name, MaxCount, SqlDistributedLockTest.ConnectionString);
+            // note: we append to the name here because then we are creating handles for known semaphores that won't
+            // be disposed until all tests finish. As a result, any other semaphore test using those names and a count of 1 will
+            // behave oddly
+            var semaphore = new SqlDistributedSemaphore(name + "_mostlyDrained", MaxCount, SqlDistributedLockTest.ConnectionString);
             lock (MostlyDrainedSemaphores)
             {
                 if (MostlyDrainedSemaphores.Add(name))
