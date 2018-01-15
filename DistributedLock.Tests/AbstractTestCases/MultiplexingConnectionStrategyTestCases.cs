@@ -34,7 +34,7 @@ namespace Medallion.Threading.Tests.Sql
                     GC.Collect();
                     GC.WaitForPendingFinalizers();
                     handleReference.IsAlive.ShouldEqual(false);
-                    Thread.Sleep(TimeSpan.FromSeconds(5)); // todo make this < 5
+                    Thread.Sleep(TimeSpan.FromSeconds(5));
 
                     using (var handle = lock2.TryAcquire())
                     {

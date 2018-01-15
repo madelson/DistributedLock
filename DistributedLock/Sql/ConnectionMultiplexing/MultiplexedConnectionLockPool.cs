@@ -180,7 +180,6 @@ namespace Medallion.Threading.Sql.ConnectionMultiplexing
         }
 
         #region ---- Cleanup ----
-        // todo should this be millis?
         // mutable for testing purposes
         internal static int CleanupIntervalSeconds { get; set; } = 15;
 
