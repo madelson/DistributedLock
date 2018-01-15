@@ -62,8 +62,7 @@ namespace Medallion.Threading.Sql
             }
         }
 
-        public static bool IsClosedOrBroken(this IDbConnection connection) 
-            => connection.State == ConnectionState.Closed || connection.State == ConnectionState.Broken;
+        public static bool IsClosedOrBroken(this IDbConnection connection) => connection.State == ConnectionState.Closed || connection.State == ConnectionState.Broken;
 
         public static IDbDataParameter CreateParameter(this IDbCommand command, string name, object value)
         {

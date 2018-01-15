@@ -8,11 +8,11 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading.Sql
 {
-    internal sealed class OwnedConnectionDistributedLock : IInternalSqlDistributedLock
+    internal sealed class OwnedConnectionSqlDistributedLock : IInternalSqlDistributedLock
     {
         private readonly string lockName, connectionString;
 
-        public OwnedConnectionDistributedLock(string lockName, string connectionString)
+        public OwnedConnectionSqlDistributedLock(string lockName, string connectionString)
         {
             this.lockName = lockName;
             this.connectionString = connectionString;
@@ -86,7 +86,7 @@ namespace Medallion.Threading.Sql
             var connection = ((LockScope<TLockCookie>)contextHandle).Connection;
             if (connection == null) { throw new ObjectDisposedException(nameof(contextHandle), "the provided handle is already disposed"); }
 
-            return new ConnectionScopedSqlDistributedLock(this.lockName, connection);
+            return new ExternalConnectionOrTransactionSqlDistributedLock(this.lockName, connection);
         }
         
         private sealed class LockScope<TLockCookie> : IDisposable

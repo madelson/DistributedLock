@@ -42,7 +42,7 @@ namespace Medallion.Threading.Sql
         /// not attempt to open, close, or dispose it
         /// </summary>
         public SqlDistributedSemaphore(string semaphoreName, int maxCount, IDbConnection connection)
-            : this(semaphoreName, maxCount, name => new ConnectionScopedSqlDistributedLock(name, connection))
+            : this(semaphoreName, maxCount, name => new ExternalConnectionOrTransactionSqlDistributedLock(name, new ConnectionOrTransaction(connection)))
         {
             if (connection == null) { throw new ArgumentNullException(nameof(connection)); }
         }
@@ -55,7 +55,7 @@ namespace Medallion.Threading.Sql
         /// </summary>
         public SqlDistributedSemaphore(string semaphoreName, int maxCount, IDbTransaction transaction)
             // todo move ToSafeName call to inner method; pass through func<name, iinternal>
-            : this(semaphoreName, maxCount, name => new TransactionScopedSqlDistributedLock(name, transaction))
+            : this(semaphoreName, maxCount, name => new ExternalConnectionOrTransactionSqlDistributedLock(name, new ConnectionOrTransaction(transaction)))
         {
             if (transaction == null) { throw new ArgumentNullException(nameof(transaction)); }
         }

@@ -187,16 +187,12 @@ namespace Medallion.Threading.Sql
 
         public ConnectionOrTransaction(IDbConnection connection)
         {
-            if (connection == null) { throw new ArgumentNullException(nameof(connection)); }
-
-            this.connectionOrTransaction = connection;
+            this.connectionOrTransaction = connection ?? throw new ArgumentNullException(nameof(connection));
         }
 
         public ConnectionOrTransaction(IDbTransaction transaction)
         {
-            if (transaction == null) { throw new ArgumentNullException(nameof(transaction)); }
-
-            this.connectionOrTransaction = transaction;
+            this.connectionOrTransaction = transaction ?? throw new ArgumentNullException(nameof(transaction));
         }
 
         public static implicit operator ConnectionOrTransaction(DbTransaction transaction) => new ConnectionOrTransaction(transaction);

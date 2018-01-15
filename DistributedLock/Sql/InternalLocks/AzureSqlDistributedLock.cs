@@ -46,7 +46,7 @@ namespace Medallion.Threading.Sql
             try
             {
                 connection.Open();
-                var internalLock = new ConnectionScopedSqlDistributedLock(this.lockName, connection);
+                var internalLock = new ExternalConnectionOrTransactionSqlDistributedLock(this.lockName, connection);
                 var internalHandle = internalLock.TryAcquire(timeoutMillis, strategy, contextHandle: null);
                 if (internalHandle != null)
                 {
@@ -93,7 +93,7 @@ namespace Medallion.Threading.Sql
             try
             {
                 await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
-                var internalLock = new ConnectionScopedSqlDistributedLock(this.lockName, connection);
+                var internalLock = new ExternalConnectionOrTransactionSqlDistributedLock(this.lockName, connection);
                 var internalHandle = await internalLock.TryAcquireAsync(timeoutMillis, strategy, cancellationToken, contextHandle: null).ConfigureAwait(false);
                 if (internalHandle != null)
                 {
@@ -117,7 +117,7 @@ namespace Medallion.Threading.Sql
 
             public LockScope(
                 IDisposable internalHandle, 
-                ConnectionScopedSqlDistributedLock internalLock,
+                ExternalConnectionOrTransactionSqlDistributedLock internalLock,
                 KeepaliveHelper keepalive,
                 bool ownsKeepalive)
             {
@@ -128,7 +128,7 @@ namespace Medallion.Threading.Sql
             }
             
             public IDisposable InternalHandle { get; private set; }
-            public ConnectionScopedSqlDistributedLock InternalLock { get; private set; }
+            public ExternalConnectionOrTransactionSqlDistributedLock InternalLock { get; private set; }
             public KeepaliveHelper Keepalive => this.keepalive;
 
             public void Dispose()

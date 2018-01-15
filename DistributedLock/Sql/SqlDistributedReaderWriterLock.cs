@@ -52,9 +52,8 @@ namespace Medallion.Threading.Sql
         /// close, or dispose it
         /// </summary>
         public SqlDistributedReaderWriterLock(string lockName, IDbConnection connection)
-            : this(lockName, new ConnectionScopedSqlDistributedLock(lockName, connection))
+            : this(lockName, new ExternalConnectionOrTransactionSqlDistributedLock(lockName, new ConnectionOrTransaction(connection ?? throw new ArgumentNullException(nameof(connection)))))
         {
-            if (connection == null) { throw new ArgumentNullException(nameof(connection)); }
         }
 
         /// <summary>
@@ -64,9 +63,8 @@ namespace Medallion.Threading.Sql
         /// not attempt to open, close, commit, roll back, or dispose them
         /// </summary>
         public SqlDistributedReaderWriterLock(string lockName, IDbTransaction transaction)
-            : this(lockName, new TransactionScopedSqlDistributedLock(lockName, transaction))
+            : this(lockName, new ExternalConnectionOrTransactionSqlDistributedLock(lockName, new ConnectionOrTransaction(transaction ?? throw new ArgumentNullException(nameof(transaction)))))
         {
-            if (transaction == null) { throw new ArgumentNullException(nameof(transaction)); }
         }
 
         private SqlDistributedReaderWriterLock(string lockName, IInternalSqlDistributedLock internalLock)

@@ -94,7 +94,7 @@ namespace Medallion.Threading.Sql
             var transaction = ((LockScope)contextHandle).Transaction;
             if (transaction == null) { throw new ObjectDisposedException(nameof(contextHandle), "the provided handle is already disposed"); }
 
-            return new TransactionScopedSqlDistributedLock(this.lockName, transaction);
+            return new ExternalConnectionOrTransactionSqlDistributedLock(this.lockName, transaction);
         }
         
         private sealed class LockScope : IDisposable

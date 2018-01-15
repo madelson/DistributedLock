@@ -17,7 +17,7 @@ namespace Medallion.Threading.Sql
         {
             this.lockName = lockName;
             this.connectionString = connectionString;
-            this.fallbackLock = new OwnedConnectionDistributedLock(lockName: lockName, connectionString: connectionString);
+            this.fallbackLock = new OwnedConnectionSqlDistributedLock(lockName: lockName, connectionString: connectionString);
         }
 
         public IDisposable TryAcquire<TLockCookie>(int timeoutMillis, ISqlSynchronizationStrategy<TLockCookie> strategy, IDisposable contextHandle)
