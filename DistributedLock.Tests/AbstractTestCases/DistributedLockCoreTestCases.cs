@@ -202,6 +202,33 @@ namespace Medallion.Threading.Tests
         }
 
         [TestMethod]
+        public void TestGetSafeLockNameIsCaseInsensitive()
+        {
+            var longName1 = new string('a', 1000);
+            var longName2 = new string('a', longName1.Length - 1) + "A";
+            StringComparer.OrdinalIgnoreCase.Equals(longName1, longName2).ShouldEqual(true, "sanity check");
+
+            using (var engine = new TEngine())
+            {
+                Assert.AreNotEqual(engine.GetSafeLockName(longName1), engine.GetSafeLockName(longName2));
+            }
+        }
+
+        [TestMethod]
+        public void TestLockNamesAreCaseInsensitive()
+        {
+            using (var engine = new TEngine())
+            {
+                var baseName = this.GetType().Name + nameof(TestLockNamesAreCaseInsensitive);
+                using (engine.CreateLockWithExactName(baseName.ToLowerInvariant()).Acquire())
+                using (var handle = engine.CreateLockWithExactName(baseName.ToUpperInvariant()).TryAcquire())
+                {
+                    (handle == null).ShouldEqual(false, this.GetType().Name);
+                }
+            }
+        }
+
+        [TestMethod]
         public void TestCanceledAlreadyThrowsForSyncAndDoesNotThrowForAsync()
         {
             using (var engine = new TEngine())

@@ -188,14 +188,14 @@ namespace Medallion.Threading.Sql
             return command;
         }
         #endregion
-
-        // TODO everything should be case-SENSITIVE here to match sp_getapplock's behavior (we should add a common test for this)
-        // TODO change to SHA2; it's faster and more secure
+        
         #region ---- Naming ----
         public static string ToSafeName(string semaphoreName)
         {
-            // note: this is documented as being 128, but for temp tables it's actually 116
-            const int MaxTableNameLength = 116;
+            // the max table name length is 128 for global and 116 for local temp tables. While we don't use local temp tables
+            // currently, to be conservative we use the lower cap. We're using 115 not 116 to reflect the missing '#' which counts
+            // towards the limit
+            const int MaxTableNameLength = 115;
             const string Suffix = "semaphore";
             // technically this is long.MaxValue.ToString().Length. I'm using long vs. int to give future flexibility
             const int IntegerSuffixMaxLength = 19;
@@ -216,7 +216,7 @@ namespace Medallion.Threading.Sql
             for (var i = 0; i < semaphoreName.Length; ++i)
             {
                 var @char = semaphoreName[i];
-                if (!('a' <= @char && @char <= 'z'))
+                if (!IsAsciiLetterOrDigit(@char))
                 {
                     if (modifiedName == null)
                     {
@@ -224,14 +224,7 @@ namespace Medallion.Threading.Sql
                         for (var j = 0; j < i; ++j) { modifiedName.Append(semaphoreName[j]); }
                     }
 
-                    if ('A' <= @char && @char <= 'Z')
-                    {
-                        modifiedName.Append(char.ToLowerInvariant(@char));
-                    }
-                    else
-                    {
-                        modifiedName.Append(((int)@char).ToString("x"));
-                    }
+                    modifiedName.Append(((int)@char).ToString("x"));
                 }
                 else if (modifiedName != null)
                 {
@@ -242,12 +235,15 @@ namespace Medallion.Threading.Sql
             return modifiedName?.ToString() ?? semaphoreName;
         }
 
+        private static bool IsAsciiLetterOrDigit(char @char) => ('a' <= @char && @char <= 'z')
+            || ('A' <= @char && @char <= 'Z')
+            || ('0' <= @char && @char <= '9');
+
         private static string HashName(string name)
         {
-            // todo use SHA2
-            using (var md5 = MD5.Create())
+            using (var hashAlgorithm = SHA256.Create())
             {
-                var hashBytes = md5.ComputeHash(Encoding.UTF8.GetBytes(name.ToUpperInvariant()));
+                var hashBytes = hashAlgorithm.ComputeHash(Encoding.UTF8.GetBytes(name));
                 return BitConverter.ToString(hashBytes)
                     .Replace("-", string.Empty)
                     .ToLowerInvariant();
