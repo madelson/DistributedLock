@@ -96,8 +96,7 @@ namespace Medallion.Threading.Sql
 
             return new TransactionScopedSqlDistributedLock(this.lockName, transaction);
         }
-
-        // todo could use releaseaction
+        
         private sealed class LockScope : IDisposable
         {
             private SqlTransaction transaction;

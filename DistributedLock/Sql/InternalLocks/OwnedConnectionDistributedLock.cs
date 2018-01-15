@@ -88,8 +88,7 @@ namespace Medallion.Threading.Sql
 
             return new ConnectionScopedSqlDistributedLock(this.lockName, connection);
         }
-
-        // todo could use releaseaction
+        
         private sealed class LockScope<TLockCookie> : IDisposable
             where TLockCookie : class
         {
