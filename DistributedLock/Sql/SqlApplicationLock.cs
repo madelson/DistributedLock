@@ -10,57 +10,40 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading.Sql
 {
-    // todo refactor to be non-static
-    internal static class SqlApplicationLock
+    internal sealed class SqlApplicationLock : ISqlSynchronizationStrategy<object>
     {
-        public static readonly ISqlSynchronizationStrategy<object> SharedLock = new SynchronizationStrategy(Mode.Shared),
-            UpdateLock = new SynchronizationStrategy(Mode.Update),
-            ExclusiveLock = new SynchronizationStrategy(Mode.Exclusive);
+        public static readonly SqlApplicationLock SharedLock = new SqlApplicationLock(Mode.Shared),
+            UpdateLock = new SqlApplicationLock(Mode.Update),
+            ExclusiveLock = new SqlApplicationLock(Mode.Exclusive);
 
         private static readonly object Cookie = new object();
+        private readonly Mode mode;
 
-        private sealed class SynchronizationStrategy : ISqlSynchronizationStrategy<object>
+        private SqlApplicationLock(Mode mode)
         {
-            private readonly Mode mode;
-
-            public SynchronizationStrategy(Mode mode)
-            {
-                this.mode = mode;
-            }
-
-            bool ISqlSynchronizationStrategy<object>.IsUpgradeable => this.mode == Mode.Update;
-
-            void ISqlSynchronizationStrategy<object>.Release(ConnectionOrTransaction connectionOrTransaction, string resourceName, object lockCookie)
-            {
-                ExecuteReleaseCommand(connectionOrTransaction, resourceName);
-            }
-
-            object ISqlSynchronizationStrategy<object>.TryAcquire(ConnectionOrTransaction connectionOrTransaction, string resourceName, int timeoutMillis)
-            {
-                return ExecuteAcquireCommand(connectionOrTransaction, resourceName, timeoutMillis, this.mode)
-                    ? Cookie
-                    : null;
-            }
-
-            async Task<object> ISqlSynchronizationStrategy<object>.TryAcquireAsync(ConnectionOrTransaction connectionOrTransaction, string resourceName, int timeoutMillis, CancellationToken cancellationToken)
-            {
-                return await ExecuteAcquireCommandAsync(connectionOrTransaction, resourceName, timeoutMillis, this.mode, cancellationToken).ConfigureAwait(false)
-                    ? Cookie
-                    : null;
-            }
+            this.mode = mode;
         }
 
-        private enum Mode
+        bool ISqlSynchronizationStrategy<object>.IsUpgradeable => this.mode == Mode.Update;
+
+        object ISqlSynchronizationStrategy<object>.TryAcquire(ConnectionOrTransaction connectionOrTransaction, string resourceName, int timeoutMillis)
         {
-            Shared,
-            Update,
-            Exclusive,
+            return ExecuteAcquireCommand(connectionOrTransaction, resourceName, timeoutMillis, this.mode) ? Cookie : null;
+        }
+
+        async Task<object> ISqlSynchronizationStrategy<object>.TryAcquireAsync(ConnectionOrTransaction connectionOrTransaction, string resourceName, int timeoutMillis, CancellationToken cancellationToken)
+        {
+            return await ExecuteAcquireCommandAsync(connectionOrTransaction, resourceName, timeoutMillis, this.mode, cancellationToken).ConfigureAwait(false) ? Cookie : null;
+        }
+
+        void ISqlSynchronizationStrategy<object>.Release(ConnectionOrTransaction connectionOrTransaction, string resourceName, object lockCookie)
+        {
+            ExecuteReleaseCommand(connectionOrTransaction, resourceName);
         }
 
         private static bool ExecuteAcquireCommand(ConnectionOrTransaction connectionOrTransaction, string lockName, int timeoutMillis, Mode mode)
         {
-            IDbDataParameter returnValue;
-            using (var command = CreateAcquireCommand(connectionOrTransaction, lockName, timeoutMillis, mode, out returnValue))
+            using (var command = CreateAcquireCommand(connectionOrTransaction, lockName, timeoutMillis, mode, out var returnValue))
             {
                 command.ExecuteNonQuery();
                 return ParseExitCode((int)returnValue.Value);
@@ -69,8 +52,7 @@ namespace Medallion.Threading.Sql
 
         private static async Task<bool> ExecuteAcquireCommandAsync(ConnectionOrTransaction connectionOrTransaction, string lockName, int timeoutMillis, Mode mode, CancellationToken cancellationToken)
         {
-            IDbDataParameter returnValue;
-            using (var command = CreateAcquireCommand(connectionOrTransaction, lockName, timeoutMillis, mode, out returnValue))
+            using (var command = CreateAcquireCommand(connectionOrTransaction, lockName, timeoutMillis, mode, out var returnValue))
             {
                 await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
                 return ParseExitCode((int)returnValue.Value);
@@ -79,8 +61,7 @@ namespace Medallion.Threading.Sql
 
         private static void ExecuteReleaseCommand(ConnectionOrTransaction connectionOrTransaction, string lockName)
         {
-            IDbDataParameter returnValue;
-            using (var command = CreateReleaseCommand(connectionOrTransaction, lockName, out returnValue))
+            using (var command = CreateReleaseCommand(connectionOrTransaction, lockName, out var returnValue))
             {
                 command.ExecuteNonQuery();
                 ParseExitCode((int)returnValue.Value);
@@ -161,10 +142,7 @@ namespace Medallion.Threading.Sql
             }
         }
 
-        private static string GetErrorMessage(int exitCode, string type)
-        {
-            return string.Format("The request for the distribute lock failed with exit code {0} ({1})", exitCode, type);
-        }
+        private static string GetErrorMessage(int exitCode, string type) => $"The request for the distribute lock failed with exit code {exitCode} ({type})";
 
         private static string GetModeString(Mode mode)
         {
@@ -176,27 +154,12 @@ namespace Medallion.Threading.Sql
                 default: throw new ArgumentException(nameof(mode));
             }
         }
-    }
 
-    internal struct ConnectionOrTransaction
-    {
-        private object connectionOrTransaction;
-
-        public IDbTransaction Transaction => this.connectionOrTransaction as IDbTransaction;
-        public IDbConnection Connection => this.Transaction?.Connection ?? (this.connectionOrTransaction as IDbConnection);
-
-        public ConnectionOrTransaction(IDbConnection connection)
+        private enum Mode
         {
-            this.connectionOrTransaction = connection ?? throw new ArgumentNullException(nameof(connection));
+            Shared,
+            Update,
+            Exclusive,
         }
-
-        public ConnectionOrTransaction(IDbTransaction transaction)
-        {
-            this.connectionOrTransaction = transaction ?? throw new ArgumentNullException(nameof(transaction));
-        }
-
-        public static implicit operator ConnectionOrTransaction(DbTransaction transaction) => new ConnectionOrTransaction(transaction);
-
-        public static implicit operator ConnectionOrTransaction(DbConnection connection) => new ConnectionOrTransaction(connection);
     }
 }

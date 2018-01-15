@@ -72,4 +72,26 @@ namespace Medallion.Threading.Sql
             return parameter;
         }
     }
+
+    internal struct ConnectionOrTransaction
+    {
+        private object connectionOrTransaction;
+
+        public IDbTransaction Transaction => this.connectionOrTransaction as IDbTransaction;
+        public IDbConnection Connection => this.Transaction?.Connection ?? (this.connectionOrTransaction as IDbConnection);
+
+        public ConnectionOrTransaction(IDbConnection connection)
+        {
+            this.connectionOrTransaction = connection ?? throw new ArgumentNullException(nameof(connection));
+        }
+
+        public ConnectionOrTransaction(IDbTransaction transaction)
+        {
+            this.connectionOrTransaction = transaction ?? throw new ArgumentNullException(nameof(transaction));
+        }
+
+        public static implicit operator ConnectionOrTransaction(DbTransaction transaction) => new ConnectionOrTransaction(transaction);
+
+        public static implicit operator ConnectionOrTransaction(DbConnection connection) => new ConnectionOrTransaction(connection);
+    }
 }
