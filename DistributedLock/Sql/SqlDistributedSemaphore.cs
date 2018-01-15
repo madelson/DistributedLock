@@ -7,6 +7,9 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading.Sql
 {
+    /// <summary>
+    /// Implements a distributed semaphore using SQL Server constructs.
+    /// </summary>
     public class SqlDistributedSemaphore : IDistributedLock
     {
         private readonly IInternalSqlDistributedLock internalLock;
@@ -54,7 +57,6 @@ namespace Medallion.Threading.Sql
         /// the <see cref="SqlDistributedSemaphore"/> will not attempt to open, close, commit, roll back, or dispose them
         /// </summary>
         public SqlDistributedSemaphore(string semaphoreName, int maxCount, IDbTransaction transaction)
-            // todo move ToSafeName call to inner method; pass through func<name, iinternal>
             : this(semaphoreName, maxCount, name => new ExternalConnectionOrTransactionSqlDistributedLock(name, new ConnectionOrTransaction(transaction)))
         {
             if (transaction == null) { throw new ArgumentNullException(nameof(transaction)); }
@@ -71,20 +73,19 @@ namespace Medallion.Threading.Sql
         #endregion
 
         #region ---- Public API ----
-        // todo all acquire doc comments
         /// <summary>
-        /// Attempts to acquire the lock synchronously. Usage:
+        /// Attempts to acquire a semaphore ticket synchronously. Usage:
         /// <code>
-        ///     using (var handle = myLock.TryAcquire(...))
+        ///     using (var handle = mySemaphore.TryAcquire(...))
         ///     {
-        ///         if (handle != null) { /* we have the lock! */ }
+        ///         if (handle != null) { /* success! */ }
         ///     }
-        ///     // dispose releases the lock if we took it
+        ///     // dispose releases the ticket if we took it
         /// </code>
         /// </summary>
-        /// <param name="timeout">How long to wait before giving up on acquiring the lock. Defaults to 0</param>
+        /// <param name="timeout">How long to wait before giving up on acquiring the semaphore. Defaults to 0</param>
         /// <param name="cancellationToken">Specifies a token by which the wait can be canceled</param>
-        /// <returns>An <see cref="IDisposable"/> "handle" which can be used to release the lock, or null if the lock was not taken</returns>
+        /// <returns>An <see cref="IDisposable"/> "handle" which can be used to release the semaphore ticket, or null if no ticket taken</returns>
         public IDisposable TryAcquire(TimeSpan timeout = default(TimeSpan), CancellationToken cancellationToken = default(CancellationToken))
         {
             return cancellationToken.CanBeCanceled
@@ -95,16 +96,16 @@ namespace Medallion.Threading.Sql
         }
 
         /// <summary>
-        /// Acquires the lock synchronously, failing with <see cref="TimeoutException"/> if the wait times out
+        /// Acquires a semaphore ticket synchronously, failing with <see cref="TimeoutException"/> if the wait times out.
         /// <code>
-        ///     using (myLock.Acquire(...))
+        ///     using (mySemaphore.Acquire(...))
         ///     {
-        ///         // we have the lock
+        ///         // success!
         ///     }
-        ///     // dispose releases the lock
+        ///     // dispose releases the ticket
         /// </code>
         /// </summary>
-        /// <param name="timeout">How long to wait before giving up on acquiring the lock. Defaults to <see cref="Timeout.InfiniteTimeSpan"/></param>
+        /// <param name="timeout">How long to wait before giving up on acquiring the ticket. Defaults to <see cref="Timeout.InfiniteTimeSpan"/></param>
         /// <param name="cancellationToken">Specifies a token by which the wait can be canceled</param>
         /// <returns>An <see cref="IDisposable"/> "handle" which can be used to release the lock</returns>
         public IDisposable Acquire(TimeSpan? timeout = null, CancellationToken cancellationToken = default(CancellationToken))
@@ -112,36 +113,35 @@ namespace Medallion.Threading.Sql
             return DistributedLockHelpers.Acquire(this, timeout, cancellationToken);
         }
 
-        // todo comments
         /// <summary>
-        /// Attempts to acquire the lock asynchronously. Usage:
+        /// Attempts to acquire a semaphore ticket asynchronously. Usage:
         /// <code>
-        ///     using (var handle = await myLock.TryAcquireAsync(...))
+        ///     using (var handle = await mySemaphore.TryAcquireAsync(...))
         ///     {
-        ///         if (handle != null) { /* we have the lock! */ }
+        ///         if (handle != null) { /* success! */ }
         ///     }
-        ///     // dispose releases the lock if we took it
+        ///     // dispose releases the ticket if we took it
         /// </code>
         /// </summary>
-        /// <param name="timeout">How long to wait before giving up on acquiring the lock. Defaults to 0</param>
+        /// <param name="timeout">How long to wait before giving up on acquiring the semaphore. Defaults to 0</param>
         /// <param name="cancellationToken">Specifies a token by which the wait can be canceled</param>
-        /// <returns>An <see cref="IDisposable"/> "handle" which can be used to release the lock, or null if the lock was not taken</returns>
+        /// <returns>An <see cref="IDisposable"/> "handle" which can be used to release the semaphore ticket, or null if no ticket taken</returns>
         public AwaitableDisposable<IDisposable> TryAcquireAsync(TimeSpan timeout = default(TimeSpan), CancellationToken cancellationToken = default(CancellationToken))
         {
             return new AwaitableDisposable<IDisposable>(this.internalLock.TryAcquireAsync(timeout.ToInt32Timeout(), this.strategy, cancellationToken, contextHandle: null));
         }
 
         /// <summary>
-        /// Acquires the lock asynchronously, failing with <see cref="TimeoutException"/> if the wait times out
+        /// Acquires a semaphore ticket synchronously, failing with <see cref="TimeoutException"/> if the wait times out.
         /// <code>
-        ///     using (await myLock.AcquireAsync(...))
+        ///     using (await mySemaphore.AcquireAsync(...))
         ///     {
-        ///         // we have the lock
+        ///         // success!
         ///     }
-        ///     // dispose releases the lock
+        ///     // dispose releases the ticket
         /// </code>
         /// </summary>
-        /// <param name="timeout">How long to wait before giving up on acquiring the lock. Defaults to <see cref="Timeout.InfiniteTimeSpan"/></param>
+        /// <param name="timeout">How long to wait before giving up on acquiring the ticket. Defaults to <see cref="Timeout.InfiniteTimeSpan"/></param>
         /// <param name="cancellationToken">Specifies a token by which the wait can be canceled</param>
         /// <returns>An <see cref="IDisposable"/> "handle" which can be used to release the lock</returns>
         public AwaitableDisposable<IDisposable> AcquireAsync(TimeSpan? timeout = null, CancellationToken cancellationToken = default(CancellationToken))
