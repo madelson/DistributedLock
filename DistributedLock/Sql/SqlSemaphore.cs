@@ -94,39 +94,6 @@ namespace Medallion.Threading.Sql
             public string Ticket { get; }
             public string MarkerTable { get; }
         }
-
-        private sealed class LockHandle : IDisposable
-        {
-            private SqlSemaphore _helper;
-            private ConnectionOrTransaction _connectionOrTransaction;
-            private string _ticket, _markerTable;
-
-            public LockHandle(
-                SqlSemaphore helper, 
-                ConnectionOrTransaction connectionOrTransaction, 
-                string ticket, 
-                string markerTable)
-            {
-                this._helper = helper;
-                this._connectionOrTransaction = connectionOrTransaction;
-                this._ticket = ticket;
-                this._markerTable = markerTable;
-            }
-
-            public void Dispose()
-            {
-                var helper = Interlocked.Exchange(ref this._helper, null);
-                if (helper == null) { return; }
-
-                using (var command = helper.CreateReleaseCommand(this._connectionOrTransaction, ticket: this._ticket, markerTable: this._markerTable))
-                {
-                    command.ExecuteNonQuery();
-                }
-
-                this._connectionOrTransaction = default(ConnectionOrTransaction);
-                this._ticket = this._markerTable = null;
-            }
-        }
         #endregion
 
         #region ---- Command Creation ----
