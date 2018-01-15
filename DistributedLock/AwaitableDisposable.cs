@@ -10,9 +10,7 @@ namespace Medallion.Threading
     {
         internal AwaitableDisposable(Task<TDisposable> task) 
         {
-            if (task == null) { throw new ArgumentNullException(nameof(task)); }
-
-            this.Task = task;
+            this.Task = task ?? throw new ArgumentNullException(nameof(task));
         }
 
         public Task<TDisposable> Task { get; }
@@ -20,6 +18,7 @@ namespace Medallion.Threading
         public TaskAwaiter<TDisposable> GetAwaiter() => this.Task.GetAwaiter();
         public ConfiguredTaskAwaitable<TDisposable> ConfigureAwait(bool continueOnCapturedContext) => this.Task.ConfigureAwait(continueOnCapturedContext);
 
+        // todo do we want this?
         public static implicit operator Task<TDisposable>(AwaitableDisposable<TDisposable> source) => source.Task;
     }
 }

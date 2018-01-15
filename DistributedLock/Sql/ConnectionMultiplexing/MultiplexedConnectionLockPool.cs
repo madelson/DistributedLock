@@ -13,13 +13,23 @@ namespace Medallion.Threading.Sql.ConnectionMultiplexing
 {
     internal sealed class MultiplexedConnectionLockPool
     {
+        public static readonly MultiplexedConnectionLockPool Instance = new MultiplexedConnectionLockPool();
+
         /// <summary>
         /// Protects access to <see cref="connectionStringPools"/> and <see cref="cleanupTask"/>
         /// </summary>
         private readonly object @lock = new object();
         private readonly Dictionary<string, Queue<MultiplexedConnectionLock>> connectionStringPools = new Dictionary<string, Queue<MultiplexedConnectionLock>>();
+        /// <summary>
+        /// Used to synchronize calls to <see cref="ThreadSafeDoCleanupAsync"/>. While under normal
+        /// conditions cleanup is never called in parallel, this is nonetheless required to support making the 
+        /// <see cref="ThreadSafeDoCleanupAsync"/> API available and reliable for testing
+        /// </summary>
+        private readonly SemaphoreSlim cleanupLock = new SemaphoreSlim(initialCount: 1, maxCount: 1);
         private Task cleanupTask = Task.FromResult(false);
-        
+
+        private MultiplexedConnectionLockPool() { }
+
         public IDisposable TryAcquire<TLockCookie>(
             string connectionString,
             string lockName,
@@ -131,8 +141,7 @@ namespace Medallion.Threading.Sql.ConnectionMultiplexing
         {
             lock (this.@lock)
             {
-                Queue<MultiplexedConnectionLock> pool;
-                return this.connectionStringPools.TryGetValue(connectionString, out pool)
+                return this.connectionStringPools.TryGetValue(connectionString, out var pool)
                     && pool.Count > 0
                     ? pool.Dequeue()
                     : null;
@@ -171,8 +180,9 @@ namespace Medallion.Threading.Sql.ConnectionMultiplexing
         }
 
         #region ---- Cleanup ----
+        // todo should this be millis?
         // mutable for testing purposes
-        public static int CleanupIntervalSeconds { get; set; } = 15;
+        internal static int CleanupIntervalSeconds { get; set; } = 15;
 
         private async Task CleanupLoop()
         {
@@ -182,12 +192,30 @@ namespace Medallion.Threading.Sql.ConnectionMultiplexing
                 {
                     await Task.Delay(TimeSpan.FromSeconds(CleanupIntervalSeconds)).ConfigureAwait(false);
 
-                    if (!await this.DoCleanupAsync().ConfigureAwait(false))
+                    if (!await this.ThreadSafeDoCleanupAsync().ConfigureAwait(false))
                     {
                         return; // exit
                     }
                 }
                 catch { /* if we hit an error, just keep going */ }
+            }
+        }
+
+        /// <summary>
+        /// Runs <see cref="DoCleanupAsync()"/> synchronized on <see cref="cleanupLock"/>.
+        /// 
+        /// Exposed as internal for testing only
+        /// </summary>
+        internal async Task<bool> ThreadSafeDoCleanupAsync()
+        {
+            await this.cleanupLock.WaitAsync().ConfigureAwait(false);
+            try
+            {
+                return await this.DoCleanupAsync().ConfigureAwait(false);
+            }
+            finally
+            {
+                this.cleanupLock.Release();
             }
         }
 

@@ -10,8 +10,6 @@ namespace Medallion.Threading.Sql
 {
     internal sealed class OptimisticConnectionMultiplexingSqlDistributedLock : IInternalSqlDistributedLock
     {
-        private static readonly MultiplexedConnectionLockPool LockPool = new MultiplexedConnectionLockPool();
-
         private readonly string lockName, connectionString;
         private readonly IInternalSqlDistributedLock fallbackLock;
 
@@ -29,7 +27,7 @@ namespace Medallion.Threading.Sql
             // to an exclusive lock which asks for a long timeout
             if (!strategy.IsUpgradeable && contextHandle == null)
             {
-                return LockPool.TryAcquire(this.connectionString, this.lockName, timeoutMillis, strategy);
+                return MultiplexedConnectionLockPool.Instance.TryAcquire(this.connectionString, this.lockName, timeoutMillis, strategy);
             }
 
             // otherwise, fall back to our fallback lock
@@ -43,7 +41,7 @@ namespace Medallion.Threading.Sql
             // to an exclusive lock which asks for a long timeout
             if (!strategy.IsUpgradeable && contextHandle == null)
             {
-                return LockPool.TryAcquireAsync(connectionString, lockName, timeoutMillis, strategy, cancellationToken);
+                return MultiplexedConnectionLockPool.Instance.TryAcquireAsync(connectionString, lockName, timeoutMillis, strategy, cancellationToken);
             }
 
             // otherwise, fall back to our fallback lock
