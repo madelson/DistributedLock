@@ -14,9 +14,6 @@ namespace Medallion.Threading.Tests.Sql
     public abstract class MultiplexingConnectionStrategyTestCases<TEngineFactory> : TestBase
         where TEngineFactory : ITestingSqlDistributedLockEngineFactory, new()
     {
-        // todo both tests here suffer from flakiness due to how we force cleanup. A cleaner solution would be to make setting the cleanup
-        // interval cancel the cleanup wait and funnel everything through the normal sleep cycle
-
         /// <summary>
         /// Similar to <see cref="DistributedLockCoreTestCases{TEngine}.TestLockAbandonment"/> but demonstrates 
         /// the time-based cleanup loop rather than forcing a cleanup
