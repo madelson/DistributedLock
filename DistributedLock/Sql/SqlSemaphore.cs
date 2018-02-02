@@ -46,26 +46,6 @@ namespace Medallion.Threading.Sql
             }
         }
 
-        private static Cookie ProcessAcquireResult(
-            IDbDataParameter resultCode,
-            IDbDataParameter ticket,
-            IDbDataParameter markerTableName)
-        {
-            switch ((int)resultCode.Value)
-            {
-                case SuccessCode:
-                    return new Cookie(ticket: (string)ticket.Value, markerTable: (string)markerTableName.Value);
-                case BusyWaitTimeoutCode:
-                    return null;
-                case FailedToAcquireWithSpaceRemainingCode:
-                    // todo better error message
-                    throw new InvalidOperationException(nameof(FailedToAcquireWithSpaceRemainingCode));
-                default:
-                    // todo
-                    throw new NotImplementedException(resultCode.Value.ToString());
-            }
-        }
-
         bool ISqlSynchronizationStrategy<Cookie>.IsUpgradeable => false;
 
         public sealed class Cookie
