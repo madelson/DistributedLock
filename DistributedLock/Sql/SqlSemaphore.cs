@@ -10,11 +10,6 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading.Sql
 {
-    // todo NOLOCK everywhere?
-    // todo NOLOCK vs?
-    // todo TOP 1 for NOLOCK queries?
-    // todo "deadlock" handling => throw for inf timeout
-
     internal sealed class SqlSemaphore : ISqlSynchronizationStrategy<SqlSemaphore.Cookie>
     {
         private readonly int _maxCount;
@@ -444,10 +439,10 @@ namespace Medallion.Threading.Sql
                      than the greatest value that exists so far, so it can be > the count. The expression for determining this value is
                      somewhat complex. We are looking at table names like ##[sem name][spid][separator][value] and parsing out value. */}
                 DECLARE @waiterNumber INT, @waiterCount INT
-                SELECT @waiterNumber = ISNULL(MAX(CAST(SUBSTRING(name, CHARINDEX('{SpidCountSeparator}', name, LEN(@{SemaphoreNameParameter})) + 1, LEN(name)) AS INT) + 1), 0),
+                SELECT TOP 1 @waiterNumber = ISNULL(MAX(CAST(SUBSTRING(name, CHARINDEX('{SpidCountSeparator}', name, LEN(@{SemaphoreNameParameter})) + 1, LEN(name)) AS INT) + 1), 0),
                     @waiterCount = COUNT(*)
                 {C/* The NOLOCK here is important: otherwise we'll be blocked by trying to read entries for marker tables created in transactions that aren't committed */}
-                FROM (SELECT * FROM tempdb.sys.tables WITH(NOLOCK)) x
+                FROM tempdb.sys.tables WITH(NOLOCK)
                 {C/* Prefix search here is important since it uses an index. We don't need escaping because we bound the name to use a fixed character set */}
                 WHERE name LIKE '##' + @{SemaphoreNameParameter} + '%'
 
