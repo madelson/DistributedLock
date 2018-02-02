@@ -3,6 +3,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -20,7 +21,7 @@ namespace Medallion.Threading.Tests.Sql
         /// </summary>
         [TestMethod]
         public void TestLockAbandonmentWithTimeBasedCleanupRun()
-        {// todo wait up to 15 secs here, but keep testing along the way
+        {
             using (var engine = new TEngineFactory().Create<MultiplexedConnectionStringProvider>())
             {
                 var originalInterval = MultiplexedConnectionLockPool.CleanupIntervalSeconds;
@@ -34,11 +35,23 @@ namespace Medallion.Threading.Tests.Sql
                     GC.Collect();
                     GC.WaitForPendingFinalizers();
                     handleReference.IsAlive.ShouldEqual(false);
-                    Thread.Sleep(TimeSpan.FromSeconds(5));
 
-                    using (var handle = lock2.TryAcquire())
+                    // we attempt to shorten the interval. However if we are already in the midst of sleeping
+                    // when we get to this test this won't do any good. Therefore we need to wait up to the
+                    // twice the original interval to guarantee completion
+                    var maxWait = TimeSpan.FromSeconds(2 * Math.Max(originalInterval, MultiplexedConnectionLockPool.CleanupIntervalSeconds));
+                    var stopwatch = Stopwatch.StartNew();
+                    while (true)
                     {
-                        Assert.IsNotNull(handle, this.GetType().Name);
+                        using (var handle = lock2.TryAcquire())
+                        {
+                            if (handle != null) { break; }
+                        }
+                        if (stopwatch.Elapsed > maxWait)
+                        {
+                            Assert.Fail(this.GetType().Name);
+                        }
+                        Thread.Sleep(TimeSpan.FromSeconds(.25));
                     }
                 }
                 finally
