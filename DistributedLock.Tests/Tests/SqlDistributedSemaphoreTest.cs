@@ -72,5 +72,26 @@ namespace Medallion.Threading.Tests.Sql
             SqlSemaphore.ToSafeName(string.Join(string.Empty, Enumerable.Range(0, byte.MaxValue).Select(i => (char)i)))
                 .ShouldEqual("0123456789abcdef10111217fb98786c16c175d232ab161b5e604c5792e6befd4e1e8d4ecac9d568a6db524semaphore");
         }
+
+        [TestMethod]
+        public void TestTicketsTakenOnBothConnectionAndTransactionForThatConnection()
+        {
+            using (var connection = new SqlConnection(ConnectionStringProvider.ConnectionString))
+            {
+                connection.Open();
+
+                var semaphore1 = new SqlDistributedSemaphore(nameof(TestTicketsTakenOnBothConnectionAndTransactionForThatConnection), 2, connection);
+                var handle1 = semaphore1.Acquire();
+
+                using (var transaction = connection.BeginTransaction())
+                {
+                    var semaphore2 = new SqlDistributedSemaphore(nameof(TestTicketsTakenOnBothConnectionAndTransactionForThatConnection), 2, transaction);
+                    var handle2 = semaphore2.Acquire();
+                    semaphore2.TryAcquire().ShouldEqual(null);
+                    var ex = TestHelper.AssertThrows<InvalidOperationException>(() => semaphore2.Acquire());
+                    ex.Message.Contains("Deadlock").ShouldEqual(true, ex.ToString());
+                }
+            }
+        }
     }
 }

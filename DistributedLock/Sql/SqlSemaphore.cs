@@ -520,7 +520,6 @@ namespace Medallion.Threading.Sql
                 {(includeTryAcquireOnceVariables ? @", @i INT, @baseTicketIndex INT, @anyNotHeld BIT" : null)}";
         }
 
-        // todo test where some tickets are taken on connection and then others are taken on transaction
         private static string CreateTryAcquireOnceSql(bool allowOneWait, bool cancelable)
         {
             return $@"
@@ -533,8 +532,10 @@ namespace Medallion.Threading.Sql
                 BEGIN
                     SET @{TicketLockNameParameter} = @{SemaphoreNameParameter} + CAST((@baseTicketIndex + @i) % @{MaxCountParameter} AS NVARCHAR(MAX))
 
-                    {C/* Since app locks are reentrant on the same connection, we must do an explicit check to avoid taking the same ticket twice */}
+                    {C/* Since app locks are reentrant on the same connection, we must do an explicit check to avoid taking the same ticket twice.
+                         Additionally, if we are transaction-scoped we must check whether we hold the lock on EITHER the transaction or the session. */}
                     IF APPLOCK_MODE('public', @{TicketLockNameParameter}, @{LockScopeVariable}) = 'NoLock'
+                        AND (@{LockScopeVariable} = 'Session' OR APPLOCK_MODE('public', @{TicketLockNameParameter}, 'Session') = 'NoLock')
                     BEGIN
                         {C/* "allowOneWait" will be specified when we are in a busy wait loop. To avoid burning CPU we pick the first unheld ticket we come
                              across and allow that wait to be 1ms instead of 0. This is preferable to doing WAITFOR since the wait will be broken if that ticket
