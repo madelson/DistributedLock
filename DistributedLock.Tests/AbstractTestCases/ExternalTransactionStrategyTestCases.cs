@@ -96,7 +96,7 @@ namespace Medallion.Threading.Tests.Sql
         public void TestLockOnRolledBackTransaction() => this.TestLockOnCompletedTransactionHelper(t => t.Rollback());
 
         [TestMethod]
-        public void TestLockOnCommittedBackTransaction() => this.TestLockOnCompletedTransactionHelper(t => t.Commit());
+        public void TestLockOnCommittedTransaction() => this.TestLockOnCompletedTransactionHelper(t => t.Commit());
 
         [TestMethod]
         public void TestLockOnDisposedTransaction() => this.TestLockOnCompletedTransactionHelper(t => t.Dispose());
@@ -118,7 +118,7 @@ namespace Medallion.Threading.Tests.Sql
                     complete(transaction);
 
                     TestHelper.AssertDoesNotThrow(handle.Dispose);
-                    connectionStringEngine.CreateLock(lockName).IsHeld().ShouldEqual(false);
+                    connectionStringEngine.CreateLock(lockName).IsHeld().ShouldEqual(false, this.GetType().Name);
 
                     TestHelper.AssertThrows<InvalidOperationException>(() => transactionEngine.CreateLock(lockName).Acquire());
                 }

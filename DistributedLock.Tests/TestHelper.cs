@@ -64,7 +64,12 @@ namespace Medallion.Threading.Tests
 
         public static bool IsHeld(this IDistributedLock @lock)
         {
-            using (var handle = @lock.TryAcquire())
+            // todo remove timeout override here
+            // we use a timeout of 1ms here rather than 0 to make this work better
+            // for semaphore in the TestLockOnCommittedTransaction test. The issue
+            // is that committing the transaction without releasing the semaphore leaks
+            // the marker table which is enough to cause TryAcquire(0) to fail
+            using (var handle = @lock.TryAcquire(TimeSpan.FromMilliseconds(1)))
             {
                 return handle == null;
             }

@@ -146,7 +146,7 @@ namespace Medallion.Threading.Tests
                     var blocked = @lock.AcquireAsync(cancellationToken: source.Token);
                     blocked.Wait(TimeSpan.FromSeconds(.1)).ShouldEqual(false);
                     source.Cancel();
-                    blocked.ContinueWith(_ => { }).Wait(TimeSpan.FromSeconds(10)).ShouldEqual(true);
+                    blocked.ContinueWith(_ => { }).Wait(TimeSpan.FromSeconds(10)).ShouldEqual(true, this.GetType().Name);
                     blocked.Status.ShouldEqual(TaskStatus.Canceled, (blocked.Exception ?? (object)"no exception").ToString());
                 }
 

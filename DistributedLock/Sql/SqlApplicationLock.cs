@@ -12,6 +12,8 @@ namespace Medallion.Threading.Sql
 {
     internal sealed class SqlApplicationLock : ISqlSynchronizationStrategy<object>
     {
+        public const int TimeoutExitCode = -1;
+
         public static readonly SqlApplicationLock SharedLock = new SqlApplicationLock(Mode.Shared),
             UpdateLock = new SqlApplicationLock(Mode.Update),
             ExclusiveLock = new SqlApplicationLock(Mode.Exclusive);
@@ -125,7 +127,7 @@ namespace Medallion.Threading.Sql
                 case 1:
                     return true;
 
-                case -1: // timeout
+                case TimeoutExitCode:
                     return false;
 
                 case -2: // canceled
