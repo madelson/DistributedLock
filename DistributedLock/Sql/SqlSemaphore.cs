@@ -181,7 +181,6 @@ namespace Medallion.Threading.Sql
                     ticketLockName = markerTableName = null;
                     return FalseTask;
                 case AllTicketsHeldByCurrentSessionCode:
-                    // todo tests for this case
                     // whenever we hit this case, it's a deadlock. If the user asked us to wait forever, we just throw. However, 
                     // if the user asked us to wait a specified amount of time we will wait in C#. There are other justifiable policies
                     // but this one seems relatively safe and likely to do what you want. It seems reasonable that no one intends to hang

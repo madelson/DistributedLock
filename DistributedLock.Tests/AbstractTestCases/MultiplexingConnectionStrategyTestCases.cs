@@ -20,7 +20,7 @@ namespace Medallion.Threading.Tests.Sql
         /// </summary>
         [TestMethod]
         public void TestLockAbandonmentWithTimeBasedCleanupRun()
-        {
+        {// todo wait up to 15 secs here, but keep testing along the way
             using (var engine = new TEngineFactory().Create<MultiplexedConnectionStringProvider>())
             {
                 var originalInterval = MultiplexedConnectionLockPool.CleanupIntervalSeconds;

@@ -39,4 +39,6 @@ namespace Medallion.Threading.Tests.Sql
         public SqlConnection Connection { get; set; }
         public SqlTransaction Transaction { get; set; }
     }
+
+    public interface IExternalConnectionOrTransactionTestingSqlConnectionManagementProvider { }
 }

@@ -180,4 +180,10 @@ namespace Medallion.Threading.Tests
 
     [TestClass]
     public class MultiplexingConnectionStrategy_SqlSemaphoreEngineFactoryTest : MultiplexingConnectionStrategyTestCases<TestingSqlDistributedSemaphoreEngineFactory> { }
+
+    [TestClass]
+    public class SqlSemaphoreSelfDeadlock_ConnectionProviderTest : SqlDistributedSemaphoreSelfDeadlockTestCases<ConnectionProvider> { }
+
+    [TestClass]
+    public class SqlSemaphoreSelfDeadlock_TransactionProviderTest : SqlDistributedSemaphoreSelfDeadlockTestCases<TransactionProvider> { }
 }

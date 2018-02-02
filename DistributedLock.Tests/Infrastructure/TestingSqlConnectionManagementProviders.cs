@@ -78,7 +78,7 @@ namespace Medallion.Threading.Tests.Sql
         }
     }
 
-    public sealed class ConnectionProvider : TestingSqlConnectionManagementProvider
+    public sealed class ConnectionProvider : TestingSqlConnectionManagementProvider, IExternalConnectionOrTransactionTestingSqlConnectionManagementProvider
     {
         private static volatile ConnectionHolder current;
 
@@ -126,7 +126,7 @@ namespace Medallion.Threading.Tests.Sql
         }
     }
 
-    public sealed class TransactionProvider : TestingSqlConnectionManagementProvider
+    public sealed class TransactionProvider : TestingSqlConnectionManagementProvider, IExternalConnectionOrTransactionTestingSqlConnectionManagementProvider
     {
         private static volatile TransactionHolder current;
 
