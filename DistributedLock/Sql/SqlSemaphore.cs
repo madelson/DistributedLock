@@ -281,20 +281,22 @@ namespace Medallion.Threading.Sql
         #region ---- Naming ----
         public static string ToSafeName(string semaphoreName)
         {
-            // todo readjust name limit to leave a larger buffer for stuff
-
             // the max table name length is 128 for global and 116 for local temp tables. While we don't use local temp tables
             // currently, to be conservative we use the lower cap. We're using 115 not 116 to reflect the missing '#' which counts
             // towards the limit
             const int MaxTableNameLength = 115;
             const string Suffix = "semaphore";
-            // technically this is long.MaxValue.ToString().Length. I'm using long vs. int to give future flexibility
-            const int IntegerSuffixMaxLength = 19;
+            // this accounts for various other things we pad onto the name:
+            // * Marker table adds SPID + "s" + WAITERNUMBER (10 + 1 + 10 = 21)
+            // * Ticket lock name adds TICKETNUMBER (10)
+            // * Intent table name adds "intent_" + SPID + "_" + TICKETNUMBER (7 + 10 + 1 + 10 = 28)
+            // We will use 30 as a safe number
+            const int AdditionalSuffixMaxLength = 30;
 
             var nameWithoutInvalidCharacters = ReplaceInvalidCharacters(semaphoreName);
             // note that we hash the original name, not the replaced name. This makes us even more robust to collisions
             var nameHash = HashName(semaphoreName);
-            var maxBaseNameLength = MaxTableNameLength - (nameHash.Length + Suffix.Length + IntegerSuffixMaxLength);
+            var maxBaseNameLength = MaxTableNameLength - (nameHash.Length + Suffix.Length + AdditionalSuffixMaxLength);
             var baseName = nameWithoutInvalidCharacters.Length <= maxBaseNameLength
                 ? nameWithoutInvalidCharacters
                 : nameWithoutInvalidCharacters.Substring(0, maxBaseNameLength);
@@ -401,7 +403,6 @@ namespace Medallion.Threading.Sql
         /// </summary>
         private static string CreateAcquirePreambleSql(bool? willRetryInSeparateQueryAfterPreamble)
         {
-            // todo factor this into the length calcs
             const string SpidCountSeparator = "s";
             // if everything is going smoothly then the preamble lock should never even come close to timing out since 
             // nothing blocking happens inside the preamble. However, to be safe we do eventually give up
