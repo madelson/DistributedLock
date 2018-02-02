@@ -97,16 +97,16 @@ namespace Medallion.Threading.Sql
             cancellationToken.ThrowIfCancellationRequested();
             string markerTableName;  
 
-            // for the special cases where we are not supporting cancellation or where the timeout is zero,
-            // we can use abbreviated single-query algorithms
-            if (timeoutMillis == 0 || !cancellationToken.CanBeCanceled)
+            // when we aren't supporting cancellation, we can use a simplified one-step algorithm. We treat a timeout of
+            // zero in the same way: since there is no blocking, we don't need to bother with explicit cancellation support
+            if (!cancellationToken.CanBeCanceled || timeoutMillis == 0)
             {
                 using (var command = CreateTextCommand(connectionOrTransaction, operationTimeoutMillis: timeoutMillis))
                 {
-                    command.CommandText = (timeoutMillis == 0 ? AcquireZeroQuery : AcquireNonCancelableQuery).Value;
-                    this.AddCommonParameters(command, semaphoreName, timeoutMillis: timeoutMillis == 0 ? default(int?) : timeoutMillis);
+                    command.CommandText = AcquireNonCancelableQuery.Value;
+                    this.AddCommonParameters(command, semaphoreName, timeoutMillis: timeoutMillis);
                     await ExecuteNonQueryAsync(command, CancellationToken.None, isSyncOverAsync).ConfigureAwait(false);
-                    return ProcessAcquireResult(command.Parameters, out markerTableName, out var ticketLockName)
+                    return await ProcessAcquireResultAsync(command.Parameters, timeoutMillis, cancellationToken, out markerTableName, out var ticketLockName).ConfigureAwait(false)
                         ? new Cookie(ticket: ticketLockName, markerTable: markerTableName)
                         : null;
                 }
@@ -120,7 +120,7 @@ namespace Medallion.Threading.Sql
                 this.AddCommonParameters(command, semaphoreName);
                 // preamble is non-cancelable
                 await ExecuteNonQueryAsync(command, CancellationToken.None, isSyncOverAsync).ConfigureAwait(false);
-                if (ProcessAcquireResult(command.Parameters, out markerTableName, out var ticketLockName))
+                if (await ProcessAcquireResultAsync(command.Parameters, timeoutMillis, cancellationToken, out markerTableName, out var ticketLockName).ConfigureAwait(false))
                 {
                     return new Cookie(ticket: ticketLockName, markerTable: markerTableName);
                 }
@@ -148,13 +148,21 @@ namespace Medallion.Threading.Sql
                     throw;
                 }
 
-                return ProcessAcquireResult(command.Parameters, out markerTableName, out var ticketLockName)
+                return await ProcessAcquireResultAsync(command.Parameters, timeoutMillis, cancellationToken, out markerTableName, out var ticketLockName).ConfigureAwait(false)
                     ? new Cookie(ticket: ticketLockName, markerTable: markerTableName)
                     : null;
             }
         }
 
-        private static bool ProcessAcquireResult(IDataParameterCollection parameters, out string markerTableName, out string ticketLockName)
+        private static readonly Task<bool> FalseTask = Task.FromResult(false),
+            TrueTask = Task.FromResult(true);
+
+        private static Task<bool> ProcessAcquireResultAsync(
+            IDataParameterCollection parameters, 
+            int timeoutMillis,
+            CancellationToken cancellationToken,
+            out string markerTableName, 
+            out string ticketLockName)
         {
             var resultCode = (int)((IDbDataParameter)parameters[ResultCodeParameter]).Value;
             switch (resultCode)
@@ -162,21 +170,38 @@ namespace Medallion.Threading.Sql
                 case SuccessCode:
                     ticketLockName = (string)((IDbDataParameter)parameters[TicketLockNameParameter]).Value;
                     markerTableName = (string)((IDbDataParameter)parameters[MarkerTableNameParameter]).Value;
-                    return true;
+                    return TrueTask;
                 case FinishedPreambleWithoutAcquiringCode:
                     ticketLockName = null;
                     markerTableName = (string)((IDbDataParameter)parameters[MarkerTableNameParameter]).Value;
-                    return false;
+                    return FalseTask;
                 case FailedToAcquireWithSpaceRemainingCode:
                     throw new InvalidOperationException($"An internal semaphore algorithm error ({resultCode}) occurred: failed to acquire a ticket despite indication that tickets are available");
                 case BusyWaitTimeoutCode:
                     ticketLockName = markerTableName = null;
-                    return false;
+                    return FalseTask;
                 case AllTicketsHeldByCurrentSessionCode:
-                    throw new NotImplementedException("todo");
+                    // todo tests for this case
+                    // whenever we hit this case, it's a deadlock. If the user asked us to wait forever, we just throw. However, 
+                    // if the user asked us to wait a specified amount of time we will wait in C#. There are other justifiable policies
+                    // but this one seems relatively safe and likely to do what you want. It seems reasonable that no one intends to hang
+                    // forever but also reasonable that someone should be able to test for lock acquisition without getting a throw
+                    if (timeoutMillis == Timeout.Infinite)
+                    {
+                        throw new InvalidOperationException("Deadlock detected: attempt to acquire the semaphore cannot succeed because all tickets are held by the current connection");
+                    }
+
+                    ticketLockName = markerTableName = null;
+
+                    async Task<bool> DelayFalseAsync()
+                    {
+                        await Task.Delay(timeoutMillis, cancellationToken).ConfigureAwait(false);
+                        return false;
+                    }
+                    return DelayFalseAsync();
                 case SqlApplicationLock.TimeoutExitCode:
                     ticketLockName = markerTableName = null;
-                    return false;
+                    return FalseTask;
                 default:
                     if (resultCode < 0)
                     {
@@ -361,14 +386,8 @@ namespace Medallion.Threading.Sql
             BusyWaitTimeoutCode = 102,
             AllTicketsHeldByCurrentSessionCode = 103;
 
-        // acquire with zero timeout just needs to run the preamble since past the preamble blocking is required
-        private static readonly Lazy<string> AcquireZeroQuery = new Lazy<string>(() => Merge(
-                CreateCommonVariableDeclarationsSql(includePreambleLock: true, includeBusyWaitLock: false, includeTryAcquireOnceVariables: true),
-                CreateAcquirePreambleSql(willRetryInSeparateQueryAfterPreamble: false),
-                CreateCodaSql(includePreambleLockRelease: true, includeBusyWaitLockRelease: false)
-            )),
-            // when we don't have to deal with cancellation, we can put everything in one big query to save on round trips
-            AcquireNonCancelableQuery = new Lazy<string>(() => Merge(
+        // when we don't have to deal with cancellation, we can put everything in one big query to save on round trips
+        private static readonly Lazy<string> AcquireNonCancelableQuery = new Lazy<string>(() => Merge(
                 CreateCommonVariableDeclarationsSql(includePreambleLock: true, includeBusyWaitLock: true, includeTryAcquireOnceVariables: true),
                 CreateAcquirePreambleSql(willRetryInSeparateQueryAfterPreamble: null),
                 CreateAcquireSql(cancelable: false),
