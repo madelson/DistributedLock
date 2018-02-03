@@ -119,6 +119,54 @@ namespace Medallion.Threading.Tests.Sql
             }
         }
 
+        [TestMethod]
+        public void TestSemaphoreParallelism()
+        {
+            const int MaxCount = 10;
+
+            using (var engine = this.CreateEngine())
+            {
+                var counter = 0;
+                var maxCounterValue = 0;
+                var maxCounterValueLock = new object();
+                var tasks = Enumerable.Range(1, 100).Select(async _ =>
+                    {
+                        var semaphore = engine.CreateSemaphore(nameof(TestSemaphoreParallelism), MaxCount);
+                        using (await semaphore.AcquireAsync())
+                        {
+                            // increment going in
+                            var currentCounterValue = Interlocked.Increment(ref counter);
+
+                            lock (maxCounterValueLock)
+                            {
+                                maxCounterValue = Math.Max(maxCounterValue, currentCounterValue);
+                            }
+
+                            // hang out for a bit to ensure concurrency
+                            await Task.Delay(TimeSpan.FromMilliseconds(10));
+
+                            // decrement and return on the way out (returns # inside the lock when this left ... should be 0)
+                            return Interlocked.Decrement(ref counter);
+                        }
+                    })
+                    .ToList();
+
+                Task.WaitAll(tasks.ToArray<Task>(), TimeSpan.FromSeconds(30)).ShouldEqual(true, this.GetType().Name);
+
+                tasks.ForEach(t =>
+                {
+                    (t.Result >= 0).ShouldEqual(true);
+                    (t.Result <= MaxCount).ShouldEqual(true);
+                });
+                Volatile.Read(ref counter).ShouldEqual(0);
+
+                lock (maxCounterValueLock)
+                {
+                    maxCounterValue.ShouldEqual(MaxCount, this.GetType().Name + ": should reach the maximum level of allowed concurrency");
+                }
+            }
+        }
+
         private TestingSqlDistributedSemaphoreEngine<TConnectionManagementProvider> CreateEngine() => new TestingSqlDistributedSemaphoreEngine<TConnectionManagementProvider>();
     }
 }
