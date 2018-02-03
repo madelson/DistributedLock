@@ -8,7 +8,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Medallion.Threading.Tests</RootNamespace>
     <AssemblyName>DistributedLock.Tests</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{3AC096D0-A1C2-E12C-1390-A8335801FDAB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
@@ -16,6 +16,7 @@
     <ReferencePath>$(ProgramFiles)\Common Files\microsoft shared\VSTT\$(VisualStudioVersion)\UITestExtensionPackages</ReferencePath>
     <IsCodedUITest>False</IsCodedUITest>
     <TestProjectType>UnitTest</TestProjectType>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -55,20 +56,34 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
-    <Compile Include="DistributedLockTestBase.cs" />
+    <Compile Include="AbstractTestCases\SqlDistributedSemaphoreSelfDeadlockTestCases.cs" />
+    <Compile Include="Infrastructure\ActionRegistrationDisposable.cs" />
+    <Compile Include="AbstractTestCases\DistributedLockCoreTestCases.cs" />
+    <Compile Include="AbstractTestCases\AzureConnectionStrategyTestCases.cs" />
+    <Compile Include="Tests\CombinatorialTests.cs" />
+    <Compile Include="AbstractTestCases\ExternalConnectionStrategyTestCases.cs" />
+    <Compile Include="AbstractTestCases\ExternalTransactionStrategyTestCases.cs" />
+    <Compile Include="AbstractTestCases\MultiplexingConnectionStrategyTestCases.cs" />
+    <Compile Include="AbstractTestCases\OwnedTransactionStrategyTestCases.cs" />
+    <Compile Include="AbstractTestCases\SqlDistributedReaderWriterLockTestCases.cs" />
+    <Compile Include="AbstractTestCases\SqlDistributedSemaphoreTestCases.cs" />
+    <Compile Include="Infrastructure\TestingSqlConnectionManagementProvider.cs" />
+    <Compile Include="Infrastructure\TestingSqlConnectionManagementProviders.cs" />
+    <Compile Include="Infrastructure\TestingSqlDistributedLockEngine.cs" />
+    <Compile Include="Infrastructure\ITestingSqlDistributedLockEngineFactory.cs" />
+    <Compile Include="Infrastructure\TestingSqlDistributedReaderWriterLockEngine.cs" />
+    <Compile Include="Infrastructure\TestingSqlDistributedSemaphoreEngine.cs" />
+    <Compile Include="Infrastructure\TestBase.cs" />
+    <Compile Include="Infrastructure\TestingSystemDistributedLockEngine.cs" />
+    <Compile Include="Infrastructure\TestingDistributedLockEngine.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Sql\IdleSessionKiller.cs" />
-    <Compile Include="Sql\SqlAzureDistributedLockTest.cs" />
-    <Compile Include="Sql\SqlConnectionScopedDistributedLockTest.cs" />
-    <Compile Include="Sql\SqlDistributedLockTest.cs" />
-    <Compile Include="Sql\SqlDistributedReaderWriterLockTests.cs" />
-    <Compile Include="Sql\SqlDistributedReaderWriterLockTestBase.cs" />
-    <Compile Include="Sql\SqlOptimisticConnectionMultiplexingDistributedLockTest.cs" />
-    <Compile Include="Sql\SqlOwnedConnectionDistributedLockTest.cs" />
-    <Compile Include="Sql\SqlOwnedTransactionDistributedLockTest.cs" />
-    <Compile Include="Sql\SqlTransactionScopedDistributedLockTest.cs" />
-    <Compile Include="SystemDistributedLockTest.cs" />
+    <Compile Include="Infrastructure\IdleSessionKiller.cs" />
+    <Compile Include="Tests\SqlDistributedLockTest.cs" />
+    <Compile Include="Tests\SqlDistributedReaderWriterLockTest.cs" />
+    <Compile Include="Tests\SqlDistributedSemaphoreTest.cs" />
+    <Compile Include="Tests\SystemDistributedLockTest.cs" />
     <Compile Include="TestHelper.cs" />
+    <Compile Include="Tests\TestSetupTest.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\DistributedLockTaker\DistributedLockTaker.csproj">

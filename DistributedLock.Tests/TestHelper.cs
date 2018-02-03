@@ -36,7 +36,7 @@ namespace Medallion.Threading.Tests
             return null; // never gets here
         }
 
-        public static void AssertDoesNotThrow(Action action)
+        public static void AssertDoesNotThrow(Action action, string message = null)
         {
             try
             {
@@ -44,7 +44,29 @@ namespace Medallion.Threading.Tests
             }
             catch (Exception ex)
             {
-                Assert.Fail("Failed with " + ex);
+                Assert.Fail("Failed with " + ex + (message != null ? ": " + message : string.Empty));
+            }
+        }
+
+        private static volatile Type _currentTestType;
+
+        public static Type CurrentTestType
+        {
+            get => _currentTestType ?? throw new InvalidOperationException("no test name set");
+            set
+            {
+                var currentTestType = _currentTestType;
+                if (value != null && currentTestType != null) { throw new InvalidOperationException("test name not cleared"); }
+                if (value == currentTestType) { throw new InvalidOperationException($"bad test name transition from '{currentTestType?.Name ?? "null"}' => '{value?.Name ?? "null"}'"); }
+                _currentTestType = value;
+            }
+        }
+
+        public static bool IsHeld(this IDistributedLock @lock)
+        {
+            using (var handle = @lock.TryAcquire())
+            {
+                return handle == null;
             }
         }
     }

@@ -1,5 +1,4 @@
-﻿using Medallion.Threading.Sql;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -10,14 +9,9 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading.Tests.Sql
 {
-    [TestClass]
-    public class SqlOwnedTransactionDistributedLockTest : DistributedLockTestBase
+    public abstract class OwnedTransactionStrategyTestCases<TEngineFactory> : TestBase
+        where TEngineFactory : ITestingSqlDistributedLockEngineFactory, new()
     {
-        internal override IDistributedLock CreateLock(string name)
-            => new SqlDistributedLock(name, SqlDistributedLockTest.ConnectionString, SqlDistributedLockConnectionStrategy.Transaction);
-
-        internal override string GetSafeLockName(string name) => SqlDistributedLock.GetSafeLockName(name);
-
         /// <summary>
         /// Validates that we use the default isolation level to avoid the problem described
         /// here: https://msdn.microsoft.com/en-us/library/5ha4240h(v=vs.110).aspx
@@ -46,7 +40,7 @@ namespace Medallion.Threading.Tests.Sql
                 FROM sys.dm_exec_sessions 
                 WHERE session_id = @@SPID";
 
-            var connectionString = new SqlConnectionStringBuilder(SqlDistributedLockTest.ConnectionString)
+            var connectionString = new SqlConnectionStringBuilder(ConnectionStringProvider.ConnectionString)
                 {
                     ApplicationName = nameof(TestIsolationLevelLeakage),
                     // makes it easy to test for leaks since all connections are the same
@@ -55,27 +49,30 @@ namespace Medallion.Threading.Tests.Sql
                 .ConnectionString;
             using (var connection = new SqlConnection(connectionString)) { SqlConnection.ClearPool(connection); }
 
-            var @lock = new SqlDistributedLock(nameof(TestIsolationLevelLeakage), connectionString, SqlDistributedLockConnectionStrategy.Transaction);
-
-            @lock.Acquire().Dispose();
-            using (var connection = new SqlConnection(connectionString))
+            using (var engine = new TEngineFactory().Create<TransactionBasedConnectionStringProvider>())
             {
-                connection.Open();
-                using (var command = connection.CreateCommand())
+                var @lock = engine.CreateLock(nameof(TestIsolationLevelLeakage));
+
+                @lock.Acquire().Dispose();
+                using (var connection = new SqlConnection(connectionString))
                 {
-                    command.CommandText = IsolationLevelQuery;
-                    command.ExecuteScalar().ShouldEqual(IsolationLevel.ReadCommitted.ToString());
+                    connection.Open();
+                    using (var command = connection.CreateCommand())
+                    {
+                        command.CommandText = IsolationLevelQuery;
+                        command.ExecuteScalar().ShouldEqual(IsolationLevel.ReadCommitted.ToString());
+                    }
                 }
-            }
 
-            @lock.AcquireAsync().Result.Dispose();
-            using (var connection = new SqlConnection(connectionString))
-            {
-                connection.Open();
-                using (var command = connection.CreateCommand())
+                @lock.AcquireAsync().Result.Dispose();
+                using (var connection = new SqlConnection(connectionString))
                 {
-                    command.CommandText = IsolationLevelQuery;
-                    command.ExecuteScalar().ShouldEqual(IsolationLevel.ReadCommitted.ToString());
+                    connection.Open();
+                    using (var command = connection.CreateCommand())
+                    {
+                        command.CommandText = IsolationLevelQuery;
+                        command.ExecuteScalar().ShouldEqual(IsolationLevel.ReadCommitted.ToString());
+                    }
                 }
             }
         }
