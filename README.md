@@ -199,6 +199,7 @@ Most of the time, you'll want to use the default connection strategy. See more d
 ## Release notes
 - 1.4.0
 	- Added a SQL-based distributed semaphore ([#7](https://github.com/madelson/DistributedLock/issues/7))
+	- Fix bug where SqlDistributedLockConnectionStrategy.Azure would leak connections, relying on GC to reclaim them ([#14](https://github.com/madelson/DistributedLock/issues/14)). Thanks [zavalita1](https://github.com/zavalita1) for investigating this issue!
 - 1.3.1 Minor fix to avoid "leaking" isolation level changes in transaction-based locks ([#8](https://github.com/madelson/DistributedLock/issues/8)). Also switched to the VS2017 project file format
 - 1.3.0 Added an Azure connection strategy to keep lock connections from becoming idle and being reclaimed by Azure's connection governor ([#5](https://github.com/madelson/DistributedLock/issues/5))
 - 1.2.0
