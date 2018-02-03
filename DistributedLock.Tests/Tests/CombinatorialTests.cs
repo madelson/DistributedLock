@@ -186,4 +186,58 @@ namespace Medallion.Threading.Tests
 
     [TestClass]
     public class SqlSemaphoreSelfDeadlock_TransactionProviderTest : SqlDistributedSemaphoreSelfDeadlockTestCases<TransactionProvider> { }
+
+    [TestClass]
+    public class ConnectionStringStrategy_SqlEngineFactory_NoStrategyConnectionStringProviderTest : ConnectionStringStrategyTestCases<TestingSqlDistributedLockEngineFactory, NoStrategyConnectionStringProvider> { }
+
+    [TestClass]
+    public class ConnectionStringStrategy_SqlEngineFactory_DefaultConnectionStringProviderTest : ConnectionStringStrategyTestCases<TestingSqlDistributedLockEngineFactory, DefaultConnectionStringProvider> { }
+
+    [TestClass]
+    public class ConnectionStringStrategy_SqlEngineFactory_AzureConnectionStringProviderTest : ConnectionStringStrategyTestCases<TestingSqlDistributedLockEngineFactory, AzureConnectionStringProvider> { }
+
+    [TestClass]
+    public class ConnectionStringStrategy_SqlEngineFactory_ConnectionBasedConnectionStringProviderTest : ConnectionStringStrategyTestCases<TestingSqlDistributedLockEngineFactory, ConnectionBasedConnectionStringProvider> { }
+
+    [TestClass]
+    public class ConnectionStringStrategy_SqlEngineFactory_TransactionBasedConnectionStringProviderTest : ConnectionStringStrategyTestCases<TestingSqlDistributedLockEngineFactory, TransactionBasedConnectionStringProvider> { }
+
+    [TestClass]
+    public class ConnectionStringStrategy_SqlEngineFactory_MultiplexedConnectionStringProviderTest : ConnectionStringStrategyTestCases<TestingSqlDistributedLockEngineFactory, MultiplexedConnectionStringProvider> { }
+
+    [TestClass]
+    public class ConnectionStringStrategy_SqlReaderWriterEngineFactory_NoStrategyConnectionStringProviderTest : ConnectionStringStrategyTestCases<TestingSqlDistributedReaderWriterLockEngineFactory, NoStrategyConnectionStringProvider> { }
+
+    [TestClass]
+    public class ConnectionStringStrategy_SqlReaderWriterEngineFactory_DefaultConnectionStringProviderTest : ConnectionStringStrategyTestCases<TestingSqlDistributedReaderWriterLockEngineFactory, DefaultConnectionStringProvider> { }
+
+    [TestClass]
+    public class ConnectionStringStrategy_SqlReaderWriterEngineFactory_AzureConnectionStringProviderTest : ConnectionStringStrategyTestCases<TestingSqlDistributedReaderWriterLockEngineFactory, AzureConnectionStringProvider> { }
+
+    [TestClass]
+    public class ConnectionStringStrategy_SqlReaderWriterEngineFactory_ConnectionBasedConnectionStringProviderTest : ConnectionStringStrategyTestCases<TestingSqlDistributedReaderWriterLockEngineFactory, ConnectionBasedConnectionStringProvider> { }
+
+    [TestClass]
+    public class ConnectionStringStrategy_SqlReaderWriterEngineFactory_TransactionBasedConnectionStringProviderTest : ConnectionStringStrategyTestCases<TestingSqlDistributedReaderWriterLockEngineFactory, TransactionBasedConnectionStringProvider> { }
+
+    [TestClass]
+    public class ConnectionStringStrategy_SqlReaderWriterEngineFactory_MultiplexedConnectionStringProviderTest : ConnectionStringStrategyTestCases<TestingSqlDistributedReaderWriterLockEngineFactory, MultiplexedConnectionStringProvider> { }
+
+    [TestClass]
+    public class ConnectionStringStrategy_SqlSemaphoreEngineFactory_NoStrategyConnectionStringProviderTest : ConnectionStringStrategyTestCases<TestingSqlDistributedSemaphoreEngineFactory, NoStrategyConnectionStringProvider> { }
+
+    [TestClass]
+    public class ConnectionStringStrategy_SqlSemaphoreEngineFactory_DefaultConnectionStringProviderTest : ConnectionStringStrategyTestCases<TestingSqlDistributedSemaphoreEngineFactory, DefaultConnectionStringProvider> { }
+
+    [TestClass]
+    public class ConnectionStringStrategy_SqlSemaphoreEngineFactory_AzureConnectionStringProviderTest : ConnectionStringStrategyTestCases<TestingSqlDistributedSemaphoreEngineFactory, AzureConnectionStringProvider> { }
+
+    [TestClass]
+    public class ConnectionStringStrategy_SqlSemaphoreEngineFactory_ConnectionBasedConnectionStringProviderTest : ConnectionStringStrategyTestCases<TestingSqlDistributedSemaphoreEngineFactory, ConnectionBasedConnectionStringProvider> { }
+
+    [TestClass]
+    public class ConnectionStringStrategy_SqlSemaphoreEngineFactory_TransactionBasedConnectionStringProviderTest : ConnectionStringStrategyTestCases<TestingSqlDistributedSemaphoreEngineFactory, TransactionBasedConnectionStringProvider> { }
+
+    [TestClass]
+    public class ConnectionStringStrategy_SqlSemaphoreEngineFactory_MultiplexedConnectionStringProviderTest : ConnectionStringStrategyTestCases<TestingSqlDistributedSemaphoreEngineFactory, MultiplexedConnectionStringProvider> { }
 }

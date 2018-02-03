@@ -1,4 +1,5 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Medallion.Collections;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -69,18 +70,31 @@ namespace Medallion.Threading.Tests
 
         private static string RemoveGenericMarkers(string name) => Regex.Replace(name, @"`\d+", string.Empty);
 
-        private List<Type> GetTypesForGenericParameters(Type[] genericParameters)
+        private List<Type[]> GetTypesForGenericParameters(Type[] genericParameters)
         {
-            if (genericParameters.Length > 1) { throw new NotSupportedException(); }
+            var genericParameterTypes = genericParameters.Select(this.GetTypesForGenericParameter).ToArray();
+            var allCombinations = Traverse.DepthFirst(
+                    root: (index: 0, value: Enumerable.Empty<Type>()),
+                    children: t => t.index == genericParameterTypes.Length
+                        ? Enumerable.Empty<(int index, IEnumerable<Type> value)>()
+                        : genericParameterTypes[t.index].Select(type => (index: t.index + 1, value: t.value.Append(type)))
+                )
+                .Where(t => t.index == genericParameterTypes.Length)
+                .Select(t => t.value.ToArray())
+                .ToList();
+            return allCombinations;
+        }
 
-            var constraints = genericParameters[0].GetGenericParameterConstraints();
+        private Type[] GetTypesForGenericParameter(Type genericParameter)
+        {
+            var constraints = genericParameter.GetGenericParameterConstraints();
             return this.GetType().Assembly
                 .GetTypes()
                 // this doesn't support fancy constraints like class
                 // see https://stackoverflow.com/questions/4864496/checking-if-an-object-meets-a-generic-parameter-constraint
                 .Where(t => !t.IsAbstract && constraints.All(c => c.IsAssignableFrom(t)))
                 .SelectMany(t => t.IsGenericTypeDefinition ? this.GetTypesForGenericParameters(t.GetGenericArguments()).Select(p => t.MakeGenericType(p)) : new[] { t })
-                .ToList();
+                .ToArray();
         }
     }
 }

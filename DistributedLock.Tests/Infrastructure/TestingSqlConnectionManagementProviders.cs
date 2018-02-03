@@ -23,6 +23,8 @@ namespace Medallion.Threading.Tests.Sql
             }
             .ConnectionString;
 
+        private static volatile string currentConnectionString = ConnectionString;
+
         private readonly SqlDistributedLockConnectionStrategy? _strategy;
 
         public ConnectionStringProvider(SqlDistributedLockConnectionStrategy? strategy)
@@ -30,13 +32,19 @@ namespace Medallion.Threading.Tests.Sql
             this._strategy = strategy;
         }
 
-        public override ConnectionInfo GetConnectionInfo() => new ConnectionInfo { ConnectionString = ConnectionString, Strategy = this._strategy };
+        public override ConnectionInfo GetConnectionInfo() => new ConnectionInfo { ConnectionString = currentConnectionString, Strategy = this._strategy };
 
         /// <summary>
         /// Since every lock handle has a dedicated connection (even in the case of multiplexing we don't share a connection for two acquires
         /// on the same name, we are not reentrant)
         /// </summary>
         internal override bool IsReentrantForAppLock => false;
+
+        public static IDisposable UseConnectionString(string connectionString)
+        {
+            currentConnectionString = connectionString;
+            return new ReleaseAction(() => currentConnectionString = ConnectionString);
+        }
     }
 
     public sealed class NoStrategyConnectionStringProvider : ConnectionStringProvider
