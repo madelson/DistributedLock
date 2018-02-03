@@ -10,6 +10,7 @@ DistributedLock is available for download as a [NuGet package](https://www.nuget
 
 - [System-wide locks](#system-wide-locks)
 - [Fully-distributed locks](#fully-distributed-locks)
+- [Semaphores](#semaphores)
 - [Reader-writer locks](#reader-writer-locks)
 - [Safe naming](#naming-locks)
 - [Try Semantics](#trylock)
@@ -47,6 +48,21 @@ using (myLock.Acquire())
 
 As of version 1.1.0, `SqlDistributedLock`s can now be scoped to existing `IDbTransaction` and/or `IDbConnection` objects as an alternative to passing a connection string directly (in which case the lock manages its own connection).
 
+## Semaphores
+
+DistributedLock contains an implementation of a distributed [semaphore](https://github.com/madelson/DistributedLock/pull/15) with an API similar to the framework's non-distributed [SemaphoreSlim](https://msdn.microsoft.com/en-us/library/system.threading.semaphoreslim(v=vs.110).aspx) class. Since the implementation is based on [SQLServer application locks](https://msdn.microsoft.com/en-us/library/ms189823.aspx), this can be used to synchronize across different machines.
+
+The semaphore acts like a lock that can be acquired by a fixed number of processes simultaneously instead of a single process. This capability is frequently used to "throttle" access to some resource such as a database or email server. In such cases, a classic mutex lock is inappropriate because we *do* want to allow concurrent access and simply want to cap the level of concurrency. For example:
+
+```C#
+// the semaphore will allow up two 5 callers to access it concurrently
+var semaphore = new SqlDistributedSemaphore("ComputeDatabase", 5, connectionString);
+using (semaphore.Acquire())
+{
+	UseComputeDatabase();
+}
+```
+
 ## Reader-writer locks
 
 DistributedLock contains an implementation of a distributed [reader-writer lock](https://en.wikipedia.org/wiki/Readers%E2%80%93writer_lock) with an API similar to the framework's non-distributed [ReaderWriterLockSlim](https://msdn.microsoft.com/en-us/library/system.threading.readerwriterlockslim(v=vs.110).aspx) class. Since the implementation is based on [SQLServer application locks](https://msdn.microsoft.com/en-us/library/ms189823.aspx), this can be used to synchronize across different machines.
@@ -57,7 +73,7 @@ The reader-writer lock allows for *multiple readers or one writer.* Furthermore,
 class DistributedCache
 {
 	private readonly SqlDistributedReaderWriterLock cacheLock = 
-		new SqlDistributedReaderWriterLock(connectionString);
+		new SqlDistributedReaderWriterLock("DistributedCache", connectionString);
 		
 	public string Get(string key)
 	{
@@ -181,6 +197,8 @@ simultaneously. This is particularly helpful for high-load scenarios since it ca
 Most of the time, you'll want to use the default connection strategy. See more details about the various strategies [here](https://github.com/madelson/DistributedLock/blob/version-1.2/DistributedLock/Sql/SqlDistributedLockConnectionStrategy.cs).
 
 ## Release notes
+- 1.4.0
+	- Added a SQL-based distributed semaphore ([#7](https://github.com/madelson/DistributedLock/issues/7))
 - 1.3.1 Minor fix to avoid "leaking" isolation level changes in transaction-based locks ([#8](https://github.com/madelson/DistributedLock/issues/8)). Also switched to the VS2017 project file format
 - 1.3.0 Added an Azure connection strategy to keep lock connections from becoming idle and being reclaimed by Azure's connection governor ([#5](https://github.com/madelson/DistributedLock/issues/5))
 - 1.2.0
