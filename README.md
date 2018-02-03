@@ -50,15 +50,15 @@ As of version 1.1.0, `SqlDistributedLock`s can now be scoped to existing `IDbTra
 
 ## Semaphores
 
-DistributedLock contains an implementation of a distributed [semaphore](https://github.com/madelson/DistributedLock/pull/15) with an API similar to the framework's non-distributed [SemaphoreSlim](https://msdn.microsoft.com/en-us/library/system.threading.semaphoreslim(v=vs.110).aspx) class. Since the implementation is based on [SQLServer application locks](https://msdn.microsoft.com/en-us/library/ms189823.aspx), this can be used to synchronize across different machines.
+DistributedLock contains an implementation of a distributed [semaphore](https://en.wikipedia.org/wiki/Semaphore_(programming)) with an API similar to the framework's non-distributed [SemaphoreSlim](https://msdn.microsoft.com/en-us/library/system.threading.semaphoreslim(v=vs.110).aspx) class. Since the implementation is based on [SQLServer application locks](https://msdn.microsoft.com/en-us/library/ms189823.aspx), this can be used to synchronize across different machines.
 
-The semaphore acts like a lock that can be acquired by a fixed number of processes simultaneously instead of a single process. This capability is frequently used to "throttle" access to some resource such as a database or email server. In such cases, a classic mutex lock is inappropriate because we *do* want to allow concurrent access and simply want to cap the level of concurrency. For example:
+The semaphore acts like a lock that can be acquired by a fixed number of processes/threads simultaneously instead of a single process/thread. This capability is frequently used to "throttle" access to some resource such as a database or email server, generally with the goal of preventing it from becoming overloaded. In such cases, a classic mutex lock is inappropriate because we *do* want to allow concurrent access and simply want to cap the level of concurrency. For example:
 
 ```C#
-// the semaphore will allow up two 5 callers to access it concurrently
 var semaphore = new SqlDistributedSemaphore("ComputeDatabase", 5, connectionString);
 using (semaphore.Acquire())
 {
+	// only 5 callers can be inside this block concurrently
 	UseComputeDatabase();
 }
 ```
