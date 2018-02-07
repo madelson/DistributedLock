@@ -133,7 +133,7 @@ namespace Medallion.Threading.Sql
                 case -2: // canceled
                     throw new OperationCanceledException(GetErrorMessage(exitCode, "canceled"));
                 case -3: // deadlock
-                    throw new InvalidOperationException(GetErrorMessage(exitCode, "deadlock"));
+                    throw new DeadlockException(GetErrorMessage(exitCode, "deadlock"));
                 case -999: // parameter / unknown
                     throw new ArgumentException(GetErrorMessage(exitCode, "parameter validation or other error"));
 

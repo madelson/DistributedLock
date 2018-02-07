@@ -162,7 +162,7 @@ namespace Medallion.Threading.Sql
                     // forever but also reasonable that someone should be able to test for lock acquisition without getting a throw
                     if (timeoutMillis == Timeout.Infinite)
                     {
-                        throw new InvalidOperationException("Deadlock detected: attempt to acquire the semaphore cannot succeed because all tickets are held by the current connection");
+                        throw new DeadlockException("Deadlock detected: attempt to acquire the semaphore cannot succeed because all tickets are held by the current connection");
                     }
 
                     ticketLockName = markerTableName = null;

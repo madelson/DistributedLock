@@ -27,7 +27,7 @@ namespace Medallion.Threading.Tests
                 var semaphore = engine.CreateSemaphore(nameof(TestSelfDeadlockThrowsOnInfiniteWait), maxCount: 2);
                 semaphore.Acquire();
                 semaphore.Acquire();
-                var ex = TestHelper.AssertThrows<InvalidOperationException>(() => semaphore.Acquire());
+                var ex = TestHelper.AssertThrows<DeadlockException>(() => semaphore.Acquire());
                 ex.Message.Contains("Deadlock").ShouldEqual(true, ex.Message);
             }
         }
