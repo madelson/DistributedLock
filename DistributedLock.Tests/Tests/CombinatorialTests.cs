@@ -240,4 +240,22 @@ namespace Medallion.Threading.Tests
 
     [TestClass]
     public class ConnectionStringStrategy_SqlSemaphoreEngineFactory_MultiplexedConnectionStringProviderTest : ConnectionStringStrategyTestCases<TestingSqlDistributedSemaphoreEngineFactory, MultiplexedConnectionStringProvider> { }
+
+    [TestClass]
+    public class ExternalConnectionOrTransactionStrategy_SqlEngineFactory_ConnectionProviderTest : ExternalConnectionOrTransactionStrategyTestCases<TestingSqlDistributedLockEngineFactory, ConnectionProvider> { }
+
+    [TestClass]
+    public class ExternalConnectionOrTransactionStrategy_SqlEngineFactory_TransactionProviderTest : ExternalConnectionOrTransactionStrategyTestCases<TestingSqlDistributedLockEngineFactory, TransactionProvider> { }
+
+    [TestClass]
+    public class ExternalConnectionOrTransactionStrategy_SqlReaderWriterEngineFactory_ConnectionProviderTest : ExternalConnectionOrTransactionStrategyTestCases<TestingSqlDistributedReaderWriterLockEngineFactory, ConnectionProvider> { }
+
+    [TestClass]
+    public class ExternalConnectionOrTransactionStrategy_SqlReaderWriterEngineFactory_TransactionProviderTest : ExternalConnectionOrTransactionStrategyTestCases<TestingSqlDistributedReaderWriterLockEngineFactory, TransactionProvider> { }
+
+    [TestClass]
+    public class ExternalConnectionOrTransactionStrategy_SqlSemaphoreEngineFactory_ConnectionProviderTest : ExternalConnectionOrTransactionStrategyTestCases<TestingSqlDistributedSemaphoreEngineFactory, ConnectionProvider> { }
+
+    [TestClass]
+    public class ExternalConnectionOrTransactionStrategy_SqlSemaphoreEngineFactory_TransactionProviderTest : ExternalConnectionOrTransactionStrategyTestCases<TestingSqlDistributedSemaphoreEngineFactory, TransactionProvider> { }
 }

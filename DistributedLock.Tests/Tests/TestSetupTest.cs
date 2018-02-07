@@ -3,6 +3,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -90,7 +91,7 @@ namespace Medallion.Threading.Tests
             var constraints = genericParameter.GetGenericParameterConstraints();
             return this.GetType().Assembly
                 .GetTypes()
-                // this doesn't support fancy constraints like class
+                // this doesn't support all fancy constraints like class or new()
                 // see https://stackoverflow.com/questions/4864496/checking-if-an-object-meets-a-generic-parameter-constraint
                 .Where(t => !t.IsAbstract && constraints.All(c => c.IsAssignableFrom(t)))
                 .SelectMany(t => t.IsGenericTypeDefinition ? this.GetTypesForGenericParameters(t.GetGenericArguments()).Select(p => t.MakeGenericType(p)) : new[] { t })
