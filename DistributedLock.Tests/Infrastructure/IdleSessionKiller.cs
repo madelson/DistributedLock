@@ -27,7 +27,7 @@ namespace Medallion.Threading.Tests.Sql
                     using (var connection = new SqlConnection(connectionString))
                     {
                         await connection.OpenAsync(cancellationToken);
-
+                        
                         var spidsToKill = new List<short>();
                         using (var findIdleSessionsCommand = connection.CreateCommand())
                         {
@@ -35,16 +35,24 @@ namespace Medallion.Threading.Tests.Sql
                             findIdleSessionsCommand.CommandText = @"
                                 SELECT session_id FROM sys.dm_exec_sessions
                                 WHERE session_id != @@SPID
+                                    AND login_name != 'sa'
                                     AND (last_request_start_time IS NULL OR last_request_start_time <= @expirationDate)
                                     AND (last_request_end_time IS NULL OR last_request_end_time <= @expirationDate)";
                             findIdleSessionsCommand.Parameters.Add(new SqlParameter("expirationDate", expirationDate));
 
-                            using (var reader = await findIdleSessionsCommand.ExecuteReaderAsync(cancellationToken))
+                            try
                             {
-                                while (await reader.ReadAsync(cancellationToken))
+                                using (var reader = await findIdleSessionsCommand.ExecuteReaderAsync(cancellationToken))
                                 {
-                                    spidsToKill.Add(reader.GetInt16(0));
+                                    while (await reader.ReadAsync(cancellationToken))
+                                    {
+                                        spidsToKill.Add(reader.GetInt16(0));
+                                    }
                                 }
+                            }
+                            catch (SqlException) when (cancellationToken.IsCancellationRequested)
+                            {
+                                cancellationToken.ThrowIfCancellationRequested();
                             }
                         }
 

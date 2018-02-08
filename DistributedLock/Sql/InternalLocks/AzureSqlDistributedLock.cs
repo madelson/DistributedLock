@@ -18,7 +18,8 @@ namespace Medallion.Threading.Sql
             this.connectionString = connectionString;
         }
 
-        public IDisposable TryAcquire(int timeoutMillis, SqlApplicationLock.Mode mode, IDisposable contextHandle)
+        public IDisposable TryAcquire<TLockCookie>(int timeoutMillis, ISqlSynchronizationStrategy<TLockCookie> strategy, IDisposable contextHandle)
+            where TLockCookie : class
         {
             if (contextHandle != null)
             {
@@ -28,9 +29,9 @@ namespace Medallion.Threading.Sql
                 lockScope.Keepalive.Stop();
                 try
                 {
-                    var internalHandle = lockScope.InternalLock.TryAcquire(timeoutMillis, mode, contextHandle: lockScope.InternalHandle);
+                    var internalHandle = lockScope.InternalLock.TryAcquire(timeoutMillis, strategy, contextHandle: lockScope.InternalHandle);
                     return internalHandle != null
-                        ? new LockScope(internalHandle, lockScope.InternalLock, lockScope.Keepalive, ownsKeepalive: false)
+                        ? new LockScope(internalHandle, lockScope.InternalLock, lockScope.Keepalive, connection: null)
                         : null;
                 }
                 finally
@@ -45,13 +46,13 @@ namespace Medallion.Threading.Sql
             try
             {
                 connection.Open();
-                var internalLock = new ConnectionScopedSqlDistributedLock(this.lockName, connection);
-                var internalHandle = internalLock.TryAcquire(timeoutMillis, mode, contextHandle: null);
+                var internalLock = new ExternalConnectionOrTransactionSqlDistributedLock(this.lockName, connection);
+                var internalHandle = internalLock.TryAcquire(timeoutMillis, strategy, contextHandle: null);
                 if (internalHandle != null)
                 {
                     var keepalive = new KeepaliveHelper(connection);
                     keepalive.Start();
-                    result = new LockScope(internalHandle, internalLock, keepalive, ownsKeepalive: true);
+                    result = new LockScope(internalHandle, internalLock, keepalive, connection);
                 }
             }
             finally
@@ -62,7 +63,8 @@ namespace Medallion.Threading.Sql
             return result;
         }
 
-        public async Task<IDisposable> TryAcquireAsync(int timeoutMillis, SqlApplicationLock.Mode mode, CancellationToken cancellationToken, IDisposable contextHandle)
+        public async Task<IDisposable> TryAcquireAsync<TLockCookie>(int timeoutMillis, ISqlSynchronizationStrategy<TLockCookie> strategy, CancellationToken cancellationToken, IDisposable contextHandle)
+            where TLockCookie : class
         {
             if (contextHandle != null)
             {
@@ -74,9 +76,9 @@ namespace Medallion.Threading.Sql
                 await lockScope.Keepalive.StopAsync().ConfigureAwait(false);
                 try
                 {
-                    var internalHandle = await lockScope.InternalLock.TryAcquireAsync(timeoutMillis, mode, cancellationToken, contextHandle: lockScope.InternalHandle).ConfigureAwait(false);
+                    var internalHandle = await lockScope.InternalLock.TryAcquireAsync(timeoutMillis, strategy, cancellationToken, contextHandle: lockScope.InternalHandle).ConfigureAwait(false);
                     return internalHandle != null
-                        ? new LockScope(internalHandle, lockScope.InternalLock, lockScope.Keepalive, ownsKeepalive: false)
+                        ? new LockScope(internalHandle, lockScope.InternalLock, lockScope.Keepalive, connection: null)
                         : null;
                 }
                 finally
@@ -91,13 +93,13 @@ namespace Medallion.Threading.Sql
             try
             {
                 await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
-                var internalLock = new ConnectionScopedSqlDistributedLock(this.lockName, connection);
-                var internalHandle = await internalLock.TryAcquireAsync(timeoutMillis, mode, cancellationToken, contextHandle: null).ConfigureAwait(false);
+                var internalLock = new ExternalConnectionOrTransactionSqlDistributedLock(this.lockName, connection);
+                var internalHandle = await internalLock.TryAcquireAsync(timeoutMillis, strategy, cancellationToken, contextHandle: null).ConfigureAwait(false);
                 if (internalHandle != null)
                 {
                     var keepalive = new KeepaliveHelper(connection);
                     keepalive.Start();
-                    result = new LockScope(internalHandle, internalLock, keepalive, ownsKeepalive: true);
+                    result = new LockScope(internalHandle, internalLock, keepalive, connection);
                 }
             }
             finally
@@ -107,26 +109,26 @@ namespace Medallion.Threading.Sql
 
             return result;
         }
-
+        
         private sealed class LockScope : IDisposable
         {
-            private readonly bool ownsKeepalive;
             private KeepaliveHelper keepalive;
+            private SqlConnection connection;
 
             public LockScope(
                 IDisposable internalHandle, 
-                ConnectionScopedSqlDistributedLock internalLock,
+                ExternalConnectionOrTransactionSqlDistributedLock internalLock,
                 KeepaliveHelper keepalive,
-                bool ownsKeepalive)
+                SqlConnection connection)
             {
                 this.InternalHandle = internalHandle;
                 this.InternalLock = internalLock;
                 this.keepalive = keepalive;
-                this.ownsKeepalive = ownsKeepalive;
+                this.connection = connection;
             }
             
             public IDisposable InternalHandle { get; private set; }
-            public ConnectionScopedSqlDistributedLock InternalLock { get; private set; }
+            public ExternalConnectionOrTransactionSqlDistributedLock InternalLock { get; private set; }
             public KeepaliveHelper Keepalive => this.keepalive;
 
             public void Dispose()
@@ -142,9 +144,15 @@ namespace Medallion.Threading.Sql
                         this.InternalHandle.Dispose();
                         this.InternalHandle = null;
                         this.InternalLock = null;
-                        if (!this.ownsKeepalive)
+                        if (this.connection != null)
                         {
-                            // if the keepalive is owned by an outer handle, restart it
+                            // if we own the connection then dispose it
+                            this.connection.Dispose();
+                            this.connection = null;
+                        }
+                        else
+                        {
+                            // otherwise, the keepalive is owned by an outer handle so restart it
                             keepalive.Start();
                         }
                     }

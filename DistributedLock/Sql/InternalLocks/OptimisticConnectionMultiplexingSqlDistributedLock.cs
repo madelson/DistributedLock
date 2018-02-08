@@ -10,8 +10,6 @@ namespace Medallion.Threading.Sql
 {
     internal sealed class OptimisticConnectionMultiplexingSqlDistributedLock : IInternalSqlDistributedLock
     {
-        private static readonly MultiplexedConnectionLockPool LockPool = new MultiplexedConnectionLockPool();
-
         private readonly string lockName, connectionString;
         private readonly IInternalSqlDistributedLock fallbackLock;
 
@@ -19,33 +17,35 @@ namespace Medallion.Threading.Sql
         {
             this.lockName = lockName;
             this.connectionString = connectionString;
-            this.fallbackLock = new OwnedConnectionDistributedLock(lockName: lockName, connectionString: connectionString);
+            this.fallbackLock = new OwnedConnectionSqlDistributedLock(lockName: lockName, connectionString: connectionString);
         }
 
-        public IDisposable TryAcquire(int timeoutMillis, SqlApplicationLock.Mode mode, IDisposable contextHandle)
+        public IDisposable TryAcquire<TLockCookie>(int timeoutMillis, ISqlSynchronizationStrategy<TLockCookie> strategy, IDisposable contextHandle)
+            where TLockCookie : class
         {
             // cannot multiplex for updates, since we cannot predict whether or not there will be a request to elevate
             // to an exclusive lock which asks for a long timeout
-            if (mode != SqlApplicationLock.Mode.Update && contextHandle == null)
+            if (!strategy.IsUpgradeable && contextHandle == null)
             {
-                return LockPool.TryAcquire(this.connectionString, this.lockName, timeoutMillis, mode);
+                return MultiplexedConnectionLockPool.Instance.TryAcquire(this.connectionString, this.lockName, timeoutMillis, strategy);
             }
 
             // otherwise, fall back to our fallback lock
-            return this.fallbackLock.TryAcquire(timeoutMillis, mode, contextHandle);
+            return this.fallbackLock.TryAcquire(timeoutMillis, strategy, contextHandle);
         }
 
-        public Task<IDisposable> TryAcquireAsync(int timeoutMillis, SqlApplicationLock.Mode mode, CancellationToken cancellationToken, IDisposable contextHandle)
+        public Task<IDisposable> TryAcquireAsync<TLockCookie>(int timeoutMillis, ISqlSynchronizationStrategy<TLockCookie> strategy, CancellationToken cancellationToken, IDisposable contextHandle)
+            where TLockCookie : class
         {
             // cannot multiplex for updates, since we cannot predict whether or not there will be a request to elevate
             // to an exclusive lock which asks for a long timeout
-            if (mode != SqlApplicationLock.Mode.Update && contextHandle == null)
+            if (!strategy.IsUpgradeable && contextHandle == null)
             {
-                return LockPool.TryAcquireAsync(connectionString, lockName, timeoutMillis, mode, cancellationToken);
+                return MultiplexedConnectionLockPool.Instance.TryAcquireAsync(connectionString, lockName, timeoutMillis, strategy, cancellationToken);
             }
 
             // otherwise, fall back to our fallback lock
-            return this.fallbackLock.TryAcquireAsync(timeoutMillis, mode, cancellationToken, contextHandle);
+            return this.fallbackLock.TryAcquireAsync(timeoutMillis, strategy, cancellationToken, contextHandle);
         }
     }
 }
