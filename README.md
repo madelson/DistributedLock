@@ -194,7 +194,7 @@ when you want the locking to be tied closely to other SQL operations being perfo
 simultaneously. This is particularly helpful for high-load scenarios since it can drastically reduce load on the underlying connection pool.
 - Azure: similar to the "Connection" strategy, but also automatically issues periodic background queries on the underlying connection to keep it from looking idle to the Azure connection governor. See [#5](https://github.com/madelson/DistributedLock/issues/5) for more details.
 
-Most of the time, you'll want to use the default connection strategy. See more details about the various strategies [here](https://github.com/madelson/DistributedLock/blob/version-1.2/DistributedLock/Sql/SqlDistributedLockConnectionStrategy.cs).
+Most of the time, you'll want to use the default connection strategy. See more details about the various strategies [here](https://github.com/madelson/DistributedLock/blob/master/DistributedLock/Sql/SqlDistributedLockConnectionStrategy.cs).
 
 ## Release notes
 - 1.4.0
