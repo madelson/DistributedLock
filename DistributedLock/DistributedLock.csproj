@@ -1,18 +1,18 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard1.3;net45</TargetFrameworks>
+    <TargetFrameworks>netstandard2.1;net472</TargetFrameworks>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
   <PropertyGroup>
     <RootNamespace>Medallion.Threading</RootNamespace>
-    <Version>1.4.0</Version>
+    <Version>1.5.0</Version>
     <Authors>Michael Adelson</Authors>
     <Description>Provides easy-to-use and robust fully distributed locks (using SQLServer) as well as wrappers for named system-wide locks (using WaitHandles)</Description>
     <Copyright>Copyright © 2017 Michael Adelson</Copyright>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-    <PackageLicenseUrl>https://raw.githubusercontent.com/madelson/DistributedLock/master/License.txt</PackageLicenseUrl>
+    <PackageLicenseUrl></PackageLicenseUrl>
     <PackageTags>distributed lock async waithandle mutex sql sqlserver reader writer azure</PackageTags>
     <PackageProjectUrl>https://github.com/madelson/DistributedLock</PackageProjectUrl>
     <RepositoryUrl></RepositoryUrl>
@@ -24,7 +24,9 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <WarningLevel>4</WarningLevel>
     <DefineConstants>TRACE;DEBUG</DefineConstants>
-    <AssemblyVersion>1.4.0.0</AssemblyVersion>
+    <AssemblyVersion>1.5.0.0</AssemblyVersion>
+    <PackageLicenseExpression></PackageLicenseExpression>
+    <PackageLicenseFile>License.txt</PackageLicenseFile>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
@@ -36,20 +38,28 @@
     <NoWarn>1591</NoWarn>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(TargetFramework)' == 'netstandard1.3'">
-    <DefineConstants>NETSTANDARD_1_3</DefineConstants>
+  <PropertyGroup Condition="'$(TargetFramework)' == 'netstandard2.1'">
+    <DefineConstants>NETSTANDARD_2_1</DefineConstants>
   </PropertyGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'net45'">
+  <ItemGroup Condition="'$(TargetFramework)' == 'net472'">
+	<PackageReference Include="Microsoft.Data.SqlClient" Version="1.1.0" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard1.3'">
-    <PackageReference Include="System.Data.SqlClient" Version="4.3.0" />
-    <PackageReference Include="System.Threading.AccessControl" Version="4.3.0" />
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.1'">
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="1.1.0" />
+    <PackageReference Include="System.Threading.AccessControl" Version="4.7.0" />
     <PackageReference Include="System.Threading.ThreadPool" Version="4.3.0" />
   </ItemGroup>
 
   <ItemGroup>
     <Folder Include="Properties\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\License.txt">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
   </ItemGroup>
 </Project>

@@ -1,12 +1,9 @@
-﻿using Medallion.Collections;
+﻿//using Medallion.Collections;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace Medallion.Threading.Tests
 {
@@ -74,7 +71,7 @@ namespace Medallion.Threading.Tests
         private List<Type[]> GetTypesForGenericParameters(Type[] genericParameters)
         {
             var genericParameterTypes = genericParameters.Select(this.GetTypesForGenericParameter).ToArray();
-            var allCombinations = Traverse.DepthFirst(
+            var allCombinations = Medallion.Collections.Traverse.DepthFirst(
                     root: (index: 0, value: Enumerable.Empty<Type>()),
                     children: t => t.index == genericParameterTypes.Length
                         ? Enumerable.Empty<(int index, IEnumerable<Type> value)>()

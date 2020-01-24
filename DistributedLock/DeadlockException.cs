@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Medallion.Threading
 {
@@ -8,7 +6,7 @@ namespace Medallion.Threading
     /// An exception that SOME distributed locks will throw under SOME deadlock conditions. Note that even locks
     /// that throw this exception under some circumstances cannot detect ALL deadlock conditions
     /// </summary>
-#if !NETSTANDARD_1_3
+#if !NETSTANDARD_2_1
     [Serializable]
 #endif
     public sealed class DeadlockException 
@@ -30,7 +28,7 @@ namespace Medallion.Threading
         /// </summary>
         public DeadlockException(string message, Exception innerException) : base(message, innerException) { }
 
-#if !NETSTANDARD_1_3
+#if !NETSTANDARD_2_1
         private DeadlockException(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
 #endif
     }

@@ -1,12 +1,6 @@
-﻿using Medallion.Threading.Sql.ConnectionMultiplexing;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Data;
 using System.Data.Common;
-using System.Data.SqlClient;
-using System.Linq;
-using System.Runtime.ExceptionServices;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
