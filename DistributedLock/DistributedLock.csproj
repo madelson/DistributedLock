@@ -2,16 +2,19 @@
 
   <PropertyGroup>
     <TargetFrameworks>netstandard1.3;net45</TargetFrameworks>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <GenerateDocumentationFile>True</GenerateDocumentationFile>
+    <WarningLevel>4</WarningLevel>
+    <LangVersion>Latest</LangVersion>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <PropertyGroup>
     <RootNamespace>Medallion.Threading</RootNamespace>
     <Version>1.4.0</Version>
+    <AssemblyVersion>1.4.0.0</AssemblyVersion>
     <Authors>Michael Adelson</Authors>
     <Description>Provides easy-to-use and robust fully distributed locks (using SQLServer) as well as wrappers for named system-wide locks (using WaitHandles)</Description>
     <Copyright>Copyright © 2017 Michael Adelson</Copyright>
-    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <PackageLicenseUrl>https://raw.githubusercontent.com/madelson/DistributedLock/master/License.txt</PackageLicenseUrl>
     <PackageTags>distributed lock async waithandle mutex sql sqlserver reader writer azure</PackageTags>
     <PackageProjectUrl>https://github.com/madelson/DistributedLock</PackageProjectUrl>
@@ -20,20 +23,18 @@
     <PackageReleaseNotes>See https://github.com/madelson/DistributedLock#release-notes</PackageReleaseNotes>
   </PropertyGroup>
 
-  <PropertyGroup>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <WarningLevel>4</WarningLevel>
-    <DefineConstants>TRACE;DEBUG</DefineConstants>
-    <AssemblyVersion>1.4.0.0</AssemblyVersion>
-  </PropertyGroup>
-
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
-    <Optimize>true</Optimize>
+    <Optimize>True</Optimize>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
+    <TreatSpecificWarningsAsErrors />
+    <DefineConstants>DEBUG</DefineConstants>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
-    <Optimize>false</Optimize>
+    <Optimize>False</Optimize>
     <NoWarn>1591</NoWarn>
+    <DefineConstants>TRACE;DEBUG</DefineConstants>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(TargetFramework)' == 'netstandard1.3'">

@@ -20,7 +20,7 @@ namespace Medallion.Threading.Sql
             this.fallbackLock = new OwnedConnectionSqlDistributedLock(lockName: lockName, connectionString: connectionString);
         }
 
-        public IDisposable TryAcquire<TLockCookie>(int timeoutMillis, ISqlSynchronizationStrategy<TLockCookie> strategy, IDisposable contextHandle)
+        public IDisposable? TryAcquire<TLockCookie>(int timeoutMillis, ISqlSynchronizationStrategy<TLockCookie> strategy, IDisposable? contextHandle)
             where TLockCookie : class
         {
             // cannot multiplex for updates, since we cannot predict whether or not there will be a request to elevate
@@ -34,7 +34,7 @@ namespace Medallion.Threading.Sql
             return this.fallbackLock.TryAcquire(timeoutMillis, strategy, contextHandle);
         }
 
-        public Task<IDisposable> TryAcquireAsync<TLockCookie>(int timeoutMillis, ISqlSynchronizationStrategy<TLockCookie> strategy, CancellationToken cancellationToken, IDisposable contextHandle)
+        public Task<IDisposable?> TryAcquireAsync<TLockCookie>(int timeoutMillis, ISqlSynchronizationStrategy<TLockCookie> strategy, CancellationToken cancellationToken, IDisposable? contextHandle)
             where TLockCookie : class
         {
             // cannot multiplex for updates, since we cannot predict whether or not there will be a request to elevate

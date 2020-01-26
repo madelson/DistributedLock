@@ -24,12 +24,12 @@ namespace Medallion.Threading.Sql
         /// <summary>
         /// Attempts to acquire the lock, returning either null for failure or a non-null state "cookie" on success
         /// </summary>
-        TLockCookie TryAcquire(ConnectionOrTransaction connectionOrTransaction, string resourceName, int timeoutMillis);
+        TLockCookie? TryAcquire(ConnectionOrTransaction connectionOrTransaction, string resourceName, int timeoutMillis);
 
         /// <summary>
         /// Attempts to acquire the lock, returning either null for failure or a non-null state "cookie" on success
         /// </summary>
-        Task<TLockCookie> TryAcquireAsync(ConnectionOrTransaction connectionOrTransaction, string resourceName, int timeoutMillis, CancellationToken cancellationToken);
+        Task<TLockCookie?> TryAcquireAsync(ConnectionOrTransaction connectionOrTransaction, string resourceName, int timeoutMillis, CancellationToken cancellationToken);
 
         void Release(ConnectionOrTransaction connectionOrTransaction, string resourceName, TLockCookie lockCookie);
     }

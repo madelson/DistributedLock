@@ -18,9 +18,9 @@ namespace Medallion.Threading.Sql
         // from an upgradeable read lock to a write lock. This allows the implementation to use the same connection
         // for the nested lock
 
-        IDisposable TryAcquire<TLockCookie>(int timeoutMillis, ISqlSynchronizationStrategy<TLockCookie> strategy, IDisposable contextHandle)
+        IDisposable? TryAcquire<TLockCookie>(int timeoutMillis, ISqlSynchronizationStrategy<TLockCookie> strategy, IDisposable? contextHandle)
             where TLockCookie : class;
-        Task<IDisposable> TryAcquireAsync<TLockCookie>(int timeoutMillis, ISqlSynchronizationStrategy<TLockCookie> strategy, CancellationToken cancellationToken, IDisposable contextHandle)
+        Task<IDisposable?> TryAcquireAsync<TLockCookie>(int timeoutMillis, ISqlSynchronizationStrategy<TLockCookie> strategy, CancellationToken cancellationToken, IDisposable? contextHandle)
             where TLockCookie : class;
     }
 }

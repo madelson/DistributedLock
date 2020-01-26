@@ -19,7 +19,7 @@ namespace Medallion.Threading.Sql
             this.connectionString = connectionString;
         }
 
-        public IDisposable TryAcquire<TLockCookie>(int timeoutMillis, ISqlSynchronizationStrategy<TLockCookie> strategy, IDisposable contextHandle)
+        public IDisposable? TryAcquire<TLockCookie>(int timeoutMillis, ISqlSynchronizationStrategy<TLockCookie> strategy, IDisposable? contextHandle)
             where TLockCookie : class
         {
             if (contextHandle != null)
@@ -27,9 +27,9 @@ namespace Medallion.Threading.Sql
                 return this.CreateContextLock(contextHandle).TryAcquire(timeoutMillis, strategy, contextHandle: null);
             }
 
-            IDisposable result = null;
+            IDisposable? result = null;
             var connection = new SqlConnection(this.connectionString);
-            SqlTransaction transaction = null;
+            SqlTransaction? transaction = null;
             try
             {
                 connection.Open();
@@ -54,7 +54,7 @@ namespace Medallion.Threading.Sql
             return result;
         }
 
-        public async Task<IDisposable> TryAcquireAsync<TLockCookie>(int timeoutMillis, ISqlSynchronizationStrategy<TLockCookie> strategy, CancellationToken cancellationToken, IDisposable contextHandle = null)
+        public async Task<IDisposable?> TryAcquireAsync<TLockCookie>(int timeoutMillis, ISqlSynchronizationStrategy<TLockCookie> strategy, CancellationToken cancellationToken, IDisposable? contextHandle = null)
             where TLockCookie : class
         {
             if (contextHandle != null)
@@ -62,9 +62,9 @@ namespace Medallion.Threading.Sql
                 return await this.CreateContextLock(contextHandle).TryAcquireAsync(timeoutMillis, strategy, cancellationToken, contextHandle: null).ConfigureAwait(false);
             }
 
-            IDisposable result = null;
+            IDisposable? result = null;
             var connection = new SqlConnection(this.connectionString);
-            SqlTransaction transaction = null;
+            SqlTransaction? transaction = null;
             try
             {
                 await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
@@ -99,14 +99,14 @@ namespace Medallion.Threading.Sql
         
         private sealed class LockScope : IDisposable
         {
-            private SqlTransaction transaction;
+            private SqlTransaction? transaction;
 
             public LockScope(SqlTransaction transaction)
             {
                 this.transaction = transaction;
             }
 
-            public SqlTransaction Transaction => Volatile.Read(ref this.transaction);
+            public SqlTransaction? Transaction => Volatile.Read(ref this.transaction);
 
             public void Dispose()
             {

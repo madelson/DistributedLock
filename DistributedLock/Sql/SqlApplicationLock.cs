@@ -28,12 +28,12 @@ namespace Medallion.Threading.Sql
 
         bool ISqlSynchronizationStrategy<object>.IsUpgradeable => this.mode == Mode.Update;
 
-        object ISqlSynchronizationStrategy<object>.TryAcquire(ConnectionOrTransaction connectionOrTransaction, string resourceName, int timeoutMillis)
+        object? ISqlSynchronizationStrategy<object>.TryAcquire(ConnectionOrTransaction connectionOrTransaction, string resourceName, int timeoutMillis)
         {
             return ExecuteAcquireCommand(connectionOrTransaction, resourceName, timeoutMillis, this.mode) ? Cookie : null;
         }
 
-        async Task<object> ISqlSynchronizationStrategy<object>.TryAcquireAsync(ConnectionOrTransaction connectionOrTransaction, string resourceName, int timeoutMillis, CancellationToken cancellationToken)
+        async Task<object?> ISqlSynchronizationStrategy<object>.TryAcquireAsync(ConnectionOrTransaction connectionOrTransaction, string resourceName, int timeoutMillis, CancellationToken cancellationToken)
         {
             return await ExecuteAcquireCommandAsync(connectionOrTransaction, resourceName, timeoutMillis, this.mode, cancellationToken).ConfigureAwait(false) ? Cookie : null;
         }
@@ -77,7 +77,7 @@ namespace Medallion.Threading.Sql
             Mode mode,
             out IDbDataParameter returnValue)
         {
-            var command = connectionOrTransaction.Connection.CreateCommand();
+            var command = connectionOrTransaction.Connection!.CreateCommand();
             command.Transaction = connectionOrTransaction.Transaction;
             command.CommandText = "dbo.sp_getapplock";
             command.CommandType = CommandType.StoredProcedure;
@@ -102,7 +102,7 @@ namespace Medallion.Threading.Sql
 
         private static IDbCommand CreateReleaseCommand(ConnectionOrTransaction connectionOrTransaction, string lockName, out IDbDataParameter returnValue)
         {
-            var command = connectionOrTransaction.Connection.CreateCommand();
+            var command = connectionOrTransaction.Connection!.CreateCommand();
             command.Transaction = connectionOrTransaction.Transaction;
             command.CommandText = "dbo.sp_releaseapplock";
             command.CommandType = CommandType.StoredProcedure;

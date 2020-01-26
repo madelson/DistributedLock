@@ -63,7 +63,7 @@ namespace Medallion.Threading.Sql
 
         public static bool IsClosedOrBroken(this IDbConnection connection) => connection.State == ConnectionState.Closed || connection.State == ConnectionState.Broken;
 
-        public static IDbDataParameter CreateParameter(this IDbCommand command, string name, object value)
+        public static IDbDataParameter CreateParameter(this IDbCommand command, string name, object? value)
         {
             var parameter = command.CreateParameter();
             parameter.ParameterName = name;
@@ -86,8 +86,8 @@ namespace Medallion.Threading.Sql
     {
         private object connectionOrTransaction;
 
-        public IDbTransaction Transaction => this.connectionOrTransaction as IDbTransaction;
-        public IDbConnection Connection => this.Transaction?.Connection ?? (this.connectionOrTransaction as IDbConnection);
+        public IDbTransaction? Transaction => this.connectionOrTransaction as IDbTransaction;
+        public IDbConnection? Connection => this.Transaction?.Connection ?? (this.connectionOrTransaction as IDbConnection);
 
         public ConnectionOrTransaction(IDbConnection connection)
         {

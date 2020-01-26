@@ -18,7 +18,7 @@ namespace Medallion.Threading.Sql
             this.connectionString = connectionString;
         }
 
-        public IDisposable TryAcquire<TLockCookie>(int timeoutMillis, ISqlSynchronizationStrategy<TLockCookie> strategy, IDisposable contextHandle)
+        public IDisposable? TryAcquire<TLockCookie>(int timeoutMillis, ISqlSynchronizationStrategy<TLockCookie> strategy, IDisposable? contextHandle)
             where TLockCookie : class
         {
             if (contextHandle != null)
@@ -26,10 +26,10 @@ namespace Medallion.Threading.Sql
                 // if we are taking a nested lock, we don't want to start another keepalive on the same connection.
                 // However, we do need to stop our current keepalive while we take the nested lock to avoid threading issues
                 var lockScope = (LockScope)contextHandle;
-                lockScope.Keepalive.Stop();
+                lockScope.Keepalive!.Stop();
                 try
                 {
-                    var internalHandle = lockScope.InternalLock.TryAcquire(timeoutMillis, strategy, contextHandle: lockScope.InternalHandle);
+                    var internalHandle = lockScope.InternalLock!.TryAcquire(timeoutMillis, strategy, contextHandle: lockScope.InternalHandle);
                     return internalHandle != null
                         ? new LockScope(internalHandle, lockScope.InternalLock, lockScope.Keepalive, connection: null)
                         : null;
@@ -42,7 +42,7 @@ namespace Medallion.Threading.Sql
             }
 
             var connection = new SqlConnection(this.connectionString);
-            LockScope result = null;
+            LockScope? result = null;
             try
             {
                 connection.Open();
@@ -63,7 +63,7 @@ namespace Medallion.Threading.Sql
             return result;
         }
 
-        public async Task<IDisposable> TryAcquireAsync<TLockCookie>(int timeoutMillis, ISqlSynchronizationStrategy<TLockCookie> strategy, CancellationToken cancellationToken, IDisposable contextHandle)
+        public async Task<IDisposable?> TryAcquireAsync<TLockCookie>(int timeoutMillis, ISqlSynchronizationStrategy<TLockCookie> strategy, CancellationToken cancellationToken, IDisposable? contextHandle)
             where TLockCookie : class
         {
             if (contextHandle != null)
@@ -73,10 +73,10 @@ namespace Medallion.Threading.Sql
                 // if we are taking a nested lock, we don't want to start another keepalive on the same connection.
                 // However, we do need to stop our current keepalive while we take the nested lock to avoid threading issues
                 var lockScope = (LockScope)contextHandle;
-                await lockScope.Keepalive.StopAsync().ConfigureAwait(false);
+                await lockScope.Keepalive!.StopAsync().ConfigureAwait(false);
                 try
                 {
-                    var internalHandle = await lockScope.InternalLock.TryAcquireAsync(timeoutMillis, strategy, cancellationToken, contextHandle: lockScope.InternalHandle).ConfigureAwait(false);
+                    var internalHandle = await lockScope.InternalLock!.TryAcquireAsync(timeoutMillis, strategy, cancellationToken, contextHandle: lockScope.InternalHandle).ConfigureAwait(false);
                     return internalHandle != null
                         ? new LockScope(internalHandle, lockScope.InternalLock, lockScope.Keepalive, connection: null)
                         : null;
@@ -89,7 +89,7 @@ namespace Medallion.Threading.Sql
             }
 
             var connection = new SqlConnection(this.connectionString);
-            LockScope result = null;
+            LockScope? result = null;
             try
             {
                 await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
@@ -112,14 +112,14 @@ namespace Medallion.Threading.Sql
         
         private sealed class LockScope : IDisposable
         {
-            private KeepaliveHelper keepalive;
-            private SqlConnection connection;
+            private KeepaliveHelper? keepalive;
+            private SqlConnection? connection;
 
             public LockScope(
                 IDisposable internalHandle, 
                 ExternalConnectionOrTransactionSqlDistributedLock internalLock,
                 KeepaliveHelper keepalive,
-                SqlConnection connection)
+                SqlConnection? connection)
             {
                 this.InternalHandle = internalHandle;
                 this.InternalLock = internalLock;
@@ -127,9 +127,9 @@ namespace Medallion.Threading.Sql
                 this.connection = connection;
             }
             
-            public IDisposable InternalHandle { get; private set; }
-            public ExternalConnectionOrTransactionSqlDistributedLock InternalLock { get; private set; }
-            public KeepaliveHelper Keepalive => this.keepalive;
+            public IDisposable? InternalHandle { get; private set; }
+            public ExternalConnectionOrTransactionSqlDistributedLock? InternalLock { get; private set; }
+            public KeepaliveHelper? Keepalive => this.keepalive;
 
             public void Dispose()
             {
@@ -141,7 +141,7 @@ namespace Medallion.Threading.Sql
                     try { keepalive.Stop(); }
                     finally
                     {
-                        this.InternalHandle.Dispose();
+                        this.InternalHandle!.Dispose();
                         this.InternalHandle = null;
                         this.InternalLock = null;
                         if (this.connection != null)

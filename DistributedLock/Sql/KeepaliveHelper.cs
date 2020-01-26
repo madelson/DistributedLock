@@ -22,8 +22,8 @@ namespace Medallion.Threading.Sql
         }
 
         private readonly WeakReference<IDbConnection> weakConnection;
-        private CancellationTokenSource cancellationTokenSource;
-        private Task task;
+        private CancellationTokenSource? cancellationTokenSource;
+        private Task? task;
 
         public KeepaliveHelper(IDbConnection connection)
         {
@@ -49,7 +49,7 @@ namespace Medallion.Threading.Sql
         {
             if (this.task == null) { throw new InvalidOperationException("already stopped"); } // sanity check
 
-            this.cancellationTokenSource.Cancel();
+            this.cancellationTokenSource!.Cancel();
             try { this.task.Wait(); }
             finally
             {
@@ -63,7 +63,7 @@ namespace Medallion.Threading.Sql
         {
             if (this.task == null) { throw new InvalidOperationException("already stopped"); } // sanity check
 
-            this.cancellationTokenSource.Cancel();
+            this.cancellationTokenSource!.Cancel();
             try { await this.task.ConfigureAwait(false); }
             finally
             {
@@ -81,7 +81,7 @@ namespace Medallion.Threading.Sql
             if (initialDelay.IsFaulted) { return initialDelay; }
             
             var helper = (KeepaliveHelper)state;
-            return RunKeepaliveAsync(helper.weakConnection, helper.cancellationTokenSource.Token);
+            return RunKeepaliveAsync(helper.weakConnection, helper.cancellationTokenSource!.Token);
         }
 
         /// <summary>
