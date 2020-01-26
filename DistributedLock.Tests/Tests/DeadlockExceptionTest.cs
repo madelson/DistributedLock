@@ -1,4 +1,4 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -9,17 +9,13 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading.Tests.Tests
 {
-    [TestClass]
     public class DeadlockExceptionTest : TestBase
     {
-        [TestMethod]
+        [Test]
         public void TestDeadlockExceptionSerialization()
         {
             void ThrowDeadlockException() => throw new DeadlockException(nameof(TestDeadlockExceptionSerialization), new InvalidOperationException("foo"));
-
-            DeadlockException deadlockException = null;
-            try { ThrowDeadlockException(); }
-            catch (DeadlockException ex) { deadlockException = ex; }
+            var deadlockException = Assert.Throws<DeadlockException>(ThrowDeadlockException);
 
             var formatter = new BinaryFormatter();
             var stream = new MemoryStream();

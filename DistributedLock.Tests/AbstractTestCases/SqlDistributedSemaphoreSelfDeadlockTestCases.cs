@@ -1,6 +1,6 @@
 ﻿using Medallion.Threading.Sql;
 using Medallion.Threading.Tests.Sql;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,11 +15,10 @@ namespace Medallion.Threading.Tests
     /// all tickets. Since this can only happen when a connection/transaction is re-used, we require
     /// <see cref="IExternalConnectionOrTransactionTestingSqlConnectionManagementProvider"/> on our providers.
     /// </summary>
-    [TestClass]
     public abstract class SqlDistributedSemaphoreSelfDeadlockTestCases<TConnectionManagementProvider> : TestBase
         where TConnectionManagementProvider : TestingSqlConnectionManagementProvider, IExternalConnectionOrTransactionTestingSqlConnectionManagementProvider, new()
     {
-        [TestMethod]
+        [Test]
         public void TestSelfDeadlockThrowsOnInfiniteWait()
         {
             using (var engine = this.CreateEngine())
@@ -27,12 +26,12 @@ namespace Medallion.Threading.Tests
                 var semaphore = engine.CreateSemaphore(nameof(TestSelfDeadlockThrowsOnInfiniteWait), maxCount: 2);
                 semaphore.Acquire();
                 semaphore.Acquire();
-                var ex = TestHelper.AssertThrows<DeadlockException>(() => semaphore.Acquire());
+                var ex = Assert.Catch<DeadlockException>(() => semaphore.Acquire());
                 ex.Message.Contains("Deadlock").ShouldEqual(true, ex.Message);
             }
         }
 
-        [TestMethod]
+        [Test]
         public void TestMultipleConnectionsCannotTriggerSelfDeadlock()
         {
             using (var engine = this.CreateEngine())
@@ -51,7 +50,7 @@ namespace Medallion.Threading.Tests
             }
         }
 
-        [TestMethod]
+        [Test]
         public void TestSelfDeadlockWaitsOnSpecifiedTime()
         {
             using (var engine = this.CreateEngine())
@@ -66,7 +65,7 @@ namespace Medallion.Threading.Tests
             }
         }
 
-        [TestMethod]
+        [Test]
         public void TestSelfDeadlockWaitRespectsCancellation()
         {
             using (var engine = this.CreateEngine())

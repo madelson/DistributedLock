@@ -1,5 +1,5 @@
 ﻿using Medallion.Threading.Tests.Sql;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
@@ -11,7 +11,6 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading.Tests
 {
-    [TestClass]
     public abstract class ConnectionStringStrategyTestCases<TEngineFactory, TConnectionManagementProvider> : TestBase
         where TEngineFactory : ITestingSqlDistributedLockEngineFactory, new()
         where TConnectionManagementProvider : ConnectionStringProvider, new()
@@ -19,7 +18,7 @@ namespace Medallion.Threading.Tests
         /// <summary>
         /// Tests that internally-owned connections are properly cleaned up by disposing the lock handle 
         /// </summary>
-        [TestMethod]
+        [Test]
         public void TestConnectionDoesNotLeak()
         {
             var applicationName = nameof(TestConnectionDoesNotLeak) + Guid.NewGuid();

@@ -1,4 +1,4 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,7 +10,7 @@ namespace Medallion.Threading.Tests.Sql
     public abstract class SqlDistributedReaderWriterLockTestCases<TConnectionManagementProvider> : TestBase
         where TConnectionManagementProvider : TestingSqlConnectionManagementProvider, new()
     {
-        [TestMethod]
+        [Test]
         public void TestMultipleReadersSingleWriter()
         {
             using (var engine = this.CreateEngine())
@@ -32,11 +32,11 @@ namespace Medallion.Threading.Tests.Sql
                     engine.CreateReaderWriterLock(nameof(TestMultipleReadersSingleWriter)).TryAcquireUpgradeableReadLock().ShouldEqual(null);
                     engine.CreateReaderWriterLock(nameof(TestMultipleReadersSingleWriter)).TryAcquireWriteLock().ShouldEqual(null);
 
-                    readHandle3.Dispose();
+                    readHandle3!.Dispose();
                 }
 
-                readHandle1.Dispose();
-                readHandle2.Dispose();
+                readHandle1!.Dispose();
+                readHandle2!.Dispose();
 
                 using (var writeHandle = engine.CreateReaderWriterLock(nameof(TestMultipleReadersSingleWriter)).TryAcquireUpgradeableReadLock())
                 {
@@ -45,7 +45,7 @@ namespace Medallion.Threading.Tests.Sql
             }
         }
 
-        [TestMethod]
+        [Test]
         public void TestUpgradeToWriteLock()
         {
             using (var engine = this.CreateEngine())
@@ -72,54 +72,54 @@ namespace Medallion.Threading.Tests.Sql
             }
         }
 
-        [TestMethod]
+        [Test]
         public void TestReaderWriterLockBadArguments()
         {
             using (var engine = this.CreateEngine())
             {
                 var @lock = engine.CreateReaderWriterLock(nameof(TestReaderWriterLockBadArguments));
-                TestHelper.AssertThrows<ArgumentOutOfRangeException>(() => @lock.AcquireReadLock(TimeSpan.FromSeconds(-2)));
-                TestHelper.AssertThrows<ArgumentOutOfRangeException>(() => @lock.AcquireReadLockAsync(TimeSpan.FromSeconds(-2)));
-                TestHelper.AssertThrows<ArgumentOutOfRangeException>(() => @lock.TryAcquireReadLock(TimeSpan.FromSeconds(-2)));
-                TestHelper.AssertThrows<ArgumentOutOfRangeException>(() => @lock.TryAcquireReadLockAsync(TimeSpan.FromSeconds(-2)));
-                TestHelper.AssertThrows<ArgumentOutOfRangeException>(() => @lock.AcquireReadLock(TimeSpan.FromSeconds(int.MaxValue)));
-                TestHelper.AssertThrows<ArgumentOutOfRangeException>(() => @lock.AcquireReadLockAsync(TimeSpan.FromSeconds(int.MaxValue)));
-                TestHelper.AssertThrows<ArgumentOutOfRangeException>(() => @lock.TryAcquireReadLock(TimeSpan.FromSeconds(int.MaxValue)));
-                TestHelper.AssertThrows<ArgumentOutOfRangeException>(() => @lock.TryAcquireReadLockAsync(TimeSpan.FromSeconds(int.MaxValue)));
+                Assert.Catch<ArgumentOutOfRangeException>(() => @lock.AcquireReadLock(TimeSpan.FromSeconds(-2)));
+                Assert.Catch<ArgumentOutOfRangeException>(() => @lock.AcquireReadLockAsync(TimeSpan.FromSeconds(-2)));
+                Assert.Catch<ArgumentOutOfRangeException>(() => @lock.TryAcquireReadLock(TimeSpan.FromSeconds(-2)));
+                Assert.Catch<ArgumentOutOfRangeException>(() => @lock.TryAcquireReadLockAsync(TimeSpan.FromSeconds(-2)));
+                Assert.Catch<ArgumentOutOfRangeException>(() => @lock.AcquireReadLock(TimeSpan.FromSeconds(int.MaxValue)));
+                Assert.Catch<ArgumentOutOfRangeException>(() => @lock.AcquireReadLockAsync(TimeSpan.FromSeconds(int.MaxValue)));
+                Assert.Catch<ArgumentOutOfRangeException>(() => @lock.TryAcquireReadLock(TimeSpan.FromSeconds(int.MaxValue)));
+                Assert.Catch<ArgumentOutOfRangeException>(() => @lock.TryAcquireReadLockAsync(TimeSpan.FromSeconds(int.MaxValue)));
 
-                TestHelper.AssertThrows<ArgumentOutOfRangeException>(() => @lock.AcquireUpgradeableReadLock(TimeSpan.FromSeconds(-2)));
-                TestHelper.AssertThrows<ArgumentOutOfRangeException>(() => @lock.AcquireUpgradeableReadLockAsync(TimeSpan.FromSeconds(-2)));
-                TestHelper.AssertThrows<ArgumentOutOfRangeException>(() => @lock.TryAcquireUpgradeableReadLock(TimeSpan.FromSeconds(-2)));
-                TestHelper.AssertThrows<ArgumentOutOfRangeException>(() => @lock.TryAcquireUpgradeableReadLockAsync(TimeSpan.FromSeconds(-2)));
-                TestHelper.AssertThrows<ArgumentOutOfRangeException>(() => @lock.AcquireUpgradeableReadLock(TimeSpan.FromSeconds(int.MaxValue)));
-                TestHelper.AssertThrows<ArgumentOutOfRangeException>(() => @lock.AcquireUpgradeableReadLockAsync(TimeSpan.FromSeconds(int.MaxValue)));
-                TestHelper.AssertThrows<ArgumentOutOfRangeException>(() => @lock.TryAcquireUpgradeableReadLock(TimeSpan.FromSeconds(int.MaxValue)));
-                TestHelper.AssertThrows<ArgumentOutOfRangeException>(() => @lock.TryAcquireUpgradeableReadLockAsync(TimeSpan.FromSeconds(int.MaxValue)));
+                Assert.Catch<ArgumentOutOfRangeException>(() => @lock.AcquireUpgradeableReadLock(TimeSpan.FromSeconds(-2)));
+                Assert.Catch<ArgumentOutOfRangeException>(() => @lock.AcquireUpgradeableReadLockAsync(TimeSpan.FromSeconds(-2)));
+                Assert.Catch<ArgumentOutOfRangeException>(() => @lock.TryAcquireUpgradeableReadLock(TimeSpan.FromSeconds(-2)));
+                Assert.Catch<ArgumentOutOfRangeException>(() => @lock.TryAcquireUpgradeableReadLockAsync(TimeSpan.FromSeconds(-2)));
+                Assert.Catch<ArgumentOutOfRangeException>(() => @lock.AcquireUpgradeableReadLock(TimeSpan.FromSeconds(int.MaxValue)));
+                Assert.Catch<ArgumentOutOfRangeException>(() => @lock.AcquireUpgradeableReadLockAsync(TimeSpan.FromSeconds(int.MaxValue)));
+                Assert.Catch<ArgumentOutOfRangeException>(() => @lock.TryAcquireUpgradeableReadLock(TimeSpan.FromSeconds(int.MaxValue)));
+                Assert.Catch<ArgumentOutOfRangeException>(() => @lock.TryAcquireUpgradeableReadLockAsync(TimeSpan.FromSeconds(int.MaxValue)));
 
-                TestHelper.AssertThrows<ArgumentOutOfRangeException>(() => @lock.AcquireWriteLock(TimeSpan.FromSeconds(-2)));
-                TestHelper.AssertThrows<ArgumentOutOfRangeException>(() => @lock.AcquireWriteLockAsync(TimeSpan.FromSeconds(-2)));
-                TestHelper.AssertThrows<ArgumentOutOfRangeException>(() => @lock.TryAcquireWriteLock(TimeSpan.FromSeconds(-2)));
-                TestHelper.AssertThrows<ArgumentOutOfRangeException>(() => @lock.TryAcquireWriteLockAsync(TimeSpan.FromSeconds(-2)));
-                TestHelper.AssertThrows<ArgumentOutOfRangeException>(() => @lock.AcquireWriteLock(TimeSpan.FromSeconds(int.MaxValue)));
-                TestHelper.AssertThrows<ArgumentOutOfRangeException>(() => @lock.AcquireWriteLockAsync(TimeSpan.FromSeconds(int.MaxValue)));
-                TestHelper.AssertThrows<ArgumentOutOfRangeException>(() => @lock.TryAcquireWriteLock(TimeSpan.FromSeconds(int.MaxValue)));
-                TestHelper.AssertThrows<ArgumentOutOfRangeException>(() => @lock.TryAcquireWriteLockAsync(TimeSpan.FromSeconds(int.MaxValue)));
+                Assert.Catch<ArgumentOutOfRangeException>(() => @lock.AcquireWriteLock(TimeSpan.FromSeconds(-2)));
+                Assert.Catch<ArgumentOutOfRangeException>(() => @lock.AcquireWriteLockAsync(TimeSpan.FromSeconds(-2)));
+                Assert.Catch<ArgumentOutOfRangeException>(() => @lock.TryAcquireWriteLock(TimeSpan.FromSeconds(-2)));
+                Assert.Catch<ArgumentOutOfRangeException>(() => @lock.TryAcquireWriteLockAsync(TimeSpan.FromSeconds(-2)));
+                Assert.Catch<ArgumentOutOfRangeException>(() => @lock.AcquireWriteLock(TimeSpan.FromSeconds(int.MaxValue)));
+                Assert.Catch<ArgumentOutOfRangeException>(() => @lock.AcquireWriteLockAsync(TimeSpan.FromSeconds(int.MaxValue)));
+                Assert.Catch<ArgumentOutOfRangeException>(() => @lock.TryAcquireWriteLock(TimeSpan.FromSeconds(int.MaxValue)));
+                Assert.Catch<ArgumentOutOfRangeException>(() => @lock.TryAcquireWriteLockAsync(TimeSpan.FromSeconds(int.MaxValue)));
 
                 using (var upgradeableHandle = @lock.AcquireUpgradeableReadLock())
                 {
-                    TestHelper.AssertThrows<ArgumentOutOfRangeException>(() => upgradeableHandle.UpgradeToWriteLock(TimeSpan.FromSeconds(-2)));
-                    TestHelper.AssertThrows<ArgumentOutOfRangeException>(() => upgradeableHandle.UpgradeToWriteLockAsync(TimeSpan.FromSeconds(-2)));
-                    TestHelper.AssertThrows<ArgumentOutOfRangeException>(() => upgradeableHandle.TryUpgradeToWriteLock(TimeSpan.FromSeconds(-2)));
-                    TestHelper.AssertThrows<ArgumentOutOfRangeException>(() => upgradeableHandle.TryUpgradeToWriteLockAsync(TimeSpan.FromSeconds(-2)));
-                    TestHelper.AssertThrows<ArgumentOutOfRangeException>(() => upgradeableHandle.UpgradeToWriteLock(TimeSpan.FromSeconds(int.MaxValue)));
-                    TestHelper.AssertThrows<ArgumentOutOfRangeException>(() => upgradeableHandle.UpgradeToWriteLockAsync(TimeSpan.FromSeconds(int.MaxValue)));
-                    TestHelper.AssertThrows<ArgumentOutOfRangeException>(() => upgradeableHandle.TryUpgradeToWriteLock(TimeSpan.FromSeconds(int.MaxValue)));
-                    TestHelper.AssertThrows<ArgumentOutOfRangeException>(() => upgradeableHandle.TryUpgradeToWriteLockAsync(TimeSpan.FromSeconds(int.MaxValue)));
+                    Assert.Catch<ArgumentOutOfRangeException>(() => upgradeableHandle.UpgradeToWriteLock(TimeSpan.FromSeconds(-2)));
+                    Assert.Catch<ArgumentOutOfRangeException>(() => upgradeableHandle.UpgradeToWriteLockAsync(TimeSpan.FromSeconds(-2)));
+                    Assert.Catch<ArgumentOutOfRangeException>(() => upgradeableHandle.TryUpgradeToWriteLock(TimeSpan.FromSeconds(-2)));
+                    Assert.Catch<ArgumentOutOfRangeException>(() => upgradeableHandle.TryUpgradeToWriteLockAsync(TimeSpan.FromSeconds(-2)));
+                    Assert.Catch<ArgumentOutOfRangeException>(() => upgradeableHandle.UpgradeToWriteLock(TimeSpan.FromSeconds(int.MaxValue)));
+                    Assert.Catch<ArgumentOutOfRangeException>(() => upgradeableHandle.UpgradeToWriteLockAsync(TimeSpan.FromSeconds(int.MaxValue)));
+                    Assert.Catch<ArgumentOutOfRangeException>(() => upgradeableHandle.TryUpgradeToWriteLock(TimeSpan.FromSeconds(int.MaxValue)));
+                    Assert.Catch<ArgumentOutOfRangeException>(() => upgradeableHandle.TryUpgradeToWriteLockAsync(TimeSpan.FromSeconds(int.MaxValue)));
                 }
             }
         }
 
-        [TestMethod]
+        [Test]
         public void TestUpgradeableHandleDisposal()
         {
             using (var engine = this.CreateEngine())
@@ -128,15 +128,15 @@ namespace Medallion.Threading.Tests.Sql
 
                 var handle = @lock.AcquireUpgradeableReadLock();
                 handle.Dispose();
-                TestHelper.AssertDoesNotThrow(() => handle.Dispose());
-                TestHelper.AssertThrows<ObjectDisposedException>(() => handle.TryUpgradeToWriteLock());
-                TestHelper.AssertThrows<ObjectDisposedException>(() => handle.TryUpgradeToWriteLockAsync());
-                TestHelper.AssertThrows<ObjectDisposedException>(() => handle.UpgradeToWriteLock());
-                TestHelper.AssertThrows<ObjectDisposedException>(() => handle.UpgradeToWriteLockAsync());
+                Assert.DoesNotThrow(() => handle.Dispose());
+                Assert.Catch<ObjectDisposedException>(() => handle.TryUpgradeToWriteLock());
+                Assert.Catch<ObjectDisposedException>(() => handle.TryUpgradeToWriteLockAsync());
+                Assert.Catch<ObjectDisposedException>(() => handle.UpgradeToWriteLock());
+                Assert.Catch<ObjectDisposedException>(() => handle.UpgradeToWriteLockAsync());
             }
         }
 
-        [TestMethod]
+        [Test]
         public void TestUpgradeableHandleMultipleUpgrades()
         {
             using (var engine = this.CreateEngine())
@@ -146,7 +146,7 @@ namespace Medallion.Threading.Tests.Sql
                 using (var upgradeHandle = @lock.AcquireUpgradeableReadLock())
                 {
                     upgradeHandle.UpgradeToWriteLock();
-                    TestHelper.AssertThrows<InvalidOperationException>(() => upgradeHandle.TryUpgradeToWriteLock());
+                    Assert.Catch<InvalidOperationException>(() => upgradeHandle.TryUpgradeToWriteLock());
                 }
             }
         }

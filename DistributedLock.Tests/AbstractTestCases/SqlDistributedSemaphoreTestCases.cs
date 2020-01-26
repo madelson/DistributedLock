@@ -1,4 +1,4 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,7 +13,7 @@ namespace Medallion.Threading.Tests.Sql
     {
         private static readonly TimeSpan LongTimeout = TimeSpan.FromSeconds(5);
 
-        [TestMethod]
+        [Test]
         public void TestConcurrencyHandling()
         {
             using (var engine = this.CreateEngine())
@@ -53,7 +53,7 @@ namespace Medallion.Threading.Tests.Sql
             }
         }
 
-        [TestMethod]
+        [Test]
         public void TestDrain()
         {
             using (var engine = this.CreateEngine())
@@ -62,20 +62,20 @@ namespace Medallion.Threading.Tests.Sql
                 var semaphore2 = engine.CreateSemaphore(nameof(TestDrain), maxCount: 4);
 
                 var handles = new List<IDisposable> { semaphore.Acquire(LongTimeout) };
-                TestHelper.AssertDoesNotThrow(() => semaphore2.Acquire().Dispose());
+                Assert.DoesNotThrow(() => semaphore2.Acquire().Dispose());
                 while (handles.Count < 4) { handles.Add(semaphore.Acquire(LongTimeout)); }
 
                 semaphore2.TryAcquire().ShouldEqual(null);
                 semaphore.TryAcquire().ShouldEqual(null);
 
                 handles[0].Dispose();
-                TestHelper.AssertDoesNotThrow(() => semaphore2.Acquire().Dispose());
+                Assert.DoesNotThrow(() => semaphore2.Acquire().Dispose());
 
                 handles.ForEach(h => h.Dispose());
             }
         }
 
-        [TestMethod]
+        [Test]
         public void TestHighTicketCount()
         {
             using (var engine = this.CreateEngine())
@@ -88,7 +88,7 @@ namespace Medallion.Threading.Tests.Sql
             }
         }
 
-        [TestMethod]
+        [Test]
         public void TestSameNameDifferentCounts()
         {
             using (var engine = this.CreateEngine())
@@ -119,7 +119,7 @@ namespace Medallion.Threading.Tests.Sql
             }
         }
 
-        [TestMethod]
+        [Test]
         public void TestSemaphoreParallelism()
         {
             const int MaxCount = 10;

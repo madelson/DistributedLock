@@ -34,10 +34,10 @@ namespace Medallion.Threading.Tests.Sql
 
     public class ConnectionInfo
     {
-        public string ConnectionString { get; set; }
+        public string? ConnectionString { get; set; }
         public SqlDistributedLockConnectionStrategy? Strategy { get; set; }
-        public SqlConnection Connection { get; set; }
-        public SqlTransaction Transaction { get; set; }
+        public SqlConnection? Connection { get; set; }
+        public SqlTransaction? Transaction { get; set; }
     }
 
     public interface IExternalConnectionOrTransactionTestingSqlConnectionManagementProvider { }

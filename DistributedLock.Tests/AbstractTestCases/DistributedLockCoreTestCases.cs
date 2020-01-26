@@ -1,7 +1,8 @@
 ﻿using Medallion.Shell;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -12,7 +13,7 @@ namespace Medallion.Threading.Tests
     public abstract class DistributedLockCoreTestCases<TEngine> : TestBase
         where TEngine : TestingDistributedLockEngine, new()
     {
-        [TestMethod]
+        [Test]
         public void BasicTest()
         {
             using (var engine = new TEngine())
@@ -42,7 +43,7 @@ namespace Medallion.Threading.Tests
             }
         }
 
-        [TestMethod]
+        [Test]
         public void BasicAsyncTest()
         {
             using (var engine = new TEngine())
@@ -72,24 +73,24 @@ namespace Medallion.Threading.Tests
             }
         }
 
-        [TestMethod]
+        [Test]
         public void TestBadArguments()
         {
             using (var engine = new TEngine())
             {
                 var @lock = engine.CreateLock(nameof(TestBadArguments));
-                TestHelper.AssertThrows<ArgumentOutOfRangeException>(() => @lock.Acquire(TimeSpan.FromSeconds(-2)));
-                TestHelper.AssertThrows<ArgumentOutOfRangeException>(() => @lock.AcquireAsync(TimeSpan.FromSeconds(-2)));
-                TestHelper.AssertThrows<ArgumentOutOfRangeException>(() => @lock.TryAcquire(TimeSpan.FromSeconds(-2)));
-                TestHelper.AssertThrows<ArgumentOutOfRangeException>(() => @lock.TryAcquireAsync(TimeSpan.FromSeconds(-2)));
-                TestHelper.AssertThrows<ArgumentOutOfRangeException>(() => @lock.Acquire(TimeSpan.FromSeconds(int.MaxValue)));
-                TestHelper.AssertThrows<ArgumentOutOfRangeException>(() => @lock.AcquireAsync(TimeSpan.FromSeconds(int.MaxValue)));
-                TestHelper.AssertThrows<ArgumentOutOfRangeException>(() => @lock.TryAcquire(TimeSpan.FromSeconds(int.MaxValue)));
-                TestHelper.AssertThrows<ArgumentOutOfRangeException>(() => @lock.TryAcquireAsync(TimeSpan.FromSeconds(int.MaxValue)));
+                Assert.Catch<ArgumentOutOfRangeException>(() => @lock.Acquire(TimeSpan.FromSeconds(-2)));
+                Assert.Catch<ArgumentOutOfRangeException>(() => @lock.AcquireAsync(TimeSpan.FromSeconds(-2)));
+                Assert.Catch<ArgumentOutOfRangeException>(() => @lock.TryAcquire(TimeSpan.FromSeconds(-2)));
+                Assert.Catch<ArgumentOutOfRangeException>(() => @lock.TryAcquireAsync(TimeSpan.FromSeconds(-2)));
+                Assert.Catch<ArgumentOutOfRangeException>(() => @lock.Acquire(TimeSpan.FromSeconds(int.MaxValue)));
+                Assert.Catch<ArgumentOutOfRangeException>(() => @lock.AcquireAsync(TimeSpan.FromSeconds(int.MaxValue)));
+                Assert.Catch<ArgumentOutOfRangeException>(() => @lock.TryAcquire(TimeSpan.FromSeconds(int.MaxValue)));
+                Assert.Catch<ArgumentOutOfRangeException>(() => @lock.TryAcquireAsync(TimeSpan.FromSeconds(int.MaxValue)));
             }
         }
 
-        [TestMethod]
+        [Test]
         public void TestDisposeHandleIsIdempotent()
         {
             using (var engine = new TEngine())
@@ -99,12 +100,12 @@ namespace Medallion.Threading.Tests
                 Assert.IsNotNull(handle);
                 handle.Dispose();
                 var handle2 = @lock.Acquire(TimeSpan.FromSeconds(30));
-                TestHelper.AssertDoesNotThrow(() => handle.Dispose());
-                TestHelper.AssertDoesNotThrow(() => handle2.Dispose());
+                Assert.DoesNotThrow(() => handle.Dispose());
+                Assert.DoesNotThrow(() => handle2.Dispose());
             }
         }
 
-        [TestMethod]
+        [Test]
         public void TestTimeouts()
         {
             using (var engine = new TEngine())
@@ -115,11 +116,11 @@ namespace Medallion.Threading.Tests
                 {
                     var syncAcquireTask = Task.Run(() => @lock.Acquire(TimeSpan.FromSeconds(.1)));
                     syncAcquireTask.ContinueWith(_ => { }).Wait(TimeSpan.FromSeconds(.2)).ShouldEqual(true, "sync acquire");
-                    Assert.IsInstanceOfType(syncAcquireTask.Exception.InnerException, typeof(TimeoutException), "sync acquire");
+                    Assert.IsInstanceOf<TimeoutException>(syncAcquireTask.Exception.InnerException, "sync acquire");
 
                     var asyncAcquireTask = @lock.AcquireAsync(TimeSpan.FromSeconds(.1));
                     asyncAcquireTask.ContinueWith(_ => { }).Wait(TimeSpan.FromSeconds(.2)).ShouldEqual(true, "async acquire");
-                    Assert.IsInstanceOfType(asyncAcquireTask.Exception.InnerException, typeof(TimeoutException), "async acquire");
+                    Assert.IsInstanceOf<TimeoutException>(asyncAcquireTask.Exception.InnerException, "async acquire");
 
                     var syncTryAcquireTask = Task.Run(() => @lock.TryAcquire(TimeSpan.FromSeconds(.1)));
                     syncTryAcquireTask.Wait(TimeSpan.FromSeconds(.2)).ShouldEqual(true, "sync tryAcquire");
@@ -132,7 +133,7 @@ namespace Medallion.Threading.Tests
             }
         }
 
-        [TestMethod]
+        [Test]
         public void CancellationTest()
         {
             using (var engine = new TEngine())
@@ -153,11 +154,11 @@ namespace Medallion.Threading.Tests
                 // already canceled
                 source = new CancellationTokenSource();
                 source.Cancel();
-                TestHelper.AssertThrows<OperationCanceledException>(() => @lock.Acquire(cancellationToken: source.Token));
+                Assert.Catch<OperationCanceledException>(() => @lock.Acquire(cancellationToken: source.Token));
             }
         }
 
-        [TestMethod]
+        [Test]
         public void TestParallelism()
         {
             using (var engine = new TEngine())
@@ -186,22 +187,22 @@ namespace Medallion.Threading.Tests
             }
         }
 
-        [TestMethod]
+        [Test]
         public void TestGetSafeLockName()
         {
             using (var engine = new TEngine())
             {
-                TestHelper.AssertThrows<ArgumentNullException>(() => engine.GetSafeLockName(null));
+                Assert.Catch<ArgumentNullException>(() => engine.GetSafeLockName(null!));
 
                 foreach (var name in new[] { string.Empty, new string('a', 1000), @"\\\\\", new string('\\', 1000) })
                 {
                     var safeName = engine.GetSafeLockName(name);
-                    TestHelper.AssertDoesNotThrow(() => engine.CreateLockWithExactName(safeName).Acquire(TimeSpan.FromSeconds(10)).Dispose(), $"{this.GetType().Name}: could not acquire '{name}'");
+                    Assert.DoesNotThrow(() => engine.CreateLockWithExactName(safeName).Acquire(TimeSpan.FromSeconds(10)).Dispose(), $"{this.GetType().Name}: could not acquire '{name}'");
                 }
             }
         }
 
-        [TestMethod]
+        [Test]
         public void TestGetSafeLockNameIsCaseInsensitive()
         {
             var longName1 = new string('a', 1000);
@@ -214,7 +215,7 @@ namespace Medallion.Threading.Tests
             }
         }
 
-        [TestMethod]
+        [Test]
         public void TestLockNamesAreCaseInsensitive()
         {
             using (var engine = new TEngine())
@@ -228,7 +229,7 @@ namespace Medallion.Threading.Tests
             }
         }
 
-        [TestMethod]
+        [Test]
         public void TestCanceledAlreadyThrowsForSyncAndDoesNotThrowForAsync()
         {
             using (var engine = new TEngine())
@@ -238,8 +239,8 @@ namespace Medallion.Threading.Tests
 
                 var @lock = engine.CreateLock("already-canceled");
 
-                TestHelper.AssertThrows<OperationCanceledException>(() => @lock.Acquire(cancellationToken: source.Token));
-                TestHelper.AssertThrows<OperationCanceledException>(() => @lock.TryAcquire(cancellationToken: source.Token));
+                Assert.Catch<OperationCanceledException>(() => @lock.Acquire(cancellationToken: source.Token));
+                Assert.Catch<OperationCanceledException>(() => @lock.TryAcquire(cancellationToken: source.Token));
 
                 var acquireTask = @lock.AcquireAsync(cancellationToken: source.Token);
                 acquireTask.ContinueWith(_ => { }).Wait(TimeSpan.FromSeconds(10)).ShouldEqual(true);
@@ -251,7 +252,7 @@ namespace Medallion.Threading.Tests
             }
         }
 
-        [TestMethod]
+        [Test]
         public void TestLockAbandonment()
         {
             using (var engine = new TEngine())
@@ -270,7 +271,7 @@ namespace Medallion.Threading.Tests
             }
         }
 
-        [TestMethod]
+        [Test]
         public void TestCrossProcess()
         {
             using (var engine = new TEngine())
@@ -292,25 +293,25 @@ namespace Medallion.Threading.Tests
             }
         }
 
-        [TestMethod]
+        [Test]
         public void TestCrossProcessAbandonment()
         {
             this.CrossProcessAbandonmentHelper(asyncWait: false, kill: false);
         }
 
-        [TestMethod]
+        [Test]
         public void TestCrossProcessAbandonmentAsync()
         {
             this.CrossProcessAbandonmentHelper(asyncWait: true, kill: false);
         }
 
-        [TestMethod]
+        [Test]
         public void TestCrossProcessAbandonmentWithKill()
         {
             this.CrossProcessAbandonmentHelper(asyncWait: false, kill: true);
         }
 
-        [TestMethod]
+        [Test]
         public void TestCrossProcessAbandonmentWithKillAsync()
         {
             this.CrossProcessAbandonmentHelper(asyncWait: true, kill: true);
@@ -350,7 +351,11 @@ namespace Medallion.Threading.Tests
 
         private static Command RunLockTaker(TEngine engine, params string[] args)
         {
-            var command = Command.Run("DistributedLockTaker", args, o => o.ThrowOnError(true));
+            var command = Command.Run(
+                Path.Combine(TestContext.CurrentContext.TestDirectory, "DistributedLockTaker"), 
+                args, 
+                o => o.ThrowOnError(true)
+            );
             engine.RegisterCleanupAction(() =>
             {
                 if (!command.Task.IsCompleted)

@@ -1,5 +1,5 @@
 ﻿using Medallion.Threading.Sql;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
@@ -13,7 +13,7 @@ namespace Medallion.Threading.Tests.Sql
     public abstract class AzureConnectionStrategyTestCases<TEngineFactory> : TestBase 
         where TEngineFactory : ITestingSqlDistributedLockEngineFactory, new()
     {
-        [TestMethod]
+        [Test]
         public void TestIdleSessionKiller()
         {
             using (var engine = new TEngineFactory().Create<DefaultConnectionStringProvider>())
@@ -22,11 +22,11 @@ namespace Medallion.Threading.Tests.Sql
                 var @lock = engine.CreateLock(nameof(TestIdleSessionKiller));
                 var handle = @lock.Acquire();
                 Thread.Sleep(TimeSpan.FromSeconds(1));
-                TestHelper.AssertThrows<SqlException>(() => handle.Dispose());
+                Assert.Catch<SqlException>(() => handle.Dispose());
             }
         }
 
-        [TestMethod]
+        [Test]
         public void TestAzureStrategyProtectsFromIdleSessionKiller()
         {
             using (var engine = this.CreateEngine())
@@ -41,7 +41,7 @@ namespace Medallion.Threading.Tests.Sql
                         var @lock = engine.CreateLock(nameof(TestAzureStrategyProtectsFromIdleSessionKiller));
                         var handle = @lock.Acquire();
                         Thread.Sleep(TimeSpan.FromSeconds(1));
-                        TestHelper.AssertDoesNotThrow(() => handle.Dispose());
+                        Assert.DoesNotThrow(() => handle.Dispose());
                     }
                 }
                 finally
@@ -54,7 +54,7 @@ namespace Medallion.Threading.Tests.Sql
         /// <summary>
         /// Demonstrates that we don't multi-thread the connection despite the <see cref="KeepaliveHelper"/>
         /// </summary>
-        [TestMethod]
+        [Test]
         public void ThreadSafetyExercise()
         {
             using (var engine = this.CreateEngine())
@@ -64,7 +64,7 @@ namespace Medallion.Threading.Tests.Sql
                 {
                     KeepaliveHelper.Interval = TimeSpan.FromMilliseconds(1);
 
-                    TestHelper.AssertDoesNotThrow(() =>
+                    Assert.DoesNotThrow(() =>
                     {
                         var @lock = engine.CreateLock(nameof(ThreadSafetyExercise));
                         for (var i = 0; i < 25; ++i)

@@ -1,4 +1,4 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,48 +9,15 @@ namespace Medallion.Threading.Tests
 {
     internal static class TestHelper
     {
-        public static T ShouldEqual<T>(this T @this, T that, string message = null)
+        public static T ShouldEqual<T>(this T @this, T that, string? message = null)
         {
             Assert.AreEqual(actual: @this, expected: that, message: message);
             return @this;
         }
 
-        public static TException AssertThrows<TException>(Action action)
-            where TException : Exception
-        {
-            try
-            {
-                action();
-            }
-            catch (TException ex)
-            {
-                return ex;
-            }
-            catch (Exception ex) 
-            {
-                Assert.Fail("Expected exception of type " + typeof(TException) + " but found " + ex);
-            }
+        private static volatile Type? _currentTestType;
 
-            Assert.Fail("Expected exception of type " + typeof(TException));
-
-            return null; // never gets here
-        }
-
-        public static void AssertDoesNotThrow(Action action, string message = null)
-        {
-            try
-            {
-                action();
-            }
-            catch (Exception ex)
-            {
-                Assert.Fail("Failed with " + ex + (message != null ? ": " + message : string.Empty));
-            }
-        }
-
-        private static volatile Type _currentTestType;
-
-        public static Type CurrentTestType
+        public static Type? CurrentTestType
         {
             get => _currentTestType ?? throw new InvalidOperationException("no test name set");
             set

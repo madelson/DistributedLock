@@ -1,5 +1,5 @@
 ﻿using Medallion.Threading.Sql.ConnectionMultiplexing;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
@@ -19,7 +19,7 @@ namespace Medallion.Threading.Tests.Sql
         /// Similar to <see cref="DistributedLockCoreTestCases{TEngine}.TestLockAbandonment"/> but demonstrates 
         /// the time-based cleanup loop rather than forcing a cleanup
         /// </summary>
-        [TestMethod]
+        [Test]
         public void TestLockAbandonmentWithTimeBasedCleanupRun()
         {
             using (var engine = new TEngineFactory().Create<MultiplexedConnectionStringProvider>())
@@ -81,7 +81,7 @@ namespace Medallion.Threading.Tests.Sql
         /// that connection which means that the mutex for the connection can't be acquired without waiting. Once something like
         /// this happens, we try to open a new connection which times out due to pool size limits
         /// </summary>
-        [TestMethod]
+        [Test]
         public void TestHighConcurrencyWithSmallPool()
         {
             var connectionString = new SqlConnectionStringBuilder(ConnectionStringProvider.ConnectionString) { MaxPoolSize = 1 }.ConnectionString;

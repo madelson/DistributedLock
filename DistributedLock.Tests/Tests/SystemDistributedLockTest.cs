@@ -1,4 +1,4 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,24 +7,23 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading.Tests
 {
-    [TestClass]
     public class SystemDistributedLockTest : TestBase
     {
-        [TestMethod]
+        [Test]
         public void TestBadConstructorArguments()
         {
-            TestHelper.AssertThrows<ArgumentNullException>(() => this.CreateLock(null));
-            TestHelper.AssertThrows<ArgumentNullException>(() => this.CreateLock(""));
-            TestHelper.AssertThrows<FormatException>(() => this.CreateLock(new string('a', SystemDistributedLock.MaxLockNameLength + 1)));
-            TestHelper.AssertThrows<FormatException>(() => this.CreateLock(@"a\b"));
+            Assert.Catch<ArgumentNullException>(() => this.CreateLock(null!));
+            Assert.Catch<ArgumentNullException>(() => this.CreateLock(""));
+            Assert.Catch<FormatException>(() => this.CreateLock(new string('a', SystemDistributedLock.MaxLockNameLength + 1)));
+            Assert.Catch<FormatException>(() => this.CreateLock(@"a\b"));
 
             // weird but valid args
-            TestHelper.AssertDoesNotThrow(() => this.CreateLock(new string('a', SystemDistributedLock.MaxLockNameLength)).Acquire().Dispose());
-            TestHelper.AssertDoesNotThrow(() => this.CreateLock(" \t").Acquire().Dispose());
-            TestHelper.AssertDoesNotThrow(() => this.CreateLock("/a/b/c").Acquire().Dispose());
+            Assert.DoesNotThrow(() => this.CreateLock(new string('a', SystemDistributedLock.MaxLockNameLength)).Acquire().Dispose());
+            Assert.DoesNotThrow(() => this.CreateLock(" \t").Acquire().Dispose());
+            Assert.DoesNotThrow(() => this.CreateLock("/a/b/c").Acquire().Dispose());
         }
 
-        [TestMethod]
+        [Test]
         public void TestGarbageCollection()
         {
             var @lock = this.CreateLock("gc_test");
@@ -41,7 +40,7 @@ namespace Medallion.Threading.Tests
             }
         }
 
-        [TestMethod]
+        [Test]
         public void TestGetSafeLockNameCompat()
         {
             SystemDistributedLock.GetSafeLockName("").ShouldEqual("EMPTYz4PhNX7vuL3xVChQ1m2AB9Yg5AULVxXcg/SpIdNs6c5H0NE8XYXysP+DGNKHfuwvY7kxvUdBeoGlODJ6+SfaPg==");

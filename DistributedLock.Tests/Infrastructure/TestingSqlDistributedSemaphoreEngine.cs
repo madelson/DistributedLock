@@ -49,7 +49,7 @@ namespace Medallion.Threading.Tests.Sql
             var connectionInfo = connectionManagementProvider.GetConnectionInfo();
             if (connectionInfo.Strategy.HasValue)
             {
-                return new SqlDistributedSemaphore(name, maxCount, connectionInfo.ConnectionString, connectionInfo.Strategy.Value);
+                return new SqlDistributedSemaphore(name, maxCount, connectionInfo.ConnectionString!, connectionInfo.Strategy.Value);
             }
             if (connectionInfo.ConnectionString != null)
             {
@@ -96,12 +96,12 @@ namespace Medallion.Threading.Tests.Sql
                 return this.semaphore.AcquireAsync(timeout, cancellationToken).Task;
             }
 
-            IDisposable IDistributedLock.TryAcquire(TimeSpan timeout, CancellationToken cancellationToken)
+            IDisposable? IDistributedLock.TryAcquire(TimeSpan timeout, CancellationToken cancellationToken)
             {
                 return this.semaphore.TryAcquire(timeout, cancellationToken);
             }
 
-            Task<IDisposable> IDistributedLock.TryAcquireAsync(TimeSpan timeout, CancellationToken cancellationToken)
+            Task<IDisposable?> IDistributedLock.TryAcquireAsync(TimeSpan timeout, CancellationToken cancellationToken)
             {
                 return this.semaphore.TryAcquireAsync(timeout, cancellationToken).Task;
             }

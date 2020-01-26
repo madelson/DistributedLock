@@ -1,4 +1,4 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
@@ -11,7 +11,7 @@ namespace Medallion.Threading.Tests.Sql
     public abstract class ExternalConnectionStrategyTestCases<TEngineFactory> : TestBase
         where TEngineFactory : ITestingSqlDistributedLockEngineFactory, new()
     {
-        [TestMethod]
+        [Test]
         public void TestCloseLockOnClosedConnection()
         {
             using (var connection = new SqlConnection(ConnectionStringProvider.ConnectionString))
@@ -22,7 +22,7 @@ namespace Medallion.Threading.Tests.Sql
                 var connectionStringLock = connectionStringEngine.CreateLock(nameof(TestCloseLockOnClosedConnection));
 
                 var @lock = connectionEngine.CreateLock(nameof(TestCloseLockOnClosedConnection));
-                TestHelper.AssertThrows<InvalidOperationException>(() => @lock.Acquire());
+                Assert.Catch<InvalidOperationException>(() => @lock.Acquire());
 
                 connection.Open();
 
@@ -31,14 +31,14 @@ namespace Medallion.Threading.Tests.Sql
 
                 connection.Dispose();
 
-                TestHelper.AssertDoesNotThrow(handle.Dispose);
+                Assert.DoesNotThrow(handle.Dispose);
 
                 // lock can be re-acquired
                 connectionStringLock.IsHeld().ShouldEqual(false);
             }
         }
 
-        [TestMethod]
+        [Test]
         public void TestIsNotScopedToTransaction()
         {
             using (var connection = new SqlConnection(ConnectionStringProvider.ConnectionString))

@@ -1,4 +1,4 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
@@ -12,7 +12,7 @@ namespace Medallion.Threading.Tests.Sql
     public abstract class ExternalTransactionStrategyTestCases<TEngineFactory> : TestBase
         where TEngineFactory : ITestingSqlDistributedLockEngineFactory, new()
     {
-        [TestMethod]
+        [Test]
         public void TestScopedToTransactionOnly()
         {
             using (var connection = new SqlConnection(ConnectionStringProvider.ConnectionString))
@@ -34,14 +34,14 @@ namespace Medallion.Threading.Tests.Sql
                         using (ConnectionProvider.UseConnection(connection))
                         using (var connectionEngine = new TEngineFactory().Create<ConnectionProvider>())
                         {
-                            TestHelper.AssertThrows<InvalidOperationException>(() => connectionEngine.CreateLock(lockName).TryAcquire());
+                            Assert.Catch<InvalidOperationException>(() => connectionEngine.CreateLock(lockName).TryAcquire());
                         }
                     }
                 }
             }
         }
 
-        [TestMethod]
+        [Test]
         public void TestCloseTransactionLockOnClosedConnection()
         {
             using (var connection = new SqlConnection(ConnectionStringProvider.ConnectionString))
@@ -61,7 +61,7 @@ namespace Medallion.Threading.Tests.Sql
 
                     connection.Dispose();
 
-                    TestHelper.AssertDoesNotThrow(handle.Dispose);
+                    Assert.DoesNotThrow(handle.Dispose);
 
                     // lock can be re-acquired
                     connectionStringEngine.CreateLock(lockName).IsHeld().ShouldEqual(false);
@@ -69,7 +69,7 @@ namespace Medallion.Threading.Tests.Sql
             }
         }
 
-        [TestMethod]
+        [Test]
         public void TestCloseTransactionLockOnClosedTransaction()
         {
             using (var connectionStringEngine = new TEngineFactory().Create<DefaultConnectionStringProvider>())
@@ -87,21 +87,21 @@ namespace Medallion.Threading.Tests.Sql
                     handle = transactionEngine.CreateLock(lockName).Acquire();
                     connectionStringEngine.CreateLock(lockName).IsHeld().ShouldEqual(true);
                 }
-                TestHelper.AssertDoesNotThrow(handle.Dispose);
+                Assert.DoesNotThrow(handle.Dispose);
                 connectionStringEngine.CreateLock(lockName).IsHeld().ShouldEqual(false);
             }
         }
 
-        [TestMethod]
+        [Test]
         public void TestLockOnRolledBackTransaction() => this.TestLockOnCompletedTransactionHelper(t => t.Rollback());
 
-        [TestMethod]
+        [Test]
         public void TestLockOnCommittedTransaction() => this.TestLockOnCompletedTransactionHelper(t => t.Commit());
 
-        [TestMethod]
+        [Test]
         public void TestLockOnDisposedTransaction() => this.TestLockOnCompletedTransactionHelper(t => t.Dispose());
 
-        private void TestLockOnCompletedTransactionHelper(Action<SqlTransaction> complete, [CallerMemberName] string lockName = null)
+        private void TestLockOnCompletedTransactionHelper(Action<SqlTransaction> complete, [CallerMemberName] string lockName = "")
         {
             using (var connectionStringEngine = new TEngineFactory().Create<DefaultConnectionStringProvider>())
             using (var connection = new SqlConnection(ConnectionStringProvider.ConnectionString))
@@ -117,10 +117,10 @@ namespace Medallion.Threading.Tests.Sql
 
                     complete(transaction);
 
-                    TestHelper.AssertDoesNotThrow(handle.Dispose);
+                    Assert.DoesNotThrow(handle.Dispose);
                     connectionStringEngine.CreateLock(lockName).IsHeld().ShouldEqual(false, this.GetType().Name);
 
-                    TestHelper.AssertThrows<InvalidOperationException>(() => transactionEngine.CreateLock(lockName).Acquire());
+                    Assert.Catch<InvalidOperationException>(() => transactionEngine.CreateLock(lockName).Acquire());
                 }
             }
         }

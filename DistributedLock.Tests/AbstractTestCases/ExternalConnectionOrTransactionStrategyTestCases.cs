@@ -1,6 +1,6 @@
 ﻿using Medallion.Threading.Sql;
 using Medallion.Threading.Tests.Sql;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
@@ -11,12 +11,11 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading.Tests
 {
-    [TestClass]
     public abstract class ExternalConnectionOrTransactionStrategyTestCases<TEngineFactory, TConnectionManagementProvider> : TestBase
         where TEngineFactory : ITestingSqlDistributedLockEngineFactory, new()
         where TConnectionManagementProvider : TestingSqlConnectionManagementProvider, IExternalConnectionOrTransactionTestingSqlConnectionManagementProvider, new()
     {
-        [TestMethod]
+        [Test]
         public void TestDeadlockDetection()
         {
             var timeout = TimeSpan.FromSeconds(30);
@@ -32,7 +31,7 @@ namespace Medallion.Threading.Tests
                 {
                     var connectionInfo = provider.GetConnectionInfo();
                     IDistributedLock lock1, lock2;
-                    using (connectionInfo.Transaction != null ? TransactionProvider.UseTransaction(connectionInfo.Transaction) : ConnectionProvider.UseConnection(connectionInfo.Connection))
+                    using (connectionInfo.Transaction != null ? TransactionProvider.UseTransaction(connectionInfo.Transaction) : ConnectionProvider.UseConnection(connectionInfo.Connection!))
                     {
                         lock1 = engine.CreateLock(isFirst ? LockName1 : LockName2);
                         lock2 = engine.CreateLock(isFirst ? LockName2 : LockName1);
@@ -52,8 +51,8 @@ namespace Medallion.Threading.Tests
                 Task.WhenAll(tasks).ContinueWith(_ => { }).Wait(TimeSpan.FromSeconds(10)).ShouldEqual(true, this.GetType().Name);
 
                 var deadlockVictim = tasks.Single(t => t.IsFaulted);
-                Assert.IsInstanceOfType(deadlockVictim.Exception.GetBaseException(), typeof(InvalidOperationException)); // backwards compat check
-                Assert.IsInstanceOfType(deadlockVictim.Exception.GetBaseException(), typeof(DeadlockException));
+                Assert.IsInstanceOf<InvalidOperationException>(deadlockVictim.Exception.GetBaseException()); // backwards compat check
+                Assert.IsInstanceOf<DeadlockException>(deadlockVictim.Exception.GetBaseException());
 
                 tasks.Count(t => t.Status == TaskStatus.RanToCompletion).ShouldEqual(1);
             }

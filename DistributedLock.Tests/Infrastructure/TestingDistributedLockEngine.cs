@@ -8,7 +8,7 @@ namespace Medallion.Threading.Tests
 {
     public abstract class TestingDistributedLockEngine : ActionRegistrationDisposable
     {
-        private readonly string _currentTestType = TestHelper.CurrentTestType.Name;
+        private readonly string _currentTestType = TestHelper.CurrentTestType!.Name;
 
         internal IDistributedLock CreateLock(string name)
         {

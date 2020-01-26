@@ -88,7 +88,7 @@ namespace Medallion.Threading.Tests.Sql
 
     public sealed class ConnectionProvider : TestingSqlConnectionManagementProvider, IExternalConnectionOrTransactionTestingSqlConnectionManagementProvider
     {
-        private static volatile ConnectionHolder current;
+        private static volatile ConnectionHolder? current;
 
         public override ConnectionInfo GetConnectionInfo()
         {
@@ -118,14 +118,14 @@ namespace Medallion.Threading.Tests.Sql
 
         private sealed class ConnectionHolder : IDisposable
         {
-            private volatile SqlConnection connection;
+            private volatile SqlConnection? connection;
 
             public ConnectionHolder(SqlConnection connection)
             {
                 this.connection = connection;
             }
 
-            public SqlConnection Connection => this.connection;
+            public SqlConnection? Connection => this.connection;
             
             void IDisposable.Dispose()
             {
@@ -136,7 +136,7 @@ namespace Medallion.Threading.Tests.Sql
 
     public sealed class TransactionProvider : TestingSqlConnectionManagementProvider, IExternalConnectionOrTransactionTestingSqlConnectionManagementProvider
     {
-        private static volatile TransactionHolder current;
+        private static volatile TransactionHolder? current;
 
         public override ConnectionInfo GetConnectionInfo()
         {
@@ -168,14 +168,14 @@ namespace Medallion.Threading.Tests.Sql
 
         private sealed class TransactionHolder : IDisposable
         {
-            private volatile SqlTransaction transaction;
+            private volatile SqlTransaction? transaction;
 
             public TransactionHolder(SqlTransaction transaction)
             {
                 this.transaction = transaction;
             }
 
-            public SqlTransaction Transaction => this.transaction;
+            public SqlTransaction? Transaction => this.transaction;
 
             void IDisposable.Dispose()
             {

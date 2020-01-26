@@ -1,4 +1,4 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -26,7 +26,7 @@ namespace Medallion.Threading.Tests.Sql
         /// information on SQL Server isolation levels, see "Isolation Levels in the Database Engine" in SQL 
         /// Server Books Online.
         /// </summary>
-        [TestMethod]
+        [Test]
         public void TestIsolationLevelLeakage()
         {
             const string IsolationLevelQuery = @"

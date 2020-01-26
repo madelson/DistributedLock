@@ -19,7 +19,7 @@ namespace Medallion.Threading.Tests.Sql
             var connectionInfo = connectionManagementProvider.GetConnectionInfo();
             if (connectionInfo.Strategy.HasValue)
             {
-                return new SqlDistributedLock(name, connectionInfo.ConnectionString, connectionInfo.Strategy.Value);
+                return new SqlDistributedLock(name, connectionInfo.ConnectionString!, connectionInfo.Strategy.Value);
             }
             if (connectionInfo.ConnectionString != null)
             {

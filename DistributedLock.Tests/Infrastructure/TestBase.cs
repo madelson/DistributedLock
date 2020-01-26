@@ -1,4 +1,4 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,13 +9,13 @@ namespace Medallion.Threading.Tests
 {
     public abstract class TestBase
     {
-        [TestInitialize]
+        [OneTimeSetUp]
         public void TestInitialize()
         {
             TestHelper.CurrentTestType = this.GetType();
         }
 
-        [TestCleanup]
+        [OneTimeTearDown]
         public void TestCleanup()
         {
             TestHelper.CurrentTestType = null;

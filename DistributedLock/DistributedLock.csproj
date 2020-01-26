@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <TargetFrameworks>netstandard1.3;net45</TargetFrameworks>
+    <RootNamespace>Medallion.Threading</RootNamespace>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
     <WarningLevel>4</WarningLevel>
     <LangVersion>Latest</LangVersion>
@@ -9,16 +10,15 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <RootNamespace>Medallion.Threading</RootNamespace>
     <Version>1.4.0</Version>
     <AssemblyVersion>1.4.0.0</AssemblyVersion>
     <Authors>Michael Adelson</Authors>
     <Description>Provides easy-to-use and robust fully distributed locks (using SQLServer) as well as wrappers for named system-wide locks (using WaitHandles)</Description>
     <Copyright>Copyright © 2017 Michael Adelson</Copyright>
-    <PackageLicenseUrl>https://raw.githubusercontent.com/madelson/DistributedLock/master/License.txt</PackageLicenseUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageTags>distributed lock async waithandle mutex sql sqlserver reader writer azure</PackageTags>
     <PackageProjectUrl>https://github.com/madelson/DistributedLock</PackageProjectUrl>
-    <RepositoryUrl></RepositoryUrl>
+    <RepositoryUrl>https://github.com/madelson/DistributedLock</RepositoryUrl>
     <FileVersion>1.0.0.0</FileVersion>
     <PackageReleaseNotes>See https://github.com/madelson/DistributedLock#release-notes</PackageReleaseNotes>
   </PropertyGroup>

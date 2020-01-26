@@ -1,5 +1,5 @@
 ﻿using Medallion.Collections;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,10 +10,9 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading.Tests
 {
-    [TestClass]
     public class TestSetupTest
     {
-        [TestMethod]
+        [Test]
         public void VerifyAllTestsAreCreated()
         {
             var testCaseClasses = this.GetType().Assembly
@@ -22,13 +21,13 @@ namespace Medallion.Threading.Tests
                     t => t.IsAbstract 
                         && t.IsClass 
                         && t.IsGenericTypeDefinition 
-                        && t.GetMethods().Any(m => m.GetCustomAttributes(inherit: false).Any(a => a is TestMethodAttribute))
+                        && t.GetMethods().Any(m => m.GetCustomAttributes(inherit: false).Any(a => a is TestAttribute))
                 )
                 .ToArray();
 
             var testClasses = this.GetType().Assembly
                 .GetTypes()
-                .Where(t => !t.IsAbstract && t.GetCustomAttributes(inherit: false).Any(a => a is TestClassAttribute))
+                .Where(t => !t.IsAbstract && t.Name.EndsWith("Test"))
                 .ToArray();
 
             var missing = new List<string>();
@@ -65,7 +64,6 @@ namespace Medallion.Threading.Tests
             var testClassName = Regex.Replace(GetTestClassName(testClassType), "Distributed|Lock|Testing|TestCases", string.Empty) + "Test";
 
             return $@"
-    [TestClass]
     public class {testClassName} : {GetCSharpName(testClassType)} {{ }}";
         }
 
