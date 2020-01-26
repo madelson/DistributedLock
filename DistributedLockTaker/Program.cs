@@ -23,7 +23,7 @@ namespace DistributedLockTaker.cs
         {
             var type = args[0];
             var name = args[1];
-            IDisposable handle = null;
+            IDisposable? handle = null;
             switch (type)
             {
                 case "SqlDistributedLock":
