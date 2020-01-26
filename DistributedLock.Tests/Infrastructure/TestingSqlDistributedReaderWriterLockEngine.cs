@@ -1,4 +1,5 @@
 ﻿using Medallion.Threading.Sql;
+using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -56,7 +57,7 @@ namespace Medallion.Threading.Tests.Sql
         /// </summary>
         private bool GetUseUpgradeLock(string name)
         {
-            if (TestHelper.CurrentTestType!.Name.Contains("Multiplex"))
+            if (TestContext.CurrentContext.Test.FullName.Contains("Multiplex"))
             {
                 // upgradeable locks cannot be multiplexed, so using them as exclusive locks in multiplexing tests
                 // can subvert what those tests are trying to demonstrate. Therefore, we just use write locks in 

@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading.Tests.Tests
 {
-    public class DeadlockExceptionTest : TestBase
+    public class DeadlockExceptionTest
     {
         [Test]
         public void TestDeadlockExceptionSerialization()

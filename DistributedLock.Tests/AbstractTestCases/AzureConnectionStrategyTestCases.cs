@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading.Tests.Sql
 {
-    public abstract class AzureConnectionStrategyTestCases<TEngineFactory> : TestBase 
+    public abstract class AzureConnectionStrategyTestCases<TEngineFactory> 
         where TEngineFactory : ITestingSqlDistributedLockEngineFactory, new()
     {
         [Test]

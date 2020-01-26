@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading.Tests.Sql
 {
-    public abstract class OwnedTransactionStrategyTestCases<TEngineFactory> : TestBase
+    public abstract class OwnedTransactionStrategyTestCases<TEngineFactory>
         where TEngineFactory : ITestingSqlDistributedLockEngineFactory, new()
     {
         /// <summary>

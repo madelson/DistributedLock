@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading.Tests
 {
-    public class SystemDistributedLockTest : TestBase
+    public class SystemDistributedLockTest
     {
         [Test]
         public void TestBadConstructorArguments()

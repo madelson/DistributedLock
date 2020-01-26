@@ -15,7 +15,7 @@ namespace Medallion.Threading.Tests
     /// all tickets. Since this can only happen when a connection/transaction is re-used, we require
     /// <see cref="IExternalConnectionOrTransactionTestingSqlConnectionManagementProvider"/> on our providers.
     /// </summary>
-    public abstract class SqlDistributedSemaphoreSelfDeadlockTestCases<TConnectionManagementProvider> : TestBase
+    public abstract class SqlDistributedSemaphoreSelfDeadlockTestCases<TConnectionManagementProvider>
         where TConnectionManagementProvider : TestingSqlConnectionManagementProvider, IExternalConnectionOrTransactionTestingSqlConnectionManagementProvider, new()
     {
         [Test]

@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading.Tests.Sql
 {
-    public abstract class SqlDistributedReaderWriterLockTestCases<TConnectionManagementProvider> : TestBase
+    public abstract class SqlDistributedReaderWriterLockTestCases<TConnectionManagementProvider>
         where TConnectionManagementProvider : TestingSqlConnectionManagementProvider, new()
     {
         [Test]

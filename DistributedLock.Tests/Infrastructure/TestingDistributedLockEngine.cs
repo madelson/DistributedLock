@@ -1,4 +1,5 @@
-﻿using System;
+﻿using NUnit.Framework;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,11 +9,11 @@ namespace Medallion.Threading.Tests
 {
     public abstract class TestingDistributedLockEngine : ActionRegistrationDisposable
     {
-        private readonly string _currentTestType = TestHelper.CurrentTestType!.Name;
+        private readonly string _currentTestFullName = TestContext.CurrentContext.Test.FullName;
 
         internal IDistributedLock CreateLock(string name)
         {
-            return this.CreateLockWithExactName(this.GetSafeLockName(name + this._currentTestType));
+            return this.CreateLockWithExactName(this.GetSafeLockName(name + this._currentTestFullName));
         }
 
         internal abstract IDistributedLock CreateLockWithExactName(string name);

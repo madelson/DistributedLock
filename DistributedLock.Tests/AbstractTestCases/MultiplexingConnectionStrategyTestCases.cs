@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading.Tests.Sql
 {
-    public abstract class MultiplexingConnectionStrategyTestCases<TEngineFactory> : TestBase
+    public abstract class MultiplexingConnectionStrategyTestCases<TEngineFactory>
         where TEngineFactory : ITestingSqlDistributedLockEngineFactory, new()
     {
         /// <summary>
@@ -28,8 +28,8 @@ namespace Medallion.Threading.Tests.Sql
                 MultiplexedConnectionLockPool.CleanupIntervalSeconds = 1;
                 try
                 {
-                    var lock1 = engine.CreateLock(nameof(TestCleanup));
-                    var lock2 = engine.CreateLock(nameof(TestCleanup));
+                    var lock1 = engine.CreateLock(nameof(this.TestLockAbandonmentWithTimeBasedCleanupRun));
+                    var lock2 = engine.CreateLock(nameof(this.TestLockAbandonmentWithTimeBasedCleanupRun));
                     var handleReference = this.TestCleanupHelper(lock1, lock2);
 
                     GC.Collect();

@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading.Tests.Sql
 {
-    public abstract class SqlDistributedSemaphoreTestCases<TConnectionManagementProvider> : TestBase
+    public abstract class SqlDistributedSemaphoreTestCases<TConnectionManagementProvider>
         where TConnectionManagementProvider : TestingSqlConnectionManagementProvider, new()
     {
         private static readonly TimeSpan LongTimeout = TimeSpan.FromSeconds(5);

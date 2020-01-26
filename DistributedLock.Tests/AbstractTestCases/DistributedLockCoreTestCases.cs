@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading.Tests
 {
-    public abstract class DistributedLockCoreTestCases<TEngine> : TestBase
+    public abstract class DistributedLockCoreTestCases<TEngine>
         where TEngine : TestingDistributedLockEngine, new()
     {
         [Test]

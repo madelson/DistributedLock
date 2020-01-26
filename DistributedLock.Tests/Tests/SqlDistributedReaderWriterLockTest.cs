@@ -11,7 +11,7 @@ using System.Threading;
 
 namespace Medallion.Threading.Tests.Sql
 {
-    public sealed class SqlDistributedReaderWriterLockTest : TestBase
+    public sealed class SqlDistributedReaderWriterLockTest
     {
         [Test]
         public void TestBadConstructorArguments()

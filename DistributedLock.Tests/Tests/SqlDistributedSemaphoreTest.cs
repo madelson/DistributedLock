@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading.Tests.Sql
 {
-    public sealed class SqlDistributedSemaphoreTest : TestBase
+    public sealed class SqlDistributedSemaphoreTest
     {
         [Test]
         public void TestBadConstructorArguments()

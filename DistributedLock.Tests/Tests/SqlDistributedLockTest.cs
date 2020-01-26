@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading.Tests.Sql
 {
-    public class SqlDistributedLockTest : TestBase
+    public class SqlDistributedLockTest
     {
         [Test]
         public void TestBadConstructorArguments()

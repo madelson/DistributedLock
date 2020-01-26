@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading.Tests.Sql
 {
-    public abstract class ExternalConnectionStrategyTestCases<TEngineFactory> : TestBase
+    public abstract class ExternalConnectionStrategyTestCases<TEngineFactory>
         where TEngineFactory : ITestingSqlDistributedLockEngineFactory, new()
     {
         [Test]

@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading.Tests
 {
-    public abstract class ConnectionStringStrategyTestCases<TEngineFactory, TConnectionManagementProvider> : TestBase
+    public abstract class ConnectionStringStrategyTestCases<TEngineFactory, TConnectionManagementProvider>
         where TEngineFactory : ITestingSqlDistributedLockEngineFactory, new()
         where TConnectionManagementProvider : ConnectionStringProvider, new()
     {
