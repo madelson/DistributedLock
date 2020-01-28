@@ -164,7 +164,7 @@ namespace Medallion.Threading.Sql.ConnectionMultiplexing
                     // if we're adding the first queue, start the cleanup thread
                     if (this.connectionStringPools.Count == 1)
                     {
-                        // rather than replacing cleanup task, we continue on it. This ensures that we never end up in a state
+                        // rather than directly replacing cleanup task, we continue on it. This ensures that we never end up in a state
                         // where two cleanup tasks are running at once. Since only cleanup can remove from the pools map, we'll
                         // never end up queueing up multiple cleanup tasks on top of one another
                         this.cleanupTask = this.cleanupTask.ContinueWith(
@@ -232,7 +232,7 @@ namespace Medallion.Threading.Sql.ConnectionMultiplexing
                 await this.DoCleanupAsync(kvp.Value).ConfigureAwait(false);
                 if (kvp.Value.Count == 0)
                 {
-                    (toRemove ?? (toRemove = new List<KeyValuePair<string, Queue<MultiplexedConnectionLock>>>())).Add(kvp);
+                    (toRemove ??= new List<KeyValuePair<string, Queue<MultiplexedConnectionLock>>>()).Add(kvp);
                 }
             }
 

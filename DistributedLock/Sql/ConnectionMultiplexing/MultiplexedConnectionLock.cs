@@ -132,7 +132,7 @@ namespace Medallion.Threading.Sql.ConnectionMultiplexing
                 {
                     if (!kvp.Value.ThreadSafeHandle.TryGetTarget(out var ignored))
                     {
-                        (toRemove ?? (toRemove = new List<string>())).Add(kvp.Key);
+                        (toRemove ??= new List<string>()).Add(kvp.Key);
                     }
                 }
                 
