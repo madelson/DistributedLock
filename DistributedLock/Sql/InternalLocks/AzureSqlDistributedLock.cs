@@ -41,7 +41,7 @@ namespace Medallion.Threading.Sql
                 }
             }
 
-            var connection = SqlClientHelper.CreateConnection(this.connectionString);
+            var connection = SqlHelpers.CreateConnection(this.connectionString);
             LockScope? result = null;
             try
             {
@@ -88,7 +88,7 @@ namespace Medallion.Threading.Sql
                 }
             }
 
-            var connection = SqlClientHelper.CreateConnection(this.connectionString);
+            var connection = SqlHelpers.CreateConnection(this.connectionString);
             LockScope? result = null;
             try
             {

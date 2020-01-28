@@ -17,7 +17,7 @@ namespace Medallion.Threading.Tests.Sql
         [Test]
         public void TestScopedToTransactionOnly()
         {
-            using (var connection = SqlClientHelper.CreateConnection(ConnectionStringProvider.ConnectionString))
+            using (var connection = SqlHelpers.CreateConnection(ConnectionStringProvider.ConnectionString))
             {
                 connection.Open();
 
@@ -46,7 +46,7 @@ namespace Medallion.Threading.Tests.Sql
         [Test]
         public void TestCloseTransactionLockOnClosedConnection()
         {
-            using (var connection = SqlClientHelper.CreateConnection(ConnectionStringProvider.ConnectionString))
+            using (var connection = SqlHelpers.CreateConnection(ConnectionStringProvider.ConnectionString))
             {
                 connection.Open();
 
@@ -75,7 +75,7 @@ namespace Medallion.Threading.Tests.Sql
         public void TestCloseTransactionLockOnClosedTransaction()
         {
             using (var connectionStringEngine = new TEngineFactory().Create<DefaultConnectionStringProvider>())
-            using (var connection = SqlClientHelper.CreateConnection(ConnectionStringProvider.ConnectionString))
+            using (var connection = SqlHelpers.CreateConnection(ConnectionStringProvider.ConnectionString))
             {
                 connection.Open();
 
@@ -106,7 +106,7 @@ namespace Medallion.Threading.Tests.Sql
         private void TestLockOnCompletedTransactionHelper(Action<DbTransaction> complete, [CallerMemberName] string lockName = "")
         {
             using (var connectionStringEngine = new TEngineFactory().Create<DefaultConnectionStringProvider>())
-            using (var connection = SqlClientHelper.CreateConnection(ConnectionStringProvider.ConnectionString))
+            using (var connection = SqlHelpers.CreateConnection(ConnectionStringProvider.ConnectionString))
             {
                 connection.Open();
 

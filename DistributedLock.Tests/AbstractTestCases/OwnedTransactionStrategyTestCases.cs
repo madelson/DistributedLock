@@ -49,14 +49,14 @@ namespace Medallion.Threading.Tests.Sql
                     MaxPoolSize = 1,
                 }
                 .ConnectionString;
-            using (var connection = SqlClientHelper.CreateConnection(connectionString)) { SqlTestHelper.ClearPool(connection); }
+            using (var connection = SqlHelpers.CreateConnection(connectionString)) { SqlTestHelper.ClearPool(connection); }
 
             using (var engine = new TEngineFactory().Create<TransactionBasedConnectionStringProvider>())
             {
                 var @lock = engine.CreateLock(nameof(TestIsolationLevelLeakage));
 
                 @lock.Acquire().Dispose();
-                using (var connection = SqlClientHelper.CreateConnection(connectionString))
+                using (var connection = SqlHelpers.CreateConnection(connectionString))
                 {
                     connection.Open();
                     using (var command = connection.CreateCommand())
@@ -67,7 +67,7 @@ namespace Medallion.Threading.Tests.Sql
                 }
 
                 @lock.AcquireAsync().Result.Dispose();
-                using (var connection = SqlClientHelper.CreateConnection(connectionString))
+                using (var connection = SqlHelpers.CreateConnection(connectionString))
                 {
                     connection.Open();
                     using (var command = connection.CreateCommand())

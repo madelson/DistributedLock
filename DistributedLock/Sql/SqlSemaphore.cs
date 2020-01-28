@@ -223,7 +223,7 @@ namespace Medallion.Threading.Sql
                     // MA: canceled SQL operations throw SqlException instead of OCE.
                     // That means that downstream operations end up faulted instead of canceled. We
                     // wrap with OCE here to correctly propagate cancellation
-                    when (cancellationToken.IsCancellationRequested && SqlClientHelper.IsCancellationException(ex))
+                    when (cancellationToken.IsCancellationRequested && SqlHelpers.IsCancellationException(ex))
                 {
                     throw new OperationCanceledException("Command was canceled", ex, cancellationToken);
                 }

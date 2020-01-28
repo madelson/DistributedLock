@@ -26,7 +26,7 @@ namespace Medallion.Threading.Tests.Sql
 
                 while (!cancellationToken.IsCancellationRequested)
                 {
-                    using (var connection = SqlClientHelper.CreateConnection(connectionString))
+                    using (var connection = SqlHelpers.CreateConnection(connectionString))
                     {
                         await connection.OpenAsync(cancellationToken);
                         

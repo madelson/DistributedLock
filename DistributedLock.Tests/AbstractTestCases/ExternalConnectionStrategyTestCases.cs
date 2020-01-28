@@ -15,7 +15,7 @@ namespace Medallion.Threading.Tests.Sql
         [Test]
         public void TestCloseLockOnClosedConnection()
         {
-            using (var connection = SqlClientHelper.CreateConnection(ConnectionStringProvider.ConnectionString))
+            using (var connection = SqlHelpers.CreateConnection(ConnectionStringProvider.ConnectionString))
             using (ConnectionProvider.UseConnection(connection))
             using (var connectionEngine = new TEngineFactory().Create<TConnectionProvider>())
             using (var connectionStringEngine = new TEngineFactory().Create<DefaultConnectionStringProvider>())
@@ -42,7 +42,7 @@ namespace Medallion.Threading.Tests.Sql
         [Test]
         public void TestIsNotScopedToTransaction()
         {
-            using (var connection = SqlClientHelper.CreateConnection(ConnectionStringProvider.ConnectionString))
+            using (var connection = SqlHelpers.CreateConnection(ConnectionStringProvider.ConnectionString))
             using (ConnectionProvider.UseConnection(connection))
             using (var connectionEngine = new TEngineFactory().Create<TConnectionProvider>())
             using (var connectionStringEngine = new TEngineFactory().Create<DefaultConnectionStringProvider>())

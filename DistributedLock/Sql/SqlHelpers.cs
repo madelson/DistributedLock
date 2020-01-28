@@ -6,6 +6,12 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Reflection;
+#if NET45 || NETSTANDARD1_3
+using System.Data.SqlClient;
+#elif NETSTANDARD2_0
+using Microsoft.Data.SqlClient;
+#endif
 
 namespace Medallion.Threading.Sql
 {
@@ -50,7 +56,7 @@ namespace Medallion.Threading.Sql
                 // MA: canceled SQL operations throw SqlException instead of OCE.
                 // That means that downstream operations end up faulted instead of canceled. We
                 // wrap with OCE here to correctly propagate cancellation
-                when (cancellationToken.IsCancellationRequested && SqlClientHelper.IsCancellationException(ex))
+                when (cancellationToken.IsCancellationRequested && IsCancellationException(ex))
             {
                 throw new OperationCanceledException(
                     "Command was canceled",
@@ -78,6 +84,41 @@ namespace Medallion.Threading.Sql
               // otherwise timeout is infinite so we use the infinite timeout of 0
               // (see https://msdn.microsoft.com/en-us/library/system.data.sqlclient.sqlcommand.commandtimeout%28v=vs.110%29.aspx)
               : 0;
+        }
+
+        public static DbConnection CreateConnection(string connectionString) => new SqlConnection(connectionString);
+
+        public static bool IsCancellationException(DbException exception)
+        {
+            const int CanceledNumber = 0;
+
+            // fast path using default SqlClient
+            if (exception is SqlException sqlException && sqlException.Number == CanceledNumber)
+            {
+                return true;
+            }
+
+
+            const string AlternateClientSqlExceptionName =
+#if NETSTANDARD1_3 || NET45
+                "Microsoft.Data.SqlClient.SqlException";
+#else
+                "System.Data.SqlClient.SqlException";
+#endif
+            var exceptionType = exception.GetType();
+            // since SqlException is sealed in both providers (as of 2020-01-26), 
+            // we don't need to search up the type hierarchy
+            if (exceptionType.ToString() == AlternateClientSqlExceptionName)
+            {
+                var numberProperty = exceptionType.GetTypeInfo().DeclaredProperties
+                    .FirstOrDefault(p => p.Name == nameof(SqlException.Number) && p.CanRead && p.GetMethod.IsPublic && !p.GetMethod.IsStatic);
+                if (numberProperty != null)
+                {
+                    return Equals(numberProperty.GetValue(exception), CanceledNumber);
+                }
+            }
+
+            return false;
         }
     }
 

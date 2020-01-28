@@ -28,7 +28,7 @@ namespace Medallion.Threading.Sql
             }
 
             IDisposable? result = null;
-            var connection = SqlClientHelper.CreateConnection(this.connectionString);
+            var connection = SqlHelpers.CreateConnection(this.connectionString);
             DbTransaction? transaction = null;
             try
             {
@@ -63,7 +63,7 @@ namespace Medallion.Threading.Sql
             }
 
             IDisposable? result = null;
-            var connection = SqlClientHelper.CreateConnection(this.connectionString);
+            var connection = SqlHelpers.CreateConnection(this.connectionString);
             DbTransaction? transaction = null;
             try
             {

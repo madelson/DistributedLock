@@ -46,7 +46,7 @@ namespace Medallion.Threading.Tests
                 }
             }
 
-            using (var connection = SqlClientHelper.CreateConnection(connectionString))
+            using (var connection = SqlHelpers.CreateConnection(connectionString))
             {
                 SqlTestHelper.ClearPool(connection);
                 // checking immediately seems flaky; likely clear pool finishing
@@ -64,7 +64,7 @@ namespace Medallion.Threading.Tests
 
             int CountActiveSessions()
             {
-                using (var connection = SqlClientHelper.CreateConnection(ConnectionStringProvider.ConnectionString))
+                using (var connection = SqlHelpers.CreateConnection(ConnectionStringProvider.ConnectionString))
                 {
                     connection.Open();
                     using (var command = connection.CreateCommand())

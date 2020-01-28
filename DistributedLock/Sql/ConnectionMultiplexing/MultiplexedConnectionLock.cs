@@ -26,7 +26,7 @@ namespace Medallion.Threading.Sql.ConnectionMultiplexing
 
         public MultiplexedConnectionLock(string connectionString)
         {
-            this.connection = SqlClientHelper.CreateConnection(connectionString);
+            this.connection = SqlHelpers.CreateConnection(connectionString);
         }
 
         public Result TryAcquire<TLockCookie>(

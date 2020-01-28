@@ -74,7 +74,7 @@ namespace Medallion.Threading.Tests.Sql
         [Test]
         public void TestTicketsTakenOnBothConnectionAndTransactionForThatConnection()
         {
-            using (var connection = SqlClientHelper.CreateConnection(ConnectionStringProvider.ConnectionString))
+            using (var connection = SqlHelpers.CreateConnection(ConnectionStringProvider.ConnectionString))
             {
                 connection.Open();
 

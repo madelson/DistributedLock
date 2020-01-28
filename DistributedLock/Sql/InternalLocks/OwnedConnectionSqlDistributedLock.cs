@@ -27,7 +27,7 @@ namespace Medallion.Threading.Sql
             }
 
             IDisposable? result = null;
-            var connection = SqlClientHelper.CreateConnection(this.connectionString);
+            var connection = SqlHelpers.CreateConnection(this.connectionString);
             try
             {
                 connection.Open();
@@ -58,7 +58,7 @@ namespace Medallion.Threading.Sql
             }
 
             IDisposable? result = null;
-            var connection = SqlClientHelper.CreateConnection(this.connectionString);
+            var connection = SqlHelpers.CreateConnection(this.connectionString);
             try
             {
                 await connection.OpenAsync(cancellationToken).ConfigureAwait(false);

@@ -141,7 +141,7 @@ namespace Medallion.Threading.Tests.Sql
     public sealed class DefaultClientConnectionProvider : ConnectionProvider
     {
         protected override DbConnection CreateConnection(string connectionString) =>
-            SqlClientHelper.CreateConnection(connectionString);
+            SqlHelpers.CreateConnection(connectionString);
     }
 
     public sealed class AlternateClientConnectionProvider : ConnectionProvider
@@ -162,7 +162,7 @@ namespace Medallion.Threading.Tests.Sql
                 return new ConnectionInfo { Transaction = currentTransaction };
             }
 
-            var connection = SqlClientHelper.CreateConnection(ConnectionStringProvider.ConnectionString);
+            var connection = SqlHelpers.CreateConnection(ConnectionStringProvider.ConnectionString);
             this.RegisterCleanupAction(CreateWeakDisposeAction(connection));
             connection.Open();
             var transaction = connection.BeginTransaction();
@@ -205,7 +205,7 @@ namespace Medallion.Threading.Tests.Sql
     public sealed class DefaultClientTransactionProvider : TransactionProvider
     {
         protected override DbConnection CreateConnection(string connectionString) =>
-            SqlClientHelper.CreateConnection(connectionString);
+            SqlHelpers.CreateConnection(connectionString);
     }
 
     public sealed class AlternateClientTransactionProvider : TransactionProvider
