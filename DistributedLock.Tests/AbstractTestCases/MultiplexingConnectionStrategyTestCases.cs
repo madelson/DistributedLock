@@ -20,6 +20,7 @@ namespace Medallion.Threading.Tests.Sql
         /// the time-based cleanup loop rather than forcing a cleanup
         /// </summary>
         [Test]
+        [NonParallelizable] // timing sensitive
         public void TestLockAbandonmentWithTimeBasedCleanupRun()
         {
             using var engine = new TEngineFactory().Create<MultiplexedConnectionStringProvider>();

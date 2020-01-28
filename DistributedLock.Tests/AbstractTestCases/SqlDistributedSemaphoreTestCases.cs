@@ -126,19 +126,19 @@ namespace Medallion.Threading.Tests.Sql
                     var semaphore = engine.CreateSemaphore(nameof(TestSemaphoreParallelism), MaxCount);
                     using (await semaphore.AcquireAsync())
                     {
-                            // increment going in
-                            var currentCounterValue = Interlocked.Increment(ref counter);
+                        // increment going in
+                        var currentCounterValue = Interlocked.Increment(ref counter);
 
                         lock (maxCounterValueLock)
                         {
                             maxCounterValue = Math.Max(maxCounterValue, currentCounterValue);
                         }
 
-                            // hang out for a bit to ensure concurrency
-                            await Task.Delay(TimeSpan.FromMilliseconds(10));
+                        // hang out for a bit to ensure concurrency
+                        await Task.Delay(TimeSpan.FromMilliseconds(15));
 
-                            // decrement and return on the way out (returns # inside the lock when this left ... should be 0)
-                            return Interlocked.Decrement(ref counter);
+                        // decrement and return on the way out (returns # inside the lock when this left ... should be 0)
+                        return Interlocked.Decrement(ref counter);
                     }
                 })
                 .ToList();

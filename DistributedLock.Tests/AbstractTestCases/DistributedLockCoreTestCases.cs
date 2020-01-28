@@ -94,6 +94,7 @@ namespace Medallion.Threading.Tests
         }
 
         [Test]
+        [NonParallelizable] // timing-sensitive
         public void TestTimeouts()
         {
             using var engine = new TEngine();
