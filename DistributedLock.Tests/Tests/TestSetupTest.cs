@@ -65,14 +65,14 @@ namespace Medallion.Threading.Tests
         
         private static string GetTestClassDeclaration(Type testClassType)
         {
-            string GetTestClassName(Type type)
+            static string GetTestClassName(Type type)
             {
                 return type.IsGenericType
                     ? $"{RemoveGenericMarkers(type.Name)}_{string.Join("_", type.GetGenericArguments().Select(GetTestClassName))}"
                     : type.Name;
             }
 
-            string GetCSharpName(Type type)
+            static string GetCSharpName(Type type)
             {
                 return type.IsGenericType
                     ? $"{RemoveGenericMarkers(type.Name) }<{string.Join(", ", type.GetGenericArguments().Select(GetCSharpName))}>"

@@ -32,7 +32,7 @@ namespace Medallion.Threading.Tests.Sql
         [Test]
         public void TestNameMangling()
         {
-            string ToSafeNameChecked(string name)
+            static string ToSafeNameChecked(string name)
             {
                 var safeName = SqlSemaphore.ToSafeName(name);
                 (safeName.Length > 0).ShouldEqual(true, "was: " + safeName);
@@ -74,30 +74,26 @@ namespace Medallion.Threading.Tests.Sql
         [Test]
         public void TestTicketsTakenOnBothConnectionAndTransactionForThatConnection()
         {
-            using (var connection = SqlHelpers.CreateConnection(ConnectionStringProvider.ConnectionString))
-            {
-                connection.Open();
+            using var connection = SqlHelpers.CreateConnection(ConnectionStringProvider.ConnectionString);
+            connection.Open();
 
-                var semaphore1 = new SqlDistributedSemaphore(
-                    UniqueSemaphoreName(nameof(TestTicketsTakenOnBothConnectionAndTransactionForThatConnection)), 
-                    2, 
-                    connection
-                );
-                var handle1 = semaphore1.Acquire();
+            var semaphore1 = new SqlDistributedSemaphore(
+                UniqueSemaphoreName(nameof(TestTicketsTakenOnBothConnectionAndTransactionForThatConnection)),
+                2,
+                connection
+            );
+            var handle1 = semaphore1.Acquire();
 
-                using (var transaction = connection.BeginTransaction())
-                {
-                    var semaphore2 = new SqlDistributedSemaphore(
-                        UniqueSemaphoreName(nameof(TestTicketsTakenOnBothConnectionAndTransactionForThatConnection)), 
-                        2, 
-                        transaction
-                    );
-                    var handle2 = semaphore2.Acquire();
-                    semaphore2.TryAcquire().ShouldEqual(null);
-                    var ex = Assert.Catch<InvalidOperationException>(() => semaphore2.Acquire());
-                    ex.Message.Contains("Deadlock").ShouldEqual(true, ex.ToString());
-                }
-            }
+            using var transaction = connection.BeginTransaction();
+            var semaphore2 = new SqlDistributedSemaphore(
+UniqueSemaphoreName(nameof(TestTicketsTakenOnBothConnectionAndTransactionForThatConnection)),
+2,
+transaction
+);
+            var handle2 = semaphore2.Acquire();
+            semaphore2.TryAcquire().ShouldEqual(null);
+            var ex = Assert.Catch<InvalidOperationException>(() => semaphore2.Acquire());
+            ex.Message.Contains("Deadlock").ShouldEqual(true, ex.ToString());
         }
 
         private static string UniqueSemaphoreName(string baseName) => $"{baseName}_{TestHelper.FrameworkName}";

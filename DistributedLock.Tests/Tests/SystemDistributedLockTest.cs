@@ -27,17 +27,15 @@ namespace Medallion.Threading.Tests
         public void TestGarbageCollection()
         {
             var @lock = this.CreateLock("gc_test");
-            Func<WeakReference> abandonLock = () => new WeakReference(@lock.Acquire());
+            WeakReference AbandonLock() => new WeakReference(@lock.Acquire());
 
-            var weakHandle = abandonLock();
+            var weakHandle = AbandonLock();
             GC.Collect();
             GC.WaitForPendingFinalizers();
 
             weakHandle.IsAlive.ShouldEqual(false);
-            using (var handle = @lock.TryAcquire())
-            {
-                Assert.IsNotNull(handle);
-            }
+            using var handle = @lock.TryAcquire();
+            Assert.IsNotNull(handle);
         }
 
         [Test]

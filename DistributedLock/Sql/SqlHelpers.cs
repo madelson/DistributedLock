@@ -122,9 +122,9 @@ namespace Medallion.Threading.Sql
         }
     }
 
-    internal struct ConnectionOrTransaction
+    internal readonly struct ConnectionOrTransaction
     {
-        private object connectionOrTransaction;
+        private readonly object connectionOrTransaction;
 
         public IDbTransaction? Transaction => this.connectionOrTransaction as IDbTransaction;
         public IDbConnection? Connection => this.Transaction?.Connection ?? (this.connectionOrTransaction as IDbConnection);

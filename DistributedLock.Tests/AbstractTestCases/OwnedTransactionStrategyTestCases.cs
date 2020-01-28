@@ -51,31 +51,25 @@ namespace Medallion.Threading.Tests.Sql
                 .ConnectionString;
             using (var connection = SqlHelpers.CreateConnection(connectionString)) { SqlTestHelper.ClearPool(connection); }
 
-            using (var engine = new TEngineFactory().Create<TransactionBasedConnectionStringProvider>())
+            using var engine = new TEngineFactory().Create<TransactionBasedConnectionStringProvider>();
+            var @lock = engine.CreateLock(nameof(TestIsolationLevelLeakage));
+
+            @lock.Acquire().Dispose();
+            using (var connection = SqlHelpers.CreateConnection(connectionString))
             {
-                var @lock = engine.CreateLock(nameof(TestIsolationLevelLeakage));
+                connection.Open();
+                using var command = connection.CreateCommand();
+                command.CommandText = IsolationLevelQuery;
+                command.ExecuteScalar().ShouldEqual(IsolationLevel.ReadCommitted.ToString());
+            }
 
-                @lock.Acquire().Dispose();
-                using (var connection = SqlHelpers.CreateConnection(connectionString))
-                {
-                    connection.Open();
-                    using (var command = connection.CreateCommand())
-                    {
-                        command.CommandText = IsolationLevelQuery;
-                        command.ExecuteScalar().ShouldEqual(IsolationLevel.ReadCommitted.ToString());
-                    }
-                }
-
-                @lock.AcquireAsync().Result.Dispose();
-                using (var connection = SqlHelpers.CreateConnection(connectionString))
-                {
-                    connection.Open();
-                    using (var command = connection.CreateCommand())
-                    {
-                        command.CommandText = IsolationLevelQuery;
-                        command.ExecuteScalar().ShouldEqual(IsolationLevel.ReadCommitted.ToString());
-                    }
-                }
+            @lock.AcquireAsync().Result.Dispose();
+            using (var connection = SqlHelpers.CreateConnection(connectionString))
+            {
+                connection.Open();
+                using var command = connection.CreateCommand();
+                command.CommandText = IsolationLevelQuery;
+                command.ExecuteScalar().ShouldEqual(IsolationLevel.ReadCommitted.ToString());
             }
         }
     }

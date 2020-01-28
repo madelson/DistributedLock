@@ -48,16 +48,14 @@ namespace Medallion.Threading.Tests.Sql
             using (var connectionStringEngine = new TEngineFactory().Create<DefaultConnectionStringProvider>())
             {
                 connection.Open();
-                
-                using (var handle = connectionEngine.CreateLock(nameof(TestIsNotScopedToTransaction)).Acquire())
-                {
-                    using (var transaction = connection.BeginTransaction())
-                    {
-                        transaction.Rollback();
-                    }
 
-                    connectionStringEngine.CreateLock(nameof(TestIsNotScopedToTransaction)).IsHeld().ShouldEqual(true, this.GetType().Name);
+                using var handle = connectionEngine.CreateLock(nameof(TestIsNotScopedToTransaction)).Acquire();
+                using (var transaction = connection.BeginTransaction())
+                {
+                    transaction.Rollback();
                 }
+
+                connectionStringEngine.CreateLock(nameof(TestIsNotScopedToTransaction)).IsHeld().ShouldEqual(true, this.GetType().Name);
             }
         }
 

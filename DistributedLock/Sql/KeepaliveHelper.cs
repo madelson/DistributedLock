@@ -108,8 +108,7 @@ namespace Medallion.Threading.Sql
 
         private static async Task<bool> ExecuteKeepaliveCommandAsync(WeakReference<IDbConnection> weakConnection, CancellationToken cancellationToken)
         {
-            IDbConnection connection;
-            if (!weakConnection.TryGetTarget(out connection))
+            if (!weakConnection.TryGetTarget(out var connection))
             {
                 return false;
             }

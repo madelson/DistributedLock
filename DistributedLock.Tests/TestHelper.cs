@@ -17,10 +17,8 @@ namespace Medallion.Threading.Tests
 
         public static bool IsHeld(this IDistributedLock @lock)
         {
-            using (var handle = @lock.TryAcquire())
-            {
-                return handle == null;
-            }
+            using var handle = @lock.TryAcquire();
+            return handle == null;
         }
 
         public const string FrameworkName =

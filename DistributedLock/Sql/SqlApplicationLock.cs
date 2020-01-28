@@ -44,29 +44,23 @@ namespace Medallion.Threading.Sql
 
         private static bool ExecuteAcquireCommand(ConnectionOrTransaction connectionOrTransaction, string lockName, int timeoutMillis, Mode mode)
         {
-            using (var command = CreateAcquireCommand(connectionOrTransaction, lockName, timeoutMillis, mode, out var returnValue))
-            {
-                command.ExecuteNonQuery();
-                return ParseExitCode((int)returnValue.Value);
-            }
+            using var command = CreateAcquireCommand(connectionOrTransaction, lockName, timeoutMillis, mode, out var returnValue);
+            command.ExecuteNonQuery();
+            return ParseExitCode((int)returnValue.Value);
         }
 
         private static async Task<bool> ExecuteAcquireCommandAsync(ConnectionOrTransaction connectionOrTransaction, string lockName, int timeoutMillis, Mode mode, CancellationToken cancellationToken)
         {
-            using (var command = CreateAcquireCommand(connectionOrTransaction, lockName, timeoutMillis, mode, out var returnValue))
-            {
-                await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
-                return ParseExitCode((int)returnValue.Value);
-            }
+            using var command = CreateAcquireCommand(connectionOrTransaction, lockName, timeoutMillis, mode, out var returnValue);
+            await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+            return ParseExitCode((int)returnValue.Value);
         }
 
         private static void ExecuteReleaseCommand(ConnectionOrTransaction connectionOrTransaction, string lockName)
         {
-            using (var command = CreateReleaseCommand(connectionOrTransaction, lockName, out var returnValue))
-            {
-                command.ExecuteNonQuery();
-                ParseExitCode((int)returnValue.Value);
-            }
+            using var command = CreateReleaseCommand(connectionOrTransaction, lockName, out var returnValue);
+            command.ExecuteNonQuery();
+            ParseExitCode((int)returnValue.Value);
         }
 
         private static IDbCommand CreateAcquireCommand(
@@ -145,16 +139,13 @@ namespace Medallion.Threading.Sql
 
         private static string GetErrorMessage(int exitCode, string type) => $"The request for the distribute lock failed with exit code {exitCode} ({type})";
 
-        private static string GetModeString(Mode mode)
+        private static string GetModeString(Mode mode) => mode switch
         {
-            switch (mode)
-            {
-                case Mode.Shared: return "Shared";
-                case Mode.Update: return "Update";
-                case Mode.Exclusive: return "Exclusive";
-                default: throw new ArgumentException(nameof(mode));
-            }
-        }
+            Mode.Shared => "Shared",
+            Mode.Update => "Update",
+            Mode.Exclusive => "Exclusive",
+            _ => throw new ArgumentException(nameof(mode)),
+        };
 
         private enum Mode
         {

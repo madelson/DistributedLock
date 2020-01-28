@@ -64,15 +64,11 @@ namespace Medallion.Threading.Tests
 
             int CountActiveSessions()
             {
-                using (var connection = SqlHelpers.CreateConnection(ConnectionStringProvider.ConnectionString))
-                {
-                    connection.Open();
-                    using (var command = connection.CreateCommand())
-                    {
-                        command.CommandText = $@"SELECT COUNT(*) FROM sys.dm_exec_sessions WHERE program_name = '{applicationName}'";
-                        return (int)command.ExecuteScalar();
-                    }
-                }
+                using var connection = SqlHelpers.CreateConnection(ConnectionStringProvider.ConnectionString);
+                connection.Open();
+                using var command = connection.CreateCommand();
+                command.CommandText = $@"SELECT COUNT(*) FROM sys.dm_exec_sessions WHERE program_name = '{applicationName}'";
+                return (int)command.ExecuteScalar();
             }
         }
 

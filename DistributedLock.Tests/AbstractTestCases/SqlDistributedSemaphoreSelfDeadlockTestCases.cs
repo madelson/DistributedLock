@@ -21,65 +21,57 @@ namespace Medallion.Threading.Tests
         [Test]
         public void TestSelfDeadlockThrowsOnInfiniteWait()
         {
-            using (var engine = this.CreateEngine())
-            {
-                var semaphore = engine.CreateSemaphore(nameof(TestSelfDeadlockThrowsOnInfiniteWait), maxCount: 2);
-                semaphore.Acquire();
-                semaphore.Acquire();
-                var ex = Assert.Catch<DeadlockException>(() => semaphore.Acquire());
-                ex.Message.Contains("Deadlock").ShouldEqual(true, ex.Message);
-            }
+            using var engine = this.CreateEngine();
+            var semaphore = engine.CreateSemaphore(nameof(TestSelfDeadlockThrowsOnInfiniteWait), maxCount: 2);
+            semaphore.Acquire();
+            semaphore.Acquire();
+            var ex = Assert.Catch<DeadlockException>(() => semaphore.Acquire());
+            ex.Message.Contains("Deadlock").ShouldEqual(true, ex.Message);
         }
 
         [Test]
         public void TestMultipleConnectionsCannotTriggerSelfDeadlock()
         {
-            using (var engine = this.CreateEngine())
-            {
-                var semaphore1 = engine.CreateSemaphore(nameof(TestMultipleConnectionsCannotTriggerSelfDeadlock), maxCount: 2);
-                var semaphore2 = engine.CreateSemaphore(nameof(TestMultipleConnectionsCannotTriggerSelfDeadlock), maxCount: 2);
-                semaphore1.Acquire();
-                semaphore2.Acquire();
+            using var engine = this.CreateEngine();
+            var semaphore1 = engine.CreateSemaphore(nameof(TestMultipleConnectionsCannotTriggerSelfDeadlock), maxCount: 2);
+            var semaphore2 = engine.CreateSemaphore(nameof(TestMultipleConnectionsCannotTriggerSelfDeadlock), maxCount: 2);
+            semaphore1.Acquire();
+            semaphore2.Acquire();
 
-                var source = new CancellationTokenSource();
-                var acquireTask = semaphore1.AcquireAsync(cancellationToken: source.Token).Task;
-                acquireTask.Wait(TimeSpan.FromSeconds(.1)).ShouldEqual(false);
-                source.Cancel();
-                acquireTask.ContinueWith(t => { }).Wait(TimeSpan.FromSeconds(10)).ShouldEqual(true);
-                acquireTask.Status.ShouldEqual(TaskStatus.Canceled);
-            }
+            var source = new CancellationTokenSource();
+            var acquireTask = semaphore1.AcquireAsync(cancellationToken: source.Token).Task;
+            acquireTask.Wait(TimeSpan.FromSeconds(.1)).ShouldEqual(false);
+            source.Cancel();
+            acquireTask.ContinueWith(t => { }).Wait(TimeSpan.FromSeconds(10)).ShouldEqual(true);
+            acquireTask.Status.ShouldEqual(TaskStatus.Canceled);
         }
 
         [Test]
         public void TestSelfDeadlockWaitsOnSpecifiedTime()
         {
-            using (var engine = this.CreateEngine())
-            {
-                var semaphore = engine.CreateSemaphore(nameof(TestSelfDeadlockWaitsOnSpecifiedTime), maxCount: 1);
-                semaphore.Acquire();
+            using var engine = this.CreateEngine();
+            var semaphore = engine.CreateSemaphore(nameof(TestSelfDeadlockWaitsOnSpecifiedTime), maxCount: 1);
+            semaphore.Acquire();
 
-                var acquireTask = Task.Run(() => semaphore.TryAcquire(TimeSpan.FromSeconds(.2)));
-                acquireTask.Wait(TimeSpan.FromSeconds(.05)).ShouldEqual(false);
-                acquireTask.Wait(TimeSpan.FromSeconds(.3)).ShouldEqual(true);
-                acquireTask.Result.ShouldEqual(null);
-            }
+            var acquireTask = Task.Run(() => semaphore.TryAcquire(TimeSpan.FromSeconds(.2)));
+            acquireTask.Wait(TimeSpan.FromSeconds(.05)).ShouldEqual(false);
+            acquireTask.Wait(TimeSpan.FromSeconds(.3)).ShouldEqual(true);
+            acquireTask.Result.ShouldEqual(null);
         }
 
         [Test]
         public void TestSelfDeadlockWaitRespectsCancellation()
         {
-            using (var engine = this.CreateEngine())
-            {
-                var semaphore = engine.CreateSemaphore(nameof(TestSelfDeadlockWaitsOnSpecifiedTime), maxCount: 1);
-                semaphore.Acquire();
+            using var engine = this.CreateEngine();
+            var semaphore = engine.CreateSemaphore(nameof(TestSelfDeadlockWaitsOnSpecifiedTime), maxCount: 1);
+            semaphore.Acquire();
 
-                var source = new CancellationTokenSource();
-                var acquireTask = semaphore.AcquireAsync(TimeSpan.FromSeconds(20), source.Token).Task;
-                acquireTask.Wait(TimeSpan.FromSeconds(.1)).ShouldEqual(false);
-                source.Cancel();
-                acquireTask.ContinueWith(t => { }).Wait(TimeSpan.FromSeconds(10)).ShouldEqual(true);
-                acquireTask.Status.ShouldEqual(TaskStatus.Canceled);
-            }
+            var source = new CancellationTokenSource();
+            var acquireTask = semaphore.AcquireAsync(TimeSpan.FromSeconds(20), source.Token).Task;
+            acquireTask.Wait(TimeSpan.FromSeconds(.1)).ShouldEqual(false);
+            source.Cancel();
+            acquireTask.ContinueWith(t => { }).Wait(TimeSpan.FromSeconds(10)).ShouldEqual(true);
+            acquireTask.Status.ShouldEqual(TaskStatus.Canceled);
         }
 
         private TestingSqlDistributedSemaphoreEngine<TConnectionManagementProvider> CreateEngine() => new TestingSqlDistributedSemaphoreEngine<TConnectionManagementProvider>();

@@ -64,18 +64,16 @@ namespace Medallion.Threading
                 return baseLockName;
             }
 
-            using (var sha = SHA512.Create())
+            using var sha = SHA512.Create();
+            var hash = Convert.ToBase64String(sha.ComputeHash(Encoding.UTF8.GetBytes(baseLockName)));
+
+            if (hash.Length >= maxNameLength)
             {
-                var hash = Convert.ToBase64String(sha.ComputeHash(Encoding.UTF8.GetBytes(baseLockName)));
-
-                if (hash.Length >= maxNameLength)
-                {
-                    return hash.Substring(0, length: maxNameLength);
-                }
-
-                var prefix = validBaseLockName.Substring(0, Math.Min(validBaseLockName.Length, maxNameLength - hash.Length));
-                return prefix + hash;
+                return hash.Substring(0, length: maxNameLength);
             }
+
+            var prefix = validBaseLockName.Substring(0, Math.Min(validBaseLockName.Length, maxNameLength - hash.Length));
+            return prefix + hash;
         }
     }
 }

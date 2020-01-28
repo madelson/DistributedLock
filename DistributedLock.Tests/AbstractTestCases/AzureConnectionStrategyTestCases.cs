@@ -16,39 +16,33 @@ namespace Medallion.Threading.Tests.Sql
         [Test]
         public void TestIdleSessionKiller()
         {
-            using (var engine = new TEngineFactory().Create<DefaultConnectionStringProvider>())
-            using (var idleSessionKiller = new IdleSessionKiller(ConnectionStringProvider.ConnectionString, idleTimeout: TimeSpan.FromSeconds(.25)))
-            {
-                var @lock = engine.CreateLock(nameof(TestIdleSessionKiller));
-                var handle = @lock.Acquire();
-                Thread.Sleep(TimeSpan.FromSeconds(1));
-                Assert.Catch<DbException>(() => handle.Dispose());
-            }
+            using var engine = new TEngineFactory().Create<DefaultConnectionStringProvider>();
+            using var idleSessionKiller = new IdleSessionKiller(ConnectionStringProvider.ConnectionString, idleTimeout: TimeSpan.FromSeconds(.25));
+            var @lock = engine.CreateLock(nameof(TestIdleSessionKiller));
+            var handle = @lock.Acquire();
+            Thread.Sleep(TimeSpan.FromSeconds(1));
+            Assert.Catch<DbException>(() => handle.Dispose());
         }
 
         [Test]
         [NonParallelizable] // sets static KeepaliveHelper.Interval
         public void TestAzureStrategyProtectsFromIdleSessionKiller()
         {
-            using (var engine = this.CreateEngine())
+            using var engine = this.CreateEngine();
+            var originalInterval = KeepaliveHelper.Interval;
+            try
             {
-                var originalInterval = KeepaliveHelper.Interval;
-                try
-                {
-                    KeepaliveHelper.Interval = TimeSpan.FromSeconds(.1);
+                KeepaliveHelper.Interval = TimeSpan.FromSeconds(.1);
 
-                    using (var idleSessionKiller = new IdleSessionKiller(ConnectionStringProvider.ConnectionString, idleTimeout: TimeSpan.FromSeconds(.25)))
-                    {
-                        var @lock = engine.CreateLock(nameof(TestAzureStrategyProtectsFromIdleSessionKiller));
-                        var handle = @lock.Acquire();
-                        Thread.Sleep(TimeSpan.FromSeconds(1));
-                        Assert.DoesNotThrow(() => handle.Dispose());
-                    }
-                }
-                finally
-                {
-                    KeepaliveHelper.Interval = originalInterval;
-                }
+                using var idleSessionKiller = new IdleSessionKiller(ConnectionStringProvider.ConnectionString, idleTimeout: TimeSpan.FromSeconds(.25));
+                var @lock = engine.CreateLock(nameof(TestAzureStrategyProtectsFromIdleSessionKiller));
+                var handle = @lock.Acquire();
+                Thread.Sleep(TimeSpan.FromSeconds(1));
+                Assert.DoesNotThrow(() => handle.Dispose());
+            }
+            finally
+            {
+                KeepaliveHelper.Interval = originalInterval;
             }
         }
 
@@ -59,29 +53,27 @@ namespace Medallion.Threading.Tests.Sql
         [NonParallelizable] // sets static KeepaliveHelper.Interval
         public void ThreadSafetyExercise()
         {
-            using (var engine = this.CreateEngine())
+            using var engine = this.CreateEngine();
+            var originalInterval = KeepaliveHelper.Interval;
+            try
             {
-                var originalInterval = KeepaliveHelper.Interval;
-                try
-                {
-                    KeepaliveHelper.Interval = TimeSpan.FromMilliseconds(1);
+                KeepaliveHelper.Interval = TimeSpan.FromMilliseconds(1);
 
-                    Assert.DoesNotThrow(() =>
-                    {
-                        var @lock = engine.CreateLock(nameof(ThreadSafetyExercise));
-                        for (var i = 0; i < 25; ++i)
-                        {
-                            using (@lock.Acquire())
-                            {
-                                Thread.Sleep(1);
-                            }
-                        }
-                    });
-                }
-                finally
+                Assert.DoesNotThrow(() =>
                 {
-                    KeepaliveHelper.Interval = originalInterval;
-                }
+                    var @lock = engine.CreateLock(nameof(ThreadSafetyExercise));
+                    for (var i = 0; i < 25; ++i)
+                    {
+                        using (@lock.Acquire())
+                        {
+                            Thread.Sleep(1);
+                        }
+                    }
+                });
+            }
+            finally
+            {
+                KeepaliveHelper.Interval = originalInterval;
             }
         }
 

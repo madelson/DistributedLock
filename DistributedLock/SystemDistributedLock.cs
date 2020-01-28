@@ -25,7 +25,7 @@ namespace Medallion.Threading
         /// <paramref name="abandonmentCheckFrequency"/> specifies how long the lock should wait before checking
         /// if the underlying <see cref="EventWaitHandle"/> has been abandoned (defaults to 2 seconds)
         /// </summary>
-        public SystemDistributedLock(string lockName, TimeSpan? abandonmentCheckFrequency = default(TimeSpan?))
+        public SystemDistributedLock(string lockName, TimeSpan? abandonmentCheckFrequency = default)
         {
             // note that just Global\ is not a valid name
             if (string.IsNullOrEmpty(lockName))
@@ -324,14 +324,13 @@ namespace Medallion.Threading
                 )
             );
 
-            bool ignored;
             var @event = new EventWaitHandle(
                 // if we create, start as unlocked
                 initialState: true,
                 // allow only one thread to hold the lock
                 mode: EventResetMode.AutoReset,
                 name: this.lockName,
-                createdNew: out ignored
+                createdNew: out _
             );
             @event.SetAccessControl(security);
 

@@ -34,12 +34,10 @@ namespace Medallion.Threading.Sql
 
         public void Release(ConnectionOrTransaction connectionOrTransaction, string resourceName, Cookie lockCookie)
         {
-            using (var command = CreateTextCommand(connectionOrTransaction, operationTimeoutMillis: Timeout.Infinite))
-            {
-                command.CommandText = ReleaseQuery.Value;
-                this.AddCommonParameters(command, resourceName, markerTableName: lockCookie.MarkerTable, ticketLockName: lockCookie.Ticket);
-                command.ExecuteNonQuery();
-            }
+            using var command = CreateTextCommand(connectionOrTransaction, operationTimeoutMillis: Timeout.Infinite);
+            command.CommandText = ReleaseQuery.Value;
+            this.AddCommonParameters(command, resourceName, markerTableName: lockCookie.MarkerTable, ticketLockName: lockCookie.Ticket);
+            command.ExecuteNonQuery();
         }
 
         bool ISqlSynchronizationStrategy<Cookie>.IsUpgradeable => false;
@@ -72,15 +70,13 @@ namespace Medallion.Threading.Sql
             // zero in the same way: since there is no blocking, we don't need to bother with explicit cancellation support
             if (!cancellationToken.CanBeCanceled || timeoutMillis == 0)
             {
-                using (var command = CreateTextCommand(connectionOrTransaction, operationTimeoutMillis: timeoutMillis))
-                {
-                    command.CommandText = AcquireNonCancelableQuery.Value;
-                    this.AddCommonParameters(command, semaphoreName, timeoutMillis: timeoutMillis);
-                    await ExecuteNonQueryAsync(command, CancellationToken.None, isSyncOverAsync).ConfigureAwait(false);
-                    return await ProcessAcquireResultAsync(command.Parameters, timeoutMillis, cancellationToken, out markerTableName, out var ticketLockName).ConfigureAwait(false)
-                        ? new Cookie(ticket: ticketLockName!, markerTable: markerTableName!)
-                        : null;
-                }
+                using var command = CreateTextCommand(connectionOrTransaction, operationTimeoutMillis: timeoutMillis);
+                command.CommandText = AcquireNonCancelableQuery.Value;
+                this.AddCommonParameters(command, semaphoreName, timeoutMillis: timeoutMillis);
+                await ExecuteNonQueryAsync(command, CancellationToken.None, isSyncOverAsync).ConfigureAwait(false);
+                return await ProcessAcquireResultAsync(command.Parameters, timeoutMillis, cancellationToken, out markerTableName, out var ticketLockName).ConfigureAwait(false)
+                    ? new Cookie(ticket: ticketLockName!, markerTable: markerTableName!)
+                    : null;
             }
 
             // cancelable case
@@ -330,13 +326,11 @@ namespace Medallion.Threading.Sql
 
         private static string HashName(string name)
         {
-            using (var hashAlgorithm = SHA256.Create())
-            {
-                var hashBytes = hashAlgorithm.ComputeHash(Encoding.UTF8.GetBytes(name));
-                return BitConverter.ToString(hashBytes)
-                    .Replace("-", string.Empty)
-                    .ToLowerInvariant();
-            }
+            using var hashAlgorithm = SHA256.Create();
+            var hashBytes = hashAlgorithm.ComputeHash(Encoding.UTF8.GetBytes(name));
+            return BitConverter.ToString(hashBytes)
+                .Replace("-", string.Empty)
+                .ToLowerInvariant();
         }
         #endregion
 

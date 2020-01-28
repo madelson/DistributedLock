@@ -40,19 +40,15 @@ namespace Medallion.Threading.Tests.Sql
         {
             get
             {
-                using (var provider = new TConnectionManagementProvider())
-                {
-                    return provider.IsReentrantForAppLock;
-                }
+                using var provider = new TConnectionManagementProvider();
+                return provider.IsReentrantForAppLock;
             }
         }
         internal override string GetSafeLockName(string name) => SqlDistributedLock.GetSafeLockName(name);
         internal override void PerformCleanupForLockAbandonment()
         {
-            using (var provider = new TConnectionManagementProvider())
-            {
-                provider.PerformCleanupForLockAbandonment();
-            }
+            using var provider = new TConnectionManagementProvider();
+            provider.PerformCleanupForLockAbandonment();
         }
     }
 

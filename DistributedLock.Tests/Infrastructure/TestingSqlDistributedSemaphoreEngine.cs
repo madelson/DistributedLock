@@ -74,10 +74,8 @@ namespace Medallion.Threading.Tests.Sql
         internal override string GetSafeLockName(string name) => name ?? throw new ArgumentNullException(nameof(name));
         internal override void PerformCleanupForLockAbandonment()
         {
-            using (var provider = new TConnectionManagementProvider())
-            {
-                provider.PerformCleanupForLockAbandonment();
-            }
+            using var provider = new TConnectionManagementProvider();
+            provider.PerformCleanupForLockAbandonment();
         }
 
         private sealed class SqlSemaphoreDistributedLock : IDistributedLock

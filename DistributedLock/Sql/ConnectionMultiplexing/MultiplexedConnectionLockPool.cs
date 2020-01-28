@@ -151,8 +151,7 @@ namespace Medallion.Threading.Sql.ConnectionMultiplexing
         {
             lock (this.@lock)
             {
-                Queue<MultiplexedConnectionLock> existingPool;
-                if (this.connectionStringPools.TryGetValue(connectionString, out existingPool))
+                if (this.connectionStringPools.TryGetValue(connectionString, out var existingPool))
                 {
                     existingPool.Enqueue(@lock);
                 }
@@ -168,7 +167,7 @@ namespace Medallion.Threading.Sql.ConnectionMultiplexing
                         // rather than replacing cleanup task, we continue on it. This ensures that we never end up in a state
                         // where two cleanup tasks are running at once. Since only cleanup can remove from the pools map, we'll
                         // never end up queueing up multiple cleanup tasks on top of one another
-                        this.cleanupTask.ContinueWith(
+                        this.cleanupTask = this.cleanupTask.ContinueWith(
                             (_, state) => Task.Run(() => ((MultiplexedConnectionLockPool)state).CleanupLoop()),
                             state: this,
                             continuationOptions: TaskContinuationOptions.ExecuteSynchronously

@@ -108,12 +108,10 @@ namespace Medallion.Threading.Tests.Sql
                     );
                     for (var i = 0; i < 30; ++i)
                     {
-                        using (var handle = @lock.AcquireUpgradeableReadLockAsync().Result)
-                        {
-                            Thread.Sleep(1);
-                            handle.UpgradeToWriteLock();
-                            Thread.Sleep(1);
-                        }
+                        using var handle = @lock.AcquireUpgradeableReadLockAsync().Result;
+                        Thread.Sleep(1);
+                        handle.UpgradeToWriteLock();
+                        Thread.Sleep(1);
                     }
                 });
             }

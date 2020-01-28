@@ -26,50 +26,44 @@ namespace Medallion.Threading.Tests.Sql
 
                 while (!cancellationToken.IsCancellationRequested)
                 {
-                    using (var connection = SqlHelpers.CreateConnection(connectionString))
+                    using var connection = SqlHelpers.CreateConnection(connectionString);
+                    await connection.OpenAsync(cancellationToken);
+
+                    var spidsToKill = new List<short>();
+                    using (var findIdleSessionsCommand = connection.CreateCommand())
                     {
-                        await connection.OpenAsync(cancellationToken);
-                        
-                        var spidsToKill = new List<short>();
-                        using (var findIdleSessionsCommand = connection.CreateCommand())
-                        {
-                            var expirationDate = DateTime.Now - idleTimeout;
-                            findIdleSessionsCommand.CommandText = @"
+                        var expirationDate = DateTime.Now - idleTimeout;
+                        findIdleSessionsCommand.CommandText = @"
                                 SELECT session_id FROM sys.dm_exec_sessions
                                 WHERE session_id != @@SPID
                                     AND login_name != 'sa'
                                     AND (last_request_start_time IS NULL OR last_request_start_time <= @expirationDate)
                                     AND (last_request_end_time IS NULL OR last_request_end_time <= @expirationDate)";
-                            findIdleSessionsCommand.Parameters.Add(findIdleSessionsCommand.CreateParameter("expirationDate", expirationDate));
+                        findIdleSessionsCommand.Parameters.Add(findIdleSessionsCommand.CreateParameter("expirationDate", expirationDate));
 
-                            try
-                            {
-                                using (var reader = await findIdleSessionsCommand.ExecuteReaderAsync(cancellationToken))
-                                {
-                                    while (await reader.ReadAsync(cancellationToken))
-                                    {
-                                        spidsToKill.Add(reader.GetInt16(0));
-                                    }
-                                }
-                            }
-                            catch (DbException) when (cancellationToken.IsCancellationRequested)
-                            {
-                                cancellationToken.ThrowIfCancellationRequested();
-                            }
-                        }
-
-                        foreach (var spid in spidsToKill)
+                        try
                         {
-                            using (var killCommand = connection.CreateCommand())
+                            using var reader = await findIdleSessionsCommand.ExecuteReaderAsync(cancellationToken);
+                            while (await reader.ReadAsync(cancellationToken))
                             {
-                                killCommand.CommandText = "KILL " + spid;
-                                try { await killCommand.ExecuteNonQueryAsync(); }
-                                catch (Exception ex) { Console.WriteLine($"Failed to kill {spid}: {ex}"); }
+                                spidsToKill.Add(reader.GetInt16(0));
                             }
                         }
-
-                        await Task.Delay(TimeSpan.FromTicks(idleTimeout.Ticks / 2), cancellationToken);
+                        catch (DbException) when (cancellationToken.IsCancellationRequested)
+                        {
+                            cancellationToken.ThrowIfCancellationRequested();
+                        }
                     }
+
+                    foreach (var spid in spidsToKill)
+                    {
+                        using var killCommand = connection.CreateCommand();
+                        killCommand.CommandText = "KILL " + spid;
+                        try { await killCommand.ExecuteNonQueryAsync(); }
+                        catch (Exception ex) { Console.WriteLine($"Failed to kill {spid}: {ex}"); }
+                    }
+
+                    await Task.Delay(TimeSpan.FromTicks(idleTimeout.Ticks / 2), cancellationToken);
                 }
             });
         }
