@@ -22,5 +22,12 @@ namespace Medallion.Threading.Tests
                 return handle == null;
             }
         }
+
+        public const string FrameworkName =
+#if NET471
+                "net471";
+#elif NETCOREAPP3_1
+                "netcoreapp3.1";
+#endif
     }
 }

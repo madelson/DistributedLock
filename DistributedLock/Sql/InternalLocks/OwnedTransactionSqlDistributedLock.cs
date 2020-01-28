@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
+using System.Data.Common;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -28,8 +28,8 @@ namespace Medallion.Threading.Sql
             }
 
             IDisposable? result = null;
-            var connection = new SqlConnection(this.connectionString);
-            SqlTransaction? transaction = null;
+            var connection = SqlClientHelper.CreateConnection(this.connectionString);
+            DbTransaction? transaction = null;
             try
             {
                 connection.Open();
@@ -63,8 +63,8 @@ namespace Medallion.Threading.Sql
             }
 
             IDisposable? result = null;
-            var connection = new SqlConnection(this.connectionString);
-            SqlTransaction? transaction = null;
+            var connection = SqlClientHelper.CreateConnection(this.connectionString);
+            DbTransaction? transaction = null;
             try
             {
                 await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
@@ -99,14 +99,14 @@ namespace Medallion.Threading.Sql
         
         private sealed class LockScope : IDisposable
         {
-            private SqlTransaction? transaction;
+            private DbTransaction? transaction;
 
-            public LockScope(SqlTransaction transaction)
+            public LockScope(DbTransaction transaction)
             {
                 this.transaction = transaction;
             }
 
-            public SqlTransaction? Transaction => Volatile.Read(ref this.transaction);
+            public DbTransaction? Transaction => Volatile.Read(ref this.transaction);
 
             public void Dispose()
             {

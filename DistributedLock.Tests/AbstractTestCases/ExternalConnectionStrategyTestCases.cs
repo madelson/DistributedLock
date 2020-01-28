@@ -1,22 +1,23 @@
-﻿using NUnit.Framework;
+﻿using Medallion.Threading.Sql;
+using NUnit.Framework;
 using System;
 using System.Collections.Generic;
-using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace Medallion.Threading.Tests.Sql
 {
-    public abstract class ExternalConnectionStrategyTestCases<TEngineFactory>
+    public abstract class ExternalConnectionStrategyTestCases<TEngineFactory, TConnectionProvider>
         where TEngineFactory : ITestingSqlDistributedLockEngineFactory, new()
+        where TConnectionProvider : ConnectionProvider, new()
     {
         [Test]
         public void TestCloseLockOnClosedConnection()
         {
-            using (var connection = new SqlConnection(ConnectionStringProvider.ConnectionString))
+            using (var connection = SqlClientHelper.CreateConnection(ConnectionStringProvider.ConnectionString))
             using (ConnectionProvider.UseConnection(connection))
-            using (var connectionEngine = new TEngineFactory().Create<ConnectionProvider>())
+            using (var connectionEngine = new TEngineFactory().Create<TConnectionProvider>())
             using (var connectionStringEngine = new TEngineFactory().Create<DefaultConnectionStringProvider>())
             {
                 var connectionStringLock = connectionStringEngine.CreateLock(nameof(TestCloseLockOnClosedConnection));
@@ -41,9 +42,9 @@ namespace Medallion.Threading.Tests.Sql
         [Test]
         public void TestIsNotScopedToTransaction()
         {
-            using (var connection = new SqlConnection(ConnectionStringProvider.ConnectionString))
+            using (var connection = SqlClientHelper.CreateConnection(ConnectionStringProvider.ConnectionString))
             using (ConnectionProvider.UseConnection(connection))
-            using (var connectionEngine = new TEngineFactory().Create<ConnectionProvider>())
+            using (var connectionEngine = new TEngineFactory().Create<TConnectionProvider>())
             using (var connectionStringEngine = new TEngineFactory().Create<DefaultConnectionStringProvider>())
             {
                 connection.Open();
@@ -60,6 +61,6 @@ namespace Medallion.Threading.Tests.Sql
             }
         }
 
-        private TestingDistributedLockEngine CreateEngine() => new TEngineFactory().Create<ConnectionProvider>();
+        private TestingDistributedLockEngine CreateEngine() => new TEngineFactory().Create<TConnectionProvider>();
     }
 }

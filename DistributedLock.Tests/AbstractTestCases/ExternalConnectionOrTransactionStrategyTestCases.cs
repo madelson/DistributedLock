@@ -3,7 +3,6 @@ using Medallion.Threading.Tests.Sql;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
-using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -51,7 +50,7 @@ namespace Medallion.Threading.Tests
                 Task.WhenAll(tasks).ContinueWith(_ => { }).Wait(TimeSpan.FromSeconds(10)).ShouldEqual(true, this.GetType().Name);
 
                 var deadlockVictim = tasks.Single(t => t.IsFaulted);
-                Assert.IsInstanceOf<InvalidOperationException>(deadlockVictim.Exception.GetBaseException()); // backwards compat check
+                Assert.IsInstanceOf<InvalidOperationException>(deadlockVictim.Exception!.GetBaseException()); // backwards compat check
                 Assert.IsInstanceOf<DeadlockException>(deadlockVictim.Exception.GetBaseException());
 
                 tasks.Count(t => t.Status == TaskStatus.RanToCompletion).ShouldEqual(1);

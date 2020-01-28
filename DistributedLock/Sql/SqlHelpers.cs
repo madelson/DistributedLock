@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
-using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -47,11 +46,11 @@ namespace Medallion.Threading.Sql
             {
                 return await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
             }
-            catch (SqlException ex)
+            catch (DbException ex)
                 // MA: canceled SQL operations throw SqlException instead of OCE.
                 // That means that downstream operations end up faulted instead of canceled. We
                 // wrap with OCE here to correctly propagate cancellation
-                when (cancellationToken.IsCancellationRequested && ex.Number == 0)
+                when (cancellationToken.IsCancellationRequested && SqlClientHelper.IsCancellationException(ex))
             {
                 throw new OperationCanceledException(
                     "Command was canceled",

@@ -3,7 +3,6 @@ using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -75,7 +74,7 @@ namespace Medallion.Threading.Tests.Sql
         [Test]
         public void TestTicketsTakenOnBothConnectionAndTransactionForThatConnection()
         {
-            using (var connection = new SqlConnection(ConnectionStringProvider.ConnectionString))
+            using (var connection = SqlClientHelper.CreateConnection(ConnectionStringProvider.ConnectionString))
             {
                 connection.Open();
 

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
+using System.Data.Common;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -22,11 +22,11 @@ namespace Medallion.Threading.Sql.ConnectionMultiplexing
         /// </summary>
         private readonly SemaphoreSlim mutex = new SemaphoreSlim(initialCount: 1, maxCount: 1);
         private readonly Dictionary<string, HandleReference> outstandingHandles = new Dictionary<string, HandleReference>();
-        private readonly SqlConnection connection;
+        private readonly DbConnection connection;
 
         public MultiplexedConnectionLock(string connectionString)
         {
-            this.connection = new SqlConnection(connectionString);
+            this.connection = SqlClientHelper.CreateConnection(connectionString);
         }
 
         public Result TryAcquire<TLockCookie>(

@@ -1,7 +1,8 @@
-﻿using Medallion.Threading.Sql;
+﻿using DistributedLock.Tests;
+using Medallion.Threading.Sql;
 using System;
 using System.Collections.Generic;
-using System.Data.SqlClient;
+using System.Data.Common;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -26,7 +27,7 @@ namespace Medallion.Threading.Tests.Sql
             // simply releases back to the pool but doesn't receive an sp_resetconnection until it is re-opened or the pool
             // is cleared. Therefore, we clear the pool!
 
-            SqlConnection.ClearAllPools();
+            SqlTestHelper.ClearAllPools();
             GC.Collect();
             GC.WaitForPendingFinalizers();
         }
@@ -36,8 +37,8 @@ namespace Medallion.Threading.Tests.Sql
     {
         public string? ConnectionString { get; set; }
         public SqlDistributedLockConnectionStrategy? Strategy { get; set; }
-        public SqlConnection? Connection { get; set; }
-        public SqlTransaction? Transaction { get; set; }
+        public DbConnection? Connection { get; set; }
+        public DbTransaction? Transaction { get; set; }
     }
 
     public interface IExternalConnectionOrTransactionTestingSqlConnectionManagementProvider { }

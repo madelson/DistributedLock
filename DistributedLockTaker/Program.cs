@@ -2,14 +2,18 @@
 using Medallion.Threading.Sql;
 using System;
 using System.Collections.Generic;
-using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+#if NET471
+using System.Data.SqlClient;
+#elif NETCOREAPP3_1
+using Microsoft.Data.SqlClient;
+#endif
 
-namespace DistributedLockTaker.cs
+namespace DistributedLockTaker
 {
-    class Program
+    internal static class Program
     {
         private static readonly string ConnectionString = new SqlConnectionStringBuilder
         {
@@ -19,11 +23,11 @@ namespace DistributedLockTaker.cs
         }
         .ConnectionString;
 
-        static int Main(string[] args)
+        public static int Main(string[] args)
         {
             var type = args[0];
             var name = args[1];
-            IDisposable? handle = null;
+            IDisposable? handle;
             switch (type)
             {
                 case "SqlDistributedLock":
@@ -44,6 +48,9 @@ namespace DistributedLockTaker.cs
                 default:
                     return 123;
             }
+
+            Console.WriteLine("Acquired");
+            Console.Out.Flush();
 
             if (Console.ReadLine() != "abandon")
             {

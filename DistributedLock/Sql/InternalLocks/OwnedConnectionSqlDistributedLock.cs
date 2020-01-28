@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data.SqlClient;
+using System.Data.Common;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -27,7 +27,7 @@ namespace Medallion.Threading.Sql
             }
 
             IDisposable? result = null;
-            var connection = new SqlConnection(this.connectionString);
+            var connection = SqlClientHelper.CreateConnection(this.connectionString);
             try
             {
                 connection.Open();
@@ -58,7 +58,7 @@ namespace Medallion.Threading.Sql
             }
 
             IDisposable? result = null;
-            var connection = new SqlConnection(this.connectionString);
+            var connection = SqlClientHelper.CreateConnection(this.connectionString);
             try
             {
                 await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
@@ -92,12 +92,12 @@ namespace Medallion.Threading.Sql
         private sealed class LockScope<TLockCookie> : IDisposable
             where TLockCookie : class
         {
-            private SqlConnection? connection;
+            private DbConnection? connection;
             private readonly string lockName;
             private ISqlSynchronizationStrategy<TLockCookie>? strategy;
             private TLockCookie? lockCookie;
 
-            public LockScope(SqlConnection connection, ISqlSynchronizationStrategy<TLockCookie> strategy, string lockName, TLockCookie lockCookie)
+            public LockScope(DbConnection connection, ISqlSynchronizationStrategy<TLockCookie> strategy, string lockName, TLockCookie lockCookie)
             {
                 this.connection = connection;
                 this.strategy = strategy;
@@ -105,7 +105,7 @@ namespace Medallion.Threading.Sql
                 this.lockCookie = lockCookie;
             }
 
-            public SqlConnection? Connection => Volatile.Read(ref this.connection);
+            public DbConnection? Connection => Volatile.Read(ref this.connection);
 
             public void Dispose()
             {
@@ -118,7 +118,7 @@ namespace Medallion.Threading.Sql
                 }
             }
 
-            private static void ReleaseLock(SqlConnection connection, ISqlSynchronizationStrategy<TLockCookie> strategy, string lockName, TLockCookie lockCookie)
+            private static void ReleaseLock(DbConnection connection, ISqlSynchronizationStrategy<TLockCookie> strategy, string lockName, TLockCookie lockCookie)
             {
                 try
                 {

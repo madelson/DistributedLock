@@ -1,5 +1,7 @@
-﻿using System;
+﻿using Medallion.Threading.Sql;
+using System;
 using System.Collections.Generic;
+using System.Data.Common;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Runtime.ExceptionServices;
@@ -24,7 +26,7 @@ namespace Medallion.Threading.Tests.Sql
 
                 while (!cancellationToken.IsCancellationRequested)
                 {
-                    using (var connection = new SqlConnection(connectionString))
+                    using (var connection = SqlClientHelper.CreateConnection(connectionString))
                     {
                         await connection.OpenAsync(cancellationToken);
                         
@@ -38,7 +40,7 @@ namespace Medallion.Threading.Tests.Sql
                                     AND login_name != 'sa'
                                     AND (last_request_start_time IS NULL OR last_request_start_time <= @expirationDate)
                                     AND (last_request_end_time IS NULL OR last_request_end_time <= @expirationDate)";
-                            findIdleSessionsCommand.Parameters.Add(new SqlParameter("expirationDate", expirationDate));
+                            findIdleSessionsCommand.Parameters.Add(findIdleSessionsCommand.CreateParameter("expirationDate", expirationDate));
 
                             try
                             {
@@ -50,7 +52,7 @@ namespace Medallion.Threading.Tests.Sql
                                     }
                                 }
                             }
-                            catch (SqlException) when (cancellationToken.IsCancellationRequested)
+                            catch (DbException) when (cancellationToken.IsCancellationRequested)
                             {
                                 cancellationToken.ThrowIfCancellationRequested();
                             }

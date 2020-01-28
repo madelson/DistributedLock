@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data.SqlClient;
+using System.Data.Common;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -41,7 +41,7 @@ namespace Medallion.Threading.Sql
                 }
             }
 
-            var connection = new SqlConnection(this.connectionString);
+            var connection = SqlClientHelper.CreateConnection(this.connectionString);
             LockScope? result = null;
             try
             {
@@ -88,7 +88,7 @@ namespace Medallion.Threading.Sql
                 }
             }
 
-            var connection = new SqlConnection(this.connectionString);
+            var connection = SqlClientHelper.CreateConnection(this.connectionString);
             LockScope? result = null;
             try
             {
@@ -113,13 +113,13 @@ namespace Medallion.Threading.Sql
         private sealed class LockScope : IDisposable
         {
             private KeepaliveHelper? keepalive;
-            private SqlConnection? connection;
+            private DbConnection? connection;
 
             public LockScope(
                 IDisposable internalHandle, 
                 ExternalConnectionOrTransactionSqlDistributedLock internalLock,
                 KeepaliveHelper keepalive,
-                SqlConnection? connection)
+                DbConnection? connection)
             {
                 this.InternalHandle = internalHandle;
                 this.InternalLock = internalLock;

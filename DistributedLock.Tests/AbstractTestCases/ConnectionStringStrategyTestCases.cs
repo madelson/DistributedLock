@@ -1,4 +1,6 @@
-﻿using Medallion.Threading.Tests.Sql;
+﻿using DistributedLock.Tests;
+using Medallion.Threading.Sql;
+using Medallion.Threading.Tests.Sql;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
@@ -44,9 +46,9 @@ namespace Medallion.Threading.Tests
                 }
             }
 
-            using (var connection = new SqlConnection(connectionString))
+            using (var connection = SqlClientHelper.CreateConnection(connectionString))
             {
-                SqlConnection.ClearPool(connection);
+                SqlTestHelper.ClearPool(connection);
                 // checking immediately seems flaky; likely clear pool finishing
                 // doesn't guarantee that SQL will immediately reflect the clear
                 var maxWaitForPoolsToClear = TimeSpan.FromSeconds(5);
@@ -62,7 +64,7 @@ namespace Medallion.Threading.Tests
 
             int CountActiveSessions()
             {
-                using (var connection = new SqlConnection(ConnectionStringProvider.ConnectionString))
+                using (var connection = SqlClientHelper.CreateConnection(ConnectionStringProvider.ConnectionString))
                 {
                     connection.Open();
                     using (var command = connection.CreateCommand())

@@ -1,7 +1,8 @@
-﻿using NUnit.Framework;
+﻿using Medallion.Threading.Sql;
+using NUnit.Framework;
 using System;
 using System.Collections.Generic;
-using System.Data.SqlClient;
+using System.Data.Common;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -9,19 +10,20 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading.Tests.Sql
 {
-    public abstract class ExternalTransactionStrategyTestCases<TEngineFactory>
+    public abstract class ExternalTransactionStrategyTestCases<TEngineFactory, TTransactionProvider>
         where TEngineFactory : ITestingSqlDistributedLockEngineFactory, new()
+        where TTransactionProvider : TransactionProvider, new()
     {
         [Test]
         public void TestScopedToTransactionOnly()
         {
-            using (var connection = new SqlConnection(ConnectionStringProvider.ConnectionString))
+            using (var connection = SqlClientHelper.CreateConnection(ConnectionStringProvider.ConnectionString))
             {
                 connection.Open();
 
                 using (var transaction = connection.BeginTransaction())
                 using (TransactionProvider.UseTransaction(transaction))
-                using (var transactionEngine = new TEngineFactory().Create<TransactionProvider>())
+                using (var transactionEngine = new TEngineFactory().Create<TTransactionProvider>())
                 {
                     var lockName = nameof(TestScopedToTransactionOnly);
                     using (transactionEngine.CreateLock(lockName).Acquire())
@@ -32,7 +34,7 @@ namespace Medallion.Threading.Tests.Sql
                         }
 
                         using (ConnectionProvider.UseConnection(connection))
-                        using (var connectionEngine = new TEngineFactory().Create<ConnectionProvider>())
+                        using (var connectionEngine = new TEngineFactory().Create<DefaultClientConnectionProvider>())
                         {
                             Assert.Catch<InvalidOperationException>(() => connectionEngine.CreateLock(lockName).TryAcquire());
                         }
@@ -44,13 +46,13 @@ namespace Medallion.Threading.Tests.Sql
         [Test]
         public void TestCloseTransactionLockOnClosedConnection()
         {
-            using (var connection = new SqlConnection(ConnectionStringProvider.ConnectionString))
+            using (var connection = SqlClientHelper.CreateConnection(ConnectionStringProvider.ConnectionString))
             {
                 connection.Open();
 
                 using (var transaction = connection.BeginTransaction())
                 using (TransactionProvider.UseTransaction(transaction))
-                using (var transactionEngine = new TEngineFactory().Create<TransactionProvider>())
+                using (var transactionEngine = new TEngineFactory().Create<TTransactionProvider>())
                 using (var connectionStringEngine = new TEngineFactory().Create<DefaultConnectionStringProvider>())
                 {
                     var lockName = nameof(TestCloseTransactionLockOnClosedConnection);
@@ -73,7 +75,7 @@ namespace Medallion.Threading.Tests.Sql
         public void TestCloseTransactionLockOnClosedTransaction()
         {
             using (var connectionStringEngine = new TEngineFactory().Create<DefaultConnectionStringProvider>())
-            using (var connection = new SqlConnection(ConnectionStringProvider.ConnectionString))
+            using (var connection = SqlClientHelper.CreateConnection(ConnectionStringProvider.ConnectionString))
             {
                 connection.Open();
 
@@ -82,7 +84,7 @@ namespace Medallion.Threading.Tests.Sql
                 IDisposable handle;
                 using (var transaction = connection.BeginTransaction())
                 using (TransactionProvider.UseTransaction(transaction))
-                using (var transactionEngine = new TEngineFactory().Create<TransactionProvider>())
+                using (var transactionEngine = new TEngineFactory().Create<TTransactionProvider>())
                 {
                     handle = transactionEngine.CreateLock(lockName).Acquire();
                     connectionStringEngine.CreateLock(lockName).IsHeld().ShouldEqual(true);
@@ -101,16 +103,16 @@ namespace Medallion.Threading.Tests.Sql
         [Test]
         public void TestLockOnDisposedTransaction() => this.TestLockOnCompletedTransactionHelper(t => t.Dispose());
 
-        private void TestLockOnCompletedTransactionHelper(Action<SqlTransaction> complete, [CallerMemberName] string lockName = "")
+        private void TestLockOnCompletedTransactionHelper(Action<DbTransaction> complete, [CallerMemberName] string lockName = "")
         {
             using (var connectionStringEngine = new TEngineFactory().Create<DefaultConnectionStringProvider>())
-            using (var connection = new SqlConnection(ConnectionStringProvider.ConnectionString))
+            using (var connection = SqlClientHelper.CreateConnection(ConnectionStringProvider.ConnectionString))
             {
                 connection.Open();
 
                 using (var transaction = connection.BeginTransaction())
                 using (TransactionProvider.UseTransaction(transaction))
-                using (var transactionEngine = new TEngineFactory().Create<TransactionProvider>())
+                using (var transactionEngine = new TEngineFactory().Create<TTransactionProvider>())
                 {
                     var handle = transactionEngine.CreateLock(lockName).Acquire();
                     connectionStringEngine.CreateLock(lockName).IsHeld().ShouldEqual(true);

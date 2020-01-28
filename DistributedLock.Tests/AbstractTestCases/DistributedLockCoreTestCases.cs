@@ -116,11 +116,11 @@ namespace Medallion.Threading.Tests
                 {
                     var syncAcquireTask = Task.Run(() => @lock.Acquire(TimeSpan.FromSeconds(.1)));
                     syncAcquireTask.ContinueWith(_ => { }).Wait(TimeSpan.FromSeconds(.2)).ShouldEqual(true, "sync acquire");
-                    Assert.IsInstanceOf<TimeoutException>(syncAcquireTask.Exception.InnerException, "sync acquire");
+                    Assert.IsInstanceOf<TimeoutException>(syncAcquireTask.Exception!.InnerException, "sync acquire");
 
                     var asyncAcquireTask = @lock.AcquireAsync(TimeSpan.FromSeconds(.1));
                     asyncAcquireTask.ContinueWith(_ => { }).Wait(TimeSpan.FromSeconds(.2)).ShouldEqual(true, "async acquire");
-                    Assert.IsInstanceOf<TimeoutException>(asyncAcquireTask.Exception.InnerException, "async acquire");
+                    Assert.IsInstanceOf<TimeoutException>(asyncAcquireTask.Exception!.InnerException, "async acquire");
 
                     var syncTryAcquireTask = Task.Run(() => @lock.TryAcquire(TimeSpan.FromSeconds(.1)));
                     syncTryAcquireTask.Wait(TimeSpan.FromSeconds(.2)).ShouldEqual(true, "sync tryAcquire");
@@ -276,10 +276,11 @@ namespace Medallion.Threading.Tests
         {
             using (var engine = new TEngine())
             {
-                var lockName = engine.GetSafeLockName(nameof(TestCrossProcess) + this.GetType().Name);
+                var lockName = engine.GetUniqueSafeLockName();
                 var command = RunLockTaker(engine, engine.CrossProcessLockType, lockName);
-                command.Task.Wait(TimeSpan.FromSeconds(.5)).ShouldEqual(false, this.GetType().ToString());
-
+                Assert.IsTrue(command.StandardOutput.ReadLineAsync().Wait(TimeSpan.FromSeconds(10)));
+                Assert.IsFalse(command.Task.IsCompleted);
+                
                 var @lock = engine.CreateLockWithExactName(lockName);
                 @lock.TryAcquire().ShouldEqual(null, this.GetType().Name);
 
@@ -321,9 +322,10 @@ namespace Medallion.Threading.Tests
         {
             using (var engine = new TEngine())
             {
-                var name = engine.GetSafeLockName($"cpl-{asyncWait}-{kill}-{this.GetType().Name}");
+                var name = engine.GetUniqueSafeLockName($"cpl-{asyncWait}-{kill}");
                 var command = RunLockTaker(engine, engine.CrossProcessLockType, name);
-                command.Task.Wait(TimeSpan.FromSeconds(.5)).ShouldEqual(false, this.GetType().ToString());
+                Assert.IsTrue(command.StandardOutput.ReadLineAsync().Wait(TimeSpan.FromSeconds(10)));
+                Assert.IsFalse(command.Task.IsCompleted);
 
                 var @lock = engine.CreateLockWithExactName(name);
 
@@ -351,11 +353,14 @@ namespace Medallion.Threading.Tests
 
         private static Command RunLockTaker(TEngine engine, params string[] args)
         {
-            var command = Command.Run(
-                Path.Combine(TestContext.CurrentContext.TestDirectory, "DistributedLockTaker"), 
-                args, 
-                o => o.ThrowOnError(true)
-            );
+            const string Configuration =
+#if DEBUG
+                "Debug";
+#else
+                "Release";
+#endif
+            var exePath = Path.Combine(TestContext.CurrentContext.TestDirectory, "..", "..", "..", "..", "DistributedLockTaker", "bin", Configuration, TestHelper.FrameworkName, "DistributedLockTaker.exe");
+            var command = Command.Run(exePath, args, o => o.ThrowOnError(true));
             engine.RegisterCleanupAction(() =>
             {
                 if (!command.Task.IsCompleted)

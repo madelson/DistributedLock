@@ -25,7 +25,7 @@ namespace Medallion.Threading.Tests.Tests
             var deserialized = (DeadlockException)formatter.Deserialize(stream);
             deserialized.Message.ShouldEqual(deadlockException.Message);
             deserialized.StackTrace.ShouldEqual(deadlockException.StackTrace);
-            deserialized.InnerException.Message.ShouldEqual(deadlockException.InnerException.Message);
+            (deserialized.InnerException?.Message).ShouldEqual(deadlockException.InnerException?.Message);
         }
     }
 }

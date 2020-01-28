@@ -2,6 +2,7 @@
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -30,18 +31,36 @@ namespace Medallion.Threading.Tests
                 .Where(t => !t.IsAbstract && t.Name.EndsWith("Test"))
                 .ToArray();
 
-            var missing = new List<string>();
-            foreach (var testCaseClass in testCaseClasses)
+            var expectedTestTypes = testCaseClasses.SelectMany(
+                    t => this.GetTypesForGenericParameters(t.GetGenericArguments()),
+                    (t, args) => t.MakeGenericType(args)
+                )
+                .ToArray();
+            var missing = expectedTestTypes.Where(t => !testClasses.Any(c => t.IsAssignableFrom(c)))
+                .Select(GetTestClassDeclaration)
+                .ToList();
+
+            if (missing.Any())
             {
-                var possibleGenericParameterTypes = this.GetTypesForGenericParameters(testCaseClass.GetGenericArguments());
-                var possibleTestTypes = possibleGenericParameterTypes.Select(p => testCaseClass.MakeGenericType(p));
-                missing.AddRange(
-                    possibleTestTypes.Where(t => !testClasses.Any(c => t.IsAssignableFrom(c)))
-                        .Select(GetTestClassDeclaration)
+                File.WriteAllText(
+                    Path.Combine(TestContext.CurrentContext.TestDirectory, "..", "..", "..", "Tests", "CombinatorialTests.cs"),
+$@"using Medallion.Threading.Tests.Sql;
+using NUnit.Framework;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace Medallion.Threading.Tests
+{{
+    // AUTO-GENERATED
+    // Contains test classes which implement abstract test cases in all valid combinations. Tests missing from here are discovered by TestSetupTest
+{string.Join(string.Empty, expectedTestTypes.Select(GetTestClassDeclaration).OrderBy(s => s))}
+}}"
                 );
             }
-
-            missing.Count.ShouldEqual(0, "Missing: " + string.Join(Environment.NewLine, missing));
+            missing.Count.ShouldEqual(0, "Missing: " + string.Join(string.Empty, missing));
         }
         
         private static string GetTestClassDeclaration(Type testClassType)

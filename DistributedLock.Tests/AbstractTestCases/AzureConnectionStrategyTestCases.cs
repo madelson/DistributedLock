@@ -2,7 +2,7 @@
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
-using System.Data.SqlClient;
+using System.Data.Common;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -22,7 +22,7 @@ namespace Medallion.Threading.Tests.Sql
                 var @lock = engine.CreateLock(nameof(TestIdleSessionKiller));
                 var handle = @lock.Acquire();
                 Thread.Sleep(TimeSpan.FromSeconds(1));
-                Assert.Catch<SqlException>(() => handle.Dispose());
+                Assert.Catch<DbException>(() => handle.Dispose());
             }
         }
 

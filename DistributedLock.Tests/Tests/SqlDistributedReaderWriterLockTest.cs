@@ -6,7 +6,6 @@ using System.Text;
 using System.Threading.Tasks;
 using Medallion.Threading.Sql;
 using System.Data.Common;
-using System.Data.SqlClient;
 using System.Threading;
 
 namespace Medallion.Threading.Tests.Sql
