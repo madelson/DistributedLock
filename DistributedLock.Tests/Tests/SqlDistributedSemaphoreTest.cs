@@ -78,12 +78,20 @@ namespace Medallion.Threading.Tests.Sql
             {
                 connection.Open();
 
-                var semaphore1 = new SqlDistributedSemaphore(nameof(TestTicketsTakenOnBothConnectionAndTransactionForThatConnection), 2, connection);
+                var semaphore1 = new SqlDistributedSemaphore(
+                    UniqueSemaphoreName(nameof(TestTicketsTakenOnBothConnectionAndTransactionForThatConnection)), 
+                    2, 
+                    connection
+                );
                 var handle1 = semaphore1.Acquire();
 
                 using (var transaction = connection.BeginTransaction())
                 {
-                    var semaphore2 = new SqlDistributedSemaphore(nameof(TestTicketsTakenOnBothConnectionAndTransactionForThatConnection), 2, transaction);
+                    var semaphore2 = new SqlDistributedSemaphore(
+                        UniqueSemaphoreName(nameof(TestTicketsTakenOnBothConnectionAndTransactionForThatConnection)), 
+                        2, 
+                        transaction
+                    );
                     var handle2 = semaphore2.Acquire();
                     semaphore2.TryAcquire().ShouldEqual(null);
                     var ex = Assert.Catch<InvalidOperationException>(() => semaphore2.Acquire());
@@ -91,5 +99,7 @@ namespace Medallion.Threading.Tests.Sql
                 }
             }
         }
+
+        private static string UniqueSemaphoreName(string baseName) => $"{baseName}_{TestHelper.FrameworkName}";
     }
 }

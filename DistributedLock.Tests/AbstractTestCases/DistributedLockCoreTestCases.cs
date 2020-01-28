@@ -203,7 +203,7 @@ namespace Medallion.Threading.Tests
         }
 
         [Test]
-        public void TestGetSafeLockNameIsCaseInsensitive()
+        public void TestGetSafeLockNameIsCaseSensitive()
         {
             var longName1 = new string('a', 1000);
             var longName2 = new string('a', longName1.Length - 1) + "A";
@@ -216,15 +216,15 @@ namespace Medallion.Threading.Tests
         }
 
         [Test]
-        public void TestLockNamesAreCaseInsensitive()
+        public void TestLockNamesAreCaseSensitive()
         {
             using (var engine = new TEngine())
             {
-                var baseName = this.GetType().Name + nameof(TestLockNamesAreCaseInsensitive);
+                var baseName = engine.GetUniqueSafeLockName(nameof(TestLockNamesAreCaseSensitive));
                 using (engine.CreateLockWithExactName(baseName.ToLowerInvariant()).Acquire())
                 using (var handle = engine.CreateLockWithExactName(baseName.ToUpperInvariant()).TryAcquire())
                 {
-                    (handle == null).ShouldEqual(false, this.GetType().Name);
+                    Assert.IsNotNull(handle);
                 }
             }
         }

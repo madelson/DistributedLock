@@ -52,6 +52,7 @@ namespace Medallion.Threading.Tests.Sql
         /// <see cref="SqlDistributedReaderWriterLock"/> and <see cref="SqlDistributedLockConnectionStrategy.Azure"/>
         /// </summary>
         [Test]
+        [NonParallelizable] // sets static KeepaliveHelper.Interval
         public void TestAzureStrategyProtectsFromIdleSessionKillerAfterFailedUpgrade()
         {
             var originalInterval = KeepaliveHelper.Interval;
@@ -60,7 +61,7 @@ namespace Medallion.Threading.Tests.Sql
                 KeepaliveHelper.Interval = TimeSpan.FromSeconds(.1);
 
                 var @lock = new SqlDistributedReaderWriterLock(
-                    nameof(TestAzureStrategyProtectsFromIdleSessionKillerAfterFailedUpgrade), 
+                    UniqueSafeLockName(nameof(TestAzureStrategyProtectsFromIdleSessionKillerAfterFailedUpgrade)), 
                     ConnectionStringProvider.ConnectionString, 
                     SqlDistributedLockConnectionStrategy.Azure
                 );
@@ -90,6 +91,7 @@ namespace Medallion.Threading.Tests.Sql
         /// <see cref="SqlDistributedReaderWriterLock"/> and <see cref="SqlDistributedLockConnectionStrategy.Azure"/>
         /// </summary>
         [Test]
+        [NonParallelizable] // sets static KeepaliveHelper.Interval
         public void ThreadSafetyExerciseWithLockUpgrade()
         {
             var originalInterval = KeepaliveHelper.Interval;
@@ -100,7 +102,7 @@ namespace Medallion.Threading.Tests.Sql
                 Assert.DoesNotThrow(() =>
                 {
                     var @lock = new SqlDistributedReaderWriterLock(
-                        nameof(ThreadSafetyExerciseWithLockUpgrade),
+                        UniqueSafeLockName(nameof(ThreadSafetyExerciseWithLockUpgrade)),
                         ConnectionStringProvider.ConnectionString,
                         SqlDistributedLockConnectionStrategy.Azure
                     );
@@ -120,5 +122,8 @@ namespace Medallion.Threading.Tests.Sql
                 KeepaliveHelper.Interval = originalInterval;
             }
         }
+
+        private static string UniqueSafeLockName(string baseName) =>
+            SqlDistributedReaderWriterLock.GetSafeLockName($"{baseName}_{TestHelper.FrameworkName}");
     }
 }

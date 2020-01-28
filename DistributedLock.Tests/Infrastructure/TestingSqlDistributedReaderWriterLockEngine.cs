@@ -25,7 +25,8 @@ namespace Medallion.Threading.Tests.Sql
             return @lock;
         }
 
-        internal SqlDistributedReaderWriterLock CreateReaderWriterLock(string name) => this.CreateReaderWriterLockWithExactName(name);
+        internal SqlDistributedReaderWriterLock CreateReaderWriterLock(string name) => 
+            this.CreateReaderWriterLockWithExactName(this.GetUniqueSafeLockName(name));
 
         internal SqlDistributedReaderWriterLock CreateReaderWriterLockWithExactName(string name)
         {

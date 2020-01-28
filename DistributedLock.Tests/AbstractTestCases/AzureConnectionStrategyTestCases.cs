@@ -27,6 +27,7 @@ namespace Medallion.Threading.Tests.Sql
         }
 
         [Test]
+        [NonParallelizable] // sets static KeepaliveHelper.Interval
         public void TestAzureStrategyProtectsFromIdleSessionKiller()
         {
             using (var engine = this.CreateEngine())
@@ -55,6 +56,7 @@ namespace Medallion.Threading.Tests.Sql
         /// Demonstrates that we don't multi-thread the connection despite the <see cref="KeepaliveHelper"/>
         /// </summary>
         [Test]
+        [NonParallelizable] // sets static KeepaliveHelper.Interval
         public void ThreadSafetyExercise()
         {
             using (var engine = this.CreateEngine())

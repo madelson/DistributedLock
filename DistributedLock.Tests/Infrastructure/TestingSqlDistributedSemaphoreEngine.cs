@@ -23,7 +23,7 @@ namespace Medallion.Threading.Tests.Sql
 
         internal override IDistributedLock CreateLockWithExactName(string name)
         {
-            var semaphore = this.CreateSemaphore(name, this.maxCount);
+            var semaphore = this.CreateSemaphoreWithExactName(name, this.maxCount);
 
             // drain the semaphore to have 1 ticket remaining (making it a lock)
             lock (this.mostlyDrainedSemaphoreNames)
@@ -42,7 +42,10 @@ namespace Medallion.Threading.Tests.Sql
             return new SqlSemaphoreDistributedLock(semaphore);
         }
 
-        internal SqlDistributedSemaphore CreateSemaphore(string name, int maxCount)
+        internal SqlDistributedSemaphore CreateSemaphore(string baseName, int maxCount) =>
+            this.CreateSemaphoreWithExactName(this.GetUniqueSafeLockName(baseName), maxCount);
+
+        private SqlDistributedSemaphore CreateSemaphoreWithExactName(string name, int maxCount)
         {
             var connectionManagementProvider = new TConnectionManagementProvider();
             this.RegisterCleanupAction(connectionManagementProvider.Dispose);

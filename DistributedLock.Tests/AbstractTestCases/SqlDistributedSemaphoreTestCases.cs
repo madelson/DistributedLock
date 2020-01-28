@@ -119,7 +119,8 @@ namespace Medallion.Threading.Tests.Sql
             }
         }
 
-        [Test, NonParallelizable]
+        [Test]
+        [NonParallelizable] // somewhat perf-sensitive
         public void TestSemaphoreParallelism()
         {
             const int MaxCount = 10;
