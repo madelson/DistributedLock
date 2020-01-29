@@ -86,7 +86,7 @@ namespace Medallion.Threading.Sql
         /// <param name="timeout">How long to wait before giving up on acquiring the semaphore. Defaults to 0</param>
         /// <param name="cancellationToken">Specifies a token by which the wait can be canceled</param>
         /// <returns>An <see cref="IDisposable"/> "handle" which can be used to release the semaphore ticket, or null if no ticket taken</returns>
-        public IDisposable TryAcquire(TimeSpan timeout = default(TimeSpan), CancellationToken cancellationToken = default(CancellationToken))
+        public IDisposable? TryAcquire(TimeSpan timeout = default, CancellationToken cancellationToken = default)
         {
             return cancellationToken.CanBeCanceled
                 // use the async version since that supports cancellation
@@ -108,7 +108,7 @@ namespace Medallion.Threading.Sql
         /// <param name="timeout">How long to wait before giving up on acquiring the ticket. Defaults to <see cref="Timeout.InfiniteTimeSpan"/></param>
         /// <param name="cancellationToken">Specifies a token by which the wait can be canceled</param>
         /// <returns>An <see cref="IDisposable"/> "handle" which can be used to release the lock</returns>
-        public IDisposable Acquire(TimeSpan? timeout = null, CancellationToken cancellationToken = default(CancellationToken))
+        public IDisposable Acquire(TimeSpan? timeout = null, CancellationToken cancellationToken = default)
         {
             return DistributedLockHelpers.Acquire(this, timeout, cancellationToken);
         }
@@ -126,9 +126,9 @@ namespace Medallion.Threading.Sql
         /// <param name="timeout">How long to wait before giving up on acquiring the semaphore. Defaults to 0</param>
         /// <param name="cancellationToken">Specifies a token by which the wait can be canceled</param>
         /// <returns>An <see cref="IDisposable"/> "handle" which can be used to release the semaphore ticket, or null if no ticket taken</returns>
-        public AwaitableDisposable<IDisposable> TryAcquireAsync(TimeSpan timeout = default(TimeSpan), CancellationToken cancellationToken = default(CancellationToken))
+        public AwaitableDisposable<IDisposable?> TryAcquireAsync(TimeSpan timeout = default, CancellationToken cancellationToken = default)
         {
-            return new AwaitableDisposable<IDisposable>(this.internalLock.TryAcquireAsync(timeout.ToInt32Timeout(), this.strategy, cancellationToken, contextHandle: null));
+            return new AwaitableDisposable<IDisposable?>(this.internalLock.TryAcquireAsync(timeout.ToInt32Timeout(), this.strategy, cancellationToken, contextHandle: null));
         }
 
         /// <summary>
@@ -144,14 +144,14 @@ namespace Medallion.Threading.Sql
         /// <param name="timeout">How long to wait before giving up on acquiring the ticket. Defaults to <see cref="Timeout.InfiniteTimeSpan"/></param>
         /// <param name="cancellationToken">Specifies a token by which the wait can be canceled</param>
         /// <returns>An <see cref="IDisposable"/> "handle" which can be used to release the lock</returns>
-        public AwaitableDisposable<IDisposable> AcquireAsync(TimeSpan? timeout = null, CancellationToken cancellationToken = default(CancellationToken))
+        public AwaitableDisposable<IDisposable> AcquireAsync(TimeSpan? timeout = null, CancellationToken cancellationToken = default)
         {
             return new AwaitableDisposable<IDisposable>(DistributedLockHelpers.AcquireAsync(this, timeout, cancellationToken));
         }
         #endregion
 
         #region ---- IDistributedLock Compat Layer (for Testing) ----
-        Task<IDisposable> IDistributedLock.TryAcquireAsync(TimeSpan timeout, CancellationToken cancellationToken)
+        Task<IDisposable?> IDistributedLock.TryAcquireAsync(TimeSpan timeout, CancellationToken cancellationToken)
         {
             return this.TryAcquireAsync(timeout, cancellationToken).Task;
         }

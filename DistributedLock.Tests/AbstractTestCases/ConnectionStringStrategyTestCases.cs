@@ -1,5 +1,7 @@
-﻿using Medallion.Threading.Tests.Sql;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using DistributedLock.Tests;
+using Medallion.Threading.Sql;
+using Medallion.Threading.Tests.Sql;
+using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
@@ -11,15 +13,14 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading.Tests
 {
-    [TestClass]
-    public abstract class ConnectionStringStrategyTestCases<TEngineFactory, TConnectionManagementProvider> : TestBase
+    public abstract class ConnectionStringStrategyTestCases<TEngineFactory, TConnectionManagementProvider>
         where TEngineFactory : ITestingSqlDistributedLockEngineFactory, new()
         where TConnectionManagementProvider : ConnectionStringProvider, new()
     {
         /// <summary>
         /// Tests that internally-owned connections are properly cleaned up by disposing the lock handle 
         /// </summary>
-        [TestMethod]
+        [Test]
         public void TestConnectionDoesNotLeak()
         {
             var applicationName = nameof(TestConnectionDoesNotLeak) + Guid.NewGuid();
@@ -45,9 +46,9 @@ namespace Medallion.Threading.Tests
                 }
             }
 
-            using (var connection = new SqlConnection(connectionString))
+            using (var connection = SqlHelpers.CreateConnection(connectionString))
             {
-                SqlConnection.ClearPool(connection);
+                SqlTestHelper.ClearPool(connection);
                 // checking immediately seems flaky; likely clear pool finishing
                 // doesn't guarantee that SQL will immediately reflect the clear
                 var maxWaitForPoolsToClear = TimeSpan.FromSeconds(5);
@@ -63,15 +64,11 @@ namespace Medallion.Threading.Tests
 
             int CountActiveSessions()
             {
-                using (var connection = new SqlConnection(ConnectionStringProvider.ConnectionString))
-                {
-                    connection.Open();
-                    using (var command = connection.CreateCommand())
-                    {
-                        command.CommandText = $@"SELECT COUNT(*) FROM sys.dm_exec_sessions WHERE program_name = '{applicationName}'";
-                        return (int)command.ExecuteScalar();
-                    }
-                }
+                using var connection = SqlHelpers.CreateConnection(ConnectionStringProvider.ConnectionString);
+                connection.Open();
+                using var command = connection.CreateCommand();
+                command.CommandText = $@"SELECT COUNT(*) FROM sys.dm_exec_sessions WHERE program_name = '{applicationName}'";
+                return (int)command.ExecuteScalar();
             }
         }
 

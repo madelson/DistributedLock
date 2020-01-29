@@ -2,11 +2,16 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
-using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Reflection;
+#if NET45 || NETSTANDARD1_3
+using System.Data.SqlClient;
+#elif NETSTANDARD2_0
+using Microsoft.Data.SqlClient;
+#endif
 
 namespace Medallion.Threading.Sql
 {
@@ -47,11 +52,11 @@ namespace Medallion.Threading.Sql
             {
                 return await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
             }
-            catch (SqlException ex)
+            catch (DbException ex)
                 // MA: canceled SQL operations throw SqlException instead of OCE.
                 // That means that downstream operations end up faulted instead of canceled. We
                 // wrap with OCE here to correctly propagate cancellation
-                when (cancellationToken.IsCancellationRequested && ex.Number == 0)
+                when (cancellationToken.IsCancellationRequested && IsCancellationException(ex))
             {
                 throw new OperationCanceledException(
                     "Command was canceled",
@@ -63,7 +68,7 @@ namespace Medallion.Threading.Sql
 
         public static bool IsClosedOrBroken(this IDbConnection connection) => connection.State == ConnectionState.Closed || connection.State == ConnectionState.Broken;
 
-        public static IDbDataParameter CreateParameter(this IDbCommand command, string name, object value)
+        public static IDbDataParameter CreateParameter(this IDbCommand command, string name, object? value)
         {
             var parameter = command.CreateParameter();
             parameter.ParameterName = name;
@@ -80,14 +85,49 @@ namespace Medallion.Threading.Sql
               // (see https://msdn.microsoft.com/en-us/library/system.data.sqlclient.sqlcommand.commandtimeout%28v=vs.110%29.aspx)
               : 0;
         }
+
+        public static DbConnection CreateConnection(string connectionString) => new SqlConnection(connectionString);
+
+        public static bool IsCancellationException(DbException exception)
+        {
+            const int CanceledNumber = 0;
+
+            // fast path using default SqlClient
+            if (exception is SqlException sqlException && sqlException.Number == CanceledNumber)
+            {
+                return true;
+            }
+
+
+            const string AlternateClientSqlExceptionName =
+#if NETSTANDARD1_3 || NET45
+                "Microsoft.Data.SqlClient.SqlException";
+#else
+                "System.Data.SqlClient.SqlException";
+#endif
+            var exceptionType = exception.GetType();
+            // since SqlException is sealed in both providers (as of 2020-01-26), 
+            // we don't need to search up the type hierarchy
+            if (exceptionType.ToString() == AlternateClientSqlExceptionName)
+            {
+                var numberProperty = exceptionType.GetTypeInfo().DeclaredProperties
+                    .FirstOrDefault(p => p.Name == nameof(SqlException.Number) && p.CanRead && p.GetMethod.IsPublic && !p.GetMethod.IsStatic);
+                if (numberProperty != null)
+                {
+                    return Equals(numberProperty.GetValue(exception), CanceledNumber);
+                }
+            }
+
+            return false;
+        }
     }
 
-    internal struct ConnectionOrTransaction
+    internal readonly struct ConnectionOrTransaction
     {
-        private object connectionOrTransaction;
+        private readonly object connectionOrTransaction;
 
-        public IDbTransaction Transaction => this.connectionOrTransaction as IDbTransaction;
-        public IDbConnection Connection => this.Transaction?.Connection ?? (this.connectionOrTransaction as IDbConnection);
+        public IDbTransaction? Transaction => this.connectionOrTransaction as IDbTransaction;
+        public IDbConnection? Connection => this.Transaction?.Connection ?? (this.connectionOrTransaction as IDbConnection);
 
         public ConnectionOrTransaction(IDbConnection connection)
         {

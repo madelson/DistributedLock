@@ -23,7 +23,7 @@ namespace Medallion.Threading.Tests.Sql
 
         internal override IDistributedLock CreateLockWithExactName(string name)
         {
-            var semaphore = this.CreateSemaphore(name, this.maxCount);
+            var semaphore = this.CreateSemaphoreWithExactName(name, this.maxCount);
 
             // drain the semaphore to have 1 ticket remaining (making it a lock)
             lock (this.mostlyDrainedSemaphoreNames)
@@ -42,14 +42,17 @@ namespace Medallion.Threading.Tests.Sql
             return new SqlSemaphoreDistributedLock(semaphore);
         }
 
-        internal SqlDistributedSemaphore CreateSemaphore(string name, int maxCount)
+        internal SqlDistributedSemaphore CreateSemaphore(string baseName, int maxCount) =>
+            this.CreateSemaphoreWithExactName(this.GetUniqueSafeLockName(baseName), maxCount);
+
+        private SqlDistributedSemaphore CreateSemaphoreWithExactName(string name, int maxCount)
         {
             var connectionManagementProvider = new TConnectionManagementProvider();
             this.RegisterCleanupAction(connectionManagementProvider.Dispose);
             var connectionInfo = connectionManagementProvider.GetConnectionInfo();
             if (connectionInfo.Strategy.HasValue)
             {
-                return new SqlDistributedSemaphore(name, maxCount, connectionInfo.ConnectionString, connectionInfo.Strategy.Value);
+                return new SqlDistributedSemaphore(name, maxCount, connectionInfo.ConnectionString!, connectionInfo.Strategy.Value);
             }
             if (connectionInfo.ConnectionString != null)
             {
@@ -71,10 +74,8 @@ namespace Medallion.Threading.Tests.Sql
         internal override string GetSafeLockName(string name) => name ?? throw new ArgumentNullException(nameof(name));
         internal override void PerformCleanupForLockAbandonment()
         {
-            using (var provider = new TConnectionManagementProvider())
-            {
-                provider.PerformCleanupForLockAbandonment();
-            }
+            using var provider = new TConnectionManagementProvider();
+            provider.PerformCleanupForLockAbandonment();
         }
 
         private sealed class SqlSemaphoreDistributedLock : IDistributedLock
@@ -96,12 +97,12 @@ namespace Medallion.Threading.Tests.Sql
                 return this.semaphore.AcquireAsync(timeout, cancellationToken).Task;
             }
 
-            IDisposable IDistributedLock.TryAcquire(TimeSpan timeout, CancellationToken cancellationToken)
+            IDisposable? IDistributedLock.TryAcquire(TimeSpan timeout, CancellationToken cancellationToken)
             {
                 return this.semaphore.TryAcquire(timeout, cancellationToken);
             }
 
-            Task<IDisposable> IDistributedLock.TryAcquireAsync(TimeSpan timeout, CancellationToken cancellationToken)
+            Task<IDisposable?> IDistributedLock.TryAcquireAsync(TimeSpan timeout, CancellationToken cancellationToken)
             {
                 return this.semaphore.TryAcquireAsync(timeout, cancellationToken).Task;
             }

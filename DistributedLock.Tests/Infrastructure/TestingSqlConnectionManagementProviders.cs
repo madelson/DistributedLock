@@ -1,7 +1,10 @@
-﻿using Medallion.Threading.Sql;
+﻿using DistributedLock.Tests;
+using DistributedLock.Tests.Infrastructure;
+using Medallion.Threading.Sql;
 using Medallion.Threading.Sql.ConnectionMultiplexing;
 using System;
 using System.Collections.Generic;
+using System.Data.Common;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
@@ -17,13 +20,11 @@ namespace Medallion.Threading.Tests.Sql
                 DataSource = @".\SQLEXPRESS",
                 InitialCatalog = "master",
                 IntegratedSecurity = true,
-                ApplicationName = typeof(ConnectionStringProvider).Assembly.GetName().Name,
+                ApplicationName = $"{typeof(ConnectionStringProvider).Assembly.GetName().Name} ({TestHelper.FrameworkName})",
                 // set a high pool size so that we don't empty the pool through things like lock abandonment tests
                 MaxPoolSize = 10000,
             }
             .ConnectionString;
-
-        private static volatile string currentConnectionString = ConnectionString;
 
         private readonly SqlDistributedLockConnectionStrategy? _strategy;
 
@@ -32,7 +33,11 @@ namespace Medallion.Threading.Tests.Sql
             this._strategy = strategy;
         }
 
-        public override ConnectionInfo GetConnectionInfo() => new ConnectionInfo { ConnectionString = currentConnectionString, Strategy = this._strategy };
+        public override ConnectionInfo GetConnectionInfo() => new ConnectionInfo 
+        { 
+            ConnectionString = Current<ConnectionStringBox>.Value?.ConnectionString ?? ConnectionString, 
+            Strategy = this._strategy
+        };
 
         /// <summary>
         /// Since every lock handle has a dedicated connection (even in the case of multiplexing we don't share a connection for two acquires
@@ -40,10 +45,18 @@ namespace Medallion.Threading.Tests.Sql
         /// </summary>
         internal override bool IsReentrantForAppLock => false;
 
-        public static IDisposable UseConnectionString(string connectionString)
+        public static IDisposable UseConnectionString(string connectionString) => 
+            Current<ConnectionStringBox>.Use(new ConnectionStringBox(connectionString));
+
+        // to avoid claimin Current<string>
+        private sealed class ConnectionStringBox
         {
-            currentConnectionString = connectionString;
-            return new ReleaseAction(() => currentConnectionString = ConnectionString);
+            public ConnectionStringBox(string connectionString)
+            {
+                this.ConnectionString = connectionString;
+            }
+
+            public string ConnectionString { get; }
         }
     }
 
@@ -86,67 +99,55 @@ namespace Medallion.Threading.Tests.Sql
         }
     }
 
-    public sealed class ConnectionProvider : TestingSqlConnectionManagementProvider, IExternalConnectionOrTransactionTestingSqlConnectionManagementProvider
+    public abstract class ConnectionProvider : TestingSqlConnectionManagementProvider, IExternalConnectionOrTransactionTestingSqlConnectionManagementProvider
     {
-        private static volatile ConnectionHolder current;
-
-        public override ConnectionInfo GetConnectionInfo()
+        public sealed override ConnectionInfo GetConnectionInfo()
         {
-            var currentConnection = current?.Connection;
+            var currentConnection = Current<DbConnection>.Value;
             if (currentConnection != null)
             {
                 return new ConnectionInfo { Connection = currentConnection };
             }
             
-            var connection = new SqlConnection(ConnectionStringProvider.ConnectionString);
+            var connection = this.CreateConnection(ConnectionStringProvider.ConnectionString);
             this.RegisterCleanupAction(CreateWeakDisposeAction(connection));
             connection.Open();
             return new ConnectionInfo { Connection = connection };
         }
 
-        public static IDisposable UseConnection(SqlConnection connection)
-        {
-            if (current?.Connection != null) { throw new InvalidOperationException("already set"); }
-
-            return current = new ConnectionHolder(connection);
-        }
+        public static IDisposable UseConnection(DbConnection connection) => Current<DbConnection>.Use(connection);
 
         /// <summary>
         /// sp_getapplock is reentrant on the same connection
         /// </summary>
-        internal override bool IsReentrantForAppLock => true;
+        internal sealed override bool IsReentrantForAppLock => true;
 
-        private sealed class ConnectionHolder : IDisposable
-        {
-            private volatile SqlConnection connection;
-
-            public ConnectionHolder(SqlConnection connection)
-            {
-                this.connection = connection;
-            }
-
-            public SqlConnection Connection => this.connection;
-            
-            void IDisposable.Dispose()
-            {
-                this.connection = null;
-            }
-        }
+        protected abstract DbConnection CreateConnection(string connectionString);
     }
 
-    public sealed class TransactionProvider : TestingSqlConnectionManagementProvider, IExternalConnectionOrTransactionTestingSqlConnectionManagementProvider
+    public sealed class DefaultClientConnectionProvider : ConnectionProvider
     {
-        private static volatile TransactionHolder current;
+        protected override DbConnection CreateConnection(string connectionString) =>
+            SqlHelpers.CreateConnection(connectionString);
+    }
 
-        public override ConnectionInfo GetConnectionInfo()
+    public sealed class AlternateClientConnectionProvider : ConnectionProvider
+    {
+        protected override DbConnection CreateConnection(string connectionString) =>
+            SqlTestHelper.CreateAlternateProviderConnection(connectionString);
+    }
+
+    public abstract class TransactionProvider : TestingSqlConnectionManagementProvider, IExternalConnectionOrTransactionTestingSqlConnectionManagementProvider
+    {
+        public sealed override ConnectionInfo GetConnectionInfo()
         {
-            var currentTransaction = current?.Transaction;
+            var currentTransaction = Current<DbTransaction>.Value;
             if (currentTransaction != null)
             {
                 return new ConnectionInfo { Transaction = currentTransaction };
             }
 
-            var connection = new SqlConnection(ConnectionStringProvider.ConnectionString);
+            var connection = SqlHelpers.CreateConnection(ConnectionStringProvider.ConnectionString);
             this.RegisterCleanupAction(CreateWeakDisposeAction(connection));
             connection.Open();
             var transaction = connection.BeginTransaction();
@@ -154,33 +155,25 @@ namespace Medallion.Threading.Tests.Sql
             return new ConnectionInfo { Transaction = transaction };
         }
 
-        public static IDisposable UseTransaction(SqlTransaction transaction)
-        {
-            if (current?.Transaction != null) { throw new InvalidOperationException("already set"); }
-
-            return current = new TransactionHolder(transaction);
-        }
+        public static IDisposable UseTransaction(DbTransaction transaction) => Current<DbTransaction>.Use(transaction);
 
         /// <summary>
         /// sp_getapplock is reentrant on the same connection
         /// </summary>
-        internal override bool IsReentrantForAppLock => true;
+        internal sealed override bool IsReentrantForAppLock => true;
 
-        private sealed class TransactionHolder : IDisposable
-        {
-            private volatile SqlTransaction transaction;
+        protected abstract DbConnection CreateConnection(string connectionString);
+    }
 
-            public TransactionHolder(SqlTransaction transaction)
-            {
-                this.transaction = transaction;
-            }
+    public sealed class DefaultClientTransactionProvider : TransactionProvider
+    {
+        protected override DbConnection CreateConnection(string connectionString) =>
+            SqlHelpers.CreateConnection(connectionString);
+    }
 
-            public SqlTransaction Transaction => this.transaction;
-
-            void IDisposable.Dispose()
-            {
-                this.transaction = null;
-            }
-        }
+    public sealed class AlternateClientTransactionProvider : TransactionProvider
+    {
+        protected override DbConnection CreateConnection(string connectionString) =>
+            SqlTestHelper.CreateAlternateProviderConnection(connectionString);
     }
 }

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
+using System.Data.Common;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -22,11 +22,11 @@ namespace Medallion.Threading.Sql.ConnectionMultiplexing
         /// </summary>
         private readonly SemaphoreSlim mutex = new SemaphoreSlim(initialCount: 1, maxCount: 1);
         private readonly Dictionary<string, HandleReference> outstandingHandles = new Dictionary<string, HandleReference>();
-        private readonly SqlConnection connection;
+        private readonly DbConnection connection;
 
         public MultiplexedConnectionLock(string connectionString)
         {
-            this.connection = new SqlConnection(connectionString);
+            this.connection = SqlHelpers.CreateConnection(connectionString);
         }
 
         public Result TryAcquire<TLockCookie>(
@@ -127,12 +127,12 @@ namespace Medallion.Threading.Sql.ConnectionMultiplexing
             await this.mutex.WaitAsync().ConfigureAwait(false);
             try
             {
-                List<string> toRemove = null;
+                List<string>? toRemove = null;
                 foreach (var kvp in this.outstandingHandles)
                 {
                     if (!kvp.Value.ThreadSafeHandle.TryGetTarget(out var ignored))
                     {
-                        (toRemove ?? (toRemove = new List<string>())).Add(kvp.Key);
+                        (toRemove ??= new List<string>()).Add(kvp.Key);
                     }
                 }
                 
@@ -234,7 +234,7 @@ namespace Medallion.Threading.Sql.ConnectionMultiplexing
                 this.Retry = retry;
             }
 
-            public IDisposable Handle { get; }
+            public IDisposable? Handle { get; }
             public MultiplexedConnectionLockRetry Retry { get; }
         }
 
@@ -257,8 +257,8 @@ namespace Medallion.Threading.Sql.ConnectionMultiplexing
 
         private sealed class ThreadSafeReleaseAction : IDisposable
         {
-            private SemaphoreSlim mutex;
-            private IDisposable cleanupHandle;
+            private SemaphoreSlim? mutex;
+            private IDisposable? cleanupHandle;
 
             public ThreadSafeReleaseAction(SemaphoreSlim mutex, IDisposable cleanupHandle)
             {
@@ -272,7 +272,7 @@ namespace Medallion.Threading.Sql.ConnectionMultiplexing
                 if (mutex != null)
                 {
                     mutex.Wait();
-                    try { this.cleanupHandle.Dispose(); }
+                    try { this.cleanupHandle!.Dispose(); }
                     finally { mutex.Release(); }
 
                     this.cleanupHandle = null;

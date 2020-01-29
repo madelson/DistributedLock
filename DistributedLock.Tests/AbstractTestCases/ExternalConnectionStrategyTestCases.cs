@@ -1,28 +1,29 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Medallion.Threading.Sql;
+using NUnit.Framework;
 using System;
 using System.Collections.Generic;
-using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace Medallion.Threading.Tests.Sql
 {
-    public abstract class ExternalConnectionStrategyTestCases<TEngineFactory> : TestBase
+    public abstract class ExternalConnectionStrategyTestCases<TEngineFactory, TConnectionProvider>
         where TEngineFactory : ITestingSqlDistributedLockEngineFactory, new()
+        where TConnectionProvider : ConnectionProvider, new()
     {
-        [TestMethod]
+        [Test]
         public void TestCloseLockOnClosedConnection()
         {
-            using (var connection = new SqlConnection(ConnectionStringProvider.ConnectionString))
+            using (var connection = SqlHelpers.CreateConnection(ConnectionStringProvider.ConnectionString))
             using (ConnectionProvider.UseConnection(connection))
-            using (var connectionEngine = new TEngineFactory().Create<ConnectionProvider>())
+            using (var connectionEngine = new TEngineFactory().Create<TConnectionProvider>())
             using (var connectionStringEngine = new TEngineFactory().Create<DefaultConnectionStringProvider>())
             {
                 var connectionStringLock = connectionStringEngine.CreateLock(nameof(TestCloseLockOnClosedConnection));
 
                 var @lock = connectionEngine.CreateLock(nameof(TestCloseLockOnClosedConnection));
-                TestHelper.AssertThrows<InvalidOperationException>(() => @lock.Acquire());
+                Assert.Catch<InvalidOperationException>(() => @lock.Acquire());
 
                 connection.Open();
 
@@ -31,35 +32,33 @@ namespace Medallion.Threading.Tests.Sql
 
                 connection.Dispose();
 
-                TestHelper.AssertDoesNotThrow(handle.Dispose);
+                Assert.DoesNotThrow(handle.Dispose);
 
                 // lock can be re-acquired
                 connectionStringLock.IsHeld().ShouldEqual(false);
             }
         }
 
-        [TestMethod]
+        [Test]
         public void TestIsNotScopedToTransaction()
         {
-            using (var connection = new SqlConnection(ConnectionStringProvider.ConnectionString))
+            using (var connection = SqlHelpers.CreateConnection(ConnectionStringProvider.ConnectionString))
             using (ConnectionProvider.UseConnection(connection))
-            using (var connectionEngine = new TEngineFactory().Create<ConnectionProvider>())
+            using (var connectionEngine = new TEngineFactory().Create<TConnectionProvider>())
             using (var connectionStringEngine = new TEngineFactory().Create<DefaultConnectionStringProvider>())
             {
                 connection.Open();
-                
-                using (var handle = connectionEngine.CreateLock(nameof(TestIsNotScopedToTransaction)).Acquire())
-                {
-                    using (var transaction = connection.BeginTransaction())
-                    {
-                        transaction.Rollback();
-                    }
 
-                    connectionStringEngine.CreateLock(nameof(TestIsNotScopedToTransaction)).IsHeld().ShouldEqual(true, this.GetType().Name);
+                using var handle = connectionEngine.CreateLock(nameof(TestIsNotScopedToTransaction)).Acquire();
+                using (var transaction = connection.BeginTransaction())
+                {
+                    transaction.Rollback();
                 }
+
+                connectionStringEngine.CreateLock(nameof(TestIsNotScopedToTransaction)).IsHeld().ShouldEqual(true, this.GetType().Name);
             }
         }
 
-        private TestingDistributedLockEngine CreateEngine() => new TEngineFactory().Create<ConnectionProvider>();
+        private TestingDistributedLockEngine CreateEngine() => new TEngineFactory().Create<TConnectionProvider>();
     }
 }

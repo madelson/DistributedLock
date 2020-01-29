@@ -9,10 +9,10 @@ namespace Medallion.Threading
 {
     internal interface IDistributedLock
     {
-        IDisposable TryAcquire(TimeSpan timeout = default(TimeSpan), CancellationToken cancellationToken = default(CancellationToken));
-        IDisposable Acquire(TimeSpan? timeout = null, CancellationToken cancellationToken = default(CancellationToken));
+        IDisposable? TryAcquire(TimeSpan timeout = default, CancellationToken cancellationToken = default);
+        IDisposable Acquire(TimeSpan? timeout = null, CancellationToken cancellationToken = default);
 
-        Task<IDisposable> TryAcquireAsync(TimeSpan timeout = default(TimeSpan), CancellationToken cancellationToken = default(CancellationToken));
-        Task<IDisposable> AcquireAsync(TimeSpan? timeout = null, CancellationToken cancellationToken = default(CancellationToken));
+        Task<IDisposable?> TryAcquireAsync(TimeSpan timeout = default, CancellationToken cancellationToken = default);
+        Task<IDisposable> AcquireAsync(TimeSpan? timeout = null, CancellationToken cancellationToken = default);
     }
 }

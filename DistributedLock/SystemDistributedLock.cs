@@ -25,7 +25,7 @@ namespace Medallion.Threading
         /// <paramref name="abandonmentCheckFrequency"/> specifies how long the lock should wait before checking
         /// if the underlying <see cref="EventWaitHandle"/> has been abandoned (defaults to 2 seconds)
         /// </summary>
-        public SystemDistributedLock(string lockName, TimeSpan? abandonmentCheckFrequency = default(TimeSpan?))
+        public SystemDistributedLock(string lockName, TimeSpan? abandonmentCheckFrequency = default)
         {
             // note that just Global\ is not a valid name
             if (string.IsNullOrEmpty(lockName))
@@ -66,7 +66,7 @@ namespace Medallion.Threading
         /// <param name="timeout">How long to wait before giving up on acquiring the lock. Defaults to 0</param>
         /// <param name="cancellationToken">Specifies a token by which the wait can be canceled</param>
         /// <returns>An <see cref="IDisposable"/> "handle" which can be used to release the lock, or null if the lock was not taken</returns>
-        public IDisposable TryAcquire(TimeSpan timeout = default(TimeSpan), CancellationToken cancellationToken = default(CancellationToken))
+        public IDisposable? TryAcquire(TimeSpan timeout = default, CancellationToken cancellationToken = default)
         {
             var timeoutMillis = timeout.ToInt32Timeout();
             var abandonmentCheckFrequencyMillis = this.abandonmentCheckFrequency.ToInt32Timeout();
@@ -152,7 +152,7 @@ namespace Medallion.Threading
         /// <param name="timeout">How long to wait before giving up on acquiring the lock. Defaults to <see cref="Timeout.InfiniteTimeSpan"/></param>
         /// <param name="cancellationToken">Specifies a token by which the wait can be canceled</param>
         /// <returns>An <see cref="IDisposable"/> "handle" which can be used to release the lock</returns>
-        public IDisposable Acquire(TimeSpan? timeout = null, CancellationToken cancellationToken = default(CancellationToken))
+        public IDisposable Acquire(TimeSpan? timeout = null, CancellationToken cancellationToken = default)
         {
             return DistributedLockHelpers.Acquire(this, timeout, cancellationToken);
         }
@@ -170,7 +170,7 @@ namespace Medallion.Threading
         /// <param name="timeout">How long to wait before giving up on acquiring the lock. Defaults to 0</param>
         /// <param name="cancellationToken">Specifies a token by which the wait can be canceled</param>
         /// <returns>An <see cref="IDisposable"/> "handle" which can be used to release the lock, or null if the lock was not taken</returns>
-        public Task<IDisposable> TryAcquireAsync(TimeSpan timeout = default(TimeSpan), CancellationToken cancellationToken = default(CancellationToken))
+        public Task<IDisposable?> TryAcquireAsync(TimeSpan timeout = default, CancellationToken cancellationToken = default)
         {
             var timeoutMillis = timeout.ToInt32Timeout();
 
@@ -190,7 +190,7 @@ namespace Medallion.Threading
         /// <param name="timeout">How long to wait before giving up on acquiring the lock. Defaults to <see cref="Timeout.InfiniteTimeSpan"/></param>
         /// <param name="cancellationToken">Specifies a token by which the wait can be canceled</param>
         /// <returns>An <see cref="IDisposable"/> "handle" which can be used to release the lock</returns>
-        public Task<IDisposable> AcquireAsync(TimeSpan? timeout = null, CancellationToken cancellationToken = default(CancellationToken))
+        public Task<IDisposable> AcquireAsync(TimeSpan? timeout = null, CancellationToken cancellationToken = default)
         {
             return DistributedLockHelpers.AcquireAsync(this, timeout, cancellationToken);
         }
@@ -210,7 +210,7 @@ namespace Medallion.Threading
         }
         #endregion
 
-        private async Task<IDisposable> InternalTryAcquireAsync(int timeoutMillis, CancellationToken cancellationToken)
+        private async Task<IDisposable?> InternalTryAcquireAsync(int timeoutMillis, CancellationToken cancellationToken)
         {
             var abandonmentCheckFrequencyMillis = this.abandonmentCheckFrequency.ToInt32Timeout();
 
@@ -324,14 +324,13 @@ namespace Medallion.Threading
                 )
             );
 
-            bool ignored;
             var @event = new EventWaitHandle(
                 // if we create, start as unlocked
                 initialState: true,
                 // allow only one thread to hold the lock
                 mode: EventResetMode.AutoReset,
                 name: this.lockName,
-                createdNew: out ignored
+                createdNew: out _
             );
             @event.SetAccessControl(security);
 
@@ -340,7 +339,7 @@ namespace Medallion.Threading
 
         private sealed class EventScope : IDisposable
         {
-            private EventWaitHandle @event;
+            private EventWaitHandle? @event;
 
             public EventScope(EventWaitHandle @event) 
             {

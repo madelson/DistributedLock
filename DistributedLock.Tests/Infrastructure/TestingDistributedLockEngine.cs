@@ -1,4 +1,5 @@
-﻿using System;
+﻿using NUnit.Framework;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,12 +9,17 @@ namespace Medallion.Threading.Tests
 {
     public abstract class TestingDistributedLockEngine : ActionRegistrationDisposable
     {
-        private readonly string _currentTestType = TestHelper.CurrentTestType.Name;
+        private readonly string _currentTestFullName = TestContext.CurrentContext.Test.FullName;
 
-        internal IDistributedLock CreateLock(string name)
-        {
-            return this.CreateLockWithExactName(this.GetSafeLockName(name + this._currentTestType));
-        }
+        internal IDistributedLock CreateLock(string baseName) =>
+            this.CreateLockWithExactName(this.GetUniqueSafeLockName(baseName));
+
+        /// <summary>
+        /// Returns a lock name based on <paramref name="baseName"/> which is "namespaced" by the current
+        /// test and framework name, thus avoiding potential collisions between test cases
+        /// </summary>
+        internal string GetUniqueSafeLockName(string baseName = "") =>
+            this.GetSafeLockName($"{baseName}_{this._currentTestFullName}_{TestHelper.FrameworkName}");
 
         internal abstract IDistributedLock CreateLockWithExactName(string name);
 

@@ -1,4 +1,5 @@
 ﻿using Medallion.Threading.Sql;
+using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,7 +25,8 @@ namespace Medallion.Threading.Tests.Sql
             return @lock;
         }
 
-        internal SqlDistributedReaderWriterLock CreateReaderWriterLock(string name) => this.CreateReaderWriterLockWithExactName(name);
+        internal SqlDistributedReaderWriterLock CreateReaderWriterLock(string name) => 
+            this.CreateReaderWriterLockWithExactName(this.GetUniqueSafeLockName(name));
 
         internal SqlDistributedReaderWriterLock CreateReaderWriterLockWithExactName(string name)
         {
@@ -33,7 +35,7 @@ namespace Medallion.Threading.Tests.Sql
             var connectionInfo = connectionManagementProvider.GetConnectionInfo();
             if (connectionInfo.Strategy.HasValue)
             {
-                return new SqlDistributedReaderWriterLock(name, connectionInfo.ConnectionString, connectionInfo.Strategy.Value);
+                return new SqlDistributedReaderWriterLock(name, connectionInfo.ConnectionString!, connectionInfo.Strategy.Value);
             }
             if (connectionInfo.ConnectionString != null)
             {
@@ -56,7 +58,7 @@ namespace Medallion.Threading.Tests.Sql
         /// </summary>
         private bool GetUseUpgradeLock(string name)
         {
-            if (TestHelper.CurrentTestType.Name.Contains("Multiplex"))
+            if (TestContext.CurrentContext.Test.FullName.Contains("Multiplex"))
             {
                 // upgradeable locks cannot be multiplexed, so using them as exclusive locks in multiplexing tests
                 // can subvert what those tests are trying to demonstrate. Therefore, we just use write locks in 
@@ -79,19 +81,15 @@ namespace Medallion.Threading.Tests.Sql
         {
             get
             {
-                using (var provider = new TConnectionManagementProvider())
-                {
-                    return provider.IsReentrantForAppLock;
-                }
+                using var provider = new TConnectionManagementProvider();
+                return provider.IsReentrantForAppLock;
             }
         }
         internal override string GetSafeLockName(string name) => SqlDistributedReaderWriterLock.GetSafeLockName(name);
         internal override void PerformCleanupForLockAbandonment()
         {
-            using (var provider = new TConnectionManagementProvider())
-            {
-                provider.PerformCleanupForLockAbandonment();
-            }
+            using var provider = new TConnectionManagementProvider();
+            provider.PerformCleanupForLockAbandonment();
         }
 
         private sealed class SqlReaderWriterLockDistributedLock : IDistributedLock
@@ -115,28 +113,26 @@ namespace Medallion.Threading.Tests.Sql
             Task<IDisposable> IDistributedLock.AcquireAsync(TimeSpan? timeout, CancellationToken cancellationToken)
             {
                 return this.useUpgradeLock
-                    ? CastToDisposable(this.@lock.AcquireUpgradeableReadLockAsync(timeout, cancellationToken))
+                    ? CastTask<SqlDistributedReaderWriterLock.UpgradeableHandle, IDisposable>(this.@lock.AcquireUpgradeableReadLockAsync(timeout, cancellationToken))
                     : this.@lock.AcquireWriteLockAsync(timeout, cancellationToken);
             }
 
-            IDisposable IDistributedLock.TryAcquire(TimeSpan timeout, CancellationToken cancellationToken)
+            IDisposable? IDistributedLock.TryAcquire(TimeSpan timeout, CancellationToken cancellationToken)
             {
                 return this.useUpgradeLock
                     ? this.@lock.TryAcquireUpgradeableReadLock(timeout, cancellationToken)
                     : this.@lock.TryAcquireWriteLock(timeout, cancellationToken);
             }
 
-            Task<IDisposable> IDistributedLock.TryAcquireAsync(TimeSpan timeout, CancellationToken cancellationToken)
+            Task<IDisposable?> IDistributedLock.TryAcquireAsync(TimeSpan timeout, CancellationToken cancellationToken)
             {
                 return this.useUpgradeLock
-                    ? CastToDisposable(this.@lock.TryAcquireUpgradeableReadLockAsync(timeout, cancellationToken))
+                    ? CastTask<SqlDistributedReaderWriterLock.UpgradeableHandle?, IDisposable?>(this.@lock.TryAcquireUpgradeableReadLockAsync(timeout, cancellationToken))
                     : this.@lock.TryAcquireWriteLockAsync(timeout, cancellationToken);
             }
 
-            private static async Task<IDisposable> CastToDisposable<T>(Task<T> task) where T : IDisposable
-            {
-                return await task.ConfigureAwait(false);
-            }
+            private static async Task<TTo> CastTask<TFrom, TTo>(Task<TFrom> task) where TFrom : TTo =>
+                await task.ConfigureAwait(false);
         }
     }
 

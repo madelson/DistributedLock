@@ -21,8 +21,8 @@ namespace Medallion.Threading
         // based on http://www.thomaslevesque.com/2015/06/04/async-and-cancellation-support-for-wait-handles/
         private static async Task<bool> WaitOneAsync(WaitHandle handle, int timeoutMillis, CancellationToken cancellationToken)
         {
-            RegisteredWaitHandle registeredHandle = null;
-            CancellationTokenRegistration tokenRegistration = default(CancellationTokenRegistration);
+            RegisteredWaitHandle? registeredHandle = null;
+            CancellationTokenRegistration tokenRegistration = default;
             try
             {
                 var taskCompletionSource = new TaskCompletionSource<bool>();

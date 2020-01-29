@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
+using System.Data.Common;
 using System.Runtime.ExceptionServices;
 using System.Security.Cryptography;
 using System.Text;
@@ -20,30 +20,24 @@ namespace Medallion.Threading.Sql
         }
 
         #region ---- Execution ----
-        public Cookie TryAcquire(ConnectionOrTransaction connectionOrTransaction, string resourceName, int timeoutMillis)
+        public Cookie? TryAcquire(ConnectionOrTransaction connectionOrTransaction, string resourceName, int timeoutMillis)
         {
-            var tryAcquireTask = this.TryAcquireAsync(connectionOrTransaction, resourceName, timeoutMillis, CancellationToken.None, isSyncOverAsync: true);
-            try { return tryAcquireTask.Result; }
-            catch (AggregateException ex)
-            {
-                ExceptionDispatchInfo.Capture(ex.GetBaseException()).Throw();
-                throw; // never hit
-            }
+            return this.TryAcquireAsync(connectionOrTransaction, resourceName, timeoutMillis, CancellationToken.None, isSyncOverAsync: true)
+                .GetAwaiter()
+                .GetResult();
         }
 
-        public Task<Cookie> TryAcquireAsync(ConnectionOrTransaction connectionOrTransaction, string resourceName, int timeoutMillis, CancellationToken cancellationToken)
+        public Task<Cookie?> TryAcquireAsync(ConnectionOrTransaction connectionOrTransaction, string resourceName, int timeoutMillis, CancellationToken cancellationToken)
         {
             return this.TryAcquireAsync(connectionOrTransaction, resourceName, timeoutMillis, cancellationToken, isSyncOverAsync: false);
         }
 
         public void Release(ConnectionOrTransaction connectionOrTransaction, string resourceName, Cookie lockCookie)
         {
-            using (var command = CreateTextCommand(connectionOrTransaction, operationTimeoutMillis: Timeout.Infinite))
-            {
-                command.CommandText = ReleaseQuery.Value;
-                this.AddCommonParameters(command, resourceName, markerTableName: lockCookie.MarkerTable, ticketLockName: lockCookie.Ticket);
-                command.ExecuteNonQuery();
-            }
+            using var command = CreateTextCommand(connectionOrTransaction, operationTimeoutMillis: Timeout.Infinite);
+            command.CommandText = ReleaseQuery.Value;
+            this.AddCommonParameters(command, resourceName, markerTableName: lockCookie.MarkerTable, ticketLockName: lockCookie.Ticket);
+            command.ExecuteNonQuery();
         }
 
         bool ISqlSynchronizationStrategy<Cookie>.IsUpgradeable => false;
@@ -62,7 +56,7 @@ namespace Medallion.Threading.Sql
         #endregion
         
         #region ---- Command Execution ----
-        private async Task<Cookie> TryAcquireAsync(
+        private async Task<Cookie?> TryAcquireAsync(
             ConnectionOrTransaction connectionOrTransaction, 
             string semaphoreName, 
             int timeoutMillis, 
@@ -70,21 +64,19 @@ namespace Medallion.Threading.Sql
             bool isSyncOverAsync)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            string markerTableName;  
+            string? markerTableName;  
 
             // when we aren't supporting cancellation, we can use a simplified one-step algorithm. We treat a timeout of
             // zero in the same way: since there is no blocking, we don't need to bother with explicit cancellation support
             if (!cancellationToken.CanBeCanceled || timeoutMillis == 0)
             {
-                using (var command = CreateTextCommand(connectionOrTransaction, operationTimeoutMillis: timeoutMillis))
-                {
-                    command.CommandText = AcquireNonCancelableQuery.Value;
-                    this.AddCommonParameters(command, semaphoreName, timeoutMillis: timeoutMillis);
-                    await ExecuteNonQueryAsync(command, CancellationToken.None, isSyncOverAsync).ConfigureAwait(false);
-                    return await ProcessAcquireResultAsync(command.Parameters, timeoutMillis, cancellationToken, out markerTableName, out var ticketLockName).ConfigureAwait(false)
-                        ? new Cookie(ticket: ticketLockName, markerTable: markerTableName)
-                        : null;
-                }
+                using var command = CreateTextCommand(connectionOrTransaction, operationTimeoutMillis: timeoutMillis);
+                command.CommandText = AcquireNonCancelableQuery.Value;
+                this.AddCommonParameters(command, semaphoreName, timeoutMillis: timeoutMillis);
+                await ExecuteNonQueryAsync(command, CancellationToken.None, isSyncOverAsync).ConfigureAwait(false);
+                return await ProcessAcquireResultAsync(command.Parameters, timeoutMillis, cancellationToken, out markerTableName, out var ticketLockName).ConfigureAwait(false)
+                    ? new Cookie(ticket: ticketLockName!, markerTable: markerTableName!)
+                    : null;
             }
 
             // cancelable case
@@ -97,7 +89,7 @@ namespace Medallion.Threading.Sql
                 await ExecuteNonQueryAsync(command, CancellationToken.None, isSyncOverAsync).ConfigureAwait(false);
                 if (await ProcessAcquireResultAsync(command.Parameters, timeoutMillis, cancellationToken, out markerTableName, out var ticketLockName).ConfigureAwait(false))
                 {
-                    return new Cookie(ticket: ticketLockName, markerTable: markerTableName);
+                    return new Cookie(ticket: ticketLockName!, markerTable: markerTableName!);
                 }
             }
 
@@ -124,7 +116,7 @@ namespace Medallion.Threading.Sql
                 }
 
                 return await ProcessAcquireResultAsync(command.Parameters, timeoutMillis, cancellationToken, out markerTableName, out var ticketLockName).ConfigureAwait(false)
-                    ? new Cookie(ticket: ticketLockName, markerTable: markerTableName)
+                    ? new Cookie(ticket: ticketLockName!, markerTable: markerTableName!)
                     : null;
             }
         }
@@ -136,8 +128,8 @@ namespace Medallion.Threading.Sql
             IDataParameterCollection parameters, 
             int timeoutMillis,
             CancellationToken cancellationToken,
-            out string markerTableName, 
-            out string ticketLockName)
+            out string? markerTableName, 
+            out string? ticketLockName)
         {
             var resultCode = (int)((IDbDataParameter)parameters[ResultCodeParameter]).Value;
             switch (resultCode)
@@ -223,11 +215,11 @@ namespace Medallion.Threading.Sql
             }))
             {
                 try { await commandTask.ConfigureAwait(false); }
-                catch (SqlException ex)
+                catch (DbException ex)
                     // MA: canceled SQL operations throw SqlException instead of OCE.
                     // That means that downstream operations end up faulted instead of canceled. We
                     // wrap with OCE here to correctly propagate cancellation
-                    when (cancellationToken.IsCancellationRequested && ex.Number == 0)
+                    when (cancellationToken.IsCancellationRequested && SqlHelpers.IsCancellationException(ex))
                 {
                     throw new OperationCanceledException("Command was canceled", ex, cancellationToken);
                 }
@@ -236,14 +228,14 @@ namespace Medallion.Threading.Sql
 
         private static IDbCommand CreateTextCommand(ConnectionOrTransaction connectionOrTransaction, int operationTimeoutMillis)
         {
-            var command = connectionOrTransaction.Connection.CreateCommand();
+            var command = connectionOrTransaction.Connection!.CreateCommand();
             command.Transaction = connectionOrTransaction.Transaction;
             command.CommandType = CommandType.Text;
             command.CommandTimeout = SqlHelpers.GetCommandTimeout(operationTimeoutMillis);
             return command;
         }
 
-        private void AddCommonParameters(IDbCommand command, string semaphoreName, int? timeoutMillis = null, string markerTableName = null, string ticketLockName = null)
+        private void AddCommonParameters(IDbCommand command, string semaphoreName, int? timeoutMillis = null, string? markerTableName = null, string? ticketLockName = null)
         {
             command.Parameters.Add(command.CreateParameter(SemaphoreNameParameter, semaphoreName));
             command.Parameters.Add(command.CreateParameter(MaxCountParameter, this._maxCount));
@@ -305,7 +297,7 @@ namespace Medallion.Threading.Sql
 
         private static string ReplaceInvalidCharacters(string semaphoreName)
         {
-            StringBuilder modifiedName = null;
+            StringBuilder? modifiedName = null;
             for (var i = 0; i < semaphoreName.Length; ++i)
             {
                 var @char = semaphoreName[i];
@@ -334,13 +326,11 @@ namespace Medallion.Threading.Sql
 
         private static string HashName(string name)
         {
-            using (var hashAlgorithm = SHA256.Create())
-            {
-                var hashBytes = hashAlgorithm.ComputeHash(Encoding.UTF8.GetBytes(name));
-                return BitConverter.ToString(hashBytes)
-                    .Replace("-", string.Empty)
-                    .ToLowerInvariant();
-            }
+            using var hashAlgorithm = SHA256.Create();
+            var hashBytes = hashAlgorithm.ComputeHash(Encoding.UTF8.GetBytes(name));
+            return BitConverter.ToString(hashBytes)
+                .Replace("-", string.Empty)
+                .ToLowerInvariant();
         }
         #endregion
 
@@ -396,7 +386,7 @@ namespace Medallion.Threading.Sql
         /// <summary>
         /// Used for making comments in format strings
         /// </summary>
-        private static readonly object C = null;
+        private static readonly object? C = null;
         
         /// <summary>
         /// The preamble is the first part of the acquire algorithm. It is not cancellation-safe

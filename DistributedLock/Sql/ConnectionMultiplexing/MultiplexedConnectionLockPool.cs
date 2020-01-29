@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -30,7 +29,7 @@ namespace Medallion.Threading.Sql.ConnectionMultiplexing
 
         private MultiplexedConnectionLockPool() { }
 
-        public IDisposable TryAcquire<TLockCookie>(
+        public IDisposable? TryAcquire<TLockCookie>(
             string connectionString,
             string lockName,
             int timeoutMillis,
@@ -69,7 +68,7 @@ namespace Medallion.Threading.Sql.ConnectionMultiplexing
              
             // normal phase: if we were not able to be opportunistic, ensure that we have a lock
             var @lock = new MultiplexedConnectionLock(connectionString);
-            IDisposable handle = null;
+            IDisposable? handle = null;
             try
             {
                 handle = @lock.TryAcquire(lockName, timeoutMillis, strategy, opportunistic: false).Handle;
@@ -83,7 +82,7 @@ namespace Medallion.Threading.Sql.ConnectionMultiplexing
             return handle;
         }
 
-        public async Task<IDisposable> TryAcquireAsync<TLockCookie>(
+        public async Task<IDisposable?> TryAcquireAsync<TLockCookie>(
             string connectionString,
             string lockName,
             int timeoutMillis,
@@ -123,7 +122,7 @@ namespace Medallion.Threading.Sql.ConnectionMultiplexing
 
             // normal phase: if we were not able to be opportunistic, ensure that we have a lock
             var @lock = new MultiplexedConnectionLock(connectionString);
-            IDisposable handle = null;
+            IDisposable? handle = null;
             try
             {
                 handle = (await @lock.TryAcquireAsync(lockName, timeoutMillis, strategy, cancellationToken, opportunistic: false).ConfigureAwait(false)).Handle;
@@ -137,7 +136,7 @@ namespace Medallion.Threading.Sql.ConnectionMultiplexing
             return handle;
         }
 
-        private MultiplexedConnectionLock GetExistingLockOrDefault(string connectionString)
+        private MultiplexedConnectionLock? GetExistingLockOrDefault(string connectionString)
         {
             lock (this.@lock)
             {
@@ -152,8 +151,7 @@ namespace Medallion.Threading.Sql.ConnectionMultiplexing
         {
             lock (this.@lock)
             {
-                Queue<MultiplexedConnectionLock> existingPool;
-                if (this.connectionStringPools.TryGetValue(connectionString, out existingPool))
+                if (this.connectionStringPools.TryGetValue(connectionString, out var existingPool))
                 {
                     existingPool.Enqueue(@lock);
                 }
@@ -166,10 +164,10 @@ namespace Medallion.Threading.Sql.ConnectionMultiplexing
                     // if we're adding the first queue, start the cleanup thread
                     if (this.connectionStringPools.Count == 1)
                     {
-                        // rather than replacing cleanup task, we continue on it. This ensures that we never end up in a state
+                        // rather than directly replacing cleanup task, we continue on it. This ensures that we never end up in a state
                         // where two cleanup tasks are running at once. Since only cleanup can remove from the pools map, we'll
                         // never end up queueing up multiple cleanup tasks on top of one another
-                        this.cleanupTask.ContinueWith(
+                        this.cleanupTask = this.cleanupTask.ContinueWith(
                             (_, state) => Task.Run(() => ((MultiplexedConnectionLockPool)state).CleanupLoop()),
                             state: this,
                             continuationOptions: TaskContinuationOptions.ExecuteSynchronously
@@ -228,13 +226,13 @@ namespace Medallion.Threading.Sql.ConnectionMultiplexing
             }
             
             // clean up each pool in the snapshot, noting pools that were empty after cleanup
-            List<KeyValuePair<string, Queue<MultiplexedConnectionLock>>> toRemove = null;
+            List<KeyValuePair<string, Queue<MultiplexedConnectionLock>>>? toRemove = null;
             foreach (var kvp in connectionStringPoolsSnapshot)
             {
                 await this.DoCleanupAsync(kvp.Value).ConfigureAwait(false);
                 if (kvp.Value.Count == 0)
                 {
-                    (toRemove ?? (toRemove = new List<KeyValuePair<string, Queue<MultiplexedConnectionLock>>>())).Add(kvp);
+                    (toRemove ??= new List<KeyValuePair<string, Queue<MultiplexedConnectionLock>>>()).Add(kvp);
                 }
             }
 

@@ -1,9 +1,8 @@
 ﻿using Medallion.Threading.Sql;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -11,30 +10,29 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading.Tests.Sql
 {
-    [TestClass]
-    public sealed class SqlDistributedSemaphoreTest : TestBase
+    public sealed class SqlDistributedSemaphoreTest
     {
-        [TestMethod]
+        [Test]
         public void TestBadConstructorArguments()
         {
-            TestHelper.AssertThrows<ArgumentNullException>(() => new SqlDistributedSemaphore(null, 1, ConnectionStringProvider.ConnectionString));
-            TestHelper.AssertThrows<ArgumentOutOfRangeException>(() => new SqlDistributedSemaphore("a", -1, ConnectionStringProvider.ConnectionString));
-            TestHelper.AssertThrows<ArgumentOutOfRangeException>(() => new SqlDistributedSemaphore("a", 0, ConnectionStringProvider.ConnectionString));
-            TestHelper.AssertThrows<ArgumentNullException>(() => new SqlDistributedSemaphore("a", 1, default(string)));
-            TestHelper.AssertThrows<ArgumentNullException>(() => new SqlDistributedSemaphore("a", 1, default(IDbConnection)));
-            TestHelper.AssertThrows<ArgumentNullException>(() => new SqlDistributedSemaphore("a", 1, default(IDbTransaction)));
-            TestHelper.AssertThrows<ArgumentException>(() => new SqlDistributedSemaphore("a", 1, ConnectionStringProvider.ConnectionString, (SqlDistributedLockConnectionStrategy)int.MinValue));
+            Assert.Catch<ArgumentNullException>(() => new SqlDistributedSemaphore(null!, 1, ConnectionStringProvider.ConnectionString));
+            Assert.Catch<ArgumentOutOfRangeException>(() => new SqlDistributedSemaphore("a", -1, ConnectionStringProvider.ConnectionString));
+            Assert.Catch<ArgumentOutOfRangeException>(() => new SqlDistributedSemaphore("a", 0, ConnectionStringProvider.ConnectionString));
+            Assert.Catch<ArgumentNullException>(() => new SqlDistributedSemaphore("a", 1, default(string)!));
+            Assert.Catch<ArgumentNullException>(() => new SqlDistributedSemaphore("a", 1, default(IDbConnection)!));
+            Assert.Catch<ArgumentNullException>(() => new SqlDistributedSemaphore("a", 1, default(IDbTransaction)!));
+            Assert.Catch<ArgumentException>(() => new SqlDistributedSemaphore("a", 1, ConnectionStringProvider.ConnectionString, (SqlDistributedLockConnectionStrategy)int.MinValue));
 
             var random = new Random(1234);
             var bytes = new byte[10000];
             random.NextBytes(bytes);
-            TestHelper.AssertDoesNotThrow(() => new SqlDistributedSemaphore(Encoding.UTF8.GetString(bytes), int.MaxValue, ConnectionStringProvider.ConnectionString));
+            Assert.DoesNotThrow(() => new SqlDistributedSemaphore(Encoding.UTF8.GetString(bytes), int.MaxValue, ConnectionStringProvider.ConnectionString));
         }
 
-        [TestMethod]
+        [Test]
         public void TestNameMangling()
         {
-            string ToSafeNameChecked(string name)
+            static string ToSafeNameChecked(string name)
             {
                 var safeName = SqlSemaphore.ToSafeName(name);
                 (safeName.Length > 0).ShouldEqual(true, "was: " + safeName);
@@ -60,7 +58,7 @@ namespace Medallion.Threading.Tests.Sql
                 .ShouldEqual(1000);
         }
 
-        [TestMethod]
+        [Test]
         public void TestNameManglingCompatibility()
         {
             SqlSemaphore.ToSafeName(string.Empty).ShouldEqual("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855semaphore");
@@ -73,25 +71,31 @@ namespace Medallion.Threading.Tests.Sql
                 .ShouldEqual("0123456789ab7fb98786c16c175d232ab161b5e604c5792e6befd4e1e8d4ecac9d568a6db524semaphore");
         }
 
-        [TestMethod]
+        [Test]
         public void TestTicketsTakenOnBothConnectionAndTransactionForThatConnection()
         {
-            using (var connection = new SqlConnection(ConnectionStringProvider.ConnectionString))
-            {
-                connection.Open();
+            using var connection = SqlHelpers.CreateConnection(ConnectionStringProvider.ConnectionString);
+            connection.Open();
 
-                var semaphore1 = new SqlDistributedSemaphore(nameof(TestTicketsTakenOnBothConnectionAndTransactionForThatConnection), 2, connection);
-                var handle1 = semaphore1.Acquire();
+            var semaphore1 = new SqlDistributedSemaphore(
+                UniqueSemaphoreName(nameof(TestTicketsTakenOnBothConnectionAndTransactionForThatConnection)),
+                2,
+                connection
+            );
+            var handle1 = semaphore1.Acquire();
 
-                using (var transaction = connection.BeginTransaction())
-                {
-                    var semaphore2 = new SqlDistributedSemaphore(nameof(TestTicketsTakenOnBothConnectionAndTransactionForThatConnection), 2, transaction);
-                    var handle2 = semaphore2.Acquire();
-                    semaphore2.TryAcquire().ShouldEqual(null);
-                    var ex = TestHelper.AssertThrows<InvalidOperationException>(() => semaphore2.Acquire());
-                    ex.Message.Contains("Deadlock").ShouldEqual(true, ex.ToString());
-                }
-            }
+            using var transaction = connection.BeginTransaction();
+            var semaphore2 = new SqlDistributedSemaphore(
+UniqueSemaphoreName(nameof(TestTicketsTakenOnBothConnectionAndTransactionForThatConnection)),
+2,
+transaction
+);
+            var handle2 = semaphore2.Acquire();
+            semaphore2.TryAcquire().ShouldEqual(null);
+            var ex = Assert.Catch<InvalidOperationException>(() => semaphore2.Acquire());
+            ex.Message.Contains("Deadlock").ShouldEqual(true, ex.ToString());
         }
+
+        private static string UniqueSemaphoreName(string baseName) => $"{baseName}_{TestHelper.FrameworkName}";
     }
 }

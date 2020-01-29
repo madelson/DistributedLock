@@ -197,6 +197,10 @@ simultaneously. This is particularly helpful for high-load scenarios since it ca
 Most of the time, you'll want to use the default connection strategy. See more details about the various strategies [here](https://github.com/madelson/DistributedLock/blob/master/DistributedLock/Sql/SqlDistributedLockConnectionStrategy.cs).
 
 ## Release notes
+- 1.5.0
+	- Added cross-platform support via Microsoft.Data.SqlClient ([#25](https://github.com/madelson/DistributedLock/issues/25)). This feature is available for .NET Standard >= 2.0. Thanks to [@alesebi91](https://github.com/alesebi91) for helping with the implementation and testing!
+	- Added C#8 nullable annotations ([#31](https://github.com/madelson/DistributedLock/issues/31))
+	- Fixed minor bug in connection multiplexing which could lead to more lock contention ([#32](https://github.com/madelson/DistributedLock/issues/32))
 - 1.4.0
 	- Added a SQL-based distributed semaphore ([#7](https://github.com/madelson/DistributedLock/issues/7))
 	- Fix bug where SqlDistributedLockConnectionStrategy.Azure would leak connections, relying on GC to reclaim them ([#14](https://github.com/madelson/DistributedLock/issues/14)). Thanks [zavalita1](https://github.com/zavalita1) for investigating this issue!

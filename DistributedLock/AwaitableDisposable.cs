@@ -19,7 +19,7 @@ namespace Medallion.Threading
     ///     using (var handle = await myLock.AcquireAsync()) { ... }
     /// </code>
     /// </summary>
-    public struct AwaitableDisposable<TDisposable> where TDisposable : IDisposable
+    public struct AwaitableDisposable<TDisposable> where TDisposable : IDisposable?
     {
         /// <summary>
         /// Constructs a new instance of <see cref="AwaitableDisposable{TDisposable}"/> from the given <paramref name="task"/>

@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
-using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -21,7 +20,7 @@ namespace Medallion.Threading.Sql
             this.connectionOrTransaction = connectionOrTransaction;
         }
 
-        public IDisposable TryAcquire<TLockCookie>(int timeoutMillis, ISqlSynchronizationStrategy<TLockCookie> strategy, IDisposable contextHandle)
+        public IDisposable? TryAcquire<TLockCookie>(int timeoutMillis, ISqlSynchronizationStrategy<TLockCookie> strategy, IDisposable? contextHandle)
             where TLockCookie : class
         {
             this.CheckConnection();
@@ -30,7 +29,7 @@ namespace Medallion.Threading.Sql
             return this.CreateHandle(strategy, lockCookie);
         }
 
-        public async Task<IDisposable> TryAcquireAsync<TLockCookie>(int timeoutMillis, ISqlSynchronizationStrategy<TLockCookie> strategy, CancellationToken cancellationToken, IDisposable contextHandle)
+        public async Task<IDisposable?> TryAcquireAsync<TLockCookie>(int timeoutMillis, ISqlSynchronizationStrategy<TLockCookie> strategy, CancellationToken cancellationToken, IDisposable? contextHandle)
             where TLockCookie : class
         {
             this.CheckConnection();
@@ -46,7 +45,7 @@ namespace Medallion.Threading.Sql
             else if (connection.State != ConnectionState.Open) { throw new InvalidOperationException("The connection is not open"); }
         }
 
-        private IDisposable CreateHandle<TLockCookie>(ISqlSynchronizationStrategy<TLockCookie> strategy, TLockCookie lockCookie) where TLockCookie : class
+        private IDisposable? CreateHandle<TLockCookie>(ISqlSynchronizationStrategy<TLockCookie> strategy, TLockCookie? lockCookie) where TLockCookie : class
         {
             if (lockCookie == null) { return null; }
 

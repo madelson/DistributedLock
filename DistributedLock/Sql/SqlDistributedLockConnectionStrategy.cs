@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data.SqlClient;
+using System.Data.Common;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -27,7 +27,7 @@ namespace Medallion.Threading.Sql
 
         /// <summary>
         /// Uses a transaction-scoped lock. This is marginally less expensive than <see cref="Connection"/>
-        /// because releasing the lock requires only disposing the underlying <see cref="SqlTransaction"/>.
+        /// because releasing the lock requires only disposing the underlying <see cref="DbTransaction"/>.
         /// The disadvantage is that using this strategy may lead to long-running transactions, which can be
         /// problematic for databases using the full recovery model
         /// </summary>
