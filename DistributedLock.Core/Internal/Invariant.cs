@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 
-namespace Medallion.Threading
+namespace Medallion.Threading.Internal
 {
 #if DEBUG
     public

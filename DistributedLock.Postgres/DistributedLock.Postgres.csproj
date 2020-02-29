@@ -28,7 +28,6 @@
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
     <TreatSpecificWarningsAsErrors />
-    <DefineConstants>DEBUG</DefineConstants>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
@@ -42,6 +41,7 @@
   </ItemGroup>
   
   <ItemGroup>
+    <ProjectReference Include="..\DistributedLock.Core\DistributedLock.Core.csproj" />
     <ProjectReference Include="..\DistributedLock\DistributedLock.csproj" />
   </ItemGroup>
 </Project>
