@@ -17,7 +17,7 @@ namespace Medallion.Threading.Tests.Sql
         /// </summary>
         private uint createCounter;
 
-        internal override IDistributedLock CreateLockWithExactName(string name)
+        internal override IDistributedLockOld CreateLockWithExactName(string name)
         {
             var readerWriterLock = this.CreateReaderWriterLockWithExactName(name);
             var @lock = new SqlReaderWriterLockDistributedLock(readerWriterLock, useUpgradeLock: this.GetUseUpgradeLock(name));
@@ -92,7 +92,7 @@ namespace Medallion.Threading.Tests.Sql
             provider.PerformCleanupForLockAbandonment();
         }
 
-        private sealed class SqlReaderWriterLockDistributedLock : IDistributedLock
+        private sealed class SqlReaderWriterLockDistributedLock : IDistributedLockOld
         {
             private readonly SqlDistributedReaderWriterLock @lock;
             private readonly bool useUpgradeLock;
@@ -103,28 +103,28 @@ namespace Medallion.Threading.Tests.Sql
                 this.useUpgradeLock = useUpgradeLock;
             }
 
-            IDisposable IDistributedLock.Acquire(TimeSpan? timeout, CancellationToken cancellationToken)
+            IDisposable IDistributedLockOld.Acquire(TimeSpan? timeout, CancellationToken cancellationToken)
             {
                 return this.useUpgradeLock
                     ? this.@lock.AcquireUpgradeableReadLock(timeout, cancellationToken)
                     : this.@lock.AcquireWriteLock(timeout, cancellationToken);
             }
 
-            Task<IDisposable> IDistributedLock.AcquireAsync(TimeSpan? timeout, CancellationToken cancellationToken)
+            Task<IDisposable> IDistributedLockOld.AcquireAsync(TimeSpan? timeout, CancellationToken cancellationToken)
             {
                 return this.useUpgradeLock
                     ? CastTask<SqlDistributedReaderWriterLock.UpgradeableHandle, IDisposable>(this.@lock.AcquireUpgradeableReadLockAsync(timeout, cancellationToken))
                     : this.@lock.AcquireWriteLockAsync(timeout, cancellationToken);
             }
 
-            IDisposable? IDistributedLock.TryAcquire(TimeSpan timeout, CancellationToken cancellationToken)
+            IDisposable? IDistributedLockOld.TryAcquire(TimeSpan timeout, CancellationToken cancellationToken)
             {
                 return this.useUpgradeLock
                     ? this.@lock.TryAcquireUpgradeableReadLock(timeout, cancellationToken)
                     : this.@lock.TryAcquireWriteLock(timeout, cancellationToken);
             }
 
-            Task<IDisposable?> IDistributedLock.TryAcquireAsync(TimeSpan timeout, CancellationToken cancellationToken)
+            Task<IDisposable?> IDistributedLockOld.TryAcquireAsync(TimeSpan timeout, CancellationToken cancellationToken)
             {
                 return this.useUpgradeLock
                     ? CastTask<SqlDistributedReaderWriterLock.UpgradeableHandle?, IDisposable?>(this.@lock.TryAcquireUpgradeableReadLockAsync(timeout, cancellationToken))

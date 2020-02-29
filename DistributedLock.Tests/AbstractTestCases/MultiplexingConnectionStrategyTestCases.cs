@@ -61,7 +61,7 @@ namespace Medallion.Threading.Tests.Sql
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)] // need to isolate for GC
-        private WeakReference TestCleanupHelper(IDistributedLock lock1, IDistributedLock lock2)
+        private WeakReference TestCleanupHelper(IDistributedLockOld lock1, IDistributedLockOld lock2)
         {
             var handle = lock1.Acquire();
 

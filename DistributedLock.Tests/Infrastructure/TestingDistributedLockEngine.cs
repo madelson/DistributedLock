@@ -11,7 +11,7 @@ namespace Medallion.Threading.Tests
     {
         private readonly string _currentTestFullName = TestContext.CurrentContext.Test.FullName;
 
-        internal IDistributedLock CreateLock(string baseName) =>
+        internal IDistributedLockOld CreateLock(string baseName) =>
             this.CreateLockWithExactName(this.GetUniqueSafeLockName(baseName));
 
         /// <summary>
@@ -21,7 +21,7 @@ namespace Medallion.Threading.Tests
         internal string GetUniqueSafeLockName(string baseName = "") =>
             this.GetSafeLockName($"{baseName}_{this._currentTestFullName}_{TestHelper.FrameworkName}");
 
-        internal abstract IDistributedLock CreateLockWithExactName(string name);
+        internal abstract IDistributedLockOld CreateLockWithExactName(string name);
 
         internal abstract string GetSafeLockName(string name);
         

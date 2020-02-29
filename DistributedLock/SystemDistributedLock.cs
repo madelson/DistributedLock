@@ -12,7 +12,7 @@ namespace Medallion.Threading
     /// <summary>
     /// Implements a system-/OS-scoped distributed lock using .NET <see cref="EventWaitHandle"/>s
     /// </summary>
-    public sealed class SystemDistributedLock : IDistributedLock
+    public sealed class SystemDistributedLock : IDistributedLockOld
     {
         private const string GlobalPrefix = @"Global\";
         private static readonly TimeSpan DefaultAbandonmentCheckFrequency = TimeSpan.FromSeconds(2);

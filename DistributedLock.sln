@@ -9,7 +9,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DistributedLock.Tests", "Di
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DistributedLockTaker", "DistributedLockTaker\DistributedLockTaker.csproj", "{6219CF2C-A3F8-4453-BE20-79EFC32987D9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DistributedLock.Postgres", "DistributedLock.Postgres\DistributedLock.Postgres.csproj", "{2646CB8F-FB5E-4712-8B1B-C1F991228A14}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DistributedLock.Postgres", "DistributedLock.Postgres\DistributedLock.Postgres.csproj", "{2646CB8F-FB5E-4712-8B1B-C1F991228A14}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DistributedLock.Core", "DistributedLock.Core\DistributedLock.Core.csproj", "{AC520183-960F-401F-9990-835916291335}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +35,10 @@ Global
 		{2646CB8F-FB5E-4712-8B1B-C1F991228A14}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2646CB8F-FB5E-4712-8B1B-C1F991228A14}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2646CB8F-FB5E-4712-8B1B-C1F991228A14}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AC520183-960F-401F-9990-835916291335}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AC520183-960F-401F-9990-835916291335}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AC520183-960F-401F-9990-835916291335}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AC520183-960F-401F-9990-835916291335}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

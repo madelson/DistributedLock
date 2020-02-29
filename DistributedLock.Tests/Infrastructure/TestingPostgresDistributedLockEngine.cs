@@ -17,7 +17,7 @@ namespace Medallion.Threading.Tests
 
         internal override bool IsReentrant => false;
 
-        internal override IDistributedLock CreateLockWithExactName(string name) => 
+        internal override IDistributedLockOld CreateLockWithExactName(string name) => 
             new PostgresDistributedLock(new PostgresAdvisoryLockKey(name), GetConnectionString());
 
         internal override string GetSafeLockName(string name) => PostgresDistributedLock.GetSafeLockName(name).ToString();

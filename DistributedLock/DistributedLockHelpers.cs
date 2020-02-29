@@ -29,13 +29,13 @@ namespace Medallion.Threading
             return (int)totalMilliseconds;
         }
 
-        public static Task<IDisposable> AcquireAsync(IDistributedLock @lock, TimeSpan? timeout, CancellationToken cancellationToken)
+        public static Task<IDisposable> AcquireAsync(IDistributedLockOld @lock, TimeSpan? timeout, CancellationToken cancellationToken)
         {
             var tryAcquireTask = @lock.TryAcquireAsync(timeout ?? Timeout.InfiniteTimeSpan, cancellationToken);
             return ValidateTryAcquireResultAsync(tryAcquireTask, timeout);
         }
 
-        public static IDisposable Acquire(IDistributedLock @lock, TimeSpan? timeout, CancellationToken cancellationToken)
+        public static IDisposable Acquire(IDistributedLockOld @lock, TimeSpan? timeout, CancellationToken cancellationToken)
         {
             return @lock.TryAcquire(timeout ?? Timeout.InfiniteTimeSpan, cancellationToken)
                 ?? throw CreateTryAcquireFailedException(timeout);
@@ -53,7 +53,7 @@ namespace Medallion.Threading
                 // should never get here
                 : (Exception)new InvalidOperationException("Failed to acquire the lock");
 
-        public static IDisposable? TryAcquireWithAsyncCancellation(IDistributedLock @lock, TimeSpan timeout, CancellationToken cancellationToken)
+        public static IDisposable? TryAcquireWithAsyncCancellation(IDistributedLockOld @lock, TimeSpan timeout, CancellationToken cancellationToken)
         {
             return @lock.TryAcquireAsync(timeout, cancellationToken).GetAwaiter().GetResult();
         }

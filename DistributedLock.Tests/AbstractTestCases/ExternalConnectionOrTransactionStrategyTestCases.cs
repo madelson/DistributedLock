@@ -28,7 +28,7 @@ namespace Medallion.Threading.Tests
             Task RunDeadlock(bool isFirst)
             {
                 var connectionInfo = provider.GetConnectionInfo();
-                IDistributedLock lock1, lock2;
+                IDistributedLockOld lock1, lock2;
                 using (connectionInfo.Transaction != null ? TransactionProvider.UseTransaction(connectionInfo.Transaction) : ConnectionProvider.UseConnection(connectionInfo.Connection!))
                 {
                     lock1 = engine.CreateLock(isFirst ? LockName1 : LockName2);

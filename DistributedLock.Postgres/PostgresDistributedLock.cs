@@ -13,7 +13,7 @@ namespace Medallion.Threading.Postgres
     // todo more code sharing with SQL
     // todo integrate into all appropriate abstract test cases (will want a new provider concept to abstract away pool clearing, credentials, DbProviderFactory, etc)
 
-    public sealed class PostgresDistributedLock : IDistributedLock
+    public sealed class PostgresDistributedLock : IDistributedLockOld
     {
         private readonly PostgresAdvisoryLockKey _key;
         private readonly string _connectionString;

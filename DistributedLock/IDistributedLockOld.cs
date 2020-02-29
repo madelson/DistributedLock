@@ -12,7 +12,7 @@ namespace Medallion.Threading
 #else
     internal 
 #endif
-        interface IDistributedLock
+        interface IDistributedLockOld
     {
         IDisposable? TryAcquire(TimeSpan timeout = default, CancellationToken cancellationToken = default);
         IDisposable Acquire(TimeSpan? timeout = null, CancellationToken cancellationToken = default);

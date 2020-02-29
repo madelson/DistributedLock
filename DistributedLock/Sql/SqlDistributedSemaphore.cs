@@ -10,7 +10,7 @@ namespace Medallion.Threading.Sql
     /// <summary>
     /// Implements a distributed semaphore using SQL Server constructs.
     /// </summary>
-    public class SqlDistributedSemaphore : IDistributedLock
+    public class SqlDistributedSemaphore : IDistributedLockOld
     {
         private readonly IInternalSqlDistributedLock internalLock;
         private readonly SqlSemaphore strategy;
@@ -151,12 +151,12 @@ namespace Medallion.Threading.Sql
         #endregion
 
         #region ---- IDistributedLock Compat Layer (for Testing) ----
-        Task<IDisposable?> IDistributedLock.TryAcquireAsync(TimeSpan timeout, CancellationToken cancellationToken)
+        Task<IDisposable?> IDistributedLockOld.TryAcquireAsync(TimeSpan timeout, CancellationToken cancellationToken)
         {
             return this.TryAcquireAsync(timeout, cancellationToken).Task;
         }
 
-        Task<IDisposable> IDistributedLock.AcquireAsync(TimeSpan? timeout, CancellationToken cancellationToken)
+        Task<IDisposable> IDistributedLockOld.AcquireAsync(TimeSpan? timeout, CancellationToken cancellationToken)
         {
             return this.AcquireAsync(timeout, cancellationToken).Task;
         }

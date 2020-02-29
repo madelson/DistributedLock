@@ -10,7 +10,7 @@ namespace Medallion.Threading.Tests.Sql
     public sealed class TestingSqlDistributedLockEngine<TConnectionManagementProvider> : TestingDistributedLockEngine
         where TConnectionManagementProvider : TestingSqlConnectionManagementProvider, new()
     {
-        internal override IDistributedLock CreateLockWithExactName(string name)
+        internal override IDistributedLockOld CreateLockWithExactName(string name)
         {
             var connectionManagementProvider = new TConnectionManagementProvider();
             this.RegisterCleanupAction(connectionManagementProvider.Dispose);

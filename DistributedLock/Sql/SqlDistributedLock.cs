@@ -15,7 +15,7 @@ namespace Medallion.Threading.Sql
     /// Implements a distributed lock using a SQL server application lock
     /// (see https://msdn.microsoft.com/en-us/library/ms189823.aspx)
     /// </summary>
-    public sealed class SqlDistributedLock : IDistributedLock
+    public sealed class SqlDistributedLock : IDistributedLockOld
     {
         private readonly IInternalSqlDistributedLock internalLock;
 

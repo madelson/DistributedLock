@@ -8,7 +8,7 @@ namespace Medallion.Threading.Tests
 {
     public sealed class TestingSystemDistributedLockEngine : TestingDistributedLockEngine
     {
-        internal override IDistributedLock CreateLockWithExactName(string name) => new SystemDistributedLock(name);
+        internal override IDistributedLockOld CreateLockWithExactName(string name) => new SystemDistributedLock(name);
 
         internal override string GetSafeLockName(string name) => SystemDistributedLock.GetSafeLockName(name);
 

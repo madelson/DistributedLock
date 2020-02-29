@@ -21,7 +21,7 @@ namespace Medallion.Threading.Tests.Sql
             this.maxCount = maxCount;
         }
 
-        internal override IDistributedLock CreateLockWithExactName(string name)
+        internal override IDistributedLockOld CreateLockWithExactName(string name)
         {
             var semaphore = this.CreateSemaphoreWithExactName(name, this.maxCount);
 
@@ -78,7 +78,7 @@ namespace Medallion.Threading.Tests.Sql
             provider.PerformCleanupForLockAbandonment();
         }
 
-        private sealed class SqlSemaphoreDistributedLock : IDistributedLock
+        private sealed class SqlSemaphoreDistributedLock : IDistributedLockOld
         {
             private readonly SqlDistributedSemaphore semaphore;
 
@@ -87,22 +87,22 @@ namespace Medallion.Threading.Tests.Sql
                 this.semaphore = semaphore;
             }
 
-            IDisposable IDistributedLock.Acquire(TimeSpan? timeout, CancellationToken cancellationToken)
+            IDisposable IDistributedLockOld.Acquire(TimeSpan? timeout, CancellationToken cancellationToken)
             {
                 return this.semaphore.Acquire(timeout, cancellationToken);
             }
 
-            Task<IDisposable> IDistributedLock.AcquireAsync(TimeSpan? timeout, CancellationToken cancellationToken)
+            Task<IDisposable> IDistributedLockOld.AcquireAsync(TimeSpan? timeout, CancellationToken cancellationToken)
             {
                 return this.semaphore.AcquireAsync(timeout, cancellationToken).Task;
             }
 
-            IDisposable? IDistributedLock.TryAcquire(TimeSpan timeout, CancellationToken cancellationToken)
+            IDisposable? IDistributedLockOld.TryAcquire(TimeSpan timeout, CancellationToken cancellationToken)
             {
                 return this.semaphore.TryAcquire(timeout, cancellationToken);
             }
 
-            Task<IDisposable?> IDistributedLock.TryAcquireAsync(TimeSpan timeout, CancellationToken cancellationToken)
+            Task<IDisposable?> IDistributedLockOld.TryAcquireAsync(TimeSpan timeout, CancellationToken cancellationToken)
             {
                 return this.semaphore.TryAcquireAsync(timeout, cancellationToken).Task;
             }
