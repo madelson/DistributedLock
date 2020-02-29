@@ -5,6 +5,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Medallion.Threading.Postgres;
+using Medallion.Threading.Tests;
 #if NET471
 using System.Data.SqlClient;
 #elif NETCOREAPP3_1
@@ -41,6 +43,9 @@ namespace DistributedLockTaker
                     break;
                 case "SqlSemaphoreDistributedLock5":
                     handle = new SqlDistributedSemaphore(name, maxCount: 5, connectionString: ConnectionString).Acquire();
+                    break;
+                case "PostgresDistributedLock":
+                    handle = new PostgresDistributedLock(new PostgresAdvisoryLockKey(name), PostgresCredentials.GetConnectionString(Environment.CurrentDirectory)).Acquire();
                     break;
                 case "SystemDistributedLock":
                     handle = new SystemDistributedLock(name).Acquire();

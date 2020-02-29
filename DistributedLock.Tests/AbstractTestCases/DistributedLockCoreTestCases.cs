@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -102,20 +103,23 @@ namespace Medallion.Threading.Tests
             // acquire with a different lock instance to avoid reentrancy mattering
             using (engine.CreateLock(nameof(TestTimeouts)).Acquire())
             {
-                var syncAcquireTask = Task.Run(() => @lock.Acquire(TimeSpan.FromSeconds(.1)));
-                syncAcquireTask.ContinueWith(_ => { }).Wait(TimeSpan.FromSeconds(.2)).ShouldEqual(true, "sync acquire");
+                var timeout = TimeSpan.FromSeconds(.1);
+                var waitTime = TimeSpan.FromSeconds(.4);
+
+                var syncAcquireTask = Task.Run(() => @lock.Acquire(timeout));
+                syncAcquireTask.ContinueWith(_ => { }).Wait(waitTime).ShouldEqual(true, "sync acquire");
                 Assert.IsInstanceOf<TimeoutException>(syncAcquireTask.Exception!.InnerException, "sync acquire");
 
-                var asyncAcquireTask = @lock.AcquireAsync(TimeSpan.FromSeconds(.1));
-                asyncAcquireTask.ContinueWith(_ => { }).Wait(TimeSpan.FromSeconds(.2)).ShouldEqual(true, "async acquire");
+                var asyncAcquireTask = @lock.AcquireAsync(timeout);
+                asyncAcquireTask.ContinueWith(_ => { }).Wait(waitTime).ShouldEqual(true, "async acquire");
                 Assert.IsInstanceOf<TimeoutException>(asyncAcquireTask.Exception!.InnerException, "async acquire");
 
-                var syncTryAcquireTask = Task.Run(() => @lock.TryAcquire(TimeSpan.FromSeconds(.1)));
-                syncTryAcquireTask.Wait(TimeSpan.FromSeconds(.2)).ShouldEqual(true, "sync tryAcquire");
+                var syncTryAcquireTask = Task.Run(() => @lock.TryAcquire(timeout));
+                syncTryAcquireTask.Wait(waitTime).ShouldEqual(true, "sync tryAcquire");
                 syncTryAcquireTask.Result.ShouldEqual(null, "sync tryAcquire");
 
-                var asyncTryAcquireTask = @lock.TryAcquireAsync(TimeSpan.FromSeconds(.1));
-                asyncTryAcquireTask.Wait(TimeSpan.FromSeconds(.2)).ShouldEqual(true, "async tryAcquire");
+                var asyncTryAcquireTask = @lock.TryAcquireAsync(timeout);
+                asyncTryAcquireTask.Wait(waitTime).ShouldEqual(true, "async tryAcquire");
                 asyncTryAcquireTask.Result.ShouldEqual(null, "async tryAcquire");
             }
         }
@@ -146,6 +150,11 @@ namespace Medallion.Threading.Tests
         [Test]
         public void TestParallelism()
         {
+            // NOTE: if this test fails for Postgres, we may need to raise the default connection limit. This can 
+            // be done by setting max_connections in C:\Program Files\PostgreSQL\<version>\data\postgresql.conf or 
+            // /var/lib/pgsql/<version>/data/postgresql.conf and then restarting Postgres.
+            // See https://docs.alfresco.com/5.0/tasks/postgresql-config.html
+
             using var engine = new TEngine();
             var counter = 0;
             var tasks = Enumerable.Range(1, 100).Select(async _ =>
@@ -198,9 +207,19 @@ namespace Medallion.Threading.Tests
         public void TestLockNamesAreCaseSensitive()
         {
             using var engine = new TEngine();
-            var baseName = engine.GetUniqueSafeLockName(nameof(TestLockNamesAreCaseSensitive));
-            using (engine.CreateLockWithExactName(baseName.ToLowerInvariant()).Acquire())
-            using (var handle = engine.CreateLockWithExactName(baseName.ToUpperInvariant()).TryAcquire())
+
+            // the goal here is to construct 2 valid lock names that differ only by case. We start by generating a hash name
+            // that is unique to this test yet stable across runs. Then we truncate it to avoid need for further hashing in Postgres
+            // (which only supports very short ASCII string names)
+            using var sha1 = SHA1.Create();
+            var uniqueHashName = Convert.ToBase64String(sha1.ComputeHash(Encoding.UTF8.GetBytes(engine.GetUniqueSafeLockName())));
+            var lowerName = $"{uniqueHashName.Substring(0, 6)}_a";
+            var upperName = $"{uniqueHashName.Substring(0, 6)}_A";
+            Assert.AreEqual(lowerName, engine.GetSafeLockName(lowerName));
+            Assert.AreEqual(upperName, engine.GetSafeLockName(upperName));
+
+            using (engine.CreateLockWithExactName(lowerName).Acquire())
+            using (var handle = engine.CreateLockWithExactName(upperName).TryAcquire())
             {
                 Assert.IsNotNull(handle);
             }
@@ -256,9 +275,11 @@ namespace Medallion.Threading.Tests
 
             command.StandardInput.WriteLine("done");
             command.StandardInput.Flush();
-
+            
             using var handle = @lock.TryAcquire(TimeSpan.FromSeconds(10));
             Assert.IsNotNull(handle, this.GetType().Name);
+
+            Assert.IsTrue(command.Task.Wait(TimeSpan.FromSeconds(10)));
         }
 
         [Test]
@@ -323,7 +344,7 @@ namespace Medallion.Threading.Tests
                 "Release";
 #endif
             var exePath = Path.Combine(TestContext.CurrentContext.TestDirectory, "..", "..", "..", "..", "DistributedLockTaker", "bin", Configuration, TestHelper.FrameworkName, "DistributedLockTaker.exe");
-            var command = Command.Run(exePath, args, o => o.ThrowOnError(true));
+            var command = Command.Run(exePath, args, o => o.WorkingDirectory(TestContext.CurrentContext.TestDirectory).ThrowOnError(true));
             engine.RegisterCleanupAction(() =>
             {
                 if (!command.Task.IsCompleted)

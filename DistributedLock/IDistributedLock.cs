@@ -7,7 +7,12 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading
 {
-    internal interface IDistributedLock
+#if DEBUG
+    public
+#else
+    internal 
+#endif
+        interface IDistributedLock
     {
         IDisposable? TryAcquire(TimeSpan timeout = default, CancellationToken cancellationToken = default);
         IDisposable Acquire(TimeSpan? timeout = null, CancellationToken cancellationToken = default);

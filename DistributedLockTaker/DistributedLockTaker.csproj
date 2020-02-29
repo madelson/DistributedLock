@@ -22,5 +22,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\DistributedLock\DistributedLock.csproj" />
+    <ProjectReference Include="..\DistributedLock.Postgres\DistributedLock.Postgres.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\DistributedLock.Tests\Infrastructure\Shared\*.cs" />
   </ItemGroup>
 </Project>

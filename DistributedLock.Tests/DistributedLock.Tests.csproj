@@ -4,6 +4,7 @@
     <TargetFrameworks>net471;netcoreapp3.1</TargetFrameworks>
     <LangVersion>8.0</LangVersion>
     <Nullable>enable</Nullable>
+    <RootNamespace>Medallion.Threading.Tests</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
@@ -19,6 +20,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\DistributedLock\DistributedLock.csproj" />
+    <ProjectReference Include="..\DistributedLock.Postgres\DistributedLock.Postgres.csproj" />
   </ItemGroup>
   
 </Project>

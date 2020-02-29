@@ -9,7 +9,12 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading
 {
-    internal static class DistributedLockHelpers
+#if DEBUG
+    public
+#else
+    internal
+#endif
+        static class DistributedLockHelpers
     {
         public static int ToInt32Timeout(this TimeSpan timeout, string? paramName = null)
         {

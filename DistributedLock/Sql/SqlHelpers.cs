@@ -15,7 +15,12 @@ using Microsoft.Data.SqlClient;
 
 namespace Medallion.Threading.Sql
 {
-    internal static class SqlHelpers
+#if DEBUG
+    public
+#else
+    internal
+#endif
+    static class SqlHelpers
     {
         public static Task<int> ExecuteNonQueryAsync(this IDbCommand command, CancellationToken cancellationToken)
         {
@@ -97,7 +102,6 @@ namespace Medallion.Threading.Sql
             {
                 return true;
             }
-
 
             const string AlternateClientSqlExceptionName =
 #if NETSTANDARD1_3 || NET45

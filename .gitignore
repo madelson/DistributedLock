@@ -51,3 +51,5 @@ StyleCop.Cache
 *.nupkg
 #MA: using nuget package restore!
 packages/
+
+credentials/
