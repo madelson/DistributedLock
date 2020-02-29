@@ -9,6 +9,10 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading.Postgres
 {
+    // todo more strategies
+    // todo more code sharing with SQL
+    // todo integrate into all appropriate abstract test cases (will want a new provider concept to abstract away pool clearing, credentials, DbProviderFactory, etc)
+
     public sealed class PostgresDistributedLock : IDistributedLock
     {
         private readonly PostgresAdvisoryLockKey _key;
