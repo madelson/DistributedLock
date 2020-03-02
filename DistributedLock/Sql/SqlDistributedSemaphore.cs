@@ -90,7 +90,7 @@ namespace Medallion.Threading.Sql
         {
             return cancellationToken.CanBeCanceled
                 // use the async version since that supports cancellation
-                ? DistributedLockHelpers.TryAcquireWithAsyncCancellation(this, timeout, cancellationToken)
+                ? DistributedLockHelpersOld.TryAcquireWithAsyncCancellation(this, timeout, cancellationToken)
                 // synchronous mode
                 : this.internalLock.TryAcquire(timeout.ToInt32Timeout(), this.strategy, contextHandle: null);
         }
@@ -110,7 +110,7 @@ namespace Medallion.Threading.Sql
         /// <returns>An <see cref="IDisposable"/> "handle" which can be used to release the lock</returns>
         public IDisposable Acquire(TimeSpan? timeout = null, CancellationToken cancellationToken = default)
         {
-            return DistributedLockHelpers.Acquire(this, timeout, cancellationToken);
+            return DistributedLockHelpersOld.Acquire(this, timeout, cancellationToken);
         }
 
         /// <summary>
@@ -146,7 +146,7 @@ namespace Medallion.Threading.Sql
         /// <returns>An <see cref="IDisposable"/> "handle" which can be used to release the lock</returns>
         public AwaitableDisposable<IDisposable> AcquireAsync(TimeSpan? timeout = null, CancellationToken cancellationToken = default)
         {
-            return new AwaitableDisposable<IDisposable>(DistributedLockHelpers.AcquireAsync(this, timeout, cancellationToken));
+            return new AwaitableDisposable<IDisposable>(DistributedLockHelpersOld.AcquireAsync(this, timeout, cancellationToken));
         }
         #endregion
 

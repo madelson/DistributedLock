@@ -29,10 +29,10 @@ namespace Medallion.Threading.Postgres
         public static PostgresAdvisoryLockKey GetSafeLockName(string name) => new PostgresAdvisoryLockKey(name, allowHashing: true);
 
         public IDisposable Acquire(TimeSpan? timeout = null, CancellationToken cancellationToken = default) =>
-            DistributedLockHelpers.Acquire(this, timeout, cancellationToken);
+            DistributedLockHelpersOld.Acquire(this, timeout, cancellationToken);
 
         public Task<IDisposable> AcquireAsync(TimeSpan? timeout = null, CancellationToken cancellationToken = default) =>
-            DistributedLockHelpers.AcquireAsync(this, timeout, cancellationToken);
+            DistributedLockHelpersOld.AcquireAsync(this, timeout, cancellationToken);
 
         public IDisposable? TryAcquire(TimeSpan timeout = default, CancellationToken cancellationToken = default)
         {

@@ -154,7 +154,7 @@ namespace Medallion.Threading
         /// <returns>An <see cref="IDisposable"/> "handle" which can be used to release the lock</returns>
         public IDisposable Acquire(TimeSpan? timeout = null, CancellationToken cancellationToken = default)
         {
-            return DistributedLockHelpers.Acquire(this, timeout, cancellationToken);
+            return DistributedLockHelpersOld.Acquire(this, timeout, cancellationToken);
         }
 
         /// <summary>
@@ -192,7 +192,7 @@ namespace Medallion.Threading
         /// <returns>An <see cref="IDisposable"/> "handle" which can be used to release the lock</returns>
         public Task<IDisposable> AcquireAsync(TimeSpan? timeout = null, CancellationToken cancellationToken = default)
         {
-            return DistributedLockHelpers.AcquireAsync(this, timeout, cancellationToken);
+            return DistributedLockHelpersOld.AcquireAsync(this, timeout, cancellationToken);
         }
 
         /// <summary>
@@ -206,7 +206,7 @@ namespace Medallion.Threading
         /// </summary>
         public static string GetSafeLockName(string baseLockName)
         {
-            return DistributedLockHelpers.ToSafeLockName(baseLockName, MaxLockNameLength, s => s.Length == 0 ? "EMPTY" : s.Replace('\\', '_'));
+            return DistributedLockHelpersOld.ToSafeLockName(baseLockName, MaxLockNameLength, s => s.Length == 0 ? "EMPTY" : s.Replace('\\', '_'));
         }
         #endregion
 

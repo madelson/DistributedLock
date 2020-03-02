@@ -1,0 +1,46 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;netstandard2.1;net461</TargetFrameworks>
+    <RootNamespace>Medallion.Threading.WaitHandles</RootNamespace>
+    <GenerateDocumentationFile>True</GenerateDocumentationFile>
+    <WarningLevel>4</WarningLevel>
+    <LangVersion>Latest</LangVersion>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <Version>1.0.0-alpha01</Version>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <Authors>Michael Adelson</Authors>
+    <Description>TODO</Description>
+    <Copyright>Copyright © 2020 Michael Adelson</Copyright>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageTags>TODO</PackageTags>
+    <PackageProjectUrl>https://github.com/madelson/DistributedLock</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/madelson/DistributedLock</RepositoryUrl>
+    <FileVersion>1.0.0.0</FileVersion>
+    <PackageReleaseNotes>See https://github.com/madelson/DistributedLock#release-notes</PackageReleaseNotes>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <Optimize>True</Optimize>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
+    <TreatSpecificWarningsAsErrors />
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+    <Optimize>False</Optimize>
+    <NoWarn>1591</NoWarn>
+    <DefineConstants>TRACE;DEBUG</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Threading.AccessControl" Version="4.7.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DistributedLock.Core\DistributedLock.Core.csproj" />
+  </ItemGroup>
+</Project>

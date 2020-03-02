@@ -14,7 +14,7 @@ namespace Medallion.Threading
 #else
     internal
 #endif
-        static class DistributedLockHelpers
+        static class DistributedLockHelpersOld
     {
         public static int ToInt32Timeout(this TimeSpan timeout, string? paramName = null)
         {

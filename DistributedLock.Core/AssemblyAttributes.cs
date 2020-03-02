@@ -9,5 +9,6 @@ using System.Text;
 // internal APIs which are public in DEBUG and internal in RELEASE. That way, we can't
 // build in DEBUG if we rely on internal APIs that are not meant to be public
 #if !DEBUG
+[assembly: InternalsVisibleTo("DistributedLock.EventWaitHandles")]
 [assembly: InternalsVisibleTo("DistributedLock.Postgres")]
 #endif

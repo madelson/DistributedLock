@@ -92,7 +92,7 @@ namespace Medallion.Threading.Sql
         public IDisposable AcquireReadLock(TimeSpan? timeout = null, CancellationToken cancellationToken = default)
         {
             return this.TryAcquireReadLock(timeout ?? Timeout.InfiniteTimeSpan, cancellationToken)
-                ?? throw DistributedLockHelpers.CreateTryAcquireFailedException(timeout);
+                ?? throw DistributedLockHelpersOld.CreateTryAcquireFailedException(timeout);
         }
 
         /// <summary>
@@ -109,7 +109,7 @@ namespace Medallion.Threading.Sql
         public Task<IDisposable> AcquireReadLockAsync(TimeSpan? timeout = null, CancellationToken cancellationToken = default)
         {
             var handleTask = this.TryAcquireReadLockAsync(timeout ?? Timeout.InfiniteTimeSpan, cancellationToken);
-            return DistributedLockHelpers.ValidateTryAcquireResultAsync(handleTask, timeout);
+            return DistributedLockHelpersOld.ValidateTryAcquireResultAsync(handleTask, timeout);
         }
 
         /// <summary>
@@ -130,7 +130,7 @@ namespace Medallion.Threading.Sql
         public UpgradeableHandle AcquireUpgradeableReadLock(TimeSpan? timeout = null, CancellationToken cancellationToken = default)
         {
             return this.TryAcquireUpgradeableReadLock(timeout ?? Timeout.InfiniteTimeSpan, cancellationToken)
-                ?? throw DistributedLockHelpers.CreateTryAcquireFailedException(timeout);
+                ?? throw DistributedLockHelpersOld.CreateTryAcquireFailedException(timeout);
         }
 
         /// <summary>
@@ -147,7 +147,7 @@ namespace Medallion.Threading.Sql
         public Task<UpgradeableHandle> AcquireUpgradeableReadLockAsync(TimeSpan? timeout = null, CancellationToken cancellationToken = default)
         {
             var handleTask = this.TryAcquireUpgradeableReadLockAsync(timeout ?? Timeout.InfiniteTimeSpan, cancellationToken);
-            return DistributedLockHelpers.ValidateTryAcquireResultAsync(handleTask, timeout);
+            return DistributedLockHelpersOld.ValidateTryAcquireResultAsync(handleTask, timeout);
         }
 
         /// <summary>
@@ -166,7 +166,7 @@ namespace Medallion.Threading.Sql
         public IDisposable AcquireWriteLock(TimeSpan? timeout = null, CancellationToken cancellationToken = default)
         {
             return this.TryAcquireWriteLock(timeout ?? Timeout.InfiniteTimeSpan, cancellationToken)
-                ?? throw DistributedLockHelpers.CreateTryAcquireFailedException(timeout);
+                ?? throw DistributedLockHelpersOld.CreateTryAcquireFailedException(timeout);
         }
 
         /// <summary>
@@ -183,7 +183,7 @@ namespace Medallion.Threading.Sql
         public Task<IDisposable> AcquireWriteLockAsync(TimeSpan? timeout = null, CancellationToken cancellationToken = default)
         {
             var handleTask = this.TryAcquireWriteLockAsync(timeout ?? Timeout.InfiniteTimeSpan, cancellationToken);
-            return DistributedLockHelpers.ValidateTryAcquireResultAsync(handleTask, timeout);
+            return DistributedLockHelpersOld.ValidateTryAcquireResultAsync(handleTask, timeout);
         }
 
         /// <summary>
@@ -216,7 +216,7 @@ namespace Medallion.Threading.Sql
             {
                 if (!this.TryUpgradeToWriteLock(timeout ?? Timeout.InfiniteTimeSpan, cancellationToken))
                 {
-                    throw DistributedLockHelpers.CreateTryAcquireFailedException(timeout);
+                    throw DistributedLockHelpersOld.CreateTryAcquireFailedException(timeout);
                 }
                 return true;
             }
@@ -239,7 +239,7 @@ namespace Medallion.Threading.Sql
             {
                 if (!await upgradeTask.ConfigureAwait(false))
                 {
-                    throw DistributedLockHelpers.CreateTryAcquireFailedException(timeout);
+                    throw DistributedLockHelpersOld.CreateTryAcquireFailedException(timeout);
                 }
                 return true;
             }

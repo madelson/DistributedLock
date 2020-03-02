@@ -114,7 +114,7 @@ namespace Medallion.Threading.Sql
         {
             return cancellationToken.CanBeCanceled
                 // use the async version since that supports cancellation
-                ? DistributedLockHelpers.TryAcquireWithAsyncCancellation(this, timeout, cancellationToken)
+                ? DistributedLockHelpersOld.TryAcquireWithAsyncCancellation(this, timeout, cancellationToken)
                 // synchronous mode
                 : this.internalLock.TryAcquire(timeout.ToInt32Timeout(), SqlApplicationLock.ExclusiveLock, contextHandle: null);
         }
@@ -134,7 +134,7 @@ namespace Medallion.Threading.Sql
         /// <returns>An <see cref="IDisposable"/> "handle" which can be used to release the lock</returns>
         public IDisposable Acquire(TimeSpan? timeout = null, CancellationToken cancellationToken = default)
         {
-            return DistributedLockHelpers.Acquire(this, timeout, cancellationToken);
+            return DistributedLockHelpersOld.Acquire(this, timeout, cancellationToken);
         }
 
         /// <summary>
@@ -170,7 +170,7 @@ namespace Medallion.Threading.Sql
         /// <returns>An <see cref="IDisposable"/> "handle" which can be used to release the lock</returns>
         public Task<IDisposable> AcquireAsync(TimeSpan? timeout = null, CancellationToken cancellationToken = default)
         {
-            return DistributedLockHelpers.AcquireAsync(this, timeout, cancellationToken);
+            return DistributedLockHelpersOld.AcquireAsync(this, timeout, cancellationToken);
         }
 
         /// <summary>
@@ -183,7 +183,7 @@ namespace Medallion.Threading.Sql
         /// </summary>
         public static string GetSafeLockName(string baseLockName)
         {
-            return DistributedLockHelpers.ToSafeLockName(baseLockName, MaxLockNameLength, s => s);
+            return DistributedLockHelpersOld.ToSafeLockName(baseLockName, MaxLockNameLength, s => s);
         }
         #endregion
 
