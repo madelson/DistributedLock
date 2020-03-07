@@ -1,16 +1,12 @@
-﻿using Medallion.Threading.Data;
+using Medallion.Threading.Data;
 using Medallion.Threading.Internal;
-using Medallion.Threading.Tests.Sql;
 using NUnit.Framework;
 using System;
-using System.Collections.Generic;
 using System.Data.Common;
-using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Medallion.Threading.Tests.Tests.Data
+namespace Medallion.Threading.Tests.Data
 {
     public class SqlHelpersTest
     {

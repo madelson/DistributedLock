@@ -1,12 +1,8 @@
-﻿using Medallion.Threading.WaitHandles;
+using Medallion.Threading.WaitHandles;
 using NUnit.Framework;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace Medallion.Threading.Tests
+namespace Medallion.Threading.Tests.WaitHandles
 {
     public class EventWaitHandleDistributedLockTest
     {

@@ -1,14 +1,9 @@
-﻿using DistributedLock.Tests;
-using Medallion.Threading.Tests.Sql;
+﻿using Medallion.Threading.Tests.Data;
 using NUnit.Framework;
 using System;
-using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace Medallion.Threading.Tests
 {

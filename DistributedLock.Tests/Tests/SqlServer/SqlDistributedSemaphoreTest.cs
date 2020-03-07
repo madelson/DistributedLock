@@ -1,16 +1,15 @@
-﻿using Medallion.Threading.Data;
+using Medallion.Threading.Data;
 using Medallion.Threading.SqlServer;
+using Medallion.Threading.Tests.Data;
 using Microsoft.Data.SqlClient;
 using NUnit.Framework;
 using System;
-using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
-namespace Medallion.Threading.Tests.Sql
+namespace Medallion.Threading.Tests.SqlServer
 {
     public sealed class SqlDistributedSemaphoreTest
     {

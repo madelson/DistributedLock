@@ -4,10 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace Medallion.Threading.Tests
 {
@@ -26,25 +23,16 @@ namespace Medallion.Threading.Tests
                 )
                 .ToArray();
 
-            var testClasses = this.GetType().Assembly
-                .GetTypes()
-                .Where(t => !t.IsAbstract && t.Name.EndsWith("Test"))
-                .ToArray();
-
             var expectedTestTypes = testCaseClasses.SelectMany(
                     t => this.GetTypesForGenericParameters(t.GetGenericArguments()),
                     (t, args) => t.MakeGenericType(args)
                 )
                 .ToArray();
-            var missing = expectedTestTypes.Where(t => !testClasses.Any(c => t.IsAssignableFrom(c)))
-                .Select(GetTestClassDeclaration)
-                .ToList();
 
-            if (missing.Any())
-            {
-                File.WriteAllText(
-                    Path.Combine(TestContext.CurrentContext.TestDirectory, "..", "..", "..", "Tests", "CombinatorialTests.cs"),
-$@"using Medallion.Threading.Tests.Sql;
+            var combinatorialTestsFile = Path.GetFullPath(Path.Combine(TestContext.CurrentContext.TestDirectory, "..", "..", "..", "Tests", "CombinatorialTests.cs"));
+
+            var expectedTestContents =
+$@"using Medallion.Threading.Tests.Data;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
@@ -52,18 +40,27 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Medallion.Threading.Tests
+{string.Join(
+    Environment.NewLine + Environment.NewLine,
+    expectedTestTypes.Select(GetTestClassDeclaration)
+        .GroupBy(t => t.@namespace, t => t.declaration)
+        .OrderBy(g => g.Key)
+        .Select(g =>
+$@"namespace {g.Key}
 {{
-    // AUTO-GENERATED
-    // Contains test classes which implement abstract test cases in all valid combinations. Tests missing from here are discovered by TestSetupTest
-{string.Join(string.Empty, expectedTestTypes.Select(GetTestClassDeclaration).OrderBy(s => s))}
-}}"
-                );
+{string.Join(Environment.NewLine, g.OrderBy(s => s).Select(s => "    " + s))}
+}}")
+)}";
+
+            var existingContents = File.Exists(combinatorialTestsFile) ? File.ReadAllText(combinatorialTestsFile) : null;
+            if (expectedTestContents != existingContents)
+            {
+                File.WriteAllText(combinatorialTestsFile, expectedTestContents);
+                Assert.Fail("Updated " + combinatorialTestsFile);
             }
-            missing.Count.ShouldEqual(0, "Missing: " + string.Join(string.Empty, missing));
         }
         
-        private static string GetTestClassDeclaration(Type testClassType)
+        private static (string declaration, string @namespace) GetTestClassDeclaration(Type testClassType)
         {
             static string GetTestClassName(Type type)
             {
@@ -82,8 +79,16 @@ namespace Medallion.Threading.Tests
             // remove words that are very common and therefore don't add much to the name
             var testClassName = Regex.Replace(GetTestClassName(testClassType), "Distributed|Lock|Testing|TestCases", string.Empty) + "Test";
 
-            return $@"
-    public class {testClassName} : {GetCSharpName(testClassType)} {{ }}";
+            var declaration = $@"public class {testClassName} : {GetCSharpName(testClassType)} {{ }}";
+
+            var namespaces = Traverse.DepthFirst(testClassType, t => t.GetGenericArguments())
+                .Select(t => t.Namespace ?? string.Empty)
+                .Distinct()
+                .Where(ns => ns.StartsWith(typeof(TestSetupTest).Namespace!))
+                .ToList();
+            if (namespaces.Count > 1) { namespaces.RemoveAll(ns => ns == typeof(TestSetupTest).Namespace); }
+            if (namespaces.Count > 1) { namespaces.RemoveAll(ns => ns.EndsWith(".Data")); }
+            return (declaration, namespaces.Single());
         }
 
         private static string RemoveGenericMarkers(string name) => Regex.Replace(name, @"`\d+", string.Empty);

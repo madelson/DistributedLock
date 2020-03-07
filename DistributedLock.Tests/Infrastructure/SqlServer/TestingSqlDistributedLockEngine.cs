@@ -1,11 +1,8 @@
-﻿using Medallion.Threading.SqlServer;
+using Medallion.Threading.SqlServer;
+using Medallion.Threading.Tests.Data;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace Medallion.Threading.Tests.Sql
+namespace Medallion.Threading.Tests.SqlServer
 {
     public sealed class TestingSqlDistributedLockEngine<TConnectionManagementProvider> : TestingDistributedLockEngine
         where TConnectionManagementProvider : TestingSqlConnectionManagementProvider, new()

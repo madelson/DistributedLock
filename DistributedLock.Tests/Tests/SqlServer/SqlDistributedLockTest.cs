@@ -1,17 +1,11 @@
-﻿using Medallion.Shell;
 using Medallion.Threading.Data;
 using Medallion.Threading.SqlServer;
+using Medallion.Threading.Tests.Data;
 using NUnit.Framework;
 using System;
-using System.Collections.Generic;
 using System.Data.Common;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 
-namespace Medallion.Threading.Tests.Sql
+namespace Medallion.Threading.Tests.SqlServer
 {
     public class SqlDistributedLockTest
     {

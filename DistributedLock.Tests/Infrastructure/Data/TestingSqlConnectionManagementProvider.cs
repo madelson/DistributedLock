@@ -1,13 +1,8 @@
-﻿using DistributedLock.Tests;
 using Medallion.Threading.Data;
 using System;
-using System.Collections.Generic;
 using System.Data.Common;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace Medallion.Threading.Tests.Sql
+namespace Medallion.Threading.Tests.Data
 {
     public abstract class TestingSqlConnectionManagementProvider : ActionRegistrationDisposable
     {

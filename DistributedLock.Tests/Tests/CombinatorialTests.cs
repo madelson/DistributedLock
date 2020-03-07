@@ -1,4 +1,4 @@
-using Medallion.Threading.Tests.Sql;
+using Medallion.Threading.Tests.Data;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
@@ -6,11 +6,36 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Medallion.Threading.Tests
+namespace Medallion.Threading.Tests.Data
 {
-    // AUTO-GENERATED
-    // Contains test classes which implement abstract test cases in all valid combinations. Tests missing from here are discovered by TestSetupTest
+    public class SqlReaderWriter_AlternateClientConnectionProviderTest : SqlDistributedReaderWriterLockTestCases<AlternateClientConnectionProvider> { }
+    public class SqlReaderWriter_AlternateClientTransactionProviderTest : SqlDistributedReaderWriterLockTestCases<AlternateClientTransactionProvider> { }
+    public class SqlReaderWriter_AzureConnectionStringProviderTest : SqlDistributedReaderWriterLockTestCases<AzureConnectionStringProvider> { }
+    public class SqlReaderWriter_ConnectionBasedConnectionStringProviderTest : SqlDistributedReaderWriterLockTestCases<ConnectionBasedConnectionStringProvider> { }
+    public class SqlReaderWriter_DefaultClientConnectionProviderTest : SqlDistributedReaderWriterLockTestCases<DefaultClientConnectionProvider> { }
+    public class SqlReaderWriter_DefaultClientTransactionProviderTest : SqlDistributedReaderWriterLockTestCases<DefaultClientTransactionProvider> { }
+    public class SqlReaderWriter_DefaultConnectionStringProviderTest : SqlDistributedReaderWriterLockTestCases<DefaultConnectionStringProvider> { }
+    public class SqlReaderWriter_MultiplexedConnectionStringProviderTest : SqlDistributedReaderWriterLockTestCases<MultiplexedConnectionStringProvider> { }
+    public class SqlReaderWriter_NoStrategyConnectionStringProviderTest : SqlDistributedReaderWriterLockTestCases<NoStrategyConnectionStringProvider> { }
+    public class SqlReaderWriter_TransactionBasedConnectionStringProviderTest : SqlDistributedReaderWriterLockTestCases<TransactionBasedConnectionStringProvider> { }
+    public class SqlSemaphore_AlternateClientConnectionProviderTest : SqlDistributedSemaphoreTestCases<AlternateClientConnectionProvider> { }
+    public class SqlSemaphore_AlternateClientTransactionProviderTest : SqlDistributedSemaphoreTestCases<AlternateClientTransactionProvider> { }
+    public class SqlSemaphore_AzureConnectionStringProviderTest : SqlDistributedSemaphoreTestCases<AzureConnectionStringProvider> { }
+    public class SqlSemaphore_ConnectionBasedConnectionStringProviderTest : SqlDistributedSemaphoreTestCases<ConnectionBasedConnectionStringProvider> { }
+    public class SqlSemaphore_DefaultClientConnectionProviderTest : SqlDistributedSemaphoreTestCases<DefaultClientConnectionProvider> { }
+    public class SqlSemaphore_DefaultClientTransactionProviderTest : SqlDistributedSemaphoreTestCases<DefaultClientTransactionProvider> { }
+    public class SqlSemaphore_DefaultConnectionStringProviderTest : SqlDistributedSemaphoreTestCases<DefaultConnectionStringProvider> { }
+    public class SqlSemaphore_MultiplexedConnectionStringProviderTest : SqlDistributedSemaphoreTestCases<MultiplexedConnectionStringProvider> { }
+    public class SqlSemaphore_NoStrategyConnectionStringProviderTest : SqlDistributedSemaphoreTestCases<NoStrategyConnectionStringProvider> { }
+    public class SqlSemaphore_TransactionBasedConnectionStringProviderTest : SqlDistributedSemaphoreTestCases<TransactionBasedConnectionStringProvider> { }
+    public class SqlSemaphoreSelfDeadlock_AlternateClientConnectionProviderTest : SqlDistributedSemaphoreSelfDeadlockTestCases<AlternateClientConnectionProvider> { }
+    public class SqlSemaphoreSelfDeadlock_AlternateClientTransactionProviderTest : SqlDistributedSemaphoreSelfDeadlockTestCases<AlternateClientTransactionProvider> { }
+    public class SqlSemaphoreSelfDeadlock_DefaultClientConnectionProviderTest : SqlDistributedSemaphoreSelfDeadlockTestCases<DefaultClientConnectionProvider> { }
+    public class SqlSemaphoreSelfDeadlock_DefaultClientTransactionProviderTest : SqlDistributedSemaphoreSelfDeadlockTestCases<DefaultClientTransactionProvider> { }
+}
 
+namespace Medallion.Threading.Tests.SqlServer
+{
     public class AzureConnectionStrategy_SqlEngineFactoryTest : AzureConnectionStrategyTestCases<TestingSqlDistributedLockEngineFactory> { }
     public class AzureConnectionStrategy_SqlReaderWriterEngineFactoryTest : AzureConnectionStrategyTestCases<TestingSqlDistributedReaderWriterLockEngineFactory> { }
     public class AzureConnectionStrategy_SqlSemaphoreEngineFactoryTest : AzureConnectionStrategyTestCases<TestingSqlDistributedSemaphoreEngineFactory> { }
@@ -63,7 +88,6 @@ namespace Medallion.Threading.Tests
     public class Core_SqlSemaphoreEngine_MultiplexedConnectionStringProviderTest : DistributedLockCoreTestCases<TestingSqlDistributedSemaphoreEngine<MultiplexedConnectionStringProvider>> { }
     public class Core_SqlSemaphoreEngine_NoStrategyConnectionStringProviderTest : DistributedLockCoreTestCases<TestingSqlDistributedSemaphoreEngine<NoStrategyConnectionStringProvider>> { }
     public class Core_SqlSemaphoreEngine_TransactionBasedConnectionStringProviderTest : DistributedLockCoreTestCases<TestingSqlDistributedSemaphoreEngine<TransactionBasedConnectionStringProvider>> { }
-    public class Core_SystemEngineTest : DistributedLockCoreTestCases<TestingEventWaitHandleDistributedLockEngine> { }
     public class ExternalConnectionOrTransactionStrategy_SqlEngineFactory_AlternateClientConnectionProviderTest : ExternalConnectionOrTransactionStrategyTestCases<TestingSqlDistributedLockEngineFactory, AlternateClientConnectionProvider> { }
     public class ExternalConnectionOrTransactionStrategy_SqlEngineFactory_AlternateClientTransactionProviderTest : ExternalConnectionOrTransactionStrategyTestCases<TestingSqlDistributedLockEngineFactory, AlternateClientTransactionProvider> { }
     public class ExternalConnectionOrTransactionStrategy_SqlEngineFactory_DefaultClientConnectionProviderTest : ExternalConnectionOrTransactionStrategyTestCases<TestingSqlDistributedLockEngineFactory, DefaultClientConnectionProvider> { }
@@ -94,28 +118,9 @@ namespace Medallion.Threading.Tests
     public class OwnedTransactionStrategy_SqlEngineFactoryTest : OwnedTransactionStrategyTestCases<TestingSqlDistributedLockEngineFactory> { }
     public class OwnedTransactionStrategy_SqlReaderWriterEngineFactoryTest : OwnedTransactionStrategyTestCases<TestingSqlDistributedReaderWriterLockEngineFactory> { }
     public class OwnedTransactionStrategy_SqlSemaphoreEngineFactoryTest : OwnedTransactionStrategyTestCases<TestingSqlDistributedSemaphoreEngineFactory> { }
-    public class SqlReaderWriter_AlternateClientConnectionProviderTest : SqlDistributedReaderWriterLockTestCases<AlternateClientConnectionProvider> { }
-    public class SqlReaderWriter_AlternateClientTransactionProviderTest : SqlDistributedReaderWriterLockTestCases<AlternateClientTransactionProvider> { }
-    public class SqlReaderWriter_AzureConnectionStringProviderTest : SqlDistributedReaderWriterLockTestCases<AzureConnectionStringProvider> { }
-    public class SqlReaderWriter_ConnectionBasedConnectionStringProviderTest : SqlDistributedReaderWriterLockTestCases<ConnectionBasedConnectionStringProvider> { }
-    public class SqlReaderWriter_DefaultClientConnectionProviderTest : SqlDistributedReaderWriterLockTestCases<DefaultClientConnectionProvider> { }
-    public class SqlReaderWriter_DefaultClientTransactionProviderTest : SqlDistributedReaderWriterLockTestCases<DefaultClientTransactionProvider> { }
-    public class SqlReaderWriter_DefaultConnectionStringProviderTest : SqlDistributedReaderWriterLockTestCases<DefaultConnectionStringProvider> { }
-    public class SqlReaderWriter_MultiplexedConnectionStringProviderTest : SqlDistributedReaderWriterLockTestCases<MultiplexedConnectionStringProvider> { }
-    public class SqlReaderWriter_NoStrategyConnectionStringProviderTest : SqlDistributedReaderWriterLockTestCases<NoStrategyConnectionStringProvider> { }
-    public class SqlReaderWriter_TransactionBasedConnectionStringProviderTest : SqlDistributedReaderWriterLockTestCases<TransactionBasedConnectionStringProvider> { }
-    public class SqlSemaphore_AlternateClientConnectionProviderTest : SqlDistributedSemaphoreTestCases<AlternateClientConnectionProvider> { }
-    public class SqlSemaphore_AlternateClientTransactionProviderTest : SqlDistributedSemaphoreTestCases<AlternateClientTransactionProvider> { }
-    public class SqlSemaphore_AzureConnectionStringProviderTest : SqlDistributedSemaphoreTestCases<AzureConnectionStringProvider> { }
-    public class SqlSemaphore_ConnectionBasedConnectionStringProviderTest : SqlDistributedSemaphoreTestCases<ConnectionBasedConnectionStringProvider> { }
-    public class SqlSemaphore_DefaultClientConnectionProviderTest : SqlDistributedSemaphoreTestCases<DefaultClientConnectionProvider> { }
-    public class SqlSemaphore_DefaultClientTransactionProviderTest : SqlDistributedSemaphoreTestCases<DefaultClientTransactionProvider> { }
-    public class SqlSemaphore_DefaultConnectionStringProviderTest : SqlDistributedSemaphoreTestCases<DefaultConnectionStringProvider> { }
-    public class SqlSemaphore_MultiplexedConnectionStringProviderTest : SqlDistributedSemaphoreTestCases<MultiplexedConnectionStringProvider> { }
-    public class SqlSemaphore_NoStrategyConnectionStringProviderTest : SqlDistributedSemaphoreTestCases<NoStrategyConnectionStringProvider> { }
-    public class SqlSemaphore_TransactionBasedConnectionStringProviderTest : SqlDistributedSemaphoreTestCases<TransactionBasedConnectionStringProvider> { }
-    public class SqlSemaphoreSelfDeadlock_AlternateClientConnectionProviderTest : SqlDistributedSemaphoreSelfDeadlockTestCases<AlternateClientConnectionProvider> { }
-    public class SqlSemaphoreSelfDeadlock_AlternateClientTransactionProviderTest : SqlDistributedSemaphoreSelfDeadlockTestCases<AlternateClientTransactionProvider> { }
-    public class SqlSemaphoreSelfDeadlock_DefaultClientConnectionProviderTest : SqlDistributedSemaphoreSelfDeadlockTestCases<DefaultClientConnectionProvider> { }
-    public class SqlSemaphoreSelfDeadlock_DefaultClientTransactionProviderTest : SqlDistributedSemaphoreSelfDeadlockTestCases<DefaultClientTransactionProvider> { }
+}
+
+namespace Medallion.Threading.Tests.WaitHandles
+{
+    public class Core_EventWaitHandleEngineTest : DistributedLockCoreTestCases<TestingEventWaitHandleDistributedLockEngine> { }
 }

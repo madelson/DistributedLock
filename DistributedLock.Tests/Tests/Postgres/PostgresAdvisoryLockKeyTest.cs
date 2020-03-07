@@ -1,12 +1,10 @@
-﻿using Medallion.Threading.Postgres;
+using Medallion.Threading.Postgres;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace DistributedLock.Tests.Tests.Postgres
+namespace Medallion.Threading.Tests.Postgres
 {
     public class PostgresAdvisoryLockKeyTest
     {

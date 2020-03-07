@@ -1,14 +1,11 @@
-﻿using Medallion.Threading.Data;
+using Medallion.Threading.Data;
+using Medallion.Threading.Tests.Data;
 using NUnit.Framework;
 using System;
-using System.Collections.Generic;
 using System.Data.Common;
-using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 
-namespace Medallion.Threading.Tests.Sql
+namespace Medallion.Threading.Tests
 {
     public abstract class AzureConnectionStrategyTestCases<TEngineFactory> 
         where TEngineFactory : ITestingSqlDistributedLockEngineFactory, new()

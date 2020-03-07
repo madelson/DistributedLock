@@ -1,4 +1,4 @@
-﻿//using Medallion.Threading.Postgres;
+//using Medallion.Threading.Postgres;
 //using Npgsql;
 //using NUnit.Framework;
 //using System;
@@ -9,7 +9,7 @@
 //using System.Threading;
 //using System.Threading.Tasks;
 
-//namespace Medallion.Threading.Tests.Tests.Postgres
+//namespace Medallion.Threading.Tests.Postgres
 //{
 //    public class PostgresDistributedLockTest
 //    {

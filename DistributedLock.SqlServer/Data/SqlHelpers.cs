@@ -1,9 +1,6 @@
 using System;
-using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
-using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Reflection;
@@ -189,19 +186,13 @@ namespace Medallion.Threading.Data
                 return true;
             }
 
-            const string AlternateClientSqlExceptionName =
-#if NETSTANDARD1_3 || NET45
-                "Microsoft.Data.SqlClient.SqlException";
-#else
-                "System.Data.SqlClient.SqlException";
-#endif
             var exceptionType = exception.GetType();
-            // since SqlException is sealed in both providers (as of 2020-01-26), 
-            // we don't need to search up the type hierarchy
-            if (exceptionType.ToString() == AlternateClientSqlExceptionName)
+            // since SqlException is sealed (as of 2020-01-26)
+            if (exceptionType.ToString() == "System.Data.SqlClient.SqlException")
             {
-                var numberProperty = exceptionType.GetTypeInfo().DeclaredProperties
-                    .FirstOrDefault(p => p.Name == nameof(SqlException.Number) && p.CanRead && p.GetMethod.IsPublic && !p.GetMethod.IsStatic);
+                var numberProperty = exceptionType
+                    .GetProperty(nameof(SqlException.Number), BindingFlags.Public | BindingFlags.Instance);
+                Invariant.Require(numberProperty != null);
                 if (numberProperty != null)
                 {
                     return Equals(numberProperty.GetValue(exception), CanceledNumber);

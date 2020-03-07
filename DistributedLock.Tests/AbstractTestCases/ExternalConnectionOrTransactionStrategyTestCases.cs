@@ -1,9 +1,7 @@
-﻿using Medallion.Threading.Tests.Sql;
+﻿using Medallion.Threading.Tests.Data;
 using NUnit.Framework;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 

@@ -1,12 +1,11 @@
-﻿using Medallion.Threading.SqlServer;
+using Medallion.Threading.SqlServer;
+using Medallion.Threading.Tests.Data;
+using Medallion.Threading.Tests.SqlServer;
 using NUnit.Framework;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
-namespace Medallion.Threading.Tests.Sql
+namespace Medallion.Threading.Tests
 {
     public abstract class SqlDistributedReaderWriterLockTestCases<TConnectionManagementProvider>
         where TConnectionManagementProvider : TestingSqlConnectionManagementProvider, new()

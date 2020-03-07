@@ -1,7 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
+  
   <PropertyGroup>
-    <TargetFrameworks>net471;netcoreapp3.1</TargetFrameworks>
+    <!-- for test iteration speed, just use one TF for debug -->
+    <TargetFrameworks Condition="'$(Configuration)' == 'Debug'">netcoreapp3.1</TargetFrameworks>
+    <TargetFrameworks Condition="'$(Configuration)' != 'Debug'">net471;netcoreapp3.1</TargetFrameworks> 
     <LangVersion>8.0</LangVersion>
     <Nullable>enable</Nullable>
     <RootNamespace>Medallion.Threading.Tests</RootNamespace>
@@ -21,6 +23,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\DistributedLock\DistributedLock.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Traverse" Version="1.0.0" />
   </ItemGroup>
   
 </Project>

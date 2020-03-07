@@ -1,11 +1,6 @@
-﻿using Medallion.Threading.WaitHandles;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Medallion.Threading.WaitHandles;
 
-namespace Medallion.Threading.Tests
+namespace Medallion.Threading.Tests.WaitHandles
 {
     public sealed class TestingEventWaitHandleDistributedLockEngine : TestingDistributedLockEngine
     {

@@ -1,11 +1,7 @@
 using Medallion.Threading.Internal;
 using Microsoft.Data.SqlClient;
 using System;
-using System.Collections.Generic;
-using System.Data;
 using System.Data.Common;
-using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -41,6 +37,7 @@ namespace Medallion.Threading.Data
             try
             {
                 await SqlHelpers.OpenAsync(connection, cancellationToken).ConfigureAwait(false);
+                // todo use BeginTransactionAsync()
                 // when creating a transaction, the isolation level doesn't matter, since we're using sp_getapplock
                 transaction = connection.BeginTransaction();
                 var lockCookie = await strategy.TryAcquireAsync(transaction, this._name, timeout, cancellationToken).ConfigureAwait(false);

@@ -1,11 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System;
 using System.Threading;
-using System.Threading.Tasks;
 
-namespace DistributedLock.Tests.Infrastructure
+namespace Medallion.Threading.Tests
 {
     internal sealed class Current<T> : IDisposable
         where T : class

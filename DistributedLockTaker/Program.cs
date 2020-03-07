@@ -1,11 +1,4 @@
-﻿using Medallion.Threading;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Medallion.Threading.Postgres;
-using Medallion.Threading.Tests;
+﻿using System;
 using Medallion.Threading.SqlServer;
 using Medallion.Threading.WaitHandles;
 #if NET471

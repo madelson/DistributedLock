@@ -1,10 +1,7 @@
 using Medallion.Threading.Data;
 using Medallion.Threading.Internal;
 using System;
-using System.Collections.Generic;
 using System.Data;
-using System.Data.Common;
-using System.Runtime.ExceptionServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;

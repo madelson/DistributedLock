@@ -1,13 +1,9 @@
-﻿using NUnit.Framework;
+using NUnit.Framework;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Runtime.Serialization.Formatters.Binary;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace Medallion.Threading.Tests.Tests
+namespace Medallion.Threading.Tests.Core
 {
     public class DeadlockExceptionTest
     {
