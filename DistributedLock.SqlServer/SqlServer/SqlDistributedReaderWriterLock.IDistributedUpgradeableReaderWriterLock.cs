@@ -14,25 +14,25 @@ namespace Medallion.Threading.SqlServer
         IDistributedLockHandle IDistributedReaderWriterLock.AcquireReadLock(TimeSpan? timeout, CancellationToken cancellationToken) =>
             this.AcquireReadLock(timeout, cancellationToken);
         ValueTask<IDistributedLockHandle?> IDistributedReaderWriterLock.TryAcquireReadLockAsync(TimeSpan timeout, CancellationToken cancellationToken) =>
-            Helpers.ConvertValueTask<SqlDistributedReaderWriterLockHandle?, IDistributedLockHandle?>(this.TryAcquireReadLockAsync(timeout, cancellationToken));
+            this.TryAcquireReadLockAsync(timeout, cancellationToken).Convert(To<IDistributedLockHandle?>.ValueTask);
         ValueTask<IDistributedLockHandle> IDistributedReaderWriterLock.AcquireReadLockAsync(TimeSpan? timeout, CancellationToken cancellationToken) =>
-            Helpers.ConvertValueTask<SqlDistributedReaderWriterLockHandle, IDistributedLockHandle>(this.AcquireReadLockAsync(timeout, cancellationToken));
+            this.AcquireReadLockAsync(timeout, cancellationToken).Convert(To<IDistributedLockHandle>.ValueTask);
         IDistributedLockUpgradeableHandle? IDistributedUpgradeableReaderWriterLock.TryAcquireUpgradeableReadLock(TimeSpan timeout, CancellationToken cancellationToken) =>
             this.TryAcquireUpgradeableReadLock(timeout, cancellationToken);
         IDistributedLockUpgradeableHandle IDistributedUpgradeableReaderWriterLock.AcquireUpgradeableReadLock(TimeSpan? timeout, CancellationToken cancellationToken) =>
             this.AcquireUpgradeableReadLock(timeout, cancellationToken);
         ValueTask<IDistributedLockUpgradeableHandle?> IDistributedUpgradeableReaderWriterLock.TryAcquireUpgradeableReadLockAsync(TimeSpan timeout, CancellationToken cancellationToken) =>
-            Helpers.ConvertValueTask<SqlDistributedReaderWriterLockUpgradeableHandle?, IDistributedLockUpgradeableHandle?>(this.TryAcquireUpgradeableReadLockAsync(timeout, cancellationToken));
+            this.TryAcquireUpgradeableReadLockAsync(timeout, cancellationToken).Convert(To<IDistributedLockUpgradeableHandle?>.ValueTask);
         ValueTask<IDistributedLockUpgradeableHandle> IDistributedUpgradeableReaderWriterLock.AcquireUpgradeableReadLockAsync(TimeSpan? timeout, CancellationToken cancellationToken) =>
-            Helpers.ConvertValueTask<SqlDistributedReaderWriterLockUpgradeableHandle, IDistributedLockUpgradeableHandle>(this.AcquireUpgradeableReadLockAsync(timeout, cancellationToken));
+            this.AcquireUpgradeableReadLockAsync(timeout, cancellationToken).Convert(To<IDistributedLockUpgradeableHandle>.ValueTask);
         IDistributedLockHandle? IDistributedReaderWriterLock.TryAcquireWriteLock(TimeSpan timeout, CancellationToken cancellationToken) =>
             this.TryAcquireWriteLock(timeout, cancellationToken);
         IDistributedLockHandle IDistributedReaderWriterLock.AcquireWriteLock(TimeSpan? timeout, CancellationToken cancellationToken) =>
             this.AcquireWriteLock(timeout, cancellationToken);
         ValueTask<IDistributedLockHandle?> IDistributedReaderWriterLock.TryAcquireWriteLockAsync(TimeSpan timeout, CancellationToken cancellationToken) =>
-            Helpers.ConvertValueTask<SqlDistributedReaderWriterLockHandle?, IDistributedLockHandle?>(this.TryAcquireWriteLockAsync(timeout, cancellationToken));
+            this.TryAcquireWriteLockAsync(timeout, cancellationToken).Convert(To<IDistributedLockHandle?>.ValueTask);
         ValueTask<IDistributedLockHandle> IDistributedReaderWriterLock.AcquireWriteLockAsync(TimeSpan? timeout, CancellationToken cancellationToken) =>
-            Helpers.ConvertValueTask<SqlDistributedReaderWriterLockHandle, IDistributedLockHandle>(this.AcquireWriteLockAsync(timeout, cancellationToken));
+            this.AcquireWriteLockAsync(timeout, cancellationToken).Convert(To<IDistributedLockHandle>.ValueTask);
 
         /// <summary>
         /// Attempts to acquire a READ lock synchronously. Multiple readers are allowed. Not compatible with a WRITE lock. Usage: 

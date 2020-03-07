@@ -1,4 +1,5 @@
-﻿using Medallion.Threading.Sql;
+﻿using Medallion.Threading.Data;
+using Microsoft.Data.SqlClient;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
@@ -17,7 +18,7 @@ namespace Medallion.Threading.Tests.Sql
         [Test]
         public void TestScopedToTransactionOnly()
         {
-            using var connection = SqlHelpers.CreateConnection(ConnectionStringProvider.ConnectionString);
+            using var connection = new SqlConnection(ConnectionStringProvider.ConnectionString);
             connection.Open();
 
             using (var transaction = connection.BeginTransaction())
@@ -44,7 +45,7 @@ namespace Medallion.Threading.Tests.Sql
         [Test]
         public void TestCloseTransactionLockOnClosedConnection()
         {
-            using var connection = SqlHelpers.CreateConnection(ConnectionStringProvider.ConnectionString);
+            using var connection = new SqlConnection(ConnectionStringProvider.ConnectionString);
             connection.Open();
 
             using (var transaction = connection.BeginTransaction())
@@ -71,7 +72,7 @@ namespace Medallion.Threading.Tests.Sql
         public void TestCloseTransactionLockOnClosedTransaction()
         {
             using var connectionStringEngine = new TEngineFactory().Create<DefaultConnectionStringProvider>();
-            using var connection = SqlHelpers.CreateConnection(ConnectionStringProvider.ConnectionString);
+            using var connection = new SqlConnection(ConnectionStringProvider.ConnectionString);
             connection.Open();
 
             var lockName = nameof(TestCloseTransactionLockOnClosedTransaction);
@@ -100,7 +101,7 @@ namespace Medallion.Threading.Tests.Sql
         private void TestLockOnCompletedTransactionHelper(Action<DbTransaction> complete, [CallerMemberName] string lockName = "")
         {
             using var connectionStringEngine = new TEngineFactory().Create<DefaultConnectionStringProvider>();
-            using var connection = SqlHelpers.CreateConnection(ConnectionStringProvider.ConnectionString);
+            using var connection = new SqlConnection(ConnectionStringProvider.ConnectionString);
             connection.Open();
 
             using (var transaction = connection.BeginTransaction())

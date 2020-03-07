@@ -1,4 +1,5 @@
-﻿using Medallion.Threading.Sql;
+﻿using Medallion.Threading.Data;
+using Microsoft.Data.SqlClient;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
@@ -15,7 +16,7 @@ namespace Medallion.Threading.Tests.Sql
         [Test]
         public void TestCloseLockOnClosedConnection()
         {
-            using (var connection = SqlHelpers.CreateConnection(ConnectionStringProvider.ConnectionString))
+            using (var connection = new SqlConnection(ConnectionStringProvider.ConnectionString))
             using (ConnectionProvider.UseConnection(connection))
             using (var connectionEngine = new TEngineFactory().Create<TConnectionProvider>())
             using (var connectionStringEngine = new TEngineFactory().Create<DefaultConnectionStringProvider>())
@@ -42,7 +43,7 @@ namespace Medallion.Threading.Tests.Sql
         [Test]
         public void TestIsNotScopedToTransaction()
         {
-            using (var connection = SqlHelpers.CreateConnection(ConnectionStringProvider.ConnectionString))
+            using (var connection = new SqlConnection(ConnectionStringProvider.ConnectionString))
             using (ConnectionProvider.UseConnection(connection))
             using (var connectionEngine = new TEngineFactory().Create<TConnectionProvider>())
             using (var connectionStringEngine = new TEngineFactory().Create<DefaultConnectionStringProvider>())

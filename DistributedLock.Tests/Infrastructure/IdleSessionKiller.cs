@@ -1,4 +1,4 @@
-﻿using Medallion.Threading.Sql;
+﻿using Medallion.Threading.Data;
 using System;
 using System.Collections.Generic;
 using System.Data.Common;
@@ -26,7 +26,7 @@ namespace Medallion.Threading.Tests.Sql
 
                 while (!cancellationToken.IsCancellationRequested)
                 {
-                    using var connection = SqlHelpers.CreateConnection(connectionString);
+                    using var connection = new SqlConnection(connectionString);
                     await connection.OpenAsync(cancellationToken);
 
                     var spidsToKill = new List<short>();

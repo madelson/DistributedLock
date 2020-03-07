@@ -1,3 +1,4 @@
+using Medallion.Threading.Internal;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -50,7 +51,11 @@ namespace Medallion.Threading.Data
             if (this.task == null) { throw new InvalidOperationException("already stopped"); } // sanity check
 
             this.cancellationTokenSource!.Cancel();
-            try { await this.task.ConfigureAwait(false); }
+            try 
+            {
+                if (SyncOverAsync.IsSynchronous) { task.GetAwaiter().GetResult(); }
+                else { await this.task.ConfigureAwait(false); }
+            }
             finally
             {
                 this.cancellationTokenSource.Dispose();

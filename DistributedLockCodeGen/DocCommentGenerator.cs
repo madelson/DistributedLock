@@ -24,18 +24,16 @@ namespace DistributedLockCodeGen
 
         internal static string AddDocComments(string code)
         {
-            var publicTypeMatch = Regex.Match(code, @"\n(    |\t)public.*?(class|interface)\s+(?<name>\w+)");
-            if (!publicTypeMatch.Success) { return code; }
+            if (!CodeGenHelpers.HasPublicType(code, out var typeInfo)) { return code; }
 
-            var isInterface = publicTypeMatch.Value.EndsWith("interface");
             var acquireMethods = Regex.Matches(
                     code,
-                    $@"(?<docComment>([ \t]+///.*?\n)*)(?<indent>        |\t\t){(isInterface ? "" : "public ")}(?<returnType>\S+) (?<name>([a-zA-Z])+)\("
+                    $@"(?<docComment>([ \t]+///.*?\n)*)(?<indent>        |\t\t){(typeInfo.isInterface ? "" : "public ")}(?<returnType>\S+) (?<name>([a-zA-Z])+)\("
                         + @"((?<paramType>\S+) (?<paramName>([a-zA-Z])+)( = \S+)(, )?)+\)"
                 );
 
             var updatedCode = code;
-            foreach (Match acquireMethod in acquireMethods)
+            foreach (var acquireMethod in acquireMethods.Cast<Match>())
             {
                 var name = acquireMethod.Groups["name"].Value;
                 if (!name.Contains("Acquire")) { continue; }
@@ -45,7 +43,7 @@ namespace DistributedLockCodeGen
                 var lockType = name.Contains("Upgradeable") ? LockType.Upgrade
                     : name.Contains("Write") ? LockType.Write
                     : name.Contains("Read") ? LockType.Read
-                    : publicTypeMatch.Groups["name"].Value.Contains("Semaphore") ? LockType.Semaphore
+                    : typeInfo.typeName.Contains("Semaphore") ? LockType.Semaphore
                     : LockType.Mutex;
 
                 var @object = lockType == LockType.Semaphore ? "semaphore" : "lock";

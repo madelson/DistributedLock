@@ -11,7 +11,7 @@ namespace Medallion.Threading.WaitHandles
 {
     public sealed partial class EventWaitHandleDistributedLock : IInternalDistributedLock<EventWaitHandleDistributedLockHandle>
     {
-        private const string GlobalPrefix = @"Global\";
+        internal const string GlobalPrefix = @"Global\";
         private static readonly TimeoutValue DefaultAbandonmentCheckCadence = TimeSpan.FromSeconds(2);
 
         private readonly TimeoutValue _abandonmentCheckCadence;
@@ -21,11 +21,11 @@ namespace Medallion.Threading.WaitHandles
             if (exactName)
             {
                 if (name == null) { throw new ArgumentNullException(nameof(name)); }
-                if (name.Length == 0) { throw new FormatException(nameof(name) + ": must not be empty"); }
+
                 if (name.Length > MaxNameLength) { throw new FormatException($"{nameof(name)}: must be at most {MaxNameLength} characters"); }
-                // todo confirm ignorecase
-                if (!name.StartsWith(GlobalPrefix, StringComparison.OrdinalIgnoreCase)) { throw new FormatException($"{nameof(name)}: must start with '{GlobalPrefix}'"); }
-                if (name.IndexOf('\\') >= 0) { throw new FormatException(nameof(name) + @": must not contain '\'"); }
+                if (!name.StartsWith(GlobalPrefix, StringComparison.Ordinal)) { throw new FormatException($"{nameof(name)}: must start with '{GlobalPrefix}'"); }
+                if (name == GlobalPrefix) { throw new FormatException($"{nameof(name)} must not be exactly '{GlobalPrefix}'"); }
+                if (name.IndexOf('\\', startIndex: GlobalPrefix.Length) >= 0) { throw new FormatException(nameof(name) + @": must not contain '\'"); }
 
                 this.Name = name;
             }
@@ -56,8 +56,30 @@ namespace Medallion.Threading.WaitHandles
 
         bool IDistributedLock.IsReentrant => false;
 
-        public static string GetSafeName(string name) =>
-            DistributedLockHelpers.ToSafeLockName(name, MaxNameLength, s => s.Length == 0 ? "EMPTY" : s.Replace('\\', '_'));
+        public static string GetSafeName(string name)
+        {
+            if (name == null) { throw new ArgumentNullException(nameof(name)); }
+
+            // Note: the reason we don't add GlobalPrefix inside the ToSafeLockName callback
+            // is for backwards compat with the SystemDistributedLock.GetSafeLockName in 1.0.
+            // In that version, the global prefix was not exposed as part of the name, and as
+            // such it was not accounted for in the hashing performed by ToSafeLockName.
+
+            if (name.StartsWith(GlobalPrefix, StringComparison.Ordinal))
+            {
+                var suffix = name.Substring(GlobalPrefix.Length);
+                var safeSuffix = ConvertToSafeSuffix(suffix);
+                return safeSuffix == suffix ? name : GlobalPrefix + safeSuffix;
+            }
+
+            return GlobalPrefix + ConvertToSafeSuffix(name);
+
+            static string ConvertToSafeSuffix(string suffix) => DistributedLockHelpers.ToSafeLockName(
+                suffix,
+                MaxNameLength - GlobalPrefix.Length,
+                s => s.Length == 0 ? "EMPTY" : s.Replace('\\', '_')
+            );
+        }
 
         async ValueTask<EventWaitHandleDistributedLockHandle?> IInternalDistributedLock<EventWaitHandleDistributedLockHandle>.InternalTryAcquireAsync(
             TimeoutValue timeout, 

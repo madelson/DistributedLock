@@ -1,5 +1,4 @@
-﻿using Medallion.Threading.Sql;
-using Medallion.Threading.Tests.Sql;
+﻿using Medallion.Threading.Tests.Sql;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
@@ -39,7 +38,7 @@ namespace Medallion.Threading.Tests
             semaphore2.Acquire();
 
             var source = new CancellationTokenSource();
-            var acquireTask = semaphore1.AcquireAsync(cancellationToken: source.Token).Task;
+            var acquireTask = semaphore1.AcquireAsync(cancellationToken: source.Token).AsTask();
             acquireTask.Wait(TimeSpan.FromSeconds(.1)).ShouldEqual(false);
             source.Cancel();
             acquireTask.ContinueWith(t => { }).Wait(TimeSpan.FromSeconds(10)).ShouldEqual(true);
@@ -67,7 +66,7 @@ namespace Medallion.Threading.Tests
             semaphore.Acquire();
 
             var source = new CancellationTokenSource();
-            var acquireTask = semaphore.AcquireAsync(TimeSpan.FromSeconds(20), source.Token).Task;
+            var acquireTask = semaphore.AcquireAsync(TimeSpan.FromSeconds(20), source.Token).AsTask();
             acquireTask.Wait(TimeSpan.FromSeconds(.1)).ShouldEqual(false);
             source.Cancel();
             acquireTask.ContinueWith(t => { }).Wait(TimeSpan.FromSeconds(10)).ShouldEqual(true);

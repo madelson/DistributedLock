@@ -20,9 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\DistributedLock.Core\DistributedLock.Core.csproj" />
     <ProjectReference Include="..\DistributedLock\DistributedLock.csproj" />
-    <ProjectReference Include="..\DistributedLock.Postgres\DistributedLock.Postgres.csproj" />
   </ItemGroup>
   
 </Project>

@@ -33,7 +33,6 @@ namespace Medallion.Threading.Tests
     public class ConnectionStringStrategy_SqlSemaphoreEngineFactory_NoStrategyConnectionStringProviderTest : ConnectionStringStrategyTestCases<TestingSqlDistributedSemaphoreEngineFactory, NoStrategyConnectionStringProvider> { }
     public class ConnectionStringStrategy_SqlSemaphoreEngineFactory_TransactionBasedConnectionStringProviderTest : ConnectionStringStrategyTestCases<TestingSqlDistributedSemaphoreEngineFactory, TransactionBasedConnectionStringProvider> { }
     public class Core_MostlyDrainedSqlSemaphoreEngineTest : DistributedLockCoreTestCases<TestingMostlyDrainedSqlSemaphoreDistributedLockEngine> { }
-    public class Core_PostgresEngineTest : DistributedLockCoreTestCases<TestingPostgresDistributedLockEngine> { }
     public class Core_SqlEngine_AlternateClientConnectionProviderTest : DistributedLockCoreTestCases<TestingSqlDistributedLockEngine<AlternateClientConnectionProvider>> { }
     public class Core_SqlEngine_AlternateClientTransactionProviderTest : DistributedLockCoreTestCases<TestingSqlDistributedLockEngine<AlternateClientTransactionProvider>> { }
     public class Core_SqlEngine_AzureConnectionStringProviderTest : DistributedLockCoreTestCases<TestingSqlDistributedLockEngine<AzureConnectionStringProvider>> { }
@@ -64,7 +63,7 @@ namespace Medallion.Threading.Tests
     public class Core_SqlSemaphoreEngine_MultiplexedConnectionStringProviderTest : DistributedLockCoreTestCases<TestingSqlDistributedSemaphoreEngine<MultiplexedConnectionStringProvider>> { }
     public class Core_SqlSemaphoreEngine_NoStrategyConnectionStringProviderTest : DistributedLockCoreTestCases<TestingSqlDistributedSemaphoreEngine<NoStrategyConnectionStringProvider>> { }
     public class Core_SqlSemaphoreEngine_TransactionBasedConnectionStringProviderTest : DistributedLockCoreTestCases<TestingSqlDistributedSemaphoreEngine<TransactionBasedConnectionStringProvider>> { }
-    public class Core_SystemEngineTest : DistributedLockCoreTestCases<TestingSystemDistributedLockEngine> { }
+    public class Core_SystemEngineTest : DistributedLockCoreTestCases<TestingEventWaitHandleDistributedLockEngine> { }
     public class ExternalConnectionOrTransactionStrategy_SqlEngineFactory_AlternateClientConnectionProviderTest : ExternalConnectionOrTransactionStrategyTestCases<TestingSqlDistributedLockEngineFactory, AlternateClientConnectionProvider> { }
     public class ExternalConnectionOrTransactionStrategy_SqlEngineFactory_AlternateClientTransactionProviderTest : ExternalConnectionOrTransactionStrategyTestCases<TestingSqlDistributedLockEngineFactory, AlternateClientTransactionProvider> { }
     public class ExternalConnectionOrTransactionStrategy_SqlEngineFactory_DefaultClientConnectionProviderTest : ExternalConnectionOrTransactionStrategyTestCases<TestingSqlDistributedLockEngineFactory, DefaultClientConnectionProvider> { }

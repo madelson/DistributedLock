@@ -42,6 +42,5 @@
   
   <ItemGroup>
     <ProjectReference Include="..\DistributedLock.Core\DistributedLock.Core.csproj" />
-    <ProjectReference Include="..\DistributedLock\DistributedLock.csproj" />
   </ItemGroup>
 </Project>

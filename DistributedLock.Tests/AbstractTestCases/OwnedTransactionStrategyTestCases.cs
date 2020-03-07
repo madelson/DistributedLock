@@ -1,5 +1,4 @@
 ﻿using DistributedLock.Tests;
-using Medallion.Threading.Sql;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
@@ -49,13 +48,13 @@ namespace Medallion.Threading.Tests.Sql
                     MaxPoolSize = 1,
                 }
                 .ConnectionString;
-            using (var connection = SqlHelpers.CreateConnection(connectionString)) { SqlTestHelper.ClearPool(connection); }
+            using (var connection = new SqlConnection(connectionString)) { SqlTestHelper.ClearPool(connection); }
 
             using var engine = new TEngineFactory().Create<TransactionBasedConnectionStringProvider>();
             var @lock = engine.CreateLock(nameof(TestIsolationLevelLeakage));
 
             @lock.Acquire().Dispose();
-            using (var connection = SqlHelpers.CreateConnection(connectionString))
+            using (var connection = new SqlConnection(connectionString))
             {
                 connection.Open();
                 using var command = connection.CreateCommand();
@@ -64,7 +63,7 @@ namespace Medallion.Threading.Tests.Sql
             }
 
             @lock.AcquireAsync().Result.Dispose();
-            using (var connection = SqlHelpers.CreateConnection(connectionString))
+            using (var connection = new SqlConnection(connectionString))
             {
                 connection.Open();
                 using var command = connection.CreateCommand();

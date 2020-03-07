@@ -60,7 +60,8 @@ namespace Medallion.Threading.SqlServer
                 this.AddCommonParameters(command, resourceName, timeout: timeout, markerTableName: markerTableName);
                 try
                 {
-                    await SqlHelpers.ExecuteNonQueryAsync(command, cancellationToken).ConfigureAwait(false);
+                    // see comments around disallowAsyncCancellation for why we pass this flag
+                    await SqlHelpers.ExecuteNonQueryAsync(command, cancellationToken, disallowAsyncCancellation: true).ConfigureAwait(false);
                 }
                 catch when (cancellationToken.IsCancellationRequested)
                 {

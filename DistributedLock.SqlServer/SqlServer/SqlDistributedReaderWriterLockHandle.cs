@@ -67,27 +67,31 @@ namespace Medallion.Threading.SqlServer
         public ValueTask UpgradeToWriteLockAsync(TimeSpan? timeout = null, CancellationToken cancellationToken = default) =>
             DistributedLockHelpers.UpgradeToWriteLockAsync(this, timeout, cancellationToken);
 
-        async ValueTask<bool> IInternalDistributedLockUpgradeableHandle.InternalTryUpgradeToWriteLockAsync(TimeoutValue timeout, CancellationToken cancellationToken)
+        ValueTask<bool> IInternalDistributedLockUpgradeableHandle.InternalTryUpgradeToWriteLockAsync(TimeoutValue timeout, CancellationToken cancellationToken)
         {
             var box = this._box ?? throw this.ObjectDisposed();
             var contents = box.Value;
             if (contents.upgradedHandle != null) { throw new InvalidOperationException("the lock has already been upgraded"); }
+            return TryPerformUpgradeAsync();
 
-            var upgradedHandle =
-                await contents.@lock.TryAcquireAsync(timeout, SqlApplicationLock.ExclusiveLock, cancellationToken, contextHandle: contents.innerHandle).ConfigureAwait(false);
-            if (upgradedHandle == null)
+            async ValueTask<bool> TryPerformUpgradeAsync()
             {
-                return false;
-            }
+                var upgradedHandle =
+                    await contents.@lock.TryAcquireAsync(timeout, SqlApplicationLock.ExclusiveLock, cancellationToken, contextHandle: contents.innerHandle).ConfigureAwait(false);
+                if (upgradedHandle == null)
+                {
+                    return false;
+                }
 
-            contents.upgradedHandle = upgradedHandle;
-            var newBox = RefBox.Create(contents);
-            if (Interlocked.CompareExchange(ref this._box, newBox, comparand: box) != box)
-            {
-                await upgradedHandle.DisposeAsync().ConfigureAwait(false);
-            }
+                contents.upgradedHandle = upgradedHandle;
+                var newBox = RefBox.Create(contents);
+                if (Interlocked.CompareExchange(ref this._box, newBox, comparand: box) != box)
+                {
+                    await upgradedHandle.DisposeAsync().ConfigureAwait(false);
+                }
 
-            return true;
+                return true;
+            }
         }
     }
 }

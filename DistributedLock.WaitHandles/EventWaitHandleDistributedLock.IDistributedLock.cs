@@ -14,9 +14,9 @@ namespace Medallion.Threading.WaitHandles
         IDistributedLockHandle IDistributedLock.Acquire(TimeSpan? timeout, CancellationToken cancellationToken) =>
             this.Acquire(timeout, cancellationToken);
         ValueTask<IDistributedLockHandle?> IDistributedLock.TryAcquireAsync(TimeSpan timeout, CancellationToken cancellationToken) =>
-            Helpers.ConvertValueTask<EventWaitHandleDistributedLockHandle?, IDistributedLockHandle?>(this.TryAcquireAsync(timeout, cancellationToken));
+            this.TryAcquireAsync(timeout, cancellationToken).Convert(To<IDistributedLockHandle?>.ValueTask);
         ValueTask<IDistributedLockHandle> IDistributedLock.AcquireAsync(TimeSpan? timeout, CancellationToken cancellationToken) =>
-            Helpers.ConvertValueTask<EventWaitHandleDistributedLockHandle, IDistributedLockHandle>(this.AcquireAsync(timeout, cancellationToken));
+            this.AcquireAsync(timeout, cancellationToken).Convert(To<IDistributedLockHandle>.ValueTask);
 
         /// <summary>
         /// Attempts to acquire the lock synchronously. Usage: 

@@ -1,5 +1,4 @@
-﻿using Medallion.Threading.Sql;
-using Medallion.Threading.Tests.Sql;
+﻿using Medallion.Threading.Tests.Sql;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
@@ -28,7 +27,7 @@ namespace Medallion.Threading.Tests
             Task RunDeadlock(bool isFirst)
             {
                 var connectionInfo = provider.GetConnectionInfo();
-                IDistributedLockOld lock1, lock2;
+                IDistributedLock lock1, lock2;
                 using (connectionInfo.Transaction != null ? TransactionProvider.UseTransaction(connectionInfo.Transaction) : ConnectionProvider.UseConnection(connectionInfo.Connection!))
                 {
                     lock1 = engine.CreateLock(isFirst ? LockName1 : LockName2);

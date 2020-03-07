@@ -1,7 +1,6 @@
 ﻿using DistributedLock.Tests;
 using DistributedLock.Tests.Infrastructure;
-using Medallion.Threading.Sql;
-using Medallion.Threading.Sql.ConnectionMultiplexing;
+using Medallion.Threading.Data;
 using System;
 using System.Collections.Generic;
 using System.Data.Common;
@@ -128,7 +127,7 @@ namespace Medallion.Threading.Tests.Sql
     public sealed class DefaultClientConnectionProvider : ConnectionProvider
     {
         protected override DbConnection CreateConnection(string connectionString) =>
-            SqlHelpers.CreateConnection(connectionString);
+            new SqlConnection(connectionString);
     }
 
     public sealed class AlternateClientConnectionProvider : ConnectionProvider
@@ -147,7 +146,7 @@ namespace Medallion.Threading.Tests.Sql
                 return new ConnectionInfo { Transaction = currentTransaction };
             }
 
-            var connection = SqlHelpers.CreateConnection(ConnectionStringProvider.ConnectionString);
+            var connection = new SqlConnection(ConnectionStringProvider.ConnectionString);
             this.RegisterCleanupAction(CreateWeakDisposeAction(connection));
             connection.Open();
             var transaction = connection.BeginTransaction();
@@ -168,7 +167,7 @@ namespace Medallion.Threading.Tests.Sql
     public sealed class DefaultClientTransactionProvider : TransactionProvider
     {
         protected override DbConnection CreateConnection(string connectionString) =>
-            SqlHelpers.CreateConnection(connectionString);
+            new SqlConnection(connectionString);
     }
 
     public sealed class AlternateClientTransactionProvider : TransactionProvider

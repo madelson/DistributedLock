@@ -1,4 +1,4 @@
-﻿using Medallion.Threading.Sql;
+﻿using Medallion.Threading.SqlServer;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,7 +10,7 @@ namespace Medallion.Threading.Tests.Sql
     public sealed class TestingSqlDistributedLockEngine<TConnectionManagementProvider> : TestingDistributedLockEngine
         where TConnectionManagementProvider : TestingSqlConnectionManagementProvider, new()
     {
-        internal override IDistributedLockOld CreateLockWithExactName(string name)
+        internal override IDistributedLock CreateLockWithExactName(string name)
         {
             var connectionManagementProvider = new TConnectionManagementProvider();
             this.RegisterCleanupAction(connectionManagementProvider.Dispose);
@@ -44,7 +44,7 @@ namespace Medallion.Threading.Tests.Sql
                 return provider.IsReentrantForAppLock;
             }
         }
-        internal override string GetSafeLockName(string name) => SqlDistributedLock.GetSafeLockName(name);
+        internal override string GetSafeName(string name) => SqlDistributedLock.GetSafeName(name);
         internal override void PerformCleanupForLockAbandonment()
         {
             using var provider = new TConnectionManagementProvider();

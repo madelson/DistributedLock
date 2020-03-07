@@ -4,9 +4,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Medallion.Threading.Sql;
 using System.Data.Common;
 using System.Threading;
+using Medallion.Threading.SqlServer;
+using Medallion.Threading.Data;
 
 namespace Medallion.Threading.Tests.Sql
 {
@@ -16,32 +17,33 @@ namespace Medallion.Threading.Tests.Sql
         public void TestBadConstructorArguments()
         {
             Assert.Catch<ArgumentNullException>(() => new SqlDistributedReaderWriterLock(null!, ConnectionStringProvider.ConnectionString));
+            Assert.Catch<ArgumentNullException>(() => new SqlDistributedReaderWriterLock(null!, ConnectionStringProvider.ConnectionString, exactName: true));
             Assert.Catch<ArgumentNullException>(() => new SqlDistributedReaderWriterLock("a", default(string)!));
             Assert.Catch<ArgumentNullException>(() => new SqlDistributedReaderWriterLock("a", default(DbTransaction)!));
             Assert.Catch<ArgumentNullException>(() => new SqlDistributedReaderWriterLock("a", default(DbConnection)!));
-            Assert.Catch<FormatException>(() => new SqlDistributedReaderWriterLock(new string('a', SqlDistributedReaderWriterLock.MaxLockNameLength + 1), ConnectionStringProvider.ConnectionString));
-            Assert.DoesNotThrow(() => new SqlDistributedReaderWriterLock(new string('a', SqlDistributedReaderWriterLock.MaxLockNameLength), ConnectionStringProvider.ConnectionString));
+            Assert.Catch<FormatException>(() => new SqlDistributedReaderWriterLock(new string('a', SqlDistributedReaderWriterLock.MaxNameLength + 1), ConnectionStringProvider.ConnectionString, exactName: true));
+            Assert.DoesNotThrow(() => new SqlDistributedReaderWriterLock(new string('a', SqlDistributedReaderWriterLock.MaxNameLength), ConnectionStringProvider.ConnectionString, exactName: true));
         }
 
         [Test]
         public void TestGetSafeLockNameCompat()
         {
-            SqlDistributedReaderWriterLock.MaxLockNameLength.ShouldEqual(SqlDistributedLock.MaxLockNameLength);
+            SqlDistributedReaderWriterLock.MaxNameLength.ShouldEqual(SqlDistributedLock.MaxNameLength);
 
             var cases = new[]
             {
                 string.Empty,
                 "abc",
                 "\\",
-                new string('a', SqlDistributedLock.MaxLockNameLength),
-                new string('\\', SqlDistributedLock.MaxLockNameLength),
-                new string('x', SqlDistributedLock.MaxLockNameLength + 1)
+                new string('a', SqlDistributedLock.MaxNameLength),
+                new string('\\', SqlDistributedLock.MaxNameLength),
+                new string('x', SqlDistributedLock.MaxNameLength + 1)
             };
 
             foreach (var lockName in cases)
             {
                 // should be compatible with SqlDistributedLock
-                SqlDistributedReaderWriterLock.GetSafeLockName(lockName).ShouldEqual(SqlDistributedLock.GetSafeLockName(lockName));
+                SqlDistributedReaderWriterLock.GetSafeName(lockName).ShouldEqual(SqlDistributedLock.GetSafeName(lockName));
             }
         }
 
@@ -122,6 +124,6 @@ namespace Medallion.Threading.Tests.Sql
         }
 
         private static string UniqueSafeLockName(string baseName) =>
-            SqlDistributedReaderWriterLock.GetSafeLockName($"{baseName}_{TestHelper.FrameworkName}");
+            SqlDistributedReaderWriterLock.GetSafeName($"{baseName}_{TestHelper.FrameworkName}");
     }
 }

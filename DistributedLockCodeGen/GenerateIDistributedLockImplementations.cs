@@ -21,7 +21,11 @@ namespace DistributedLockCodeGen
             foreach (var file in files)
             {
                 var lockCode = File.ReadAllText(file);
-                if (lockCode.Contains("AUTO-GENERATED")) { return; }
+                if (lockCode.Contains("AUTO-GENERATED")
+                    || !CodeGenHelpers.HasPublicType(lockCode, out _)) 
+                { 
+                    continue; 
+                }
 
                 if (!lockCode.Contains(": IInternalDistributedLock<"))
                 {
@@ -90,7 +94,11 @@ namespace {@namespace}
             foreach (var file in files)
             {
                 var lockCode = File.ReadAllText(file);
-                if (lockCode.Contains("AUTO-GENERATED")) { return; }
+                if (lockCode.Contains("AUTO-GENERATED")
+                    || !CodeGenHelpers.HasPublicType(lockCode, out _)) 
+                { 
+                    continue; 
+                }
 
                 bool isUpgradeable;
                 if (lockCode.Contains(": IInternalDistributedUpgradeableReaderWriterLock<"))
@@ -184,9 +192,8 @@ namespace {@namespace}
                 .Append(isAsync ? $"ValueTask<{returnTypeToUse}>" : returnTypeToUse)
                 .AppendLine($" {@interface}.{method}(TimeSpan{(isTry ? string.Empty : "?")} timeout, CancellationToken cancellationToken) =>")
                 .Append(' ', 12)
-                .Append(isAsync ? $"Helpers.ConvertValueTask<{handleType}{(isTry ? "?" : string.Empty)}, {returnTypeToUse}>(" : string.Empty)
                 .Append($"this.{method}(timeout, cancellationToken)")
-                .Append(isAsync ? ")" : string.Empty)
+                .Append(isAsync ? $".Convert(To<{returnTypeToUse}>.ValueTask)" : string.Empty)
                 .AppendLine(";");
         }
     }

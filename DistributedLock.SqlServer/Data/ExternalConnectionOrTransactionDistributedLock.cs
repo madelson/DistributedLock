@@ -12,15 +12,16 @@ namespace Medallion.Threading.Data
 {
     internal sealed class ExternalConnectionOrTransactionSqlDistributedLock : IInternalSqlDistributedLock
     {
-        private readonly string lockName;
-        private readonly ConnectionOrTransaction connectionOrTransaction;
+        private readonly string _name;
+        private readonly ConnectionOrTransaction _connectionOrTransaction;
 
-        public ExternalConnectionOrTransactionSqlDistributedLock(string lockName, ConnectionOrTransaction connectionOrTransaction)
+        public ExternalConnectionOrTransactionSqlDistributedLock(string name, ConnectionOrTransaction connectionOrTransaction)
         {
-            this.lockName = lockName;
-            this.connectionOrTransaction = connectionOrTransaction;
+            this._name = name;
+            this._connectionOrTransaction = connectionOrTransaction;
         }
 
+        // todo isreentrant tests
         bool IInternalSqlDistributedLock.IsReentrant => true;
 
         public async ValueTask<IDistributedLockHandle?> TryAcquireAsync<TLockCookie>(
@@ -32,13 +33,13 @@ namespace Medallion.Threading.Data
         {
             this.CheckConnection();
 
-            var lockCookie = await strategy.TryAcquireAsync(this.connectionOrTransaction, this.lockName, timeout, cancellationToken).ConfigureAwait(false);
+            var lockCookie = await strategy.TryAcquireAsync(this._connectionOrTransaction, this._name, timeout, cancellationToken).ConfigureAwait(false);
             return lockCookie == null ? null : new Handle<TLockCookie>(this, strategy, lockCookie);
         }
 
         private void CheckConnection()
         {
-            var connection = this.connectionOrTransaction.Connection;
+            var connection = this._connectionOrTransaction.Connection;
             if (connection == null) { throw new InvalidOperationException("The transaction had been disposed"); }
             else if (connection.State != ConnectionState.Open) { throw new InvalidOperationException("The connection is not open"); }
         }
@@ -46,34 +47,25 @@ namespace Medallion.Threading.Data
         private sealed class Handle<TLockCookie> : IDistributedLockHandle
             where TLockCookie : class
         {
-            private ExternalConnectionOrTransactionSqlDistributedLock? _lock;
-            private ISqlSynchronizationStrategy<TLockCookie>? _strategy;
-            private TLockCookie? _lockCookie;
+            private RefBox<(ExternalConnectionOrTransactionSqlDistributedLock @lock, ISqlSynchronizationStrategy<TLockCookie> strategy, TLockCookie lockCookie)>? _box;
 
             public Handle(
                 ExternalConnectionOrTransactionSqlDistributedLock @lock,
                 ISqlSynchronizationStrategy<TLockCookie> strategy, 
                 TLockCookie lockCookie)
             {
-                this._lock = @lock;
-                this._strategy = strategy;
-                this._lockCookie = lockCookie;
+                this._box = RefBox.Create((@lock, strategy, lockCookie));
             }
 
             public CancellationToken HandleLostToken => throw new NotImplementedException();
 
             public void Dispose() => SyncOverAsync.Run(@this => this.DisposeAsync(), this, willGoAsync: false);
 
-            public async ValueTask DisposeAsync()
-            {
-                var @lock = Interlocked.Exchange(ref this._lock, null);
-                if (@lock != null)
-                {
-                    var strategy = Interlocked.Exchange(ref this._strategy, null)!;
-                    var lockCookie = Interlocked.Exchange(ref this._lockCookie, null)!;
-                    await strategy.ReleaseAsync(@lock.connectionOrTransaction, @lock.lockName, lockCookie).ConfigureAwait(false);
-                }
-            }
+            public ValueTask DisposeAsync() => 
+                RefBox.TryConsume(ref this._box, out var contents)
+                    && !(contents.@lock._connectionOrTransaction.Connection?.IsClosedOrBroken() ?? true)
+                    ? contents.strategy.ReleaseAsync(contents.@lock._connectionOrTransaction, contents.@lock._name, contents.lockCookie)
+                    : default;
         }
     }
 }

@@ -1,4 +1,6 @@
-﻿using Medallion.Threading.Sql;
+﻿using Medallion.Threading.Data;
+using Medallion.Threading.SqlServer;
+using Microsoft.Data.SqlClient;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
@@ -74,7 +76,7 @@ namespace Medallion.Threading.Tests.Sql
         [Test]
         public void TestTicketsTakenOnBothConnectionAndTransactionForThatConnection()
         {
-            using var connection = SqlHelpers.CreateConnection(ConnectionStringProvider.ConnectionString);
+            using var connection = new SqlConnection(ConnectionStringProvider.ConnectionString);
             connection.Open();
 
             var semaphore1 = new SqlDistributedSemaphore(

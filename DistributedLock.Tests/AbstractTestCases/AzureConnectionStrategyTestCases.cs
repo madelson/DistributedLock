@@ -1,4 +1,4 @@
-﻿using Medallion.Threading.Sql;
+﻿using Medallion.Threading.Data;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;

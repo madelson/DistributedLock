@@ -10,15 +10,9 @@ namespace Medallion.Threading.Data
     // todo revisit this; right place, right abstraction?
     internal static class SemaphoreSlimHelper
     {
-        public static ValueTask<bool> WaitAsync(SemaphoreSlim semaphore, TimeoutValue timeout, CancellationToken cancellationToken)
-        {
-            if (SyncOverAsync.IsSynchronous)
-            {
-                semaphore.WaitAsync(timeout.InMilliseconds, cancellationToken);
-                return default;
-            }
-
-            return semaphore.WaitAsync(timeout.InMilliseconds, cancellationToken).AsValueTask();
-        }
+        public static ValueTask<bool> WaitAsync(SemaphoreSlim semaphore, TimeoutValue timeout, CancellationToken cancellationToken) =>
+            SyncOverAsync.IsSynchronous
+                ? semaphore.Wait(timeout.InMilliseconds, cancellationToken).AsValueTask()
+                : semaphore.WaitAsync(timeout.InMilliseconds, cancellationToken).AsValueTask();
     }
 }

@@ -1,4 +1,5 @@
-﻿using Medallion.Threading.Sql;
+﻿using Medallion.Threading.Internal;
+using Medallion.Threading.SqlServer;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -21,7 +22,7 @@ namespace Medallion.Threading.Tests.Sql
             this.maxCount = maxCount;
         }
 
-        internal override IDistributedLockOld CreateLockWithExactName(string name)
+        internal override IDistributedLock CreateLockWithExactName(string name)
         {
             var semaphore = this.CreateSemaphoreWithExactName(name, this.maxCount);
 
@@ -39,7 +40,7 @@ namespace Medallion.Threading.Tests.Sql
                 }
             }
             
-            return new SqlSemaphoreDistributedLock(semaphore);
+            return new SqlDistributedSemaphoreLock(semaphore);
         }
 
         internal SqlDistributedSemaphore CreateSemaphore(string baseName, int maxCount) =>
@@ -71,41 +72,37 @@ namespace Medallion.Threading.Tests.Sql
         }
         
         internal override bool IsReentrant => false;
-        internal override string GetSafeLockName(string name) => name ?? throw new ArgumentNullException(nameof(name));
+        internal override string GetSafeName(string name) => name ?? throw new ArgumentNullException(nameof(name));
         internal override void PerformCleanupForLockAbandonment()
         {
             using var provider = new TConnectionManagementProvider();
             provider.PerformCleanupForLockAbandonment();
         }
 
-        private sealed class SqlSemaphoreDistributedLock : IDistributedLockOld
+        private sealed class SqlDistributedSemaphoreLock : IDistributedLock
         {
-            private readonly SqlDistributedSemaphore semaphore;
+            private readonly SqlDistributedSemaphore _semaphore;
 
-            public SqlSemaphoreDistributedLock(SqlDistributedSemaphore semaphore)
+            public SqlDistributedSemaphoreLock(SqlDistributedSemaphore semaphore)
             {
-                this.semaphore = semaphore;
+                this._semaphore = semaphore;
             }
 
-            IDisposable IDistributedLockOld.Acquire(TimeSpan? timeout, CancellationToken cancellationToken)
-            {
-                return this.semaphore.Acquire(timeout, cancellationToken);
-            }
+            string IDistributedLock.Name => this._semaphore.Name;
 
-            Task<IDisposable> IDistributedLockOld.AcquireAsync(TimeSpan? timeout, CancellationToken cancellationToken)
-            {
-                return this.semaphore.AcquireAsync(timeout, cancellationToken).Task;
-            }
+            bool IDistributedLock.IsReentrant => false;
 
-            IDisposable? IDistributedLockOld.TryAcquire(TimeSpan timeout, CancellationToken cancellationToken)
-            {
-                return this.semaphore.TryAcquire(timeout, cancellationToken);
-            }
+            IDistributedLockHandle IDistributedLock.Acquire(TimeSpan? timeout, CancellationToken cancellationToken) =>
+                this._semaphore.Acquire(timeout, cancellationToken);
 
-            Task<IDisposable?> IDistributedLockOld.TryAcquireAsync(TimeSpan timeout, CancellationToken cancellationToken)
-            {
-                return this.semaphore.TryAcquireAsync(timeout, cancellationToken).Task;
-            }
+            ValueTask<IDistributedLockHandle> IDistributedLock.AcquireAsync(TimeSpan? timeout, CancellationToken cancellationToken) =>
+                this._semaphore.AcquireAsync(timeout, cancellationToken).Convert(To<IDistributedLockHandle>.ValueTask);
+
+            IDistributedLockHandle? IDistributedLock.TryAcquire(TimeSpan timeout, CancellationToken cancellationToken) =>
+                this._semaphore.TryAcquire(timeout, cancellationToken);
+
+            ValueTask<IDistributedLockHandle?> IDistributedLock.TryAcquireAsync(TimeSpan timeout, CancellationToken cancellationToken) =>
+                this._semaphore.TryAcquireAsync(timeout, cancellationToken).Convert(To<IDistributedLockHandle?>.ValueTask);
         }
     }
 

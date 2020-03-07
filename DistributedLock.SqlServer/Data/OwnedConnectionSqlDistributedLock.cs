@@ -69,48 +69,35 @@ namespace Medallion.Threading.Data
         private sealed class Handle<TLockCookie> : IDistributedLockHandle
             where TLockCookie : class
         {
-            private DbConnection? connection;
-            private readonly string lockName;
-            private ISqlSynchronizationStrategy<TLockCookie>? strategy;
-            private TLockCookie? lockCookie;
+            private RefBox<(DbConnection connection, ISqlSynchronizationStrategy<TLockCookie> strategy, string name, TLockCookie lockCookie)>? _box;
 
-            public Handle(DbConnection connection, ISqlSynchronizationStrategy<TLockCookie> strategy, string lockName, TLockCookie lockCookie)
+            public Handle(DbConnection connection, ISqlSynchronizationStrategy<TLockCookie> strategy, string name, TLockCookie lockCookie)
             {
-                this.connection = connection;
-                this.strategy = strategy;
-                this.lockName = lockName;
-                this.lockCookie = lockCookie;
+                this._box = RefBox.Create((connection, strategy, name, lockCookie));
             }
 
             public CancellationToken HandleLostToken => throw new NotImplementedException();
 
-            public DbConnection? Connection => Volatile.Read(ref this.connection);
+            public DbConnection? Connection => Volatile.Read(ref this._box)?.Value.connection;
 
             public void Dispose() => SyncOverAsync.Run(@this => @this.DisposeAsync(), this, willGoAsync: false);
 
             public async ValueTask DisposeAsync()
             {
-                var connection = Interlocked.Exchange(ref this.connection, null);
-                if (connection != null && !connection.IsClosedOrBroken())
+                if (RefBox.TryConsume(ref this._box, out var contents)
+                    && !contents.connection.IsClosedOrBroken())
                 {
-                    await ReleaseLockAsync(connection, this.strategy!, this.lockName, this.lockCookie!).ConfigureAwait(false);
-                    this.strategy = null;
-                    this.lockCookie = null;
-                }
-            }
-
-            private static async ValueTask ReleaseLockAsync(DbConnection connection, ISqlSynchronizationStrategy<TLockCookie> strategy, string lockName, TLockCookie lockCookie)
-            {
-                try
-                {
-                    // explicit release is required due to connection pooling. For a pooled connection,
-                    // simply calling Dispose() will not release the lock: it just returns the connection
-                    // to the pool
-                    await strategy.ReleaseAsync(connection, lockName, lockCookie).ConfigureAwait(false);
-                }
-                finally
-                {
-                    await SqlHelpers.DisposeAsync(connection).ConfigureAwait(false);
+                    try
+                    {
+                        // explicit release is required due to connection pooling. For a pooled connection,
+                        // simply calling Dispose() will not release the lock: it just returns the connection
+                        // to the pool
+                        await contents.strategy.ReleaseAsync(contents.connection, contents.name, contents.lockCookie).ConfigureAwait(false);
+                    }
+                    finally
+                    {
+                        await SqlHelpers.DisposeAsync(contents.connection).ConfigureAwait(false);
+                    }
                 }
             }
         }

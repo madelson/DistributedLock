@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Reflection;
 using Microsoft.Data.SqlClient;
 using Medallion.Threading.Internal;
+using System.Runtime.CompilerServices;
 
 namespace Medallion.Threading.Data
 {
@@ -57,68 +58,95 @@ namespace Medallion.Threading.Data
             return default;
         }
 
-        public static ValueTask<int> ExecuteNonQueryAsync(this IDbCommand command, CancellationToken cancellationToken) =>
-            ExecuteAsync(command, (c, t) => c.ExecuteNonQueryAsync(t), c => c.ExecuteNonQuery(), cancellationToken);
+        public static ValueTask<int> ExecuteNonQueryAsync(this IDbCommand command, CancellationToken cancellationToken, bool disallowAsyncCancellation = false) =>
+            ExecuteAsync(command, (c, t) => c.ExecuteNonQueryAsync(t), c => c.ExecuteNonQuery(), cancellationToken, disallowAsyncCancellation);
 
-        private static ValueTask<TResult> ExecuteAsync<TResult>(
+        private static async ValueTask<TResult> ExecuteAsync<TResult>(
             IDbCommand command, 
             Func<DbCommand, CancellationToken, Task<TResult>> executeAsync,
             Func<IDbCommand, TResult> executeSync,
-            CancellationToken cancellationToken)
+            CancellationToken cancellationToken,
+            bool disallowAsyncCancellation)
         {
             if (!SyncOverAsync.IsSynchronous && command is DbCommand dbCommand)
             {
-                return cancellationToken.CanBeCanceled
-                    ? InternalExecuteAndPropagateCancellationAsync((dbCommand, executeAsync), (state, token) => state.executeAsync(state.dbCommand, token).AsValueTask(), cancellationToken)
-                    : executeAsync(dbCommand, cancellationToken).AsValueTask();
-            }
+                if (!cancellationToken.CanBeCanceled)
+                {
+                    return await executeAsync(dbCommand, CancellationToken.None).ConfigureAwait(false);
+                }
+                else if (!disallowAsyncCancellation)
+                {
+                    return await InternalExecuteAndPropagateCancellationAsync(
+                        (dbCommand, executeAsync),
+                        (state, cancellationToken) => state.executeAsync(state.dbCommand, cancellationToken).AsValueTask(),
+                        cancellationToken
+                    ).ConfigureAwait(false);
+                }
+                else
+                {
+                    // FALL THROUGH
 
-            // todo retest: do we need to support this? If we do we'll need to add a flag to follow a sync codepath in the SqlSemaphore + cancel + sqlserver case
-            // note: we can't call ExecuteNonQueryAsync(cancellationToken) here because of
-            // what appears to be a .NET bug (see https://github.com/dotnet/corefx/issues/26623,
-            // https://stackoverflow.com/questions/48461567/canceling-query-with-while-loop-hangs-forever)
-            // The workaround is to fall back to multi-threaded async querying in the case where we
-            // have a live cancellation token (less efficient but at least it works)
+                    // note: we can't call ExecuteNonQueryAsync(cancellationToken) or even ExecuteNonQueryAsync() 
+                    // here because of a .NET bug (see https://github.com/dotnet/SqlClient/issues/44,
+                    // https://stackoverflow.com/questions/48461567/canceling-query-with-while-loop-hangs-forever)
+                    // The workaround is to fall back to sync cancellation and sync execution in this case
+                }
+            }
 
             if (cancellationToken.CanBeCanceled)
             {
-                // todo retest: do we need this complexity or can we just call cancel once?
-                var completed = false;
-                using (cancellationToken.Register(() =>
+                // check this first rather than rely on a race between the the cancellation registration and the
+                // command execution. Note that if SqlCommand.Cancel() is called before the command is executed, this has no effect
+                cancellationToken.ThrowIfCancellationRequested();
+
+                var commandBox = new StrongBox<IDbCommand?>(command);
+
+                // having the registration offload the cancel loop to a background thread is important, since
+                // registrations fire synchronously if the token is already canceled
+                using var registration = cancellationToken.Register(state => Task.Run(async () =>
                 {
-                    // we call cancel in a loop here until the command task completes. This is because
-                    // when cancellation triggers it's possible the command hasn't even run yet. Therefore
-                    // we want to keep trying until we know cancellation has worked
-                    var spinWait = new SpinWait();
-                    while (true)
+                    var commandBox = (StrongBox<IDbCommand?>)state;
+                    IDbCommand? command;
+                    while ((command = Volatile.Read(ref commandBox.Value)) != null)
                     {
                         try { command.Cancel(); }
                         catch { /* just ignore errors here */ }
 
-                        if (Volatile.Read(ref completed)) { break; }
-                        spinWait.SpinOnce();
+                        await Task.Delay(1).ConfigureAwait(false);
                     }
-                }))
+                }), state: commandBox);
+
+                try
                 {
-                    try { return executeSync(command).AsValueTask(); }
-                    finally { Volatile.Write(ref completed, true); }
+                    return await InternalExecuteAndPropagateCancellationAsync(
+                        (command, executeSync),
+                        (state, cancellationToken) => state.executeSync(state.command).AsValueTask(),
+                        cancellationToken
+                    ).ConfigureAwait(false);
+                }
+                finally
+                {
+                    // allows the cancellation loop to exit if it started
+                    Volatile.Write(ref commandBox.Value, null);
                 }
             }
 
-            return executeSync(command).AsValueTask();
+            return executeSync(command);
         }
-
+        
         private static async ValueTask<TResult> InternalExecuteAndPropagateCancellationAsync<TState, TResult>(
             TState state,
             Func<TState, CancellationToken, ValueTask<TResult>> executeAsync,
             CancellationToken cancellationToken)
         {
+            Invariant.Require(cancellationToken.CanBeCanceled);
+
             try
             {
                 return await executeAsync(state, cancellationToken).ConfigureAwait(false);
             }
-            catch (DbException ex)
-                // Canceled SQL operations throw SqlException instead of OCE.
+            catch (Exception ex)
+                // Canceled SQL operations throw SqlException/InvalidOperationException instead of OCE.
                 // That means that downstream operations end up faulted instead of canceled. We
                 // wrap with OCE here to correctly propagate cancellation
                 when (cancellationToken.IsCancellationRequested && IsCancellationException(ex))
@@ -151,7 +179,7 @@ namespace Medallion.Threading.Data
                 : operationTimeout.InSeconds + 30;
         }
 
-        public static bool IsCancellationException(DbException exception)
+        private static bool IsCancellationException(Exception exception)
         {
             const int CanceledNumber = 0;
 
@@ -180,7 +208,8 @@ namespace Medallion.Threading.Data
                 }
             }
 
-            return false;
+            // this shows up when you call DbCommand.Cancel()
+            return exception is InvalidOperationException;
         }
     }
 

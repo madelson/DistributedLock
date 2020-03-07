@@ -1,4 +1,5 @@
-﻿using NUnit.Framework;
+﻿using Medallion.Threading.SqlServer;
+using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -49,7 +50,7 @@ namespace Medallion.Threading.Tests.Sql
 
             var readHandle = engine.CreateReaderWriterLock(nameof(TestUpgradeToWriteLock)).AcquireReadLock();
 
-            Task<IDisposable> readTask;
+            Task<SqlDistributedReaderWriterLockHandle> readTask;
             using (var upgradeableHandle = @lock.AcquireUpgradeableReadLockAsync().Result)
             {
                 upgradeableHandle.TryUpgradeToWriteLock().ShouldEqual(false); // read lock still held
@@ -58,7 +59,7 @@ namespace Medallion.Threading.Tests.Sql
 
                 upgradeableHandle.TryUpgradeToWriteLock().ShouldEqual(true);
 
-                readTask = engine.CreateReaderWriterLock(nameof(TestUpgradeToWriteLock)).AcquireReadLockAsync();
+                readTask = engine.CreateReaderWriterLock(nameof(TestUpgradeToWriteLock)).AcquireReadLockAsync().AsTask();
                 readTask.Wait(TimeSpan.FromSeconds(.1)).ShouldEqual(false, "write lock held");
             }
 

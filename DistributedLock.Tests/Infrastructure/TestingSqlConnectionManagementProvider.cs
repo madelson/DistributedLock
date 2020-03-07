@@ -1,5 +1,5 @@
 ﻿using DistributedLock.Tests;
-using Medallion.Threading.Sql;
+using Medallion.Threading.Data;
 using System;
 using System.Collections.Generic;
 using System.Data.Common;
