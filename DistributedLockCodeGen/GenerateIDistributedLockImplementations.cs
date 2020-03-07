@@ -10,19 +10,19 @@ namespace DistributedLockCodeGen
 {
     public class GenerateIDistributedLockImplementations
     {
-        public static string SolutionDirectory => Path.GetFullPath(Path.Combine(TestContext.CurrentContext.TestDirectory, "..", "..", "..", ".."));
-
         [Test]
-        public void Generate()
+        public void GenerateForIDistributedLock()
         {
-            var files = Directory.GetFiles(SolutionDirectory, "*DistributedLock.cs", SearchOption.AllDirectories)
-                .Where(f => f.IndexOf("DistributedLock.Tests", StringComparison.OrdinalIgnoreCase) < 0
-                    && f.IndexOf("DistributedLock.Core", StringComparison.OrdinalIgnoreCase) < 0);
+            var files = CodeGenHelpers.EnumerateSolutionFiles()
+                .Where(f => f.IndexOf("DistributedLock.Core", StringComparison.OrdinalIgnoreCase) < 0)
+                .Where(f => f.EndsWith("DistributedLock.cs", StringComparison.OrdinalIgnoreCase) && Path.GetFileName(f)[0] != 'I');
             
             var errors = new List<string>();
             foreach (var file in files)
             {
                 var lockCode = File.ReadAllText(file);
+                if (lockCode.Contains("AUTO-GENERATED")) { return; }
+
                 if (!lockCode.Contains(": IInternalDistributedLock<"))
                 {
                     errors.Add($"{file} does not implement the expected interface");
@@ -31,7 +31,13 @@ namespace DistributedLockCodeGen
 
                 var lockType = Path.GetFileNameWithoutExtension(file);
                 var handleType = lockType + "Handle";
-                var handleTypeArticle = new[] { "A", "E", "I", "O", "U" }.Any(s => handleType.StartsWith(s)) ? "An" : "A";
+
+                var explicitImplementations = new StringBuilder();
+                const string Interface = "IDistributedLock", InterfaceHandle = Interface + "Handle";
+                foreach (var method in new[] { "TryAcquire", "Acquire", "TryAcquireAsync", "AcquireAsync" })
+                {
+                    AppendExplicitInterfaceMethod(explicitImplementations, Interface, method, InterfaceHandle, handleType);
+                }
 
                 var @namespace = Regex.Match(lockCode, @"\nnamespace (?<namespace>\S+)").Groups["namespace"].Value;
                 var code =
@@ -46,83 +52,22 @@ namespace {@namespace}
     {{
         // AUTO-GENERATED
 
-        IDistributedLockHandle? IDistributedLock.TryAcquire(TimeSpan timeout, CancellationToken cancellationToken) =>
-            this.TryAcquire(timeout, cancellationToken);
-
-        IDistributedLockHandle IDistributedLock.Acquire(TimeSpan? timeout, CancellationToken cancellationToken) =>
-            this.Acquire(timeout, cancellationToken);
-
-        ValueTask<IDistributedLockHandle?> IDistributedLock.TryAcquireAsync(TimeSpan timeout, CancellationToken cancellationToken) =>
-            Helpers.ConvertValueTask<{handleType}?, IDistributedLockHandle?>(this.TryAcquireAsync(timeout, cancellationToken));
-
-        ValueTask<IDistributedLockHandle> IDistributedLock.AcquireAsync(TimeSpan? timeout, CancellationToken cancellationToken) =>
-            Helpers.ConvertValueTask<{handleType}, IDistributedLockHandle>(this.AcquireAsync(timeout, cancellationToken));
-
-        /// <summary>
-        /// Attempts to acquire the lock synchronously. Usage:
-        /// <code>
-        ///     using (var handle = myLock.TryAcquire(...))
-        ///     {{
-        ///         if (handle != null) {{ /* we have the lock! */ }}
-        ///     }}
-        ///     // dispose releases the lock if we took it
-        /// </code>
-        /// </summary>
-        /// <param name=""timeout"">How long to wait before giving up on acquiring the lock. Defaults to 0</param>
-        /// <param name=""cancellationToken"">Specifies a token by which the wait can be canceled</param>
-        /// <returns>{handleTypeArticle} <see cref=""{handleType}""/> which can be used to release the lock, or null if the lock was not taken</returns>
+{explicitImplementations}
         public {handleType}? TryAcquire(TimeSpan timeout = default, CancellationToken cancellationToken = default) =>
             DistributedLockHelpers.TryAcquire(this, timeout, cancellationToken);
 
-        /// <summary>
-        /// Acquires the lock synchronously, failing with <see cref=""TimeoutException""/> if the wait times out
-        /// <code>
-        ///     using (myLock.Acquire(...))
-        ///     {{
-        ///         // we have the lock
-        ///     }}
-        ///     // dispose releases the lock
-        /// </code>
-        /// </summary>
-        /// <param name=""timeout"">How long to wait before giving up on acquiring the lock. Defaults to <see cref=""Timeout.InfiniteTimeSpan""/></param>
-        /// <param name=""cancellationToken"">Specifies a token by which the wait can be canceled</param>
-        /// <returns>{handleTypeArticle} <see cref=""{handleType}""/> which can be used to release the lock</returns>
         public {handleType} Acquire(TimeSpan? timeout = null, CancellationToken cancellationToken = default) =>
             DistributedLockHelpers.Acquire(this, timeout, cancellationToken);
 
-        /// <summary>
-        /// Attempts to acquire the lock asynchronously. Usage:
-        /// <code>
-        ///     using (var handle = await myLock.TryAcquireAsync(...))
-        ///     {{
-        ///         if (handle != null) {{ /* we have the lock! */ }}
-        ///     }}
-        ///     // dispose releases the lock if we took it
-        /// </code>
-        /// </summary>
-        /// <param name=""timeout"">How long to wait before giving up on acquiring the lock. Defaults to 0</param>
-        /// <param name=""cancellationToken"">Specifies a token by which the wait can be canceled</param>
-        /// <returns>{handleTypeArticle} <see cref=""{handleType}""/> which can be used to release the lock, or null if the lock was not taken</returns>
         public ValueTask<{handleType}?> TryAcquireAsync(TimeSpan timeout = default, CancellationToken cancellationToken = default) =>
             this.As<IInternalDistributedLock<{handleType}>>().InternalTryAcquireAsync(timeout, cancellationToken);
 
-        /// <summary>
-        /// Acquires the lock asynchronously, failing with <see cref=""TimeoutException""/> if the wait times out
-        /// <code>
-        ///     using (await myLock.AcquireAsync(...))
-        ///     {{
-        ///         // we have the lock
-        ///     }}
-        ///     // dispose releases the lock
-        /// </code>
-        /// </summary>
-        /// <param name=""timeout"">How long to wait before giving up on acquiring the lock. Defaults to <see cref=""Timeout.InfiniteTimeSpan""/></param>
-        /// <param name=""cancellationToken"">Specifies a token by which the wait can be canceled</param>
-        /// <returns>{handleTypeArticle} <see cref=""{handleType}""/> which can be used to release the lock</returns>
         public ValueTask<{handleType}> AcquireAsync(TimeSpan? timeout = null, CancellationToken cancellationToken = default) =>
             DistributedLockHelpers.AcquireAsync(this, timeout, cancellationToken);
     }}
 }}";
+                code = DocCommentGenerator.AddDocComments(code);
+
                 var outputPath = Path.Combine(Path.GetDirectoryName(file), Path.GetFileNameWithoutExtension(file) + ".IDistributedLock.cs");
                 if (!File.Exists(outputPath) || File.ReadAllText(outputPath) != code)
                 {
@@ -132,6 +77,117 @@ namespace {@namespace}
             }
 
             Assert.IsEmpty(errors);
+        }
+
+        [Test]
+        public void GenerateForIDistributedReaderWriterLock()
+        {
+            var files = CodeGenHelpers.EnumerateSolutionFiles()
+                .Where(f => f.IndexOf("DistributedLock.Core", StringComparison.OrdinalIgnoreCase) < 0)
+                .Where(f => Regex.IsMatch(Path.GetFileName(f), @"Distributed.*?ReaderWriterLock\.cs$", RegexOptions.IgnoreCase));
+
+            var errors = new List<string>();
+            foreach (var file in files)
+            {
+                var lockCode = File.ReadAllText(file);
+                if (lockCode.Contains("AUTO-GENERATED")) { return; }
+
+                bool isUpgradeable;
+                if (lockCode.Contains(": IInternalDistributedUpgradeableReaderWriterLock<"))
+                {
+                    isUpgradeable = true;
+                }
+                else if (lockCode.Contains(": IInternalDistributedReaderWriterLock<"))
+                {
+                    isUpgradeable = false;
+                }
+                else
+                {
+                    errors.Add($"{file} does not implement the expected interface");
+                    continue;
+                }
+
+                var lockType = Path.GetFileNameWithoutExtension(file);
+
+                var explicitImplementations = new StringBuilder();
+                var publicMethods = new StringBuilder();
+                foreach (var methodLockType in new[] { LockType.Read, LockType.Upgrade, LockType.Write }.Where(t => isUpgradeable || t != LockType.Upgrade))
+                foreach (var isAsync in new[] { false, true })
+                foreach (var isTry in new[] { true, false })
+                {
+                    var upgradeableText = methodLockType == LockType.Upgrade ? "Upgradeable" : "";
+                    var handleType = lockType + upgradeableText + "Handle";
+
+                    var methodName = $"{(isTry ? "Try" : "")}Acquire{upgradeableText}{(methodLockType == LockType.Write ? "Write" : "Read")}Lock{(isAsync ? "Async" : "")}";
+                    AppendExplicitInterfaceMethod(
+                        explicitImplementations,
+                        $"IDistributed{upgradeableText}ReaderWriterLock",
+                        methodName, 
+                        $"IDistributedLock{upgradeableText}Handle",
+                        handleType
+                    );
+
+                    var simplifiedMethodName = methodLockType == LockType.Upgrade ? methodName : methodName.Replace("ReadLock", "").Replace("WriteLock", "");
+
+                    publicMethods.AppendLine()
+                        .Append(' ', 8).Append("public ")
+                        .Append(isAsync ? "ValueTask<" : "").Append(handleType).Append(isTry ? "?" : "").Append(isAsync ? ">" : "").Append(' ')
+                        .Append(methodName)
+                        .Append("(").Append("TimeSpan").Append(isTry ? "" : "?").AppendLine($" timeout = {(isTry ? "default" : "null")}, CancellationToken cancellationToken = default) =>")
+                        .Append(' ', 12)
+                        .Append(
+                            isTry && isAsync
+                                ? $"this.As<IInternalDistributed{upgradeableText}ReaderWriterLock<{(methodLockType == LockType.Upgrade ? lockType + "Handle, " : "")}{handleType}>>()"
+                                    + $".Internal{simplifiedMethodName}(timeout, cancellationToken"
+                                : $"DistributedLockHelpers.{simplifiedMethodName}(this, timeout, cancellationToken"
+                        )
+                        .Append(methodLockType == LockType.Read ? ", isWrite: false" : methodLockType == LockType.Write ? ", isWrite: true" : "")
+                        .AppendLine(");");
+                }
+
+                var @namespace = Regex.Match(lockCode, @"\nnamespace (?<namespace>\S+)").Groups["namespace"].Value;
+                var code =
+$@"using System;
+using System.Threading;
+using System.Threading.Tasks;
+using Medallion.Threading.Internal;
+
+namespace {@namespace}
+{{
+    public partial class {lockType}
+    {{
+        // AUTO-GENERATED
+
+{explicitImplementations}{publicMethods}
+    }}
+}}";
+                code = DocCommentGenerator.AddDocComments(code);
+
+                var outputPath = Path.Combine(Path.GetDirectoryName(file), $"{Path.GetFileNameWithoutExtension(file)}.IDistributed{(isUpgradeable ? "Upgradeable" : "")}ReaderWriterLock.cs");
+                if (!File.Exists(outputPath) || File.ReadAllText(outputPath) != code)
+                {
+                    File.WriteAllText(outputPath, code);
+                    errors.Add($"updated {file}");
+                }
+            }
+
+            Assert.IsEmpty(errors);
+        }
+
+        private static void AppendExplicitInterfaceMethod(StringBuilder code, string @interface, string method, string returnType, string handleType)
+        {
+            var isAsync = method.EndsWith("Async");
+            var isTry = method.StartsWith("Try");
+            var returnTypeToUse = isTry ? returnType + "?" : returnType;
+
+            code.Append(' ', 8)
+                .Append(isAsync ? $"ValueTask<{returnTypeToUse}>" : returnTypeToUse)
+                .AppendLine($" {@interface}.{method}(TimeSpan{(isTry ? string.Empty : "?")} timeout, CancellationToken cancellationToken) =>")
+                .Append(' ', 12)
+                .Append(isAsync ? $"Helpers.ConvertValueTask<{handleType}{(isTry ? "?" : string.Empty)}, {returnTypeToUse}>(" : string.Empty)
+                .Append($"this.{method}(timeout, cancellationToken)")
+                .Append(isAsync ? ")" : string.Empty)
+                .AppendLine(";");
         }
     }
 }

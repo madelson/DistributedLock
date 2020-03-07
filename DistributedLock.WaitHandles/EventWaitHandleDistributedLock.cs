@@ -31,28 +31,32 @@ namespace Medallion.Threading.WaitHandles
             }
             else
             {
-                this.Name = GetSafeLockName(name);
+                this.Name = GetSafeName(name);
             }
 
-            TimeoutValue abandonmentCheckCadenceTimeout;
-            // try-catch to get a better error message
-            try { abandonmentCheckCadenceTimeout = new TimeoutValue(abandonmentCheckCadence); }
-            catch { throw new ArgumentOutOfRangeException(nameof(abandonmentCheckCadence)); }
-            if (abandonmentCheckCadenceTimeout.IsZero) { throw new ArgumentOutOfRangeException(nameof(abandonmentCheckCadence), "must not be zero"); }
-            this._abandonmentCheckCadence = abandonmentCheckCadenceTimeout;
+            if (abandonmentCheckCadence.HasValue)
+            {
+                TimeoutValue abandonmentCheckCadenceTimeout;
+                // try-catch to get a better error message
+                try { abandonmentCheckCadenceTimeout = new TimeoutValue(abandonmentCheckCadence); }
+                catch { throw new ArgumentOutOfRangeException(nameof(abandonmentCheckCadence)); }
+                if (abandonmentCheckCadenceTimeout.IsZero) { throw new ArgumentOutOfRangeException(nameof(abandonmentCheckCadence), "must not be zero"); }
+                this._abandonmentCheckCadence = abandonmentCheckCadenceTimeout;
+            }
+            else { this._abandonmentCheckCadence = DefaultAbandonmentCheckCadence; }
         }
 
         /// <summary>
         /// The maximum allowed length for lock names
         /// </summary>
         // 260 based on LINQPad experimentation
-        public static int MaxNameLength => 260 - GlobalPrefix.Length;
+        public static int MaxNameLength => 260;
 
         public string Name { get; }
 
         bool IDistributedLock.IsReentrant => false;
 
-        public static string GetSafeLockName(string name) =>
+        public static string GetSafeName(string name) =>
             DistributedLockHelpers.ToSafeLockName(name, MaxNameLength, s => s.Length == 0 ? "EMPTY" : s.Replace('\\', '_'));
 
         async ValueTask<EventWaitHandleDistributedLockHandle?> IInternalDistributedLock<EventWaitHandleDistributedLockHandle>.InternalTryAcquireAsync(

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Medallion.Threading.Internal;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
@@ -27,46 +28,36 @@ namespace Medallion.Threading.Sql
 
         bool ISqlSynchronizationStrategy<object>.IsUpgradeable => this.mode == Mode.Update;
 
-        object? ISqlSynchronizationStrategy<object>.TryAcquire(ConnectionOrTransaction connectionOrTransaction, string resourceName, int timeoutMillis)
+        async ValueTask<object?> ISqlSynchronizationStrategy<object>.TryAcquireAsync(
+            ConnectionOrTransaction connectionOrTransaction, 
+            string resourceName, 
+            TimeoutValue timeout, 
+            CancellationToken cancellationToken)
         {
-            return ExecuteAcquireCommand(connectionOrTransaction, resourceName, timeoutMillis, this.mode) ? Cookie : null;
+            return await ExecuteAcquireCommandAsync(connectionOrTransaction, resourceName, timeout, this.mode, cancellationToken).ConfigureAwait(false) ? Cookie : null;
         }
 
-        async Task<object?> ISqlSynchronizationStrategy<object>.TryAcquireAsync(ConnectionOrTransaction connectionOrTransaction, string resourceName, int timeoutMillis, CancellationToken cancellationToken)
-        {
-            return await ExecuteAcquireCommandAsync(connectionOrTransaction, resourceName, timeoutMillis, this.mode, cancellationToken).ConfigureAwait(false) ? Cookie : null;
-        }
+        ValueTask ISqlSynchronizationStrategy<object>.ReleaseAsync(ConnectionOrTransaction connectionOrTransaction, string resourceName, object lockCookie) =>
+            ExecuteReleaseCommandAsync(connectionOrTransaction, resourceName);
 
-        void ISqlSynchronizationStrategy<object>.Release(ConnectionOrTransaction connectionOrTransaction, string resourceName, object lockCookie)
+        private static async Task<bool> ExecuteAcquireCommandAsync(ConnectionOrTransaction connectionOrTransaction, string lockName, TimeoutValue timeout, Mode mode, CancellationToken cancellationToken)
         {
-            ExecuteReleaseCommand(connectionOrTransaction, resourceName);
-        }
-
-        private static bool ExecuteAcquireCommand(ConnectionOrTransaction connectionOrTransaction, string lockName, int timeoutMillis, Mode mode)
-        {
-            using var command = CreateAcquireCommand(connectionOrTransaction, lockName, timeoutMillis, mode, out var returnValue);
-            command.ExecuteNonQuery();
+            using var command = CreateAcquireCommand(connectionOrTransaction, lockName, timeout, mode, out var returnValue);
+            await SqlHelpers.ExecuteNonQueryAsync(command, cancellationToken).ConfigureAwait(false);
             return ParseExitCode((int)returnValue.Value);
         }
 
-        private static async Task<bool> ExecuteAcquireCommandAsync(ConnectionOrTransaction connectionOrTransaction, string lockName, int timeoutMillis, Mode mode, CancellationToken cancellationToken)
-        {
-            using var command = CreateAcquireCommand(connectionOrTransaction, lockName, timeoutMillis, mode, out var returnValue);
-            await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
-            return ParseExitCode((int)returnValue.Value);
-        }
-
-        private static void ExecuteReleaseCommand(ConnectionOrTransaction connectionOrTransaction, string lockName)
+        private static async ValueTask ExecuteReleaseCommandAsync(ConnectionOrTransaction connectionOrTransaction, string lockName)
         {
             using var command = CreateReleaseCommand(connectionOrTransaction, lockName, out var returnValue);
-            command.ExecuteNonQuery();
+            await SqlHelpers.ExecuteNonQueryAsync(command, CancellationToken.None).ConfigureAwait(false);
             ParseExitCode((int)returnValue.Value);
         }
 
         private static IDbCommand CreateAcquireCommand(
             ConnectionOrTransaction connectionOrTransaction, 
             string lockName, 
-            int timeoutMillis, 
+            TimeoutValue timeout, 
             Mode mode,
             out IDbDataParameter returnValue)
         {
@@ -74,17 +65,12 @@ namespace Medallion.Threading.Sql
             command.Transaction = connectionOrTransaction.Transaction;
             command.CommandText = "dbo.sp_getapplock";
             command.CommandType = CommandType.StoredProcedure;
-            command.CommandTimeout = timeoutMillis >= 0
-                  // command timeout is in seconds. We always wait at least the lock timeout plus a buffer 
-                  ? (timeoutMillis / 1000) + 30
-                  // otherwise timeout is infinite so we use the infinite timeout of 0
-                  // (see https://msdn.microsoft.com/en-us/library/system.data.sqlclient.sqlcommand.commandtimeout%28v=vs.110%29.aspx)
-                  : 0;
+            command.CommandTimeout = SqlHelpers.GetCommandTimeout(timeout);
 
             command.Parameters.Add(command.CreateParameter("Resource", lockName));
             command.Parameters.Add(command.CreateParameter("LockMode", GetModeString(mode)));
             command.Parameters.Add(command.CreateParameter("LockOwner", command.Transaction != null ? "Transaction" : "Session"));
-            command.Parameters.Add(command.CreateParameter("LockTimeout", timeoutMillis));
+            command.Parameters.Add(command.CreateParameter("LockTimeout", timeout.InMilliseconds));
 
             returnValue = command.CreateParameter();
             returnValue.Direction = ParameterDirection.ReturnValue;
@@ -126,7 +112,7 @@ namespace Medallion.Threading.Sql
                 case -2: // canceled
                     throw new OperationCanceledException(GetErrorMessage(exitCode, "canceled"));
                 case -3: // deadlock
-                    throw new DeadlockExceptionOld(GetErrorMessage(exitCode, "deadlock"));
+                    throw new DeadlockException(GetErrorMessage(exitCode, "deadlock"));
                 case -999: // parameter / unknown
                     throw new ArgumentException(GetErrorMessage(exitCode, "parameter validation or other error"));
 

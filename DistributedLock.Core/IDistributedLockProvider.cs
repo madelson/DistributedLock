@@ -4,6 +4,8 @@ using System.Text;
 
 namespace Medallion.Threading
 {
+    // todo implementations
+
     /// <summary>
     /// Acts as a factory for <see cref="IDistributedLock"/> instances of a certain type. This interface may be
     /// easier to use than <see cref="IDistributedLock"/> in dependency injection scenarios.

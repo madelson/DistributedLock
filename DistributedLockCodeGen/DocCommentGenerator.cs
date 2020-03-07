@@ -24,13 +24,13 @@ namespace DistributedLockCodeGen
 
         internal static string AddDocComments(string code)
         {
-            var publicTypeMatch = Regex.Match(code, @"\n(    |\t)public.*?(class|interface)\b");
+            var publicTypeMatch = Regex.Match(code, @"\n(    |\t)public.*?(class|interface)\s+(?<name>\w+)");
             if (!publicTypeMatch.Success) { return code; }
 
             var isInterface = publicTypeMatch.Value.EndsWith("interface");
             var acquireMethods = Regex.Matches(
                     code,
-                    $@"(?<docComment>([ \t]+///.*?\n)+)(?<indent>        |\t\t){(isInterface ? "" : "public ")}(?<returnType>\S+) (?<name>([a-zA-Z])+)\("
+                    $@"(?<docComment>([ \t]+///.*?\n)*)(?<indent>        |\t\t){(isInterface ? "" : "public ")}(?<returnType>\S+) (?<name>([a-zA-Z])+)\("
                         + @"((?<paramType>\S+) (?<paramName>([a-zA-Z])+)( = \S+)(, )?)+\)"
                 );
 
@@ -45,9 +45,11 @@ namespace DistributedLockCodeGen
                 var lockType = name.Contains("Upgradeable") ? LockType.Upgrade
                     : name.Contains("Write") ? LockType.Write
                     : name.Contains("Read") ? LockType.Read
+                    : publicTypeMatch.Groups["name"].Value.Contains("Semaphore") ? LockType.Semaphore
                     : LockType.Mutex;
 
-                var @object = "lock";
+                var @object = lockType == LockType.Semaphore ? "semaphore" : "lock";
+                var handleObject = lockType == LockType.Semaphore ? "ticket" : "lock";
 
                 var lineStart = acquireMethod.Groups["indent"].Value + "/// ";
                 var docComment = new StringBuilder();
@@ -63,6 +65,7 @@ namespace DistributedLockCodeGen
                     LockType.Upgrade => "an UPGRADE lock ",
                     LockType.Write => "a WRITE lock ",
                     LockType.Mutex => "the lock ",
+                    LockType.Semaphore => "a semaphore ticket ",
                     _ => throw new NotSupportedException()
                 });
                 docComment.Append(isAsync ? "asynchronously" : "synchronously");
@@ -73,6 +76,7 @@ namespace DistributedLockCodeGen
                     LockType.Upgrade => "Not compatible with another UPGRADE lock or a WRITE lock. ",
                     LockType.Write => "Not compatible with another WRITE lock or an UPGRADE lock. ",
                     LockType.Mutex => "",
+                    LockType.Semaphore => "",
                     _ => throw new NotSupportedException(),
                 });
                 docComment.AppendLine("Usage: ");
@@ -86,28 +90,28 @@ namespace DistributedLockCodeGen
                 docComment.Append(lineStart).AppendLine("    {");
                 docComment.Append(lineStart).Append(' ', 8)
                     .Append(isTry ? "if (handle != null) { " : "")
-                    .Append($"/* we have the {@object}! */")
+                    .Append($"/* we have the {handleObject}! */")
                     .AppendLine(isTry ? " }" : "");
                 docComment.Append(lineStart).AppendLine("    }");
                 docComment.Append(lineStart)
-                    .Append($"    // dispose releases the {@object}")
+                    .Append($"    // dispose releases the {handleObject}")
                     .AppendLine(isTry ? " if we took it" : "");
                 docComment.Append(lineStart).AppendLine("</code>");
 
                 docComment.Append(lineStart).AppendLine("</summary>");
 
                 docComment.Append(lineStart).Append("<param name=\"timeout\">How long to wait before giving up on the acquisition attempt. ")
-                    .AppendLine($"Defaults to {(isTry ? "0" : "<see cref=\"Timeout.InfiniteTimeSpan\")")}</param>");
+                    .AppendLine($"Defaults to {(isTry ? "0" : "<see cref=\"Timeout.InfiniteTimeSpan\"/>")}</param>");
                 docComment.Append(lineStart).AppendLine("<param name=\"cancellationToken\">Specifies a token by which the wait can be canceled</param>");
 
                 var returnType = acquireMethod.Groups["returnType"].Value;
                 if (returnType.StartsWith("ValueTask<")) { returnType = returnType.Replace("ValueTask<", "").TrimEnd('>'); }
                 var useAn = "aeiou".Contains(char.ToLower(returnType[0]));
-                docComment.Append(lineStart).Append($"<returns>A{(useAn ? "n" : "")} <see cref=\"{returnType.TrimEnd('?')}\"/> which can be used to release the {@object}")
+                docComment.Append(lineStart).Append($"<returns>A{(useAn ? "n" : "")} <see cref=\"{returnType.TrimEnd('?')}\"/> which can be used to release the {handleObject}")
                     .Append(isTry ? " or null on failure" : "")
                     .AppendLine("</returns>");
 
-                updatedCode = updatedCode.Replace(acquireMethod.Value, acquireMethod.Value.Replace(acquireMethod.Groups["docComment"].Value, docComment.ToString()));
+                updatedCode = updatedCode.Replace(acquireMethod.Value, docComment + acquireMethod.Value.Substring(acquireMethod.Groups["docComment"].Length));
             }
 
             return updatedCode;
@@ -120,5 +124,6 @@ namespace DistributedLockCodeGen
         Read,
         Write,
         Upgrade,
+        Semaphore,
     }
 }

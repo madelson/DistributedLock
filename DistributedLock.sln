@@ -17,6 +17,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DistributedLock.WaitHandles
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DistributedLockCodeGen", "DistributedLockCodeGen\DistributedLockCodeGen.csproj", "{FD0A6F2C-277A-492F-85FE-26A3FBD0383B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DistributedLock.Sql", "DistributedLock.Sql\DistributedLock.Sql.csproj", "{A7C39A34-B8FA-48B0-87C4-65FE2A8BD62B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -51,6 +53,10 @@ Global
 		{FD0A6F2C-277A-492F-85FE-26A3FBD0383B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FD0A6F2C-277A-492F-85FE-26A3FBD0383B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FD0A6F2C-277A-492F-85FE-26A3FBD0383B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A7C39A34-B8FA-48B0-87C4-65FE2A8BD62B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A7C39A34-B8FA-48B0-87C4-65FE2A8BD62B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A7C39A34-B8FA-48B0-87C4-65FE2A8BD62B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A7C39A34-B8FA-48B0-87C4-65FE2A8BD62B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

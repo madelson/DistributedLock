@@ -1,5 +1,4 @@
 ﻿using Medallion.Threading.Postgres;
-using Microsoft.Data.SqlClient;
 using Npgsql;
 using NUnit.Framework;
 using System;
