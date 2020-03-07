@@ -9,7 +9,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Medallion.Threading.Sql
+namespace Medallion.Threading.Data
 {
     internal sealed class OwnedTransactionSqlDistributedLock : IInternalSqlDistributedLock
     {

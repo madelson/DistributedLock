@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Medallion.Threading.Sql
+namespace Medallion.Threading.Data
 {
     /// <summary>
     /// Represents a "locking algorithm" implemented in SQL

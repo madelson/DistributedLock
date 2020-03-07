@@ -3,7 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Medallion.Threading.Internal;
 
-namespace Medallion.Threading.Sql
+namespace Medallion.Threading.SqlServer
 {
     public partial class SqlDistributedReaderWriterLock
     {

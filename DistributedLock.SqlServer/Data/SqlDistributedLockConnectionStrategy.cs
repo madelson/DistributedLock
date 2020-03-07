@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Medallion.Threading.Sql
+namespace Medallion.Threading.Data
 {
     /// <summary>
     /// Determines how a <see cref="SqlDistributedLock"/> manages its connection

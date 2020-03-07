@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Medallion.Threading.Sql
+namespace Medallion.Threading.Data
 {
     /// <summary>
     /// There are several strategies for implementing SQL-based locks; this interface

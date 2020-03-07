@@ -9,7 +9,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Medallion.Threading.Sql.ConnectionMultiplexing
+namespace Medallion.Threading.Data
 {
     /// <summary>
     /// Allows multiple SQL application locks to be taken on a single connection.

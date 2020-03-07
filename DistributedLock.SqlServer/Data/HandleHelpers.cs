@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Medallion.Threading.Sql
+namespace Medallion.Threading.Data
 {
     internal static class HandleHelpers
     {

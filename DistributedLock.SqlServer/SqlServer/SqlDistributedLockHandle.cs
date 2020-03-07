@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Medallion.Threading.Sql
+namespace Medallion.Threading.SqlServer
 {
     public sealed class SqlDistributedLockHandle : IDistributedLockHandle
     {

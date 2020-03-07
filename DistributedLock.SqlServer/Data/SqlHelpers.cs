@@ -10,7 +10,7 @@ using System.Reflection;
 using Microsoft.Data.SqlClient;
 using Medallion.Threading.Internal;
 
-namespace Medallion.Threading.Sql
+namespace Medallion.Threading.Data
 {
     // todo consider using a wrapped class everywhere that provides this + connectionortransaction abstraction
 

@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Medallion.Threading.Sql.ConnectionMultiplexing
+namespace Medallion.Threading.Data
 {
     // todo revisit this; right place, right abstraction?
     internal static class SemaphoreSlimHelper

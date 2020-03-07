@@ -1,5 +1,5 @@
+using Medallion.Threading.Data;
 using Medallion.Threading.Internal;
-using Medallion.Threading.Sql.ConnectionMultiplexing;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -10,7 +10,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Medallion.Threading.Sql
+namespace Medallion.Threading.SqlServer
 {
     /// <summary>
     /// Implements a distributed lock using a SQL server application lock
