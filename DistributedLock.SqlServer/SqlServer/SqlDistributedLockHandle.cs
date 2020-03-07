@@ -1,4 +1,4 @@
-﻿using Medallion.Threading.Internal;
+using Medallion.Threading.Internal;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -7,11 +7,11 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading.Sql
 {
-    public sealed class SqlDistributedSemaphoreHandle : IDistributedLockHandle
+    public sealed class SqlDistributedLockHandle : IDistributedLockHandle
     {
         private IDistributedLockHandle? _innerHandle;
 
-        internal SqlDistributedSemaphoreHandle(IDistributedLockHandle innerHandle)
+        internal SqlDistributedLockHandle(IDistributedLockHandle innerHandle)
         {
             this._innerHandle = innerHandle;
         }

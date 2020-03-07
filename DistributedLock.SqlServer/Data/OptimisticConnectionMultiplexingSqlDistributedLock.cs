@@ -1,4 +1,4 @@
-﻿using Medallion.Threading.Internal;
+using Medallion.Threading.Internal;
 using Medallion.Threading.Sql.ConnectionMultiplexing;
 using System;
 using System.Collections.Generic;
