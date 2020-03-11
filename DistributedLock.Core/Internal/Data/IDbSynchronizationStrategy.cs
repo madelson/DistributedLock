@@ -1,13 +1,19 @@
 using Medallion.Threading.Internal;
+using Medallion.Threading.Internal.Data;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Medallion.Threading.Data
+namespace Medallion.Threading.Internal.Data
 {
     /// <summary>
     /// Represents a "locking algorithm" implemented in SQL
     /// </summary>
-    interface ISqlSynchronizationStrategy<TLockCookie>
+#if DEBUG
+    public
+#else
+    internal
+#endif
+    interface IDbSynchronizationStrategy<TLockCookie>
         where TLockCookie : class
     {
         /// <summary>
@@ -22,8 +28,8 @@ namespace Medallion.Threading.Data
         /// <summary>
         /// Attempts to acquire the lock, returning either null for failure or a non-null state "cookie" on success
         /// </summary>
-        ValueTask<TLockCookie?> TryAcquireAsync(ConnectionOrTransaction connectionOrTransaction, string resourceName, TimeoutValue timeout, CancellationToken cancellationToken);
+        ValueTask<TLockCookie?> TryAcquireAsync(DatabaseConnection connection, string resourceName, TimeoutValue timeout, CancellationToken cancellationToken);
 
-        ValueTask ReleaseAsync(ConnectionOrTransaction connectionOrTransaction, string resourceName, TLockCookie lockCookie);
+        ValueTask ReleaseAsync(DatabaseConnection connectionconnection, string resourceName, TLockCookie lockCookie);
     }
 }

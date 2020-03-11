@@ -11,6 +11,7 @@ namespace Medallion.Threading
         /// </summary>
         string Name { get; }
 
+        // todo remove
         /// <summary>
         /// Whether the lock can be acquired multiple times by the same user.
         /// Equivalent to <see cref="LockRecursionPolicy.SupportsRecursion"/>

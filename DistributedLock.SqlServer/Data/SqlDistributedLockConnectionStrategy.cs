@@ -1,9 +1,11 @@
+using System;
 using System.Data.Common;
 
 namespace Medallion.Threading.Data
 {
+    // todo remove enum
     /// <summary>
-    /// Determines how a <see cref="SqlDistributedLock"/> manages its connection
+    /// Determines how a <see cref="IDistributedLock"/> manages its connection
     /// </summary>
     public enum SqlDistributedLockConnectionStrategy
     {
@@ -39,7 +41,7 @@ namespace Medallion.Threading.Data
         /// connection will be allocated.
         /// 
         /// This option can improve performance and avoid connection pool starvation in high-load scenarios. It is also
-        /// particularly applicable to cases where <see cref="SqlDistributedLock.TryAcquire(TimeSpan, System.Threading.CancellationToken)"/>
+        /// particularly applicable to cases where <see cref="IDistributedLock.TryAcquire(TimeSpan, System.Threading.CancellationToken)"/>
         /// semantics are used with a zero-length timeout.
         /// </summary>
         OptimisticConnectionMultiplexing = 3,

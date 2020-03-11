@@ -29,6 +29,8 @@ namespace Medallion.Threading.Internal
 
         public readonly struct TaskConversion<TTo> { }
 
+        internal static async ValueTask ConvertToVoid<TResult>(this ValueTask<TResult> task) => await task.ConfigureAwait(false);
+
         public static ValueTask<T> AsValueTask<T>(this Task<T> task) => new ValueTask<T>(task);
         public static ValueTask AsValueTask(this Task task) => new ValueTask(task);
         public static ValueTask<T> AsValueTask<T>(this T value) => new ValueTask<T>(value);

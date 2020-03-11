@@ -1,5 +1,6 @@
 using Medallion.Threading.Data;
 using Medallion.Threading.Internal;
+using Medallion.Threading.Internal.Data;
 using System;
 using System.Data;
 using System.Threading;
@@ -12,7 +13,7 @@ namespace Medallion.Threading.SqlServer
     /// </summary>
     public class SqlDistributedSemaphore
     {
-        private readonly IInternalSqlDistributedLock _internalLock;
+        private readonly IDbDistributedLock _internalLock;
         private readonly SqlSemaphore _strategy;
 
         #region ---- Constructors ----
@@ -44,7 +45,7 @@ namespace Medallion.Threading.SqlServer
         /// not attempt to open, close, or dispose it
         /// </summary>
         public SqlDistributedSemaphore(string name, int maxCount, IDbConnection connection)
-            : this(name, maxCount, name => new ExternalConnectionOrTransactionSqlDistributedLock(name, new ConnectionOrTransaction(connection ?? throw new ArgumentNullException(nameof(connection)))))
+            : this(name, maxCount, name => new ExternalConnectionOrTransactionDbDistributedLock(name, new SqlDatabaseConnection(connection ?? throw new ArgumentNullException(nameof(connection)), Timeout.InfiniteTimeSpan)))
         {
         }
 
@@ -55,16 +56,15 @@ namespace Medallion.Threading.SqlServer
         /// the <see cref="SqlDistributedSemaphore"/> will not attempt to open, close, commit, roll back, or dispose them
         /// </summary>
         public SqlDistributedSemaphore(string name, int maxCount, IDbTransaction transaction)
-            : this(name, maxCount, name => new ExternalConnectionOrTransactionSqlDistributedLock(name, new ConnectionOrTransaction(transaction ?? throw new ArgumentNullException(nameof(transaction)))))
+            : this(name, maxCount, name => new ExternalConnectionOrTransactionDbDistributedLock(name, new SqlDatabaseConnection(transaction ?? throw new ArgumentNullException(nameof(transaction)), Timeout.InfiniteTimeSpan)))
         {
         }
 
-        private SqlDistributedSemaphore(string name, int maxCount, Func<string, IInternalSqlDistributedLock> createInternalLockFromName)
+        private SqlDistributedSemaphore(string name, int maxCount, Func<string, IDbDistributedLock> createInternalLockFromName)
         {
-            if (name == null) { throw new ArgumentNullException(nameof(name)); }
             if (maxCount < 1) { throw new ArgumentOutOfRangeException(nameof(maxCount), maxCount, "must be positive"); }
 
-            this.Name = name;
+            this.Name = name ?? throw new ArgumentNullException(nameof(name));
             this._strategy = new SqlSemaphore(maxCount);
             this._internalLock = createInternalLockFromName(SqlSemaphore.ToSafeName(name));
         }

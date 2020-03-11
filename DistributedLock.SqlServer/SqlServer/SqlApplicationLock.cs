@@ -1,5 +1,6 @@
 using Medallion.Threading.Data;
 using Medallion.Threading.Internal;
+using Medallion.Threading.Internal.Data;
 using System;
 using System.Data;
 using System.Threading;
@@ -7,7 +8,10 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading.SqlServer
 {
-    internal sealed class SqlApplicationLock : ISqlSynchronizationStrategy<object>
+    /// <summary>
+    /// Implements <see cref="IDbSynchronizationStrategy{TLockCookie}"/> using sp_getapplock
+    /// </summary>
+    internal sealed class SqlApplicationLock : IDbSynchronizationStrategy<object>
     {
         public const int TimeoutExitCode = -1;
 
@@ -23,72 +27,98 @@ namespace Medallion.Threading.SqlServer
             this.mode = mode;
         }
 
-        bool ISqlSynchronizationStrategy<object>.IsUpgradeable => this.mode == Mode.Update;
+        bool IDbSynchronizationStrategy<object>.IsUpgradeable => this.mode == Mode.Update;
 
-        async ValueTask<object?> ISqlSynchronizationStrategy<object>.TryAcquireAsync(
-            ConnectionOrTransaction connectionOrTransaction, 
+        async ValueTask<object?> IDbSynchronizationStrategy<object>.TryAcquireAsync(
+            DatabaseConnection connection, 
             string resourceName, 
             TimeoutValue timeout, 
             CancellationToken cancellationToken)
         {
-            return await ExecuteAcquireCommandAsync(connectionOrTransaction, resourceName, timeout, this.mode, cancellationToken).ConfigureAwait(false) ? Cookie : null;
+            try
+            {
+                return await ExecuteAcquireCommandAsync(connection, resourceName, timeout, this.mode, cancellationToken).ConfigureAwait(false) ? Cookie : null;
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                // If the command is canceled, I believe there's a slim chance that acquisition just completed before the cancellation went through.
+                // In that case, I'm pretty sure it won't be rolled back. Therefore, to be safe we issue a try-release 
+                await ExecuteReleaseCommandAsync(connection, resourceName, isTry: true).ConfigureAwait(false);
+                throw;
+            }
         }
 
-        ValueTask ISqlSynchronizationStrategy<object>.ReleaseAsync(ConnectionOrTransaction connectionOrTransaction, string resourceName, object lockCookie) =>
-            ExecuteReleaseCommandAsync(connectionOrTransaction, resourceName);
+        ValueTask IDbSynchronizationStrategy<object>.ReleaseAsync(DatabaseConnection connection, string resourceName, object lockCookie) =>
+            ExecuteReleaseCommandAsync(connection, resourceName, isTry: false);
 
-        private static async Task<bool> ExecuteAcquireCommandAsync(ConnectionOrTransaction connectionOrTransaction, string lockName, TimeoutValue timeout, Mode mode, CancellationToken cancellationToken)
+        private static async Task<bool> ExecuteAcquireCommandAsync(DatabaseConnection connection, string lockName, TimeoutValue timeout, Mode mode, CancellationToken cancellationToken)
         {
-            using var command = CreateAcquireCommand(connectionOrTransaction, lockName, timeout, mode, out var returnValue);
-            await SqlHelpers.ExecuteNonQueryAsync(command, cancellationToken).ConfigureAwait(false);
+            using var command = CreateAcquireCommand(connection, lockName, timeout, mode, out var returnValue);
+            await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
             return ParseExitCode((int)returnValue.Value);
         }
 
-        private static async ValueTask ExecuteReleaseCommandAsync(ConnectionOrTransaction connectionOrTransaction, string lockName)
+        private static async ValueTask ExecuteReleaseCommandAsync(DatabaseConnection connection, string lockName, bool isTry)
         {
-            using var command = CreateReleaseCommand(connectionOrTransaction, lockName, out var returnValue);
-            await SqlHelpers.ExecuteNonQueryAsync(command, CancellationToken.None).ConfigureAwait(false);
+            using var command = CreateReleaseCommand(connection, lockName, isTry, out var returnValue);
+            await command.ExecuteNonQueryAsync(CancellationToken.None).ConfigureAwait(false);
             ParseExitCode((int)returnValue.Value);
         }
 
-        private static IDbCommand CreateAcquireCommand(
-            ConnectionOrTransaction connectionOrTransaction, 
+        private static DatabaseCommand CreateAcquireCommand(
+            DatabaseConnection connection, 
             string lockName, 
             TimeoutValue timeout, 
             Mode mode,
             out IDbDataParameter returnValue)
         {
-            var command = connectionOrTransaction.Connection!.CreateCommand();
-            command.Transaction = connectionOrTransaction.Transaction;
-            command.CommandText = "dbo.sp_getapplock";
-            command.CommandType = CommandType.StoredProcedure;
-            command.CommandTimeout = SqlHelpers.GetCommandTimeout(timeout);
+            // todo when we're checking recursion this should not be a stored proc
 
-            command.Parameters.Add(command.CreateParameter("Resource", lockName));
-            command.Parameters.Add(command.CreateParameter("LockMode", GetModeString(mode)));
-            command.Parameters.Add(command.CreateParameter("LockOwner", command.Transaction != null ? "Transaction" : "Session"));
-            command.Parameters.Add(command.CreateParameter("LockTimeout", timeout.InMilliseconds));
+            var command = connection.CreateCommand();
+            command.SetCommandText("dbo.sp_getapplock");
+            command.SetCommandType(CommandType.StoredProcedure);
+            command.SetTimeout(timeout);
 
-            returnValue = command.CreateParameter();
-            returnValue.Direction = ParameterDirection.ReturnValue;
-            command.Parameters.Add(returnValue);
+            command.AddParameter("Resource", lockName);
+            command.AddParameter("LockMode", GetModeString(mode));
+            command.AddParameter("LockOwner", connection.HasTransaction ? "Transaction" : "Session");
+            command.AddParameter("LockTimeout", timeout.InMilliseconds);
+
+            returnValue = command.AddParameter(type: DbType.Int32, direction: ParameterDirection.ReturnValue);
 
             return command;
         }
 
-        private static IDbCommand CreateReleaseCommand(ConnectionOrTransaction connectionOrTransaction, string lockName, out IDbDataParameter returnValue)
+        private static DatabaseCommand CreateReleaseCommand(DatabaseConnection connection, string lockName, bool isTry, out IDbDataParameter returnValue)
         {
-            var command = connectionOrTransaction.Connection!.CreateCommand();
-            command.Transaction = connectionOrTransaction.Transaction;
-            command.CommandText = "dbo.sp_releaseapplock";
-            command.CommandType = CommandType.StoredProcedure;
-            command.Parameters.Add(command.CreateParameter("Resource", lockName));
-            command.Parameters.Add(command.CreateParameter("LockOwner", command.Transaction != null ? "Transaction" : "Session"));
+            var command = connection.CreateCommand();
+            if (isTry)
+            {
+                command.SetCommandText(
+                    @"IF APPLOCK_MODE('public', @Resource, @LockOwner) != 'NoLock'
+                        EXEC @Result = dbo.sp_releaseapplock @Resource, @LockOwner
+                      ELSE
+                        SET @Result = 0"
+                );
+            }
+            else
+            {
+                command.SetCommandText("dbo.sp_releaseapplock");
+                command.SetCommandType(CommandType.StoredProcedure);
+            }
 
-            returnValue = command.CreateParameter();
-            returnValue.Direction = ParameterDirection.ReturnValue;
-            command.Parameters.Add(returnValue);
+            command.AddParameter("Resource", lockName);
+            command.AddParameter("LockOwner", connection.HasTransaction ? "Transaction" : "Session");
 
+            if (isTry)
+            {
+                returnValue = command.AddParameter("Result", type: DbType.Int32, direction: ParameterDirection.Output);
+            }
+            else
+            {
+                returnValue = command.AddParameter(type: DbType.Int32, direction: ParameterDirection.ReturnValue);
+            } 
+            
             return command;
         }
 
@@ -120,7 +150,7 @@ namespace Medallion.Threading.SqlServer
             }
         }
 
-        private static string GetErrorMessage(int exitCode, string type) => $"The request for the distribute lock failed with exit code {exitCode} ({type})";
+        private static string GetErrorMessage(int exitCode, string type) => $"The request for the distributed lock failed with exit code {exitCode} ({type})";
 
         private static string GetModeString(Mode mode) => mode switch
         {

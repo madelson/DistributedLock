@@ -3,6 +3,8 @@ using System.Threading;
 
 namespace Medallion.Threading
 {
+    // todo IDistributedSynchronizationHandle?
+
     /// <summary>
     /// A handle to a distributed lock or other synchronization primitive. To unlock/release,
     /// simply dispose the handle

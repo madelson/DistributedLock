@@ -40,7 +40,7 @@ namespace DistributedLockCodeGen
                 const string Interface = "IDistributedLock", InterfaceHandle = Interface + "Handle";
                 foreach (var method in new[] { "TryAcquire", "Acquire", "TryAcquireAsync", "AcquireAsync" })
                 {
-                    AppendExplicitInterfaceMethod(explicitImplementations, Interface, method, InterfaceHandle, handleType);
+                    AppendExplicitInterfaceMethod(explicitImplementations, Interface, method, InterfaceHandle);
                 }
 
                 var @namespace = Regex.Match(lockCode, @"\nnamespace (?<namespace>\S+)").Groups["namespace"].Value;
@@ -72,7 +72,7 @@ namespace {@namespace}
 }}";
                 code = DocCommentGenerator.AddDocComments(code);
 
-                var outputPath = Path.Combine(Path.GetDirectoryName(file), Path.GetFileNameWithoutExtension(file) + ".IDistributedLock.cs");
+                var outputPath = Path.Combine(Path.GetDirectoryName(file)!, Path.GetFileNameWithoutExtension(file) + ".IDistributedLock.cs");
                 if (!File.Exists(outputPath) || File.ReadAllText(outputPath) != code)
                 {
                     File.WriteAllText(outputPath, code);
@@ -131,8 +131,7 @@ namespace {@namespace}
                         explicitImplementations,
                         $"IDistributed{upgradeableText}ReaderWriterLock",
                         methodName, 
-                        $"IDistributedLock{upgradeableText}Handle",
-                        handleType
+                        $"IDistributedLock{upgradeableText}Handle"
                     );
 
                     var simplifiedMethodName = methodLockType == LockType.Upgrade ? methodName : methodName.Replace("ReadLock", "").Replace("WriteLock", "");
@@ -171,7 +170,7 @@ namespace {@namespace}
 }}";
                 code = DocCommentGenerator.AddDocComments(code);
 
-                var outputPath = Path.Combine(Path.GetDirectoryName(file), $"{Path.GetFileNameWithoutExtension(file)}.IDistributed{(isUpgradeable ? "Upgradeable" : "")}ReaderWriterLock.cs");
+                var outputPath = Path.Combine(Path.GetDirectoryName(file)!, $"{Path.GetFileNameWithoutExtension(file)}.IDistributed{(isUpgradeable ? "Upgradeable" : "")}ReaderWriterLock.cs");
                 if (!File.Exists(outputPath) || File.ReadAllText(outputPath) != code)
                 {
                     File.WriteAllText(outputPath, code);
@@ -182,7 +181,7 @@ namespace {@namespace}
             Assert.IsEmpty(errors);
         }
 
-        private static void AppendExplicitInterfaceMethod(StringBuilder code, string @interface, string method, string returnType, string handleType)
+        private static void AppendExplicitInterfaceMethod(StringBuilder code, string @interface, string method, string returnType)
         {
             var isAsync = method.EndsWith("Async");
             var isTry = method.StartsWith("Try");

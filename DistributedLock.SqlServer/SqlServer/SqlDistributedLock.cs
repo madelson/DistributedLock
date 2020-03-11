@@ -1,5 +1,6 @@
 using Medallion.Threading.Data;
 using Medallion.Threading.Internal;
+using Medallion.Threading.Internal.Data;
 using System;
 using System.Data;
 using System.Threading;
@@ -13,7 +14,7 @@ namespace Medallion.Threading.SqlServer
     /// </summary>
     public sealed partial class SqlDistributedLock : IInternalDistributedLock<SqlDistributedLockHandle>
     {
-        private readonly IInternalSqlDistributedLock _internalLock;
+        private readonly IDbDistributedLock _internalLock;
 
         // todo review API (here + rwlock + semaphore); should we have options instead of an enum?
         // todo connection factory API (to allow for access tokens)?
@@ -29,16 +30,16 @@ namespace Medallion.Threading.SqlServer
         }
 
         public SqlDistributedLock(string name, IDbConnection connection, bool exactName = false)
-            : this(name, exactName, n => new ExternalConnectionOrTransactionSqlDistributedLock(n, new ConnectionOrTransaction(connection ?? throw new ArgumentNullException(nameof(connection)))))
+            : this(name, exactName, n => new ExternalConnectionOrTransactionDbDistributedLock(n, new SqlDatabaseConnection(connection ?? throw new ArgumentNullException(nameof(connection)), Timeout.InfiniteTimeSpan)))
         {
         }
 
         public SqlDistributedLock(string name, IDbTransaction transaction, bool exactName = false)
-            : this(name, exactName, n => new ExternalConnectionOrTransactionSqlDistributedLock(n, new ConnectionOrTransaction(transaction ?? throw new ArgumentNullException(nameof(transaction)))))
+            : this(name, exactName, n => new ExternalConnectionOrTransactionDbDistributedLock(n, new SqlDatabaseConnection(transaction ?? throw new ArgumentNullException(nameof(transaction)), Timeout.InfiniteTimeSpan)))
         {
         }
 
-        private SqlDistributedLock(string name, bool exactName, Func<string, IInternalSqlDistributedLock> internalLockFactory)
+        private SqlDistributedLock(string name, bool exactName, Func<string, IDbDistributedLock> internalLockFactory)
         {
             if (exactName)
             {
@@ -62,7 +63,7 @@ namespace Medallion.Threading.SqlServer
         // todo should this be the safe name or the user-provided name? Should we even expose this?
         public string Name { get; }
 
-        public bool IsReentrant => this._internalLock.IsReentrant;
+        public bool IsReentrant => throw new NotImplementedException("todo");
 
         /// <summary>
         /// Given <paramref name="name"/>, constructs a lock name which is safe for use with <see cref="SqlDistributedLock"/>
@@ -75,24 +76,28 @@ namespace Medallion.Threading.SqlServer
         ValueTask<SqlDistributedLockHandle?> IInternalDistributedLock<SqlDistributedLockHandle>.InternalTryAcquireAsync(TimeoutValue timeout, CancellationToken cancellationToken) =>
             HandleHelpers.Wrap(this._internalLock.TryAcquireAsync(timeout, SqlApplicationLock.ExclusiveLock, cancellationToken, contextHandle: null), h => new SqlDistributedLockHandle(h));
 
-        internal static IInternalSqlDistributedLock CreateInternalLock(string name, string connectionString, SqlDistributedLockConnectionStrategy connectionStrategy)
+        internal static IDbDistributedLock CreateInternalLock(string name, string connectionString, SqlDistributedLockConnectionStrategy connectionStrategy)
         {
             if (connectionString == null) { throw new ArgumentNullException(nameof(connectionString)); }
 
             switch (connectionStrategy) 
             {
+                // todo replace enum with connect options
                 case SqlDistributedLockConnectionStrategy.Default:
                 case SqlDistributedLockConnectionStrategy.Connection:
-                    return new OwnedConnectionSqlDistributedLock(name: name, connectionString: connectionString);
+                    return new OwnedConnectionOrTransactionDbDistributedLock(name, ConnectionFactory, useTransaction: false);
                 case SqlDistributedLockConnectionStrategy.Transaction:
-                    return new OwnedTransactionSqlDistributedLock(name: name, connectionString: connectionString);
+                    return new OwnedConnectionOrTransactionDbDistributedLock(name, ConnectionFactory, useTransaction: true);
                 case SqlDistributedLockConnectionStrategy.OptimisticConnectionMultiplexing:
-                    return new OptimisticConnectionMultiplexingSqlDistributedLock(name: name, connectionString: connectionString);
+                    return new OptimisticConnectionMultiplexingDbDistributedLock(name: name, connectionString, SqlMultiplexedConnectionLockPool.Instance);
                 case SqlDistributedLockConnectionStrategy.Azure:
-                    return new AzureSqlDistributedLock(lockName: name, connectionString: connectionString);
+                    // todo this should not be its own separate case
+                    return new OwnedConnectionOrTransactionDbDistributedLock(name, () => new SqlDatabaseConnection(connectionString, KeepaliveHelper.Interval), useTransaction: true);
                 default:
                     throw new ArgumentException(nameof(connectionStrategy));
             }
+
+            DatabaseConnection ConnectionFactory() => new SqlDatabaseConnection(connectionString, Timeout.InfiniteTimeSpan);
         }
     }
 }

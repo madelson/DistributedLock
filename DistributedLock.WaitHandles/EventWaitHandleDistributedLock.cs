@@ -34,12 +34,8 @@ namespace Medallion.Threading.WaitHandles
 
             if (abandonmentCheckCadence.HasValue)
             {
-                TimeoutValue abandonmentCheckCadenceTimeout;
-                // try-catch to get a better error message
-                try { abandonmentCheckCadenceTimeout = new TimeoutValue(abandonmentCheckCadence); }
-                catch { throw new ArgumentOutOfRangeException(nameof(abandonmentCheckCadence)); }
-                if (abandonmentCheckCadenceTimeout.IsZero) { throw new ArgumentOutOfRangeException(nameof(abandonmentCheckCadence), "must not be zero"); }
-                this._abandonmentCheckCadence = abandonmentCheckCadenceTimeout;
+                this._abandonmentCheckCadence = new TimeoutValue(abandonmentCheckCadence, nameof(abandonmentCheckCadence));
+                if (this._abandonmentCheckCadence.IsZero) { throw new ArgumentOutOfRangeException(nameof(abandonmentCheckCadence), "must not be zero"); }
             }
             else { this._abandonmentCheckCadence = DefaultAbandonmentCheckCadence; }
         }

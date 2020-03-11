@@ -7,6 +7,7 @@ using System.Threading;
 
 namespace Medallion.Threading.Tests
 {
+    // todo rework now that eveyr lock has this
     public abstract class AzureConnectionStrategyTestCases<TEngineFactory> 
         where TEngineFactory : ITestingSqlDistributedLockEngineFactory, new()
     {

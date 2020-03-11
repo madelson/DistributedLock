@@ -1,5 +1,5 @@
-using Medallion.Threading.Data;
 using Medallion.Threading.Internal;
+using Medallion.Threading.Internal.Data;
 using System;
 using System.Data;
 using System.Security.Cryptography;
@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading.SqlServer
 {
-    internal sealed class SqlSemaphore : ISqlSynchronizationStrategy<SqlSemaphore.Cookie>
+    internal sealed class SqlSemaphore : IDbSynchronizationStrategy<SqlSemaphore.Cookie>
     {
         private readonly int _maxCount;
 
@@ -19,7 +19,7 @@ namespace Medallion.Threading.SqlServer
         }
 
         #region ---- Execution ----
-        public async ValueTask<Cookie?> TryAcquireAsync(ConnectionOrTransaction connectionOrTransaction, string resourceName, TimeoutValue timeout, CancellationToken cancellationToken)
+        public async ValueTask<Cookie?> TryAcquireAsync(DatabaseConnection connection, string resourceName, TimeoutValue timeout, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
             string? markerTableName;
@@ -28,10 +28,10 @@ namespace Medallion.Threading.SqlServer
             // zero in the same way: since there is no blocking, we don't need to bother with explicit cancellation support
             if (!cancellationToken.CanBeCanceled || timeout.IsZero)
             {
-                using var command = CreateTextCommand(connectionOrTransaction, operationTimeout: timeout);
-                command.CommandText = AcquireNonCancelableQuery.Value;
+                using var command = CreateTextCommand(connection, operationTimeout: timeout);
+                command.SetCommandText(AcquireNonCancelableQuery.Value);
                 this.AddCommonParameters(command, resourceName, timeout: timeout);
-                await SqlHelpers.ExecuteNonQueryAsync(command, CancellationToken.None).ConfigureAwait(false);
+                await command.ExecuteNonQueryAsync(CancellationToken.None).ConfigureAwait(false);
                 return await ProcessAcquireResultAsync(command.Parameters, timeout, cancellationToken, out markerTableName, out var ticketLockName).ConfigureAwait(false)
                     ? new Cookie(ticket: ticketLockName!, markerTable: markerTableName!)
                     : null;
@@ -39,36 +39,36 @@ namespace Medallion.Threading.SqlServer
 
             // cancelable case
 
-            using (var command = CreateTextCommand(connectionOrTransaction, operationTimeout: timeout))
+            using (var command = CreateTextCommand(connection, operationTimeout: timeout))
             {
-                command.CommandText = AcquireCancelablePreambleQuery.Value;
+                command.SetCommandText(AcquireCancelablePreambleQuery.Value);
                 this.AddCommonParameters(command, resourceName);
                 // preamble is non-cancelable
-                await SqlHelpers.ExecuteNonQueryAsync(command, CancellationToken.None).ConfigureAwait(false);
+                await command.ExecuteNonQueryAsync(CancellationToken.None).ConfigureAwait(false);
                 if (await ProcessAcquireResultAsync(command.Parameters, timeout, cancellationToken, out markerTableName, out var ticketLockName).ConfigureAwait(false))
                 {
                     return new Cookie(ticket: ticketLockName!, markerTable: markerTableName!);
                 }
             }
 
-            using (var command = CreateTextCommand(connectionOrTransaction, operationTimeout: timeout))
+            using (var command = CreateTextCommand(connection, operationTimeout: timeout))
             {
-                command.CommandText = AcquireCancelableQuery.Value;
+                command.SetCommandText(AcquireCancelableQuery.Value);
                 this.AddCommonParameters(command, resourceName, timeout: timeout, markerTableName: markerTableName);
                 try
                 {
                     // see comments around disallowAsyncCancellation for why we pass this flag
-                    await SqlHelpers.ExecuteNonQueryAsync(command, cancellationToken, disallowAsyncCancellation: true).ConfigureAwait(false);
+                    await command.ExecuteNonQueryAsync(cancellationToken, disallowAsyncCancellation: true).ConfigureAwait(false);
                 }
                 catch when (cancellationToken.IsCancellationRequested)
                 {
                     // if we canceled the query, we need to perform cleanup to make sure we don't leave marker tables or held locks
 
-                    using (var cleanupCommand = CreateTextCommand(connectionOrTransaction, operationTimeout: TimeSpan.Zero))
+                    using (var cleanupCommand = CreateTextCommand(connection, operationTimeout: TimeSpan.Zero))
                     {
-                        cleanupCommand.CommandText = CancellationCleanupQuery.Value;
+                        cleanupCommand.SetCommandText(CancellationCleanupQuery.Value);
                         this.AddCommonParameters(cleanupCommand, resourceName, markerTableName: markerTableName);
-                        await SqlHelpers.ExecuteNonQueryAsync(cleanupCommand, CancellationToken.None).ConfigureAwait(false);
+                        await cleanupCommand.ExecuteNonQueryAsync(CancellationToken.None).ConfigureAwait(false);
                     }
 
                     throw;
@@ -80,15 +80,15 @@ namespace Medallion.Threading.SqlServer
             }
         }
 
-        public async ValueTask ReleaseAsync(ConnectionOrTransaction connectionOrTransaction, string resourceName, Cookie lockCookie)
+        public async ValueTask ReleaseAsync(DatabaseConnection connection, string resourceName, Cookie lockCookie)
         {
-            using var command = CreateTextCommand(connectionOrTransaction, operationTimeout: Timeout.InfiniteTimeSpan);
-            command.CommandText = ReleaseQuery.Value;
+            using var command = CreateTextCommand(connection, operationTimeout: Timeout.InfiniteTimeSpan);
+            command.SetCommandText(ReleaseQuery.Value);
             this.AddCommonParameters(command, resourceName, markerTableName: lockCookie.MarkerTable, ticketLockName: lockCookie.Ticket);
-            await SqlHelpers.ExecuteNonQueryAsync(command, CancellationToken.None).ConfigureAwait(false);
+            await command.ExecuteNonQueryAsync(CancellationToken.None).ConfigureAwait(false);
         }
 
-        bool ISqlSynchronizationStrategy<Cookie>.IsUpgradeable => false;
+        bool IDbSynchronizationStrategy<Cookie>.IsUpgradeable => false;
 
         public sealed class Cookie
         {
@@ -157,47 +157,38 @@ namespace Medallion.Threading.SqlServer
             }
         }
 
-        private static IDbCommand CreateTextCommand(ConnectionOrTransaction connectionOrTransaction, TimeoutValue operationTimeout)
+        private static DatabaseCommand CreateTextCommand(DatabaseConnection connection, TimeoutValue operationTimeout)
         {
-            var command = connectionOrTransaction.Connection!.CreateCommand();
-            command.Transaction = connectionOrTransaction.Transaction;
-            command.CommandType = CommandType.Text;
-            command.CommandTimeout = SqlHelpers.GetCommandTimeout(operationTimeout);
+            var command = connection.CreateCommand();
+            command.SetTimeout(operationTimeout);
             return command;
         }
 
-        private void AddCommonParameters(IDbCommand command, string semaphoreName, TimeoutValue? timeout = null, string? markerTableName = null, string? ticketLockName = null)
+        private void AddCommonParameters(DatabaseCommand command, string semaphoreName, TimeoutValue? timeout = null, string? markerTableName = null, string? ticketLockName = null)
         {
-            command.Parameters.Add(command.CreateParameter(SemaphoreNameParameter, semaphoreName));
-            command.Parameters.Add(command.CreateParameter(MaxCountParameter, this._maxCount));
+            command.AddParameter(SemaphoreNameParameter, semaphoreName);
+            command.AddParameter(MaxCountParameter, this._maxCount);
             if (timeout.HasValue)
             {
-                command.Parameters.Add(command.CreateParameter(TimeoutMillisParameter, timeout.Value.InMilliseconds));
+                command.AddParameter(TimeoutMillisParameter, timeout.Value.InMilliseconds);
             }
 
-            var resultCode = command.CreateParameter(ResultCodeParameter, null);
-            resultCode.DbType = DbType.Int32;
-            resultCode.Direction = ParameterDirection.Output;
-            command.Parameters.Add(resultCode);
+            command.AddParameter(ResultCodeParameter, type: DbType.Int32, direction: ParameterDirection.Output);
 
-            var ticket = command.CreateParameter(TicketLockNameParameter, ticketLockName);
+            var ticket = command.AddParameter(TicketLockNameParameter, ticketLockName, type: DbType.String);
             if (ticketLockName == null)
             {
                 ticket.Direction = ParameterDirection.Output;
             }
-            ticket.DbType = DbType.String;
             const int MaxOutputStringLength = 8000; // plenty long enough
             ticket.Size = MaxOutputStringLength;
-            command.Parameters.Add(ticket);
-
-            var markerTable = command.CreateParameter(MarkerTableNameParameter, markerTableName);
+            
+            var markerTable = command.AddParameter(MarkerTableNameParameter, markerTableName, type: DbType.String);
             if (markerTableName == null)
             {
                 markerTable.Direction = ParameterDirection.Output;
             }
-            markerTable.DbType = DbType.String;
             markerTable.Size = MaxOutputStringLength;
-            command.Parameters.Add(markerTable);
         }
         #endregion
 

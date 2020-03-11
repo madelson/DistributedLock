@@ -36,7 +36,7 @@ namespace Medallion.Threading.Tests.Data
                                     AND login_name != 'sa'
                                     AND (last_request_start_time IS NULL OR last_request_start_time <= @expirationDate)
                                     AND (last_request_end_time IS NULL OR last_request_end_time <= @expirationDate)";
-                        findIdleSessionsCommand.Parameters.Add(findIdleSessionsCommand.CreateParameter("expirationDate", expirationDate));
+                        findIdleSessionsCommand.Parameters.AddWithValue("expirationDate", expirationDate);
 
                         try
                         {

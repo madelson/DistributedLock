@@ -1,5 +1,5 @@
-using Medallion.Threading.Data;
 using Medallion.Threading.Internal;
+using Medallion.Threading.Internal.Data;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -35,9 +35,9 @@ namespace Medallion.Threading.SqlServer
 
     public sealed class SqlDistributedReaderWriterLockUpgradeableHandle : SqlDistributedReaderWriterLockHandle, IInternalDistributedLockUpgradeableHandle
     {
-        private RefBox<(IDistributedLockHandle innerHandle, IInternalSqlDistributedLock @lock, IDistributedLockHandle? upgradedHandle)>? _box;
+        private RefBox<(IDistributedLockHandle innerHandle, IDbDistributedLock @lock, IDistributedLockHandle? upgradedHandle)>? _box;
 
-        internal SqlDistributedReaderWriterLockUpgradeableHandle(IDistributedLockHandle innerHandle, IInternalSqlDistributedLock @lock)
+        internal SqlDistributedReaderWriterLockUpgradeableHandle(IDistributedLockHandle innerHandle, IDbDistributedLock @lock)
         {
             this._box = RefBox.Create((innerHandle, @lock, default(IDistributedLockHandle?)));
         }

@@ -13,7 +13,7 @@ namespace Medallion.Threading.Internal
 #endif    
     readonly struct TimeoutValue : IEquatable<TimeoutValue>
     {
-        public TimeoutValue(TimeSpan? timeout)
+        public TimeoutValue(TimeSpan? timeout, string paramName = "timeout")
         {
             if (timeout is { } timeoutValue)
             {
@@ -24,7 +24,7 @@ namespace Medallion.Threading.Internal
                 if (totalMilliseconds < -1 || totalMilliseconds > int.MaxValue)
                 {
                     throw new ArgumentOutOfRangeException(
-                        paramName: nameof(timeout), 
+                        paramName: paramName, 
                         actualValue: timeoutValue, 
                         message: $"Must be {nameof(Timeout)}.{nameof(Timeout.InfiniteTimeSpan)} ({Timeout.InfiniteTimeSpan}) or a non-negative value <= {TimeSpan.FromMilliseconds(int.MaxValue)})"
                     );

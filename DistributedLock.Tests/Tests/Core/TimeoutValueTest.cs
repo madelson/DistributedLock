@@ -46,7 +46,7 @@ namespace Medallion.Threading.Tests.Core
             CheckEquality(TimeSpan.FromTicks(1));
             CheckEquality(TimeSpan.Zero);
 
-            void CheckEquality(TimeSpan value) => Assert.AreEqual((int)value.TotalMilliseconds, ((TimeoutValue)value).InMilliseconds);
+            static void CheckEquality(TimeSpan value) => Assert.AreEqual((int)value.TotalMilliseconds, ((TimeoutValue)value).InMilliseconds);
         }
 
         [Test]

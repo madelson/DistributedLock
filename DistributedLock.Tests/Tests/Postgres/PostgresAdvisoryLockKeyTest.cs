@@ -22,7 +22,7 @@ namespace Medallion.Threading.Tests.Postgres
             Assert.AreEqual(new string('0', 16), default(PostgresAdvisoryLockKey).ToString());
             Assert.IsTrue(default(PostgresAdvisoryLockKey).HasSingleKey);
             Assert.AreEqual(0, default(PostgresAdvisoryLockKey).Key);
-            AssertEquality(new PostgresAdvisoryLockKey(0), default(PostgresAdvisoryLockKey));
+            AssertEquality(new PostgresAdvisoryLockKey(0), default);
         }
 
         [Test]

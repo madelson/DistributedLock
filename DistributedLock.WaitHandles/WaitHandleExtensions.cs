@@ -28,15 +28,15 @@ namespace Medallion.Threading.WaitHandles
             // cancellable wait based on
             // http://www.thomaslevesque.com/2015/06/04/async-and-cancellation-support-for-wait-handles/
             var index = WaitHandle.WaitAny(new[] { waitHandle, cancellationToken.WaitHandle }, timeout.InMilliseconds);
-            switch (index)
+            return index switch
             {
-                case WaitHandle.WaitTimeout: // timeout
-                    return false;
-                case 0: // event
-                    return true;
-                default: // canceled
-                    throw new OperationCanceledException(cancellationToken);
-            }
+                // timeout
+                WaitHandle.WaitTimeout => false,
+                // event
+                0 => true,
+                // canceled
+                _ => throw new OperationCanceledException(cancellationToken),
+            };
         }
 
         // based on http://www.thomaslevesque.com/2015/06/04/async-and-cancellation-support-for-wait-handles/

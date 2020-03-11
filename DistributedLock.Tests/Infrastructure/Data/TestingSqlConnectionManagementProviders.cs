@@ -1,4 +1,5 @@
 using Medallion.Threading.Data;
+using Medallion.Threading.Internal;
 using System;
 using System.Data.Common;
 using System.Data.SqlClient;
@@ -84,7 +85,7 @@ namespace Medallion.Threading.Tests.Data
         internal override void PerformCleanupForLockAbandonment()
         {
             // normally this happens on a cadence, but here we force it one-off
-            MultiplexedConnectionLockPool.Instance.ThreadSafeDoCleanupAsync().Wait();
+            ManagedFinalizerQueue.Instance.FinalizeAsync().Wait();
 
             // still do this because upgrade locks don't allow multiplexing
             base.PerformCleanupForLockAbandonment();

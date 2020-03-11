@@ -37,6 +37,34 @@ namespace Medallion.Threading.Internal
             return prefix + hash;
         }
 
+        internal static IDistributedLockHandle WithManagedFinalizer(this IDistributedLockHandle handle)
+        {
+            Invariant.Require(!(handle is ManagedFinalizationDistributedLockHandle));
+            return new ManagedFinalizationDistributedLockHandle(handle);
+        }
+
+        private sealed class ManagedFinalizationDistributedLockHandle : IDistributedLockHandle
+        {
+            private readonly IDistributedLockHandle _innerHandle;
+            private readonly IDisposable _finalizerRegistration;
+
+            public ManagedFinalizationDistributedLockHandle(IDistributedLockHandle innerHandle)
+            {
+                this._innerHandle = innerHandle;
+                this._finalizerRegistration = ManagedFinalizerQueue.Instance.Register(this, innerHandle);
+            }
+
+            public CancellationToken HandleLostToken => this._innerHandle.HandleLostToken;
+
+            public void Dispose() => SyncOverAsync.Run(@this => @this.DisposeAsync(), this, false);
+
+            public ValueTask DisposeAsync()
+            {
+                this._finalizerRegistration.Dispose();
+                return this._innerHandle.DisposeAsync();
+            }
+        }
+
         #region ---- IInternalDistributedLock implementations ----
         public static ValueTask<THandle> AcquireAsync<THandle>(IInternalDistributedLock<THandle> @lock, TimeSpan? timeout, CancellationToken cancellationToken)
             where THandle : class, IDistributedLockHandle =>

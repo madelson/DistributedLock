@@ -1,5 +1,6 @@
 using Medallion.Threading.Data;
 using Medallion.Threading.Internal;
+using Medallion.Threading.Internal.Data;
 using System;
 using System.Data;
 using System.Threading;
@@ -20,7 +21,7 @@ namespace Medallion.Threading.SqlServer
     /// </summary>
     public sealed partial class SqlDistributedReaderWriterLock : IInternalDistributedUpgradeableReaderWriterLock<SqlDistributedReaderWriterLockHandle, SqlDistributedReaderWriterLockUpgradeableHandle>
     {
-        private readonly IInternalSqlDistributedLock _internalLock;
+        private readonly IDbDistributedLock _internalLock;
 
         #region ---- Constructors ----
         public SqlDistributedReaderWriterLock(string name, string connectionString, bool exactName = false)
@@ -34,16 +35,16 @@ namespace Medallion.Threading.SqlServer
         }
 
         public SqlDistributedReaderWriterLock(string name, IDbConnection connection, bool exactName = false)
-            : this(name, exactName, n => new ExternalConnectionOrTransactionSqlDistributedLock(n, new ConnectionOrTransaction(connection ?? throw new ArgumentNullException(nameof(connection)))))
+            : this(name, exactName, n => new ExternalConnectionOrTransactionDbDistributedLock(n, new SqlDatabaseConnection(connection ?? throw new ArgumentNullException(nameof(connection)), Timeout.InfiniteTimeSpan)))
         {
         }
 
         public SqlDistributedReaderWriterLock(string name, IDbTransaction transaction, bool exactName = false)
-            : this(name, exactName, n => new ExternalConnectionOrTransactionSqlDistributedLock(n, new ConnectionOrTransaction(transaction ?? throw new ArgumentNullException(nameof(transaction)))))
+            : this(name, exactName, n => new ExternalConnectionOrTransactionDbDistributedLock(n, new SqlDatabaseConnection(transaction ?? throw new ArgumentNullException(nameof(transaction)), Timeout.InfiniteTimeSpan)))
         {
         }
 
-        private SqlDistributedReaderWriterLock(string name, bool exactName, Func<string, IInternalSqlDistributedLock> internalLockFactory)
+        private SqlDistributedReaderWriterLock(string name, bool exactName, Func<string, IDbDistributedLock> internalLockFactory)
         {
             if (exactName)
             {
@@ -62,7 +63,7 @@ namespace Medallion.Threading.SqlServer
 
         public string Name { get; }
 
-        public bool IsReentrant => this._internalLock.IsReentrant;
+        public bool IsReentrant => throw new NotImplementedException();
 
         /// <summary>
         /// The maximum allowed length for lock names. See https://msdn.microsoft.com/en-us/library/ms189823.aspx
