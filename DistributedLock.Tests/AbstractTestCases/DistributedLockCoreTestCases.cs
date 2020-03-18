@@ -1,6 +1,8 @@
 ﻿using Medallion.Shell;
+using Medallion.Threading.Internal;
 using NUnit.Framework;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
@@ -10,15 +12,25 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading.Tests
 {
-    public abstract class DistributedLockCoreTestCases<TEngine>
-        where TEngine : TestingDistributedLockEngine, new()
+    public abstract class DistributedLockCoreTestCases<TLockProvider>
+        where TLockProvider : ITestingLockProvider, new()
     {
+        private TLockProvider _lockProvider = default!;
+        private readonly List<Action> _cleanupActions = new List<Action>();
+
+        [SetUp] public void SetUp() => this._lockProvider = new TLockProvider();
+
+        [TearDown] public void TearDown()
+        {
+            this._cleanupActions.ForEach(a => a());
+            this._cleanupActions.Clear();
+        }
+
         [Test]
         public void BasicTest()
         {
-            using var engine = new TEngine();
-            var @lock = engine.CreateLock(nameof(BasicTest));
-            var lock2 = engine.CreateLock(nameof(BasicTest) + "2");
+            var @lock = this._lockProvider.CreateLock(nameof(BasicTest));
+            var lock2 = this._lockProvider.CreateLock(nameof(BasicTest) + "2");
 
             using (var handle = @lock.TryAcquire())
             {
@@ -26,7 +38,7 @@ namespace Medallion.Threading.Tests
 
                 using (var nestedHandle = @lock.TryAcquire())
                 {
-                    (nestedHandle == null).ShouldEqual(!engine.IsReentrant, this.GetType() + ": reentrancy mis-stated");
+                    Assert.IsNull(nestedHandle, "should not be reentrant");
                 }
 
                 using var nestedHandle2 = lock2.TryAcquire();
@@ -40,26 +52,28 @@ namespace Medallion.Threading.Tests
         }
 
         [Test]
-        public void BasicAsyncTest()
+        public async Task BasicAsyncTest()
         {
-            using var engine = new TEngine();
-            var @lock = engine.CreateLock(nameof(BasicAsyncTest));
-            var lock2 = engine.CreateLock(nameof(BasicAsyncTest) + "2");
+            // note: we intentionally have a mix of await using vs using and await 
+            // vs .Result here to excercise various code paths
 
-            using (var handle = @lock.TryAcquireAsync().Result)
+            var @lock = this._lockProvider.CreateLock(nameof(BasicAsyncTest));
+            var lock2 = this._lockProvider.CreateLock(nameof(BasicAsyncTest) + "2");
+
+            await using (var handle = await @lock.TryAcquireAsync())
             {
                 Assert.IsNotNull(handle, this.GetType().Name);
 
-                using (var nestedHandle = @lock.TryAcquireAsync().Result)
+                using (var nestedHandle = await @lock.TryAcquireAsync())
                 {
-                    (nestedHandle == null).ShouldEqual(!engine.IsReentrant, this.GetType().Name);
+                    Assert.IsNull(nestedHandle, this.GetType().Name);
                 }
 
-                using var nestedHandle2 = lock2.TryAcquireAsync().Result;
+                await using var nestedHandle2 = lock2.TryAcquireAsync().Result;
                 Assert.IsNotNull(nestedHandle2, this.GetType().Name);
             }
 
-            using (var handle = @lock.TryAcquireAsync().Result)
+            await using (var handle = await @lock.TryAcquireAsync())
             {
                 Assert.IsNotNull(handle, this.GetType().Name);
             }
@@ -68,8 +82,7 @@ namespace Medallion.Threading.Tests
         [Test]
         public void TestBadArguments()
         {
-            using var engine = new TEngine();
-            var @lock = engine.CreateLock(nameof(TestBadArguments));
+            var @lock = this._lockProvider.CreateLock(nameof(TestBadArguments));
             Assert.Catch<ArgumentOutOfRangeException>(() => @lock.Acquire(TimeSpan.FromSeconds(-2)));
             Assert.Catch<ArgumentOutOfRangeException>(() => @lock.AcquireAsync(TimeSpan.FromSeconds(-2)));
             Assert.Catch<ArgumentOutOfRangeException>(() => @lock.TryAcquire(TimeSpan.FromSeconds(-2)));
@@ -83,8 +96,7 @@ namespace Medallion.Threading.Tests
         [Test]
         public void TestDisposeHandleIsIdempotent()
         {
-            using var engine = new TEngine();
-            var @lock = engine.CreateLock(nameof(TestDisposeHandleIsIdempotent));
+            var @lock = this._lockProvider.CreateLock(nameof(TestDisposeHandleIsIdempotent));
             var handle = @lock.Acquire(TimeSpan.FromSeconds(30));
             Assert.IsNotNull(handle);
             handle.Dispose();
@@ -97,10 +109,9 @@ namespace Medallion.Threading.Tests
         [NonParallelizable] // timing-sensitive
         public void TestTimeouts()
         {
-            using var engine = new TEngine();
-            var @lock = engine.CreateLock(nameof(TestTimeouts));
+            var @lock = this._lockProvider.CreateLock(nameof(TestTimeouts));
             // acquire with a different lock instance to avoid reentrancy mattering
-            using (engine.CreateLock(nameof(TestTimeouts)).Acquire())
+            using (this._lockProvider.CreateLock(nameof(TestTimeouts)).Acquire())
             {
                 var timeout = TimeSpan.FromSeconds(.1);
                 var waitTime = TimeSpan.FromSeconds(.4);
@@ -126,12 +137,11 @@ namespace Medallion.Threading.Tests
         [Test]
         public void CancellationTest()
         {
-            using var engine = new TEngine();
             var lockName = nameof(CancellationTest);
-            var @lock = engine.CreateLock(lockName);
+            var @lock = this._lockProvider.CreateLock(lockName);
 
             var source = new CancellationTokenSource();
-            using (var handle = engine.CreateLock(lockName).Acquire())
+            using (var handle = this._lockProvider.CreateLock(lockName).Acquire())
             {
                 var blocked = @lock.AcquireAsync(cancellationToken: source.Token).AsTask();
                 blocked.Wait(TimeSpan.FromSeconds(.1)).ShouldEqual(false);
@@ -154,11 +164,10 @@ namespace Medallion.Threading.Tests
             // /var/lib/pgsql/<version>/data/postgresql.conf and then restarting Postgres.
             // See https://docs.alfresco.com/5.0/tasks/postgresql-config.html
 
-            using var engine = new TEngine();
             var counter = 0;
             var tasks = Enumerable.Range(1, 100).Select(async _ =>
                 {
-                    var @lock = engine.CreateLock("parallel_test");
+                    var @lock = this._lockProvider.CreateLock("parallel_test");
                     using (await @lock.AcquireAsync())
                     {
                             // increment going in
@@ -181,13 +190,12 @@ namespace Medallion.Threading.Tests
         [Test]
         public void TestGetSafeLockName()
         {
-            using var engine = new TEngine();
-            Assert.Catch<ArgumentNullException>(() => engine.GetSafeName(null!));
+            Assert.Catch<ArgumentNullException>(() => this._lockProvider.GetSafeName(null!));
 
             foreach (var name in new[] { string.Empty, new string('a', 1000), @"\\\\\", new string('\\', 1000) })
             {
-                var safeName = engine.GetSafeName(name);
-                Assert.DoesNotThrow(() => engine.CreateLockWithExactName(safeName).Acquire(TimeSpan.FromSeconds(10)).Dispose(), $"{this.GetType().Name}: could not acquire '{name}'");
+                var safeName = this._lockProvider.GetSafeName(name);
+                Assert.DoesNotThrow(() => this._lockProvider.CreateLockWithExactName(safeName).Acquire(TimeSpan.FromSeconds(10)).Dispose(), $"{this.GetType().Name}: could not acquire '{name}'");
             }
         }
 
@@ -198,29 +206,26 @@ namespace Medallion.Threading.Tests
             var longName2 = new string('a', longName1.Length - 1) + "A";
             StringComparer.OrdinalIgnoreCase.Equals(longName1, longName2).ShouldEqual(true, "sanity check");
 
-            using var engine = new TEngine();
-            Assert.AreNotEqual(engine.GetSafeName(longName1), engine.GetSafeName(longName2));
+            Assert.AreNotEqual(this._lockProvider.GetSafeName(longName1), this._lockProvider.GetSafeName(longName2));
         }
 
         [Test]
         public async Task TestLockNamesAreCaseSensitive()
         {
-            using var engine = new TEngine();
-
             // the goal here is to construct 2 valid lock names that differ only by case. We start by generating a hash name
             // that is unique to this test yet stable across runs. Then we truncate it to avoid need for further hashing in Postgres
             // (which only supports very short ASCII string names). Finally, we re-run through GetSafeName to pick up any special prefix
             // that is needed (e. g. for wait handles)
             using var sha1 = SHA1.Create();
-            var uniqueHashName = Convert.ToBase64String(sha1.ComputeHash(Encoding.UTF8.GetBytes(engine.GetUniqueSafeLockName())));
-            var lowerName = engine.GetSafeName($"{uniqueHashName.Substring(0, 6)}_a");
-            var upperName = engine.GetSafeName($"{uniqueHashName.Substring(0, 6)}_A");
+            var uniqueHashName = Convert.ToBase64String(sha1.ComputeHash(Encoding.UTF8.GetBytes(this._lockProvider.GetUniqueSafeName())));
+            var lowerName = this._lockProvider.GetSafeName($"{uniqueHashName.Substring(0, 6)}_a");
+            var upperName = this._lockProvider.GetSafeName($"{uniqueHashName.Substring(0, 6)}_A");
             // make sure we succeeded in generating what we set out ot generate
             Assert.AreNotEqual(lowerName, upperName);
             Assert.IsTrue(StringComparer.OrdinalIgnoreCase.Equals(lowerName, upperName));
 
-            await using (await engine.CreateLockWithExactName(lowerName).AcquireAsync())
-            await using (var handle = await engine.CreateLockWithExactName(upperName).TryAcquireAsync())
+            await using (await this._lockProvider.CreateLockWithExactName(lowerName).AcquireAsync())
+            await using (var handle = await this._lockProvider.CreateLockWithExactName(upperName).TryAcquireAsync())
             {
                 Assert.IsNotNull(handle);
             }
@@ -229,11 +234,10 @@ namespace Medallion.Threading.Tests
         [Test]
         public void TestCanceledAlreadyThrowsForSyncAndDoesNotThrowForAsync()
         {
-            using var engine = new TEngine();
             using var source = new CancellationTokenSource();
             source.Cancel();
 
-            var @lock = engine.CreateLock("already-canceled");
+            var @lock = this._lockProvider.CreateLock("already-canceled");
 
             Assert.Catch<OperationCanceledException>(() => @lock.Acquire(cancellationToken: source.Token));
             Assert.Catch<OperationCanceledException>(() => @lock.TryAcquire(cancellationToken: source.Token));
@@ -248,30 +252,29 @@ namespace Medallion.Threading.Tests
         }
 
         [Test]
-        public void TestLockAbandonment()
+        public async Task TestLockAbandonment()
         {
-            using var engine = new TEngine();
             var lockName = nameof(TestLockAbandonment);
-            new Action<string>(name => engine.CreateLock(name).Acquire())(lockName);
+            new Action<string>(name => this._lockProvider.CreateLock(name).Acquire())(lockName);
 
             GC.Collect();
             GC.WaitForPendingFinalizers();
-            engine.PerformCleanupForLockAbandonment();
+            await ManagedFinalizerQueue.Instance.FinalizeAsync();
+            this._lockProvider.PerformAdditionalCleanupForHandleAbandonment();
 
-            using var handle = engine.CreateLock(lockName).TryAcquire();
+            using var handle = this._lockProvider.CreateLock(lockName).TryAcquire();
             Assert.IsNotNull(handle, this.GetType().Name);
         }
 
         [Test]
         public void TestCrossProcess()
         {
-            using var engine = new TEngine();
-            var lockName = engine.GetUniqueSafeLockName();
-            var command = RunLockTaker(engine, engine.CrossProcessLockType, lockName);
+            var lockName = this._lockProvider.GetUniqueSafeName();
+            var command = this.RunLockTaker(this._lockProvider, this._lockProvider.CrossProcessLockType, lockName);
             Assert.IsTrue(command.StandardOutput.ReadLineAsync().Wait(TimeSpan.FromSeconds(10)));
             Assert.IsFalse(command.Task.Wait(TimeSpan.FromSeconds(.1)));
 
-            var @lock = engine.CreateLockWithExactName(lockName);
+            var @lock = this._lockProvider.CreateLockWithExactName(lockName);
             @lock.TryAcquire().ShouldEqual(null, this.GetType().Name);
 
             command.StandardInput.WriteLine("done");
@@ -309,13 +312,12 @@ namespace Medallion.Threading.Tests
 
         private void CrossProcessAbandonmentHelper(bool asyncWait, bool kill)
         {
-            using var engine = new TEngine();
-            var name = engine.GetUniqueSafeLockName($"cpl-{asyncWait}-{kill}");
-            var command = RunLockTaker(engine, engine.CrossProcessLockType, name);
+            var name = this._lockProvider.GetUniqueSafeName($"cpl-{asyncWait}-{kill}");
+            var command = this.RunLockTaker(this._lockProvider, this._lockProvider.CrossProcessLockType, name);
             Assert.IsTrue(command.StandardOutput.ReadLineAsync().Wait(TimeSpan.FromSeconds(10)));
             Assert.IsFalse(command.Task.IsCompleted);
 
-            var @lock = engine.CreateLockWithExactName(name);
+            var @lock = this._lockProvider.CreateLockWithExactName(name);
 
             var acquireTask = asyncWait
                 ? @lock.TryAcquireAsync(TimeSpan.FromSeconds(10)).AsTask()
@@ -336,7 +338,7 @@ namespace Medallion.Threading.Tests
             Assert.IsNotNull(handle, this.GetType().Name);
         }
 
-        private static Command RunLockTaker(TEngine engine, params string[] args)
+        private Command RunLockTaker(TLockProvider engine, params string[] args)
         {
             const string Configuration =
 #if DEBUG
@@ -347,7 +349,7 @@ namespace Medallion.Threading.Tests
             var exePath = Path.Combine(TestContext.CurrentContext.TestDirectory, "..", "..", "..", "..", "DistributedLockTaker", "bin", Configuration, TestHelper.FrameworkName, "DistributedLockTaker.exe");
             var command = Command.Run(exePath, args, o => o.WorkingDirectory(TestContext.CurrentContext.TestDirectory).ThrowOnError(true))
                 .RedirectStandardErrorTo(Console.Error);
-            engine.RegisterCleanupAction(() =>
+            this._cleanupActions.Add(() =>
             {
                 if (!command.Task.IsCompleted)
                 {

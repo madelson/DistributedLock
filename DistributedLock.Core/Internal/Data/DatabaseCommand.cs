@@ -77,6 +77,11 @@ namespace Medallion.Threading.Internal.Data
             bool disallowAsyncCancellation,
             bool isKeepaliveQuery)
         {
+            if (this._connection.ShouldPrepareCommands)
+            {
+                await this.PrepareAsync(cancellationToken).ConfigureAwait(false);
+            }
+
             if (!SyncOverAsync.IsSynchronous && this._command is DbCommand dbCommand)
             {
                 if (!cancellationToken.CanBeCanceled)
@@ -173,7 +178,22 @@ namespace Medallion.Threading.Internal.Data
                 );
             }
         }
-        #endregion
+
+        private ValueTask PrepareAsync(CancellationToken cancellationToken)
+        {
+#if NETSTANDARD2_1
+            if (!SyncOverAsync.IsSynchronous && this._command is DbCommand dbCommand)
+            {
+                return dbCommand.PrepareAsync(cancellationToken).AsValueTask();
+            }
+#elif !NETSTANDARD2_0 && !NET461
+            ERROR
+#endif
+
+            this._command.Prepare();
+            return default;
+        }
+#endregion
 
         public void Dispose() => this._command.Dispose();
 

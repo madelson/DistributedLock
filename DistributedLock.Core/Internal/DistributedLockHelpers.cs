@@ -37,6 +37,15 @@ namespace Medallion.Threading.Internal
             return prefix + hash;
         }
 
+        // todo revisit API
+        public static async ValueTask<THandle?> Wrap<THandle>(this ValueTask<IDistributedLockHandle?> handleTask, Func<IDistributedLockHandle, THandle> factory)
+            where THandle : class
+        {
+            var handle = await handleTask.ConfigureAwait(false);
+            return handle != null ? factory(handle) : null;
+        }
+
+        // todo consider removing this if we don't use it enough
         internal static IDistributedLockHandle WithManagedFinalizer(this IDistributedLockHandle handle)
         {
             Invariant.Require(!(handle is ManagedFinalizationDistributedLockHandle));

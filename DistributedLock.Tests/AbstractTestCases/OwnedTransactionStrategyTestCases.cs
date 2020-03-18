@@ -5,6 +5,7 @@ using System.Data.SqlClient;
 
 namespace Medallion.Threading.Tests
 {
+    // todo convert to include postgres
     public abstract class OwnedTransactionStrategyTestCases<TEngineFactory>
         where TEngineFactory : ITestingSqlDistributedLockEngineFactory, new()
     {

@@ -7,7 +7,8 @@ using System.Threading;
 
 namespace Medallion.Threading.Tests
 {
-    // todo rework now that eveyr lock has this
+    // todo convert to include postgres
+    // todo rework now that every lock has this
     public abstract class AzureConnectionStrategyTestCases<TEngineFactory> 
         where TEngineFactory : ITestingSqlDistributedLockEngineFactory, new()
     {

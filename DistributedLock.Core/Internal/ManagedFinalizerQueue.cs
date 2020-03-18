@@ -32,7 +32,7 @@ namespace Medallion.Threading.Internal
 
         public static readonly ManagedFinalizerQueue Instance = new ManagedFinalizerQueue();
 
-        private ConcurrentDictionary<IAsyncDisposable, WeakReference> _items = new ConcurrentDictionary<IAsyncDisposable, WeakReference>();
+        private readonly ConcurrentDictionary<IAsyncDisposable, WeakReference> _items = new ConcurrentDictionary<IAsyncDisposable, WeakReference>();
 
         // The state of this class can be described by 3 bits:
         // _count: >0 or ==0
@@ -65,10 +65,13 @@ namespace Medallion.Threading.Internal
         /// <summary>
         /// If <paramref name="resource"/> is GC'd, <paramref name="finalizer"/> will be run.
         /// <paramref name="finalizer"/> must be thread-safe. Disposing the returned <see cref="IDisposable"/>
-        /// revokes the registration
+        /// revokes the registration. Note that, for this to work, <paramref name="finalizer"/> must not hold
+        /// a strong reference to <paramref name="resource"/>.
         /// </summary>
         public IDisposable Register(object resource, IAsyncDisposable finalizer)
         {
+            Invariant.Require(finalizer != resource);
+
             this._items.As<IDictionary<IAsyncDisposable, WeakReference>>()
                 .Add(finalizer, new WeakReference(resource));
             
@@ -143,7 +146,7 @@ namespace Medallion.Threading.Internal
                 if (!kvp.Value.IsAlive)
                 {
                     var itemFinalizerTask = this.TryRemove(kvp.Key, disposeKey: true);
-                    if (waitForItemFinalization && itemFinalizerTask != null)
+                    if (waitForItemFinalization)
                     {
                         (itemFinalizerTasks ??= new List<Task>()).Add(itemFinalizerTask);
                     }
@@ -158,7 +161,7 @@ namespace Medallion.Threading.Internal
         /// </summary>
         internal Task FinalizeAsync() => this.FinalizeAsync(waitForItemFinalization: true);
 
-        private Task? TryRemove(IAsyncDisposable key, bool disposeKey)
+        private Task TryRemove(IAsyncDisposable key, bool disposeKey)
         {
             if (this._items.TryRemove(key, out _))
             {
@@ -171,7 +174,7 @@ namespace Medallion.Threading.Internal
                 }
             }
 
-            return null;
+            return Task.CompletedTask;
         }
 
         private sealed class Registration : IDisposable

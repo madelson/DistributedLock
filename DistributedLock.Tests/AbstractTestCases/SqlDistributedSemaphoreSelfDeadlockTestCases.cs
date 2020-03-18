@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading.Tests
 {
+    // todo convert to include postgres
     /// <summary>
     /// These cases test "self-deadlock", where a semaphore acquire cannot possibly succeed because the current connection owns
     /// all tickets. Since this can only happen when a connection/transaction is re-used, we require

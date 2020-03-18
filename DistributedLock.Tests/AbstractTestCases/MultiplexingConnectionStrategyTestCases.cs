@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading.Tests
 {
+    // todo convert to include postgres
     public abstract class MultiplexingConnectionStrategyTestCases<TEngineFactory>
         where TEngineFactory : ITestingSqlDistributedLockEngineFactory, new()
     {

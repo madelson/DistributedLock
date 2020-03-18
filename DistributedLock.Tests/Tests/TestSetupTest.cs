@@ -23,10 +23,7 @@ namespace Medallion.Threading.Tests
                 )
                 .ToArray();
 
-            var expectedTestTypes = testCaseClasses.SelectMany(
-                    t => this.GetTypesForGenericParameters(t.GetGenericArguments()),
-                    (t, args) => t.MakeGenericType(args)
-                )
+            var expectedTestTypes = testCaseClasses.SelectMany(this.GetPossibleGenericInstantiations)
                 .ToArray();
 
             var combinatorialTestsFile = Path.GetFullPath(Path.Combine(TestContext.CurrentContext.TestDirectory, "..", "..", "..", "Tests", "CombinatorialTests.cs"));
@@ -65,14 +62,20 @@ $@"namespace {g.Key}
             static string GetTestClassName(Type type)
             {
                 return type.IsGenericType
-                    ? $"{RemoveGenericMarkers(type.Name)}_{string.Join("_", type.GetGenericArguments().Select(GetTestClassName))}"
-                    : type.Name;
+                    ? $"{RemoveProviderSuffix(RemoveGenericMarkers(type.Name))}_{string.Join("_", type.GetGenericArguments().Select(GetTestClassName))}"
+                    : RemoveProviderSuffix(type.Name);
+
+                static string RemoveProviderSuffix(string name)
+                {
+                    var ProviderSuffix = "Provider";
+                    return name.EndsWith(ProviderSuffix) ? name.Substring(0, name.Length - ProviderSuffix.Length) : name;
+                }
             }
 
             static string GetCSharpName(Type type)
             {
                 return type.IsGenericType
-                    ? $"{RemoveGenericMarkers(type.Name) }<{string.Join(", ", type.GetGenericArguments().Select(GetCSharpName))}>"
+                    ? $"{RemoveGenericMarkers(type.Name)}<{string.Join(", ", type.GetGenericArguments().Select(GetCSharpName))}>"
                     : type.Name;
             }
 
@@ -88,14 +91,17 @@ $@"namespace {g.Key}
                 .ToList();
             if (namespaces.Count > 1) { namespaces.RemoveAll(ns => ns == typeof(TestSetupTest).Namespace); }
             if (namespaces.Count > 1) { namespaces.RemoveAll(ns => ns.EndsWith(".Data")); }
+            if (namespaces.Count > 1) { Assert.Fail(string.Join(", ", namespaces)); }
             return (declaration, namespaces.Single());
         }
 
         private static string RemoveGenericMarkers(string name) => Regex.Replace(name, @"`\d+", string.Empty);
 
-        private List<Type[]> GetTypesForGenericParameters(Type[] genericParameters)
+        private Type[] GetPossibleGenericInstantiations(Type genericTypeDefinition)
         {
-            var genericParameterTypes = genericParameters.Select(this.GetTypesForGenericParameter).ToArray();
+            var genericParameterTypes = genericTypeDefinition.GetGenericArguments()
+                .Select(this.GetTypesForGenericParameter)
+                .ToArray();
             var allCombinations = Traverse.DepthFirst(
                     root: (index: 0, value: Enumerable.Empty<Type>()),
                     children: t => t.index == genericParameterTypes.Length
@@ -103,8 +109,9 @@ $@"namespace {g.Key}
                         : genericParameterTypes[t.index].Select(type => (index: t.index + 1, value: t.value.Append(type)))
                 )
                 .Where(t => t.index == genericParameterTypes.Length)
-                .Select(t => t.value.ToArray())
-                .ToList();
+                .Select(t => MakeGenericTypeOrDefault(genericTypeDefinition, t.value.ToArray()))
+                .Where(t => t != null).Select(t => t!)
+                .ToArray();
             return allCombinations;
         }
 
@@ -115,9 +122,31 @@ $@"namespace {g.Key}
                 .GetTypes()
                 // this doesn't support all fancy constraints like class or new()
                 // see https://stackoverflow.com/questions/4864496/checking-if-an-object-meets-a-generic-parameter-constraint
-                .Where(t => !t.IsAbstract && constraints.All(c => c.IsAssignableFrom(t)))
-                .SelectMany(t => t.IsGenericTypeDefinition ? this.GetTypesForGenericParameters(t.GetGenericArguments()).Select(p => t.MakeGenericType(p)) : new[] { t })
+                .Where(t => !t.IsAbstract && constraints.All(c => IsDerivedFromOrDerivedFromGenericOf(derived: t, @base: c)))
+                .SelectMany(t => t.IsGenericTypeDefinition ? this.GetPossibleGenericInstantiations(t) : new[] { t })
                 .ToArray();
+        }
+
+        /// <summary>
+        /// Attempts to construct a generic type. While we do filter down the types we try based on the generic constraints,
+        /// we currently make no attempt to do cross-generic-parameter optimization such as when one generic constraint is
+        /// dependent on another generic parameter (e. g. T : Foo[V]). In these cases, we fall back to the native validation
+        /// </summary>
+        private static Type? MakeGenericTypeOrDefault(Type genericTypeDefininition, Type[] genericArguments)
+        {
+            try { return genericTypeDefininition.MakeGenericType(genericArguments); }
+            catch (ArgumentException) { return null; }
+        }
+
+        private static bool IsDerivedFromOrDerivedFromGenericOf(Type derived, Type @base)
+        {
+            if (@base.IsAssignableFrom(derived)) { return true; }
+            if (!@base.ContainsGenericParameters) { return false; }
+
+            var baseDefinition = @base.GetGenericTypeDefinition();
+            return Traverse.Along(derived, t => t.BaseType)
+                .Concat(derived.GetInterfaces())
+                .Any(t => t.IsConstructedGenericType && t.GetGenericTypeDefinition() == baseDefinition);
         }
     }
 }

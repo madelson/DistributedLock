@@ -11,20 +11,23 @@ namespace Medallion.Threading.SqlServer
 {
     internal sealed class SqlDatabaseConnection : DatabaseConnection
     {
-        public SqlDatabaseConnection(IDbConnection connection, TimeoutValue keepaliveCadence)
-            : base(connection, keepaliveCadence)
+        public SqlDatabaseConnection(IDbConnection connection, TimeoutValue keepaliveCadence, bool isExternallyOwned = true)
+            : base(connection, keepaliveCadence, isExternallyOwned: isExternallyOwned)
         {
         }
 
         public SqlDatabaseConnection(IDbTransaction transaction, TimeoutValue keepaliveCadence)
-            : base(transaction, keepaliveCadence)
+            : base(transaction, keepaliveCadence, isExternallyOwned: true)
         {
         }
 
         public SqlDatabaseConnection(string connectionString, TimeoutValue keepaliveCadence)
-            : base(new SqlConnection(connectionString), keepaliveCadence)
+            : base(new SqlConnection(connectionString), keepaliveCadence, isExternallyOwned: false)
         {
         }
+
+        // SQLServer gets no benefit from this
+        protected override bool ShouldPrepareCommands => false;
 
         protected override bool IsCommandCancellationException(Exception exception)
         {

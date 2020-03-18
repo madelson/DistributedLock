@@ -74,7 +74,7 @@ namespace Medallion.Threading.SqlServer
         bool IInternalDistributedLock<SqlDistributedLockHandle>.WillGoAsync(TimeoutValue timeout, CancellationToken cancellationToken) => false;
 
         ValueTask<SqlDistributedLockHandle?> IInternalDistributedLock<SqlDistributedLockHandle>.InternalTryAcquireAsync(TimeoutValue timeout, CancellationToken cancellationToken) =>
-            HandleHelpers.Wrap(this._internalLock.TryAcquireAsync(timeout, SqlApplicationLock.ExclusiveLock, cancellationToken, contextHandle: null), h => new SqlDistributedLockHandle(h));
+            this._internalLock.TryAcquireAsync(timeout, SqlApplicationLock.ExclusiveLock, cancellationToken, contextHandle: null).Wrap(h => new SqlDistributedLockHandle(h));
 
         internal static IDbDistributedLock CreateInternalLock(string name, string connectionString, SqlDistributedLockConnectionStrategy connectionStrategy)
         {

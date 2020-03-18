@@ -3,6 +3,7 @@ using Medallion.Threading.Internal;
 using Medallion.Threading.Internal.Data;
 using System;
 using System.Data;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -13,21 +14,28 @@ namespace Medallion.Threading.SqlServer
     /// </summary>
     internal sealed class SqlApplicationLock : IDbSynchronizationStrategy<object>
     {
-        public const int TimeoutExitCode = -1;
+        public const int TimeoutExitCode = -1,
+            AlreadyHeldExitCode = 103,
+            InvalidUpgradeExitCode = 104;
 
         public static readonly SqlApplicationLock SharedLock = new SqlApplicationLock(Mode.Shared),
             UpdateLock = new SqlApplicationLock(Mode.Update),
-            ExclusiveLock = new SqlApplicationLock(Mode.Exclusive);
+            ExclusiveLock = new SqlApplicationLock(Mode.Exclusive),
+            UpgradeLock = new SqlApplicationLock(Mode.Exclusive, isUpgrade: true);
 
         private static readonly object Cookie = new object();
-        private readonly Mode mode;
+        private readonly Mode _mode;
+        private readonly bool _isUpgrade;
 
-        private SqlApplicationLock(Mode mode)
+        private SqlApplicationLock(Mode mode, bool isUpgrade = false)
         {
-            this.mode = mode;
+            Invariant.Require(!isUpgrade || mode == Mode.Exclusive);
+
+            this._mode = mode;
+            this._isUpgrade = isUpgrade;
         }
 
-        bool IDbSynchronizationStrategy<object>.IsUpgradeable => this.mode == Mode.Update;
+        bool IDbSynchronizationStrategy<object>.IsUpgradeable => this._mode == Mode.Update;
 
         async ValueTask<object?> IDbSynchronizationStrategy<object>.TryAcquireAsync(
             DatabaseConnection connection, 
@@ -37,7 +45,7 @@ namespace Medallion.Threading.SqlServer
         {
             try
             {
-                return await ExecuteAcquireCommandAsync(connection, resourceName, timeout, this.mode, cancellationToken).ConfigureAwait(false) ? Cookie : null;
+                return await this.ExecuteAcquireCommandAsync(connection, resourceName, timeout, cancellationToken).ConfigureAwait(false) ? Cookie : null;
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
@@ -51,41 +59,73 @@ namespace Medallion.Threading.SqlServer
         ValueTask IDbSynchronizationStrategy<object>.ReleaseAsync(DatabaseConnection connection, string resourceName, object lockCookie) =>
             ExecuteReleaseCommandAsync(connection, resourceName, isTry: false);
 
-        private static async Task<bool> ExecuteAcquireCommandAsync(DatabaseConnection connection, string lockName, TimeoutValue timeout, Mode mode, CancellationToken cancellationToken)
+        private async Task<bool> ExecuteAcquireCommandAsync(DatabaseConnection connection, string lockName, TimeoutValue timeout, CancellationToken cancellationToken)
         {
-            using var command = CreateAcquireCommand(connection, lockName, timeout, mode, out var returnValue);
+            using var command = this.CreateAcquireCommand(connection, lockName, timeout, out var returnValue);
             await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
-            return ParseExitCode((int)returnValue.Value);
+            return await ParseExitCodeAsync((int)returnValue.Value, timeout, cancellationToken).ConfigureAwait(false);
         }
 
         private static async ValueTask ExecuteReleaseCommandAsync(DatabaseConnection connection, string lockName, bool isTry)
         {
             using var command = CreateReleaseCommand(connection, lockName, isTry, out var returnValue);
             await command.ExecuteNonQueryAsync(CancellationToken.None).ConfigureAwait(false);
-            ParseExitCode((int)returnValue.Value);
+            await ParseExitCodeAsync((int)returnValue.Value, TimeSpan.Zero, CancellationToken.None).ConfigureAwait(false);
         }
 
-        private static DatabaseCommand CreateAcquireCommand(
+        private DatabaseCommand CreateAcquireCommand(
             DatabaseConnection connection, 
             string lockName, 
             TimeoutValue timeout, 
-            Mode mode,
             out IDbDataParameter returnValue)
         {
-            // todo when we're checking recursion this should not be a stored proc
-
             var command = connection.CreateCommand();
-            command.SetCommandText("dbo.sp_getapplock");
-            command.SetCommandType(CommandType.StoredProcedure);
+
+            if (connection.IsExernallyOwned || this._isUpgrade)
+            {
+                returnValue = command.AddParameter("Result", type: DbType.Int32, direction: ParameterDirection.Output);
+
+                const string CurrentOwnerMode = "APPLOCK_MODE('public', @Resource, @LockOwner)",
+                    GetAppLock = "EXEC @Result = dbo.sp_getapplock @Resource=@Resource, @LockMode=@LockMode, @LockOwner=@LockOwner, @LockTimeout=@LockTimeout, @DbPrincipal='public'";
+                var alternateOwnerHasLockCheck = connection.IsExernallyOwned && connection.HasTransaction
+                    ? " OR APPLOCK_MODE('public', @Resource, 'Session') != 'NoLock'"
+                    : string.Empty;
+
+                if (this._isUpgrade)
+                {
+                    command.SetCommandText(
+                        $@"DECLARE @Mode NVARCHAR(32) = {CurrentOwnerMode}
+                        IF @Mode = 'NoLock'
+                            SET @Result = {InvalidUpgradeExitCode}
+                        ELSE IF @Mode != '{GetModeString(Mode.Update)}'{alternateOwnerHasLockCheck}
+                            SET @Result = {AlreadyHeldExitCode}
+                        ELSE 
+                            {GetAppLock}"
+                    );
+                }
+                else
+                {
+                    command.SetCommandText(
+                        $@"IF {CurrentOwnerMode} != 'NoLock'{alternateOwnerHasLockCheck}
+                            SET @Result = {AlreadyHeldExitCode}
+                        ELSE
+                            {GetAppLock}"
+                    );
+                }
+            }
+            else
+            {
+                returnValue = command.AddParameter(type: DbType.Int32, direction: ParameterDirection.ReturnValue);
+                command.SetCommandText("dbo.sp_getapplock");
+                command.SetCommandType(CommandType.StoredProcedure);
+            }
             command.SetTimeout(timeout);
 
             command.AddParameter("Resource", lockName);
-            command.AddParameter("LockMode", GetModeString(mode));
+            command.AddParameter("LockMode", GetModeString(this._mode));
             command.AddParameter("LockOwner", connection.HasTransaction ? "Transaction" : "Session");
             command.AddParameter("LockTimeout", timeout.InMilliseconds);
-
-            returnValue = command.AddParameter(type: DbType.Int32, direction: ParameterDirection.ReturnValue);
-
+            
             return command;
         }
 
@@ -122,7 +162,7 @@ namespace Medallion.Threading.SqlServer
             return command;
         }
 
-        public static bool ParseExitCode(int exitCode)
+        public static async ValueTask<bool> ParseExitCodeAsync(int exitCode, TimeoutValue timeout, CancellationToken cancellationToken)
         {
             // sp_getapplock exit codes documented at
             // https://msdn.microsoft.com/en-us/library/ms189823.aspx
@@ -143,10 +183,23 @@ namespace Medallion.Threading.SqlServer
                 case -999: // parameter / unknown
                     throw new ArgumentException(GetErrorMessage(exitCode, "parameter validation or other error"));
 
+                case InvalidUpgradeExitCode: // todo add test that hits this case (requires releasing on the connection or acquiring write before upgrade)
+                    throw new InvalidOperationException("Cannot upgrade to an exclusive lock because the update lock is not held");
+                case AlreadyHeldExitCode:
+                    return timeout.IsZero ? false
+                        : timeout.IsInfinite ? throw new InvalidOperationException("Attempted to acquire a lock that is already held on the same connection")
+                        : await WaitThenReturnFalseAsync().ConfigureAwait(false);
+
                 default:
                     if (exitCode <= 0)
                         throw new InvalidOperationException(GetErrorMessage(exitCode, "unknown"));
                     return true; // unknown success code
+            }
+
+            async ValueTask<bool> WaitThenReturnFalseAsync()
+            {
+                await SyncOverAsync.Delay(timeout, cancellationToken).ConfigureAwait(false);
+                return false;
             }
         }
 

@@ -30,6 +30,6 @@ namespace Medallion.Threading.Internal.Data
         /// </summary>
         ValueTask<TLockCookie?> TryAcquireAsync(DatabaseConnection connection, string resourceName, TimeoutValue timeout, CancellationToken cancellationToken);
 
-        ValueTask ReleaseAsync(DatabaseConnection connectionconnection, string resourceName, TLockCookie lockCookie);
+        ValueTask ReleaseAsync(DatabaseConnection connection, string resourceName, TLockCookie lockCookie);
     }
 }

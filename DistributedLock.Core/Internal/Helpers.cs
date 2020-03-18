@@ -18,7 +18,7 @@ namespace Medallion.Threading.Internal
         /// <summary>
         /// Performs a type-safe "cast" of a <see cref="ValueTask{TResult}"/>
         /// </summary>
-        public static async ValueTask<TBase> Convert<TDerived, TBase>(this ValueTask<TDerived> task, To<TBase>.ValueTaskConversion conversion)
+        public static async ValueTask<TBase> Convert<TDerived, TBase>(this ValueTask<TDerived> task, To<TBase>.ValueTaskConversion _)
             where TDerived : TBase =>
             await task.ConfigureAwait(false);
 
@@ -35,7 +35,8 @@ namespace Medallion.Threading.Internal
         public static ValueTask AsValueTask(this Task task) => new ValueTask(task);
         public static ValueTask<T> AsValueTask<T>(this T value) => new ValueTask<T>(value);
 
-        public static ObjectDisposedException ObjectDisposed<T>(this T value) where T : IAsyncDisposable =>
+        // todo rethink message here; should this return "handle" or something more generic since it might be an internal type?
+        public static ObjectDisposedException ObjectDisposed<T>(this T _) where T : IAsyncDisposable =>
             throw new ObjectDisposedException(typeof(T).ToString());
     }
 

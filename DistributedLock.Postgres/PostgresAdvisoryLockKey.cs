@@ -23,6 +23,7 @@ namespace Medallion.Threading.Postgres
             this._keyEncoding = KeyEncoding.Int32Pair;
         }
 
+        // todo should allow hashing be default (exact name)?
         public PostgresAdvisoryLockKey(string name, bool allowHashing = false)
         {
             if (name == null) { throw new ArgumentNullException(nameof(name)); }
@@ -53,7 +54,7 @@ namespace Medallion.Threading.Postgres
 
         internal bool HasSingleKey => this._keyEncoding == KeyEncoding.Int64;
         
-        public long Key
+        internal long Key
         {
             get
             {
@@ -62,14 +63,9 @@ namespace Medallion.Threading.Postgres
             }
         }
 
-        public (int key1, int key2) Keys
-        {
-            get
-            {
-                Invariant.Require(!this.HasSingleKey);
-                return SplitKeys(this._key);
-            }
-        }
+        // note: we allow calling this even with a single key, since for 
+        // pg_locks lookups we have to split the key anyway
+        internal (int key1, int key2) Keys => SplitKeys(this._key);
 
         public bool Equals(PostgresAdvisoryLockKey that) => this.ToTuple().Equals(that.ToTuple());
 

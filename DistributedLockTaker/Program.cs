@@ -1,6 +1,8 @@
 ﻿using System;
 using Medallion.Threading.SqlServer;
 using Medallion.Threading.WaitHandles;
+using Medallion.Threading.Postgres;
+using Medallion.Threading.Tests;
 #if NET471
 using System.Data.SqlClient;
 #elif NETCOREAPP3_1
@@ -29,18 +31,18 @@ namespace DistributedLockTaker
                 case nameof(SqlDistributedLock):
                     handle = new SqlDistributedLock(name, ConnectionString).Acquire();
                     break;
-                case nameof(SqlDistributedReaderWriterLock) + "Lock":
+                case nameof(SqlDistributedReaderWriterLock):
                     handle = new SqlDistributedReaderWriterLock(name, ConnectionString).AcquireWriteLock();
                     break;
-                case nameof(SqlDistributedSemaphore) + "Lock":
+                case "SemaphoreAsMutex1":
                     handle = new SqlDistributedSemaphore(name, maxCount: 1, connectionString: ConnectionString).Acquire();
                     break;
-                case nameof(SqlDistributedSemaphore) + "Lock5":
+                case "SemaphoreAsMutex5":
                     handle = new SqlDistributedSemaphore(name, maxCount: 5, connectionString: ConnectionString).Acquire();
                     break;
-                //case "PostgresDistributedLock":
-                //    handle = new PostgresDistributedLock(new PostgresAdvisoryLockKey(name), PostgresCredentials.GetConnectionString(Environment.CurrentDirectory)).Acquire();
-                //    break;
+                case "PostgresDistributedLock":
+                    handle = new PostgresDistributedLock(new PostgresAdvisoryLockKey(name), PostgresCredentials.GetConnectionString(Environment.CurrentDirectory)).Acquire();
+                    break;
                 case nameof(EventWaitHandleDistributedLock):
                     handle = new EventWaitHandleDistributedLock(name).Acquire();
                     break;

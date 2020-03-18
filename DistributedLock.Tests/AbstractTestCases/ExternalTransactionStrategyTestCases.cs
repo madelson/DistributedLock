@@ -7,6 +7,7 @@ using System.Runtime.CompilerServices;
 
 namespace Medallion.Threading.Tests
 {
+    // todo convert to include postgres
     public abstract class ExternalTransactionStrategyTestCases<TEngineFactory, TTransactionProvider>
         where TEngineFactory : ITestingSqlDistributedLockEngineFactory, new()
         where TTransactionProvider : TransactionProvider, new()
@@ -26,7 +27,7 @@ namespace Medallion.Threading.Tests
                 {
                     using (var handle = transactionEngine.CreateLock(lockName).TryAcquire())
                     {
-                        (handle != null).ShouldEqual(transactionEngine.IsReentrant, "reentrant: " + this.GetType().Name);
+                        Assert.IsNull(handle, "should not be reentrant");
                     }
 
                     using (ConnectionProvider.UseConnection(connection))

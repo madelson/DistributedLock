@@ -69,13 +69,14 @@ namespace Medallion.Threading.SqlServer
         {
             var box = this._box ?? throw this.ObjectDisposed();
             var contents = box.Value;
+            // todo ensure test for this
             if (contents.upgradedHandle != null) { throw new InvalidOperationException("the lock has already been upgraded"); }
             return TryPerformUpgradeAsync();
 
             async ValueTask<bool> TryPerformUpgradeAsync()
             {
                 var upgradedHandle =
-                    await contents.@lock.TryAcquireAsync(timeout, SqlApplicationLock.ExclusiveLock, cancellationToken, contextHandle: contents.innerHandle).ConfigureAwait(false);
+                    await contents.@lock.TryAcquireAsync(timeout, SqlApplicationLock.UpgradeLock, cancellationToken, contextHandle: contents.innerHandle).ConfigureAwait(false);
                 if (upgradedHandle == null)
                 {
                     return false;

@@ -37,6 +37,9 @@ namespace Medallion.Threading.Internal.Data
         {
             if (contextHandle != null)
             {
+                // todo revisit how this works with managed finalization. We want to avoid the case where the upgraded handle and the original handle get
+                // finalized in the wrong order. Perhaps it would be simpler to make upgradestrategy its own different interface, and then make the idblock return
+                // a handle type that might be able to self-upgrade if it has the right internal strategy
                 return await this.CreateContextLock<TLockCookie>(contextHandle).TryAcquireAsync(timeout, strategy, cancellationToken, contextHandle: null).ConfigureAwait(false);
             }
 
@@ -79,40 +82,60 @@ namespace Medallion.Threading.Internal.Data
         private sealed class Handle<TLockCookie> : IDistributedLockHandle
             where TLockCookie : class
         {
-            private readonly string _name;
-            private readonly bool _useTransaction;
-            private RefBox<(DatabaseConnection connection, IDbSynchronizationStrategy<TLockCookie> strategy, TLockCookie lockCookie)>? _box;
+            private InnerHandle? _innerHandle;
+            private IDisposable? _finalizer;
 
             public Handle(DatabaseConnection connection, IDbSynchronizationStrategy<TLockCookie> strategy, string name, TLockCookie lockCookie, bool useTransaction)
             {
-                this._box = RefBox.Create((connection, strategy, lockCookie));
-                this._name = name;
-                this._useTransaction = useTransaction;
+                this._innerHandle = new InnerHandle(connection, strategy, name, lockCookie, useTransaction);
+                this._finalizer = ManagedFinalizerQueue.Instance.Register(this, this._innerHandle);
             }
 
             public CancellationToken HandleLostToken => throw new NotImplementedException();
 
-            public DatabaseConnection? Connection => Volatile.Read(ref this._box)?.Value.connection;
+            public DatabaseConnection? Connection => Volatile.Read(ref this._innerHandle)?.Connection;
 
             public void Dispose() => SyncOverAsync.Run(@this => @this.DisposeAsync(), this, willGoAsync: false);
 
-            public async ValueTask DisposeAsync()
+            public ValueTask DisposeAsync()
             {
-                if (RefBox.TryConsume(ref this._box, out var contents))
+                Interlocked.Exchange(ref this._finalizer, null)?.Dispose();
+                return Interlocked.Exchange(ref this._innerHandle, null)?.DisposeAsync() ?? default;
+            }
+
+            private sealed class InnerHandle : IAsyncDisposable
+            {
+                private readonly IDbSynchronizationStrategy<TLockCookie> _strategy;
+                private readonly string _name;
+                private readonly TLockCookie _lockCookie;
+                private readonly bool _useTransaction;
+
+                public InnerHandle(DatabaseConnection connection, IDbSynchronizationStrategy<TLockCookie> strategy, string name, TLockCookie lockCookie, bool useTransaction)
+                {
+                    this.Connection = connection;
+                    this._strategy = strategy;
+                    this._name = name;
+                    this._lockCookie = lockCookie;
+                    this._useTransaction = useTransaction;
+                }
+
+                public DatabaseConnection Connection { get; }
+
+                public async ValueTask DisposeAsync()
                 {
                     try
                     {
                         // If we're not using a transaction, explicit release is required due to connection pooling. 
                         // For a pooled connection, simply calling Dispose() will not release the lock: it just 
                         // returns the connection to the pool
-                        if (!this._useTransaction && contents.connection.CanExecuteQueries)
+                        if (!this._useTransaction && this.Connection.CanExecuteQueries)
                         {
-                            await contents.strategy.ReleaseAsync(contents.connection, this._name, contents.lockCookie).ConfigureAwait(false);
+                            await this._strategy.ReleaseAsync(this.Connection, this._name, this._lockCookie).ConfigureAwait(false);
                         }
                     }
                     finally
                     {
-                        await contents.connection.DisposeAsync().ConfigureAwait(false);
+                        await this.Connection.DisposeAsync().ConfigureAwait(false);
                     }
                 }
             }

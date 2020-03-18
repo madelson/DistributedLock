@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading.Tests
 {
+    // todo convert to include postgres
     public abstract class SqlDistributedReaderWriterLockTestCases<TConnectionManagementProvider>
         where TConnectionManagementProvider : TestingSqlConnectionManagementProvider, new()
     {

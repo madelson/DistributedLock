@@ -24,14 +24,15 @@ namespace Medallion.Threading.Internal.Data
         private IDbTransaction? _transaction;
         private KeepaliveHelper? _keepaliveHelper;
 
-        protected DatabaseConnection(IDbConnection connection, TimeoutValue keepaliveCadence)
+        protected DatabaseConnection(IDbConnection connection, TimeoutValue keepaliveCadence, bool isExternallyOwned)
         {
             this._connection = connection;
             this._keepaliveCadence = keepaliveCadence;
+            this.IsExernallyOwned = isExternallyOwned;
         }
 
-        protected DatabaseConnection(IDbTransaction transaction, TimeoutValue keepaliveCadence)
-            : this(transaction.Connection, keepaliveCadence)
+        protected DatabaseConnection(IDbTransaction transaction, TimeoutValue keepaliveCadence, bool isExternallyOwned)
+            : this(transaction.Connection, keepaliveCadence, isExternallyOwned)
         {
             if (transaction.Connection == null) { throw new InvalidOperationException("Cannot execute queries against a transaction that has been disposed"); }
 
@@ -39,6 +40,10 @@ namespace Medallion.Threading.Internal.Data
         }
 
         public bool HasTransaction => this._transaction != null;
+        // todo use this for sqlserver
+        public bool IsExernallyOwned { get; }
+
+        protected internal abstract bool ShouldPrepareCommands { get; }
 
         internal bool CanExecuteQueries => this._connection.State == ConnectionState.Open && (this._transaction == null || this._transaction.Connection != null);
         internal KeepaliveHelper? KeepaliveHelper { get; }
@@ -102,6 +107,8 @@ namespace Medallion.Threading.Internal.Data
 
         private async ValueTask DisposeOrCloseAsync(bool isDispose)
         {
+            Invariant.Require(!this.IsExernallyOwned);
+
             try { await this.StopKeepaliveAsync().ConfigureAwait(false); }
             finally
             {
@@ -132,10 +139,14 @@ namespace Medallion.Threading.Internal.Data
             }
         }
 
-        private ValueTask DisposeTransactionAsync()
+        public ValueTask DisposeTransactionAsync()
         {
+            var transaction = this._transaction;
+            if (transaction == null) { return default; }
+            this._transaction = null;
+
 #if NETSTANDARD2_1
-            if (!SyncOverAsync.IsSynchronous && this._transaction is DbTransaction dbTransaction)
+            if (!SyncOverAsync.IsSynchronous && transaction is DbTransaction dbTransaction)
             {
                 return dbTransaction.DisposeAsync();
             }
@@ -144,7 +155,7 @@ namespace Medallion.Threading.Internal.Data
             ERROR
 #endif
 
-            this._transaction?.Dispose();
+            transaction.Dispose();
             return default;
         }
 

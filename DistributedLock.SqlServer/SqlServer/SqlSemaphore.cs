@@ -149,11 +149,17 @@ namespace Medallion.Threading.SqlServer
                     ticketLockName = markerTableName = null;
                     return false.AsValueTask();
                 default:
-                    if (resultCode < 0)
+                    ticketLockName = markerTableName = null;
+                    return FailAsync();
+
+                    async ValueTask<bool> FailAsync()
                     {
-                        SqlApplicationLock.ParseExitCode(resultCode);
+                        if (resultCode < 0)
+                        {
+                            await SqlApplicationLock.ParseExitCodeAsync(resultCode, timeout, cancellationToken).ConfigureAwait(false);
+                        }
+                        throw new InvalidOperationException($"Unexpected semaphore algorithm result code {resultCode}");
                     }
-                    throw new InvalidOperationException($"Unexpected semaphore algorithm result code {resultCode}");
             }
         }
 
@@ -272,7 +278,7 @@ namespace Medallion.Threading.SqlServer
             FinishedPreambleWithoutAcquiringCode = 100,
             FailedToAcquireWithSpaceRemainingCode = 101,
             BusyWaitTimeoutCode = 102,
-            AllTicketsHeldByCurrentSessionCode = 103;
+            AllTicketsHeldByCurrentSessionCode = SqlApplicationLock.AlreadyHeldExitCode;
 
         // when we don't have to deal with cancellation, we can put everything in one big query to save on round trips
         private static readonly Lazy<string> AcquireNonCancelableQuery = new Lazy<string>(() => Merge(

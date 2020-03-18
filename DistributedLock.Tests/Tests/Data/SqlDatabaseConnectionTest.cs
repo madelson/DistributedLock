@@ -75,7 +75,8 @@ namespace Medallion.Threading.Tests.Data
                 isSystemDataSqlClient
                     ? new System.Data.SqlClient.SqlConnection(ConnectionStringProvider.ConnectionString).As<DbConnection>()
                     : new Microsoft.Data.SqlClient.SqlConnection(ConnectionStringProvider.ConnectionString),
-                keepaliveCadence: Timeout.InfiniteTimeSpan
+                keepaliveCadence: Timeout.InfiniteTimeSpan,
+                isExternallyOwned: false
             );
     }
 }
