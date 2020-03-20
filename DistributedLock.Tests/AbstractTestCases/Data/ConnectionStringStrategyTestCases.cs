@@ -1,8 +1,6 @@
 ﻿using Medallion.Threading.Internal;
-using Medallion.Threading.Tests.Data;
 using NUnit.Framework;
 using System;
-using System.Data.SqlClient;
 using System.Diagnostics;
 using System.Threading;
 

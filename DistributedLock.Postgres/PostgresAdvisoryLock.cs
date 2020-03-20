@@ -66,10 +66,17 @@ namespace Medallion.Threading.Postgres
             {
                 await RollBackTransactionTimeoutVariablesIfNeededAsync().ConfigureAwait(false);
 
-                // lock_timeout error code from https://www.postgresql.org/docs/10/errcodes-appendix.html
-                if (ex is PostgresException postgresException && postgresException.SqlState == "55P03")
+                if (ex is PostgresException postgresException)
                 {
-                    return null;
+                    switch (postgresException.SqlState)
+                    {
+                        // lock_timeout error code from https://www.postgresql.org/docs/10/errcodes-appendix.html
+                        case "55P03":
+                            return null;
+                        // deadlock_detected error code from https://www.postgresql.org/docs/10/errcodes-appendix.html
+                        case "40P01":
+                            throw new DeadlockException($"The request for the distributed lock failed with exit code '{postgresException.SqlState}' (deadlock_detected)", ex);
+                    }
                 }
 
                 if (ex is OperationCanceledException && cancellationToken.IsCancellationRequested)

@@ -54,13 +54,19 @@ namespace Medallion.Threading.Tests.Data
             new TestingDbConnectionOptions { ConnectionString = this.Db.ConnectionStringBuilder.ConnectionString, ConnectionStringOptions = TestingConnectionStringOptions.UseTransaction };
     }
 
-    public sealed class TestingExternalConnectionSynchronizationStrategy<TDb> : TestingDbSynchronizationStrategy<TDb>
+    public abstract class TestingExternalConnectionOrTransactionSynchronizationStrategy<TDb> : TestingDbSynchronizationStrategy<TDb>
+        where TDb : ITestingDb, new()
+    {
+        public abstract void StartAmbient();
+    }
+
+    public sealed class TestingExternalConnectionSynchronizationStrategy<TDb> : TestingExternalConnectionOrTransactionSynchronizationStrategy<TDb>
         where TDb : ITestingDb, new()
     {
         private readonly DisposableCollection _disposables = new DisposableCollection();
         private DbConnection? _ambientConnection;
 
-        public void StartAmbientConnection()
+        public override void StartAmbient()
         {
             // clear first so GetConnectionOptions will make a new connection
             this._ambientConnection = null;
@@ -95,13 +101,13 @@ namespace Medallion.Threading.Tests.Data
         public override void Dispose() => this._disposables.Dispose();
     }
 
-    public sealed class TestingExternalTransactionSynchronizationStrategy<TDb> : TestingDbSynchronizationStrategy<TDb>
+    public sealed class TestingExternalTransactionSynchronizationStrategy<TDb> : TestingExternalConnectionOrTransactionSynchronizationStrategy<TDb>
         where TDb : ITestingDb, new()
     {
         private readonly DisposableCollection _disposables = new DisposableCollection();
         private DbTransaction? _ambientTransaction;
 
-        public void StartAmbientTransaction()
+        public override void StartAmbient()
         {
             // clear first so GetConnectionOptions will make a new transaction
             this._ambientTransaction = null;
