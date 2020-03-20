@@ -120,8 +120,10 @@ $@"namespace {g.Key}
             var constraints = genericParameter.GetGenericParameterConstraints();
             return this.GetType().Assembly
                 .GetTypes()
-                // this doesn't support all fancy constraints like class or new()
-                // see https://stackoverflow.com/questions/4864496/checking-if-an-object-meets-a-generic-parameter-constraint
+                // This doesn't support all fancy constraints like class or new()
+                // see https://stackoverflow.com/questions/4864496/checking-if-an-object-meets-a-generic-parameter-constraint.
+                // It also does attempt to enforce cross-constraint rules (e. g. T : Foo[V]). The idea is to identify cases 
+                // that might match
                 .Where(t => !t.IsAbstract && constraints.All(c => IsDerivedFromOrDerivedFromGenericOf(derived: t, @base: c)))
                 .SelectMany(t => t.IsGenericTypeDefinition ? this.GetPossibleGenericInstantiations(t) : new[] { t })
                 .ToArray();
@@ -141,7 +143,7 @@ $@"namespace {g.Key}
         private static bool IsDerivedFromOrDerivedFromGenericOf(Type derived, Type @base)
         {
             if (@base.IsAssignableFrom(derived)) { return true; }
-            if (!@base.ContainsGenericParameters) { return false; }
+            if (!@base.IsGenericType) { return false; }
 
             var baseDefinition = @base.GetGenericTypeDefinition();
             return Traverse.Along(derived, t => t.BaseType)

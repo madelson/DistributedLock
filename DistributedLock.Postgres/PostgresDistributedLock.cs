@@ -18,15 +18,18 @@ namespace Medallion.Threading.Postgres
     public sealed partial class PostgresDistributedLock : IInternalDistributedLock<PostgresDistributedLockHandle>
     {
         private readonly IDbDistributedLock _internalLock;
-        
-        public PostgresDistributedLock(PostgresAdvisoryLockKey key, string connectionString)
+
+        // todo revisit API
+        public PostgresDistributedLock(PostgresAdvisoryLockKey key, string connectionString, bool useMultiplexing = true)
             : this(
                 key,
-                new OptimisticConnectionMultiplexingDbDistributedLock(
-                    key.ToString(), 
-                    connectionString ?? throw new ArgumentNullException(nameof(connectionString)), 
-                    PostgresMultiplexedConnectionLockPool.Instance
-                ))
+                useMultiplexing
+                    ? new OptimisticConnectionMultiplexingDbDistributedLock(
+                        key.ToString(),
+                        connectionString ?? throw new ArgumentNullException(nameof(connectionString)),
+                        PostgresMultiplexedConnectionLockPool.Instance
+                    )
+                    : CreateOwnedConnectionLock(key, connectionString))
         {
         }
 
@@ -60,5 +63,16 @@ namespace Medallion.Threading.Postgres
 
         // todo remove
         public bool WillGoAsync(TimeoutValue timeout, CancellationToken cancellationToken) => false;
+
+        private static IDbDistributedLock CreateOwnedConnectionLock(PostgresAdvisoryLockKey key, string connectionString)
+        {
+            if (connectionString == null) { throw new ArgumentNullException(nameof(connectionString)); }
+
+            return new OwnedConnectionOrTransactionDbDistributedLock(
+                key.ToString(),
+                () => new PostgresDatabaseConnection(connectionString, Timeout.InfiniteTimeSpan),
+                useTransaction: false
+            );
+        }
     }
 }

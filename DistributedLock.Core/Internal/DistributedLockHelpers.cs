@@ -15,7 +15,7 @@ namespace Medallion.Threading.Internal
 #endif
     static class DistributedLockHelpers
     {
-        public static string ToSafeLockName(string name, int maxNameLength, Func<string, string> convertToValidName)
+        public static string ToSafeName(string name, int maxNameLength, Func<string, string> convertToValidName)
         {
             if (name == null) { throw new ArgumentNullException(nameof(name)); }
 

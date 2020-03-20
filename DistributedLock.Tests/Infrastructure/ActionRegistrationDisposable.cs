@@ -3,6 +3,8 @@ using System.Collections.Generic;
 
 namespace Medallion.Threading.Tests
 {
+    // todo remove this and swap back the infra folder
+
     /// <summary>
     /// Utility class to simplify the implementation of testing <see cref="IDisposable"/>s
     /// </summary>

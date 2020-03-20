@@ -68,7 +68,7 @@ namespace Medallion.Threading.WaitHandles
 
             return GlobalPrefix + ConvertToSafeSuffix(name);
 
-            static string ConvertToSafeSuffix(string suffix) => DistributedLockHelpers.ToSafeLockName(
+            static string ConvertToSafeSuffix(string suffix) => DistributedLockHelpers.ToSafeName(
                 suffix,
                 MaxNameLength - GlobalPrefix.Length,
                 s => s.Length == 0 ? "EMPTY" : s.Replace('\\', '_')

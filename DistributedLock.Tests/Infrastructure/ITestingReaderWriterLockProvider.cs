@@ -11,13 +11,6 @@ namespace Medallion.Threading.Tests
         void PerformAdditionalCleanupForHandleAbandonment() { }
     }
 
-    public enum ReaderWriterLockType
-    {
-        Read,
-        Write,
-        Upgrade,
-    }
-
     internal static class TestingReaderWriterLockProviderExtensions
     {
         /// <summary>

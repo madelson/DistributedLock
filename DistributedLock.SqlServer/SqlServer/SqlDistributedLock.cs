@@ -69,7 +69,7 @@ namespace Medallion.Threading.SqlServer
         /// Given <paramref name="name"/>, constructs a lock name which is safe for use with <see cref="SqlDistributedLock"/>
         /// </summary>
         public static string GetSafeName(string name) =>
-            DistributedLockHelpers.ToSafeLockName(name, MaxNameLength, s => s);
+            DistributedLockHelpers.ToSafeName(name, MaxNameLength, s => s);
 
         bool IInternalDistributedLock<SqlDistributedLockHandle>.WillGoAsync(TimeoutValue timeout, CancellationToken cancellationToken) => false;
 
