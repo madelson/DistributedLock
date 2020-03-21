@@ -7,13 +7,20 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading.Tests
 {
-    public sealed class TestingReaderWriterLockAsMutexProvider<TReaderWriterLockProvider, TStrategy> : TestingLockProvider<TStrategy>
+    public interface ITestingReaderWriterLockAsMutexProvider
+    {
+        public bool DisableUpgradeLock { get; set; }
+    }
+
+    public sealed class TestingReaderWriterLockAsMutexProvider<TReaderWriterLockProvider, TStrategy> : TestingLockProvider<TStrategy>, ITestingReaderWriterLockAsMutexProvider
         where TReaderWriterLockProvider : TestingReaderWriterLockProvider<TStrategy>, new()
         where TStrategy : TestingSynchronizationStrategy, new()
     {
         private readonly TReaderWriterLockProvider _readerWriterLockProvider = new TReaderWriterLockProvider();
 
         public override TStrategy Strategy => this._readerWriterLockProvider.Strategy;
+
+        public bool DisableUpgradeLock { get; set; }
 
         public override string GetCrossProcessLockType()
         {
@@ -27,7 +34,7 @@ namespace Medallion.Threading.Tests
         }
 
         public override IDistributedLock CreateLockWithExactName(string name) => 
-            new ReaderWriterLockAsMutex(this._readerWriterLockProvider.CreateReaderWriterLockWithExactName(name));
+            new ReaderWriterLockAsMutex(this._readerWriterLockProvider.CreateReaderWriterLockWithExactName(name), this);
 
         public override string GetSafeName(string name) => this._readerWriterLockProvider.GetSafeName(name);
 
@@ -37,19 +44,22 @@ namespace Medallion.Threading.Tests
             base.Dispose();
         }
 
-        private static bool GetShouldUseUpgradeLock()
+        private bool GetShouldUseUpgradeLock()
         {
-            // intended to be random yet consistent across runs (assuming no changes)
-            return (Environment.StackTrace.Length % 2) == 1;
+            return !this.DisableUpgradeLock
+                // intended to be random yet consistent across runs (assuming no changes)
+                && (Environment.StackTrace.Length % 2) == 1;
         }
 
         private class ReaderWriterLockAsMutex : IDistributedLock
         {
+            private readonly TestingReaderWriterLockAsMutexProvider<TReaderWriterLockProvider, TStrategy> _provider;
             private readonly IDistributedReaderWriterLock _readerWriterLock;
 
-            public ReaderWriterLockAsMutex(IDistributedReaderWriterLock readerWriterLock)
+            public ReaderWriterLockAsMutex(IDistributedReaderWriterLock readerWriterLock, TestingReaderWriterLockAsMutexProvider<TReaderWriterLockProvider, TStrategy> provider)
             {
                 this._readerWriterLock = readerWriterLock;
+                this._provider = provider;
             }
 
             string IDistributedLock.Name => this._readerWriterLock.Name;
@@ -79,7 +89,7 @@ namespace Medallion.Threading.Tests
             private bool ShouldUseUpgrade(out IDistributedUpgradeableReaderWriterLock upgradeable)
             {
                 if (this._readerWriterLock is IDistributedUpgradeableReaderWriterLock upgradeableLock
-                    && GetShouldUseUpgradeLock())
+                    && this._provider.GetShouldUseUpgradeLock())
                 {
                     upgradeable = upgradeableLock;
                     return true;

@@ -29,29 +29,32 @@ namespace Medallion.Threading.Tests.Data
     }
 
     public abstract class TestingConnectionStringSynchronizationStrategy<TDb> : TestingDbSynchronizationStrategy<TDb>
-        where TDb : ITestingDb, new()
+        // since we're just going to be generating from connection strings, we only care about
+        // the primary ADO client for the database
+        where TDb : ITestingPrimaryClientDb, new()
     {
+        protected abstract TestingConnectionStringOptions ConnectionStringOptions { get; }
+
+        public override TestingDbConnectionOptions GetConnectionOptions() =>
+            new TestingDbConnectionOptions { ConnectionString = this.Db.ConnectionStringBuilder.ConnectionString, ConnectionStringOptions = this.ConnectionStringOptions };
     }
 
     public sealed class TestingConnectionMultiplexingSynchronizationStrategy<TDb> : TestingConnectionStringSynchronizationStrategy<TDb>
-        where TDb : ITestingDb, new()
+        where TDb : ITestingPrimaryClientDb, new()
     {
-        public override TestingDbConnectionOptions GetConnectionOptions() =>
-            new TestingDbConnectionOptions { ConnectionString = this.Db.ConnectionStringBuilder.ConnectionString, ConnectionStringOptions = TestingConnectionStringOptions.UseMultiplexing };
+        protected override TestingConnectionStringOptions ConnectionStringOptions => TestingConnectionStringOptions.UseMultiplexing;
     }
 
     public sealed class TestingOwnedConnectionSynchronizationStrategy<TDb> : TestingConnectionStringSynchronizationStrategy<TDb>
-        where TDb : ITestingDb, new()
+        where TDb : ITestingPrimaryClientDb, new()
     {
-        public override TestingDbConnectionOptions GetConnectionOptions() =>
-            new TestingDbConnectionOptions { ConnectionString = this.Db.ConnectionStringBuilder.ConnectionString };
+        protected override TestingConnectionStringOptions ConnectionStringOptions => TestingConnectionStringOptions.None;
     }
 
     public sealed class TestingOwnedTransactionSynchronizationStrategy<TDb> : TestingConnectionStringSynchronizationStrategy<TDb>
-        where TDb : ITestingDb, new()
+        where TDb : ITestingPrimaryClientDb, new()
     {
-        public override TestingDbConnectionOptions GetConnectionOptions() =>
-            new TestingDbConnectionOptions { ConnectionString = this.Db.ConnectionStringBuilder.ConnectionString, ConnectionStringOptions = TestingConnectionStringOptions.UseTransaction };
+        protected override TestingConnectionStringOptions ConnectionStringOptions => TestingConnectionStringOptions.UseTransaction;
     }
 
     public abstract class TestingExternalConnectionOrTransactionSynchronizationStrategy<TDb> : TestingDbSynchronizationStrategy<TDb>

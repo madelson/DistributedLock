@@ -9,8 +9,6 @@ namespace Medallion.Threading.Tests.Data
     public abstract class ConnectionStringStrategyTestCases<TLockProvider, TStrategy, TDb>
         where TLockProvider : TestingLockProvider<TStrategy>, new()
         where TStrategy : TestingConnectionStringSynchronizationStrategy<TDb>, new()
-        // since we're just going to be generating from connection strings, we only care about
-        // the primary ADO client for the database
         where TDb : ITestingPrimaryClientDb, new()
     {
         private TLockProvider _lockProvider = default!;

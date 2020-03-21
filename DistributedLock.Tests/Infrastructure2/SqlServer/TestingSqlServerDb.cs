@@ -22,7 +22,12 @@ namespace Medallion.Threading.Tests.SqlServer
             }
             .ConnectionString;
 
-        public DbConnectionStringBuilder ConnectionStringBuilder { get; } = new Microsoft.Data.SqlClient.SqlConnectionStringBuilder(ConnectionString);
+        private readonly Microsoft.Data.SqlClient.SqlConnectionStringBuilder _connectionStringBuilder =
+            new Microsoft.Data.SqlClient.SqlConnectionStringBuilder(ConnectionString);
+
+        public DbConnectionStringBuilder ConnectionStringBuilder => this._connectionStringBuilder;
+
+        public int MaxPoolSize { get => this._connectionStringBuilder.MaxPoolSize; set => this._connectionStringBuilder.MaxPoolSize = value; }
 
         // https://stackoverflow.com/questions/5808332/sql-server-maximum-character-length-of-object-names/41502228
         public int MaxApplicationNameLength => 128;
@@ -48,7 +53,12 @@ namespace Medallion.Threading.Tests.SqlServer
 
     public sealed class TestingSystemDataSqlServerDb : ITestingSqlServerDb
     {
-        public DbConnectionStringBuilder ConnectionStringBuilder { get; } = new Microsoft.Data.SqlClient.SqlConnectionStringBuilder(TestingSqlServerDb.ConnectionString);
+        private readonly System.Data.SqlClient.SqlConnectionStringBuilder _connectionStringBuilder =
+            new System.Data.SqlClient.SqlConnectionStringBuilder(TestingSqlServerDb.ConnectionString);
+
+        public DbConnectionStringBuilder ConnectionStringBuilder => this._connectionStringBuilder;
+
+        public int MaxPoolSize { get => this._connectionStringBuilder.MaxPoolSize; set => this._connectionStringBuilder.MaxPoolSize = value; }
 
         public int MaxApplicationNameLength => new TestingSqlServerDb().MaxApplicationNameLength;
 
