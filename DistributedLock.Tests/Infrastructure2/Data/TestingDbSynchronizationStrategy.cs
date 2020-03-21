@@ -109,22 +109,23 @@ namespace Medallion.Threading.Tests.Data
         where TDb : ITestingDb, new()
     {
         private readonly DisposableCollection _disposables = new DisposableCollection();
-        private DbTransaction? _ambientTransaction;
+
+        public DbTransaction? AmbientTransaction { get; private set; }
 
         public override void StartAmbient()
         {
             // clear first so GetConnectionOptions will make a new transaction
-            this._ambientTransaction = null;
+            this.AmbientTransaction = null;
 
-            this._ambientTransaction = this.GetConnectionOptions().Transaction;
+            this.AmbientTransaction = this.GetConnectionOptions().Transaction;
         }
 
         public override TestingDbConnectionOptions GetConnectionOptions()
         {
             DbTransaction transaction;
-            if (this._ambientTransaction != null)
+            if (this.AmbientTransaction != null)
             {
-                transaction = this._ambientTransaction;
+                transaction = this.AmbientTransaction;
             }
             else
             {
@@ -140,7 +141,7 @@ namespace Medallion.Threading.Tests.Data
 
         public override void PerformAdditionalCleanupForHandleAbandonment()
         {
-            if (this._ambientTransaction != null) { throw new InvalidOperationException("cannot perform abandonment cleanup with an ambient transaction"); }
+            if (this.AmbientTransaction != null) { throw new InvalidOperationException("cannot perform abandonment cleanup with an ambient transaction"); }
             this._disposables.ClearAndDisposeAll();
             using var connection = this.Db.CreateConnection();
             this.Db.ClearPool(connection);

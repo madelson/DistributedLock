@@ -13,6 +13,8 @@ namespace Medallion.Threading.Tests.Postgres
 {
     public class PostgresDistributedLockTest
     {
+        // todo promote some cases to abstract postgres or general cases
+
         [Test]
         public async Task TestInt64AndInt32PairKeyNamespacesAreDifferent()
         {

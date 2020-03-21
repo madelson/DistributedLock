@@ -124,7 +124,7 @@ $@"namespace {g.Key}
                 // see https://stackoverflow.com/questions/4864496/checking-if-an-object-meets-a-generic-parameter-constraint.
                 // It also does attempt to enforce cross-constraint rules (e. g. T : Foo[V]). The idea is to identify cases 
                 // that might match
-                .Where(t => !t.IsAbstract && constraints.All(c => IsDerivedFromOrDerivedFromGenericOf(derived: t, @base: c)))
+                .Where(t => !t.IsNestedPrivate && !t.IsAbstract && constraints.All(c => IsDerivedFromOrDerivedFromGenericOf(derived: t, @base: c)))
                 .SelectMany(t => t.IsGenericTypeDefinition ? this.GetPossibleGenericInstantiations(t) : new[] { t })
                 .ToArray();
         }

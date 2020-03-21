@@ -14,6 +14,8 @@ namespace Medallion.Threading.Tests.Data
 
         int MaxApplicationNameLength { get; }
 
+        bool SupportsTransactionScopedSynchronization { get; }
+
         DbConnection CreateConnection();
 
         void ClearPool(DbConnection connection);

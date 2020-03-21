@@ -18,6 +18,13 @@ namespace Medallion.Threading.Tests.Postgres
         // https://til.hashrocket.com/posts/8f87c65a0a-postgresqls-max-identifier-length-is-63-bytes
         public int MaxApplicationNameLength => 63;
 
+        /// <summary>
+        /// Technically Postgres does support this through xact advisory lock methods, but it is very unwieldy to use due to the transaction
+        /// abort semantics and largely unnecessary for our purposes since, unlike SQLServer, a connection-scoped Postgres lock can still
+        /// participate in an ongoing transaction.
+        /// </summary>
+        public bool SupportsTransactionScopedSynchronization => false;
+
         public void ClearPool(DbConnection connection) => NpgsqlConnection.ClearPool((NpgsqlConnection)connection);
 
         public int CountActiveSessions(string applicationName)
