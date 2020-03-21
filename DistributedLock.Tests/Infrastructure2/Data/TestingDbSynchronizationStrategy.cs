@@ -28,26 +28,26 @@ namespace Medallion.Threading.Tests.Data
         public new TDb Db => (TDb)base.Db;
     }
 
-    public sealed class TestingConnectionMultiplexingSynchronizationStrategy<TDb> : TestingDbSynchronizationStrategy<TDb>
+    public abstract class TestingConnectionStringSynchronizationStrategy<TDb> : TestingDbSynchronizationStrategy<TDb>
+        where TDb : ITestingDb, new()
+    {
+    }
+
+    public sealed class TestingConnectionMultiplexingSynchronizationStrategy<TDb> : TestingConnectionStringSynchronizationStrategy<TDb>
         where TDb : ITestingDb, new()
     {
         public override TestingDbConnectionOptions GetConnectionOptions() =>
             new TestingDbConnectionOptions { ConnectionString = this.Db.ConnectionStringBuilder.ConnectionString, ConnectionStringOptions = TestingConnectionStringOptions.UseMultiplexing };
     }
 
-    public abstract class TestingOwnedConnectionSynchronizationStrategy<TDb> : TestingDbSynchronizationStrategy<TDb>
-        where TDb : ITestingDb, new()
-    {
-    }
-
-    public sealed class TestingConnectionStringSynchronizationStrategy<TDb> : TestingOwnedConnectionSynchronizationStrategy<TDb>
+    public sealed class TestingOwnedConnectionSynchronizationStrategy<TDb> : TestingConnectionStringSynchronizationStrategy<TDb>
         where TDb : ITestingDb, new()
     {
         public override TestingDbConnectionOptions GetConnectionOptions() =>
             new TestingDbConnectionOptions { ConnectionString = this.Db.ConnectionStringBuilder.ConnectionString };
     }
 
-    public sealed class TestingConnectionStringWithTransactionSynchronizationStrategy<TDb> : TestingOwnedConnectionSynchronizationStrategy<TDb>
+    public sealed class TestingOwnedTransactionSynchronizationStrategy<TDb> : TestingConnectionStringSynchronizationStrategy<TDb>
         where TDb : ITestingDb, new()
     {
         public override TestingDbConnectionOptions GetConnectionOptions() =>
