@@ -57,6 +57,9 @@ namespace Medallion.Threading.Tests.Data
     public abstract class TestingExternalConnectionOrTransactionSynchronizationStrategy<TDb> : TestingDbSynchronizationStrategy<TDb>
         where TDb : ITestingDb, new()
     {
+        /// <summary>
+        /// Starts a new "ambient" connection or transaction that future locks will be created with
+        /// </summary>
         public abstract void StartAmbient();
     }
 
@@ -64,22 +67,23 @@ namespace Medallion.Threading.Tests.Data
         where TDb : ITestingDb, new()
     {
         private readonly DisposableCollection _disposables = new DisposableCollection();
-        private DbConnection? _ambientConnection;
+
+        public DbConnection? AmbientConnection { get; private set; }
 
         public override void StartAmbient()
         {
             // clear first so GetConnectionOptions will make a new connection
-            this._ambientConnection = null;
+            this.AmbientConnection = null;
 
-            this._ambientConnection = this.GetConnectionOptions().Connection;
+            this.AmbientConnection = this.GetConnectionOptions().Connection;
         }
 
         public override TestingDbConnectionOptions GetConnectionOptions()
         {
             DbConnection connection;
-            if (this._ambientConnection != null)
+            if (this.AmbientConnection != null)
             {
-                connection = this._ambientConnection;
+                connection = this.AmbientConnection;
             }
             else
             {
@@ -92,7 +96,7 @@ namespace Medallion.Threading.Tests.Data
 
         public override void PerformAdditionalCleanupForHandleAbandonment()
         {
-            if (this._ambientConnection != null) { throw new InvalidOperationException("cannot perform abandonment cleanup with an ambient connection"); }
+            if (this.AmbientConnection != null) { throw new InvalidOperationException("cannot perform abandonment cleanup with an ambient connection"); }
             this._disposables.ClearAndDisposeAll();
             using var connection = this.Db.CreateConnection();
             this.Db.ClearPool(connection);

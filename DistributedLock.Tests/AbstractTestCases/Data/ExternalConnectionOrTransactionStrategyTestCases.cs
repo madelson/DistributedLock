@@ -22,14 +22,14 @@ namespace Medallion.Threading.Tests.Data
             var timeout = TimeSpan.FromSeconds(30);
 
             using var barrier = new Barrier(participantCount: 2);
-            var lockName1 = this._lockProvider.GetUniqueSafeName("D1");
-            var lockName2 = this._lockProvider.GetUniqueSafeName("D2");
+            const string LockName1 = nameof(TestDeadlockDetection) + "_1",
+                LockName2 = nameof(TestDeadlockDetection) + "_2";
 
             Task RunDeadlock(bool isFirst)
             {
                 this._lockProvider.Strategy.StartAmbient();
-                var lock1 = this._lockProvider.CreateLock(isFirst ? lockName1 : lockName2);
-                var lock2 = this._lockProvider.CreateLock(isFirst ? lockName2 : lockName1);
+                var lock1 = this._lockProvider.CreateLock(isFirst ? LockName1 : LockName2);
+                var lock2 = this._lockProvider.CreateLock(isFirst ? LockName2 : LockName1);
                 return Task.Run(async () =>
                 {
                     using (await lock1.AcquireAsync(timeout))
