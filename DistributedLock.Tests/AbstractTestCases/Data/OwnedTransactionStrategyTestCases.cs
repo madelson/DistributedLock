@@ -1,9 +1,8 @@
 using Medallion.Threading.Internal;
-using Medallion.Threading.Tests.Data;
 using NUnit.Framework;
 using System.Data;
 
-namespace Medallion.Threading.Tests
+namespace Medallion.Threading.Tests.Data
 {
     public abstract class OwnedTransactionStrategyTestCases<TLockProvider, TDb>
         where TLockProvider : TestingLockProvider<TestingOwnedTransactionSynchronizationStrategy<TDb>>, new()
