@@ -1,26 +1,29 @@
-﻿using Medallion.Threading.Tests.Data;
-using Medallion.Threading.Tests.SqlServer;
-using NUnit.Framework;
+﻿using NUnit.Framework;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Medallion.Threading.Tests
+namespace Medallion.Threading.Tests.Data
 {
-    // todo convert to include postgres
     /// <summary>
     /// These cases test "self-deadlock", where a semaphore acquire cannot possibly succeed because the current connection owns
     /// all tickets. Since this can only happen when a connection/transaction is re-used, we require
-    /// <see cref="IExternalConnectionOrTransactionTestingSqlConnectionManagementProvider"/> on our providers.
+    /// <see cref="TestingExternalConnectionOrTransactionSynchronizationStrategy{TDb}"/> on our providers.
     /// </summary>
-    public abstract class SqlDistributedSemaphoreSelfDeadlockTestCases<TConnectionManagementProvider>
-        where TConnectionManagementProvider : TestingSqlConnectionManagementProvider, IExternalConnectionOrTransactionTestingSqlConnectionManagementProvider, new()
+    public abstract class SemaphoreSelfDeadlockTestCases<TSemaphoreProvider, TStrategy, TDb>
+        where TSemaphoreProvider : TestingSemaphoreProvider<TStrategy>, new()
+        where TStrategy : TestingExternalConnectionOrTransactionSynchronizationStrategy<TDb>, new()
+        where TDb : ITestingDb, new()
     {
+        private TSemaphoreProvider _semaphoreProvider = default!;
+
+        [SetUp] public void SetUp() => this._semaphoreProvider = new TSemaphoreProvider();
+        [TearDown] public void TearDown() => this._semaphoreProvider.Dispose();
+
         [Test]
         public void TestSelfDeadlockThrowsOnInfiniteWait()
         {
-            using var engine = this.CreateEngine();
-            var semaphore = engine.CreateSemaphore(nameof(TestSelfDeadlockThrowsOnInfiniteWait), maxCount: 2);
+            var semaphore = this._semaphoreProvider.CreateSemaphore(nameof(TestSelfDeadlockThrowsOnInfiniteWait), maxCount: 2);
             semaphore.Acquire();
             semaphore.Acquire();
             var ex = Assert.Catch<DeadlockException>(() => semaphore.Acquire());
@@ -30,9 +33,8 @@ namespace Medallion.Threading.Tests
         [Test]
         public void TestMultipleConnectionsCannotTriggerSelfDeadlock()
         {
-            using var engine = this.CreateEngine();
-            var semaphore1 = engine.CreateSemaphore(nameof(TestMultipleConnectionsCannotTriggerSelfDeadlock), maxCount: 2);
-            var semaphore2 = engine.CreateSemaphore(nameof(TestMultipleConnectionsCannotTriggerSelfDeadlock), maxCount: 2);
+            var semaphore1 = this._semaphoreProvider.CreateSemaphore(nameof(TestMultipleConnectionsCannotTriggerSelfDeadlock), maxCount: 2);
+            var semaphore2 = this._semaphoreProvider.CreateSemaphore(nameof(TestMultipleConnectionsCannotTriggerSelfDeadlock), maxCount: 2);
             semaphore1.Acquire();
             semaphore2.Acquire();
 
@@ -47,8 +49,7 @@ namespace Medallion.Threading.Tests
         [Test]
         public void TestSelfDeadlockWaitsOnSpecifiedTime()
         {
-            using var engine = this.CreateEngine();
-            var semaphore = engine.CreateSemaphore(nameof(TestSelfDeadlockWaitsOnSpecifiedTime), maxCount: 1);
+            var semaphore = this._semaphoreProvider.CreateSemaphore(nameof(TestSelfDeadlockWaitsOnSpecifiedTime), maxCount: 1);
             semaphore.Acquire();
 
             var acquireTask = Task.Run(() => semaphore.TryAcquire(TimeSpan.FromSeconds(.2)));
@@ -60,8 +61,7 @@ namespace Medallion.Threading.Tests
         [Test]
         public void TestSelfDeadlockWaitRespectsCancellation()
         {
-            using var engine = this.CreateEngine();
-            var semaphore = engine.CreateSemaphore(nameof(TestSelfDeadlockWaitsOnSpecifiedTime), maxCount: 1);
+            var semaphore = this._semaphoreProvider.CreateSemaphore(nameof(TestSelfDeadlockWaitsOnSpecifiedTime), maxCount: 1);
             semaphore.Acquire();
 
             var source = new CancellationTokenSource();
@@ -71,7 +71,5 @@ namespace Medallion.Threading.Tests
             acquireTask.ContinueWith(t => { }).Wait(TimeSpan.FromSeconds(10)).ShouldEqual(true);
             acquireTask.Status.ShouldEqual(TaskStatus.Canceled);
         }
-
-        private TestingSqlDistributedSemaphoreEngine<TConnectionManagementProvider> CreateEngine() => new TestingSqlDistributedSemaphoreEngine<TConnectionManagementProvider>();
     }
 }
