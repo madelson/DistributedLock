@@ -12,15 +12,17 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading.Tests
 {
-    public abstract class DistributedLockCoreTestCases<TLockProvider>
-        where TLockProvider : ITestingLockProvider, new()
+    public abstract class DistributedLockCoreTestCases<TLockProvider, TStrategy>
+        where TLockProvider : TestingLockProvider<TStrategy>, new()
+        where TStrategy : TestingSynchronizationStrategy, new()
     {
         private TLockProvider _lockProvider = default!;
         private readonly List<Action> _cleanupActions = new List<Action>();
 
         [SetUp] public void SetUp() => this._lockProvider = new TLockProvider();
 
-        [TearDown] public void TearDown()
+        [TearDown] 
+        public void TearDown()
         {
             this._cleanupActions.ForEach(a => a());
             this._cleanupActions.Clear();
@@ -260,7 +262,7 @@ namespace Medallion.Threading.Tests
             GC.Collect();
             GC.WaitForPendingFinalizers();
             await ManagedFinalizerQueue.Instance.FinalizeAsync();
-            this._lockProvider.PerformAdditionalCleanupForHandleAbandonment();
+            this._lockProvider.Strategy.PerformAdditionalCleanupForHandleAbandonment();
 
             using var handle = this._lockProvider.CreateLock(lockName).TryAcquire();
             Assert.IsNotNull(handle, this.GetType().Name);
@@ -270,7 +272,7 @@ namespace Medallion.Threading.Tests
         public void TestCrossProcess()
         {
             var lockName = this._lockProvider.GetUniqueSafeName();
-            var command = this.RunLockTaker(this._lockProvider, this._lockProvider.CrossProcessLockType, lockName);
+            var command = this.RunLockTaker(this._lockProvider, this._lockProvider.GetCrossProcessLockType(), lockName);
             Assert.IsTrue(command.StandardOutput.ReadLineAsync().Wait(TimeSpan.FromSeconds(10)));
             Assert.IsFalse(command.Task.Wait(TimeSpan.FromSeconds(.1)));
 
@@ -313,7 +315,7 @@ namespace Medallion.Threading.Tests
         private void CrossProcessAbandonmentHelper(bool asyncWait, bool kill)
         {
             var name = this._lockProvider.GetUniqueSafeName($"cpl-{asyncWait}-{kill}");
-            var command = this.RunLockTaker(this._lockProvider, this._lockProvider.CrossProcessLockType, name);
+            var command = this.RunLockTaker(this._lockProvider, this._lockProvider.GetCrossProcessLockType(), name);
             Assert.IsTrue(command.StandardOutput.ReadLineAsync().Wait(TimeSpan.FromSeconds(10)));
             Assert.IsFalse(command.Task.IsCompleted);
 

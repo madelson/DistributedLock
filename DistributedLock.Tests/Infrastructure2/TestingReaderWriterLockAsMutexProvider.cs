@@ -22,21 +22,13 @@ namespace Medallion.Threading.Tests
 
         public bool DisableUpgradeLock { get; set; }
 
-        public override string GetCrossProcessLockType()
-        {
-            if (this._readerWriterLockProvider is ITestingUpgradeableReaderWriterLockProvider upgradeableProvider
-                && GetShouldUseUpgradeLock())
-            {
-                return upgradeableProvider.GetCrossProcessLockType(ReaderWriterLockType.Upgrade);
-            }
-
-            return this._readerWriterLockProvider.GetCrossProcessLockType(ReaderWriterLockType.Write);
-        }
-
         public override IDistributedLock CreateLockWithExactName(string name) => 
             new ReaderWriterLockAsMutex(this._readerWriterLockProvider.CreateReaderWriterLockWithExactName(name), this);
 
         public override string GetSafeName(string name) => this._readerWriterLockProvider.GetSafeName(name);
+
+        public override string GetCrossProcessLockType() => 
+            this._readerWriterLockProvider.GetCrossProcessLockType(ReaderWriterLockType.Write);
 
         public override void Dispose()
         {

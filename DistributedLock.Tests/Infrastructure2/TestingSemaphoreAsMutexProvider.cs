@@ -25,7 +25,7 @@ namespace Medallion.Threading.Tests
 
         public override TStrategy Strategy => this._semaphoreProvider.Strategy;
 
-        public override string GetCrossProcessLockType() => nameof(SemaphoreAsMutex) + this._maxCount;
+        public override string GetCrossProcessLockType() => $"{this._semaphoreProvider.GetCrossProcessLockType()}{this._maxCount}AsMutex";
 
         public override IDistributedLock CreateLockWithExactName(string name)
         {
