@@ -4,6 +4,7 @@ using Npgsql;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.Common;
 using System.Text;
 
@@ -41,6 +42,14 @@ namespace Medallion.Threading.Tests.Postgres
             command.CommandText = "SELECT COUNT(*)::int FROM pg_stat_activity WHERE application_name = @applicationName";
             command.Parameters.AddWithValue("applicationName", applicationName);
             return (int)command.ExecuteScalar();
+        }
+
+        public IsolationLevel GetIsolationLevel(DbConnection connection)
+        {
+            using var command = connection.CreateCommand();
+            // values based on https://www.postgresql.org/docs/12/transaction-iso.html
+            command.CommandText = "SELECT REPLACE(current_setting('transaction_isolation'), ' ', '')";
+            return (IsolationLevel)Enum.Parse(typeof(IsolationLevel), (string)command.ExecuteScalar());
         }
 
         public DbConnection CreateConnection() => new NpgsqlConnection(this.ConnectionStringBuilder.ConnectionString);

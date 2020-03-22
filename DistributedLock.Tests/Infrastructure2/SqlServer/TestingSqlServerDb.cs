@@ -2,6 +2,7 @@
 using Medallion.Threading.Tests.Data;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.Common;
 using System.Text;
 
@@ -48,6 +49,23 @@ namespace Medallion.Threading.Tests.SqlServer
             return (int)command.ExecuteScalar();
         }
 
+        public IsolationLevel GetIsolationLevel(DbConnection connection)
+        {
+            using var command = connection.CreateCommand();
+            command.CommandText = @"
+                SELECT CASE transaction_isolation_level
+                    WHEN 0 THEN 'Unspecified'
+                    WHEN 1 THEN 'ReadUncommitted'
+                    WHEN 2 THEN 'ReadCommitted'
+                    WHEN 3 THEN 'RepeatableRead'
+                    WHEN 4 THEN 'Serializable'
+                    WHEN 5 THEN 'Snapshot'
+                    ELSE 'Unknown' END AS isolationLevel
+                FROM sys.dm_exec_sessions
+                WHERE session_id = @@SPID";
+            return (IsolationLevel)Enum.Parse(typeof(IsolationLevel), (string)command.ExecuteScalar());
+        }
+
         public DbConnection CreateConnection() => new Microsoft.Data.SqlClient.SqlConnection(this.ConnectionStringBuilder.ConnectionString);
     }
 
@@ -67,6 +85,8 @@ namespace Medallion.Threading.Tests.SqlServer
         public void ClearPool(DbConnection connection) => System.Data.SqlClient.SqlConnection.ClearPool((System.Data.SqlClient.SqlConnection)connection);
 
         public int CountActiveSessions(string applicationName) => new TestingSqlServerDb().CountActiveSessions(applicationName);
+
+        public IsolationLevel GetIsolationLevel(DbConnection connection) => new TestingSqlServerDb().GetIsolationLevel(connection);
 
         public DbConnection CreateConnection() => new System.Data.SqlClient.SqlConnection(this.ConnectionStringBuilder.ConnectionString);
     }
