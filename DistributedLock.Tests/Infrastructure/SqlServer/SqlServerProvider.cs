@@ -13,16 +13,7 @@ namespace Medallion.Threading.Tests.SqlServer
         ITestingDbLockProvider<SqlServerProvider>, ITestingDbReaderWriterLockProvider<SqlServerProvider>, 
         ITestingDbUpgradeableReaderWriterLockProvider<SqlServerProvider>, ITestingDbSemaphoreProvider<SqlServerProvider>
     {
-        internal static readonly string ConnectionString = new Microsoft.Data.SqlClient.SqlConnectionStringBuilder
-            {
-                DataSource = @".\SQLEXPRESS",
-                InitialCatalog = "master",
-                IntegratedSecurity = true,
-                ApplicationName = $"{typeof(SqlServerProvider).Assembly.GetName().Name} ({TestHelper.FrameworkName})",
-                // set a high pool size so that we don't empty the pool through things like lock abandonment tests
-                MaxPoolSize = 10000,
-            }
-            .ConnectionString;
+        internal static readonly string ConnectionString = SqlServerCredentials.ConnectionString;
 
         string ITestingDbProvider.ConnectionString => ConnectionString;
 

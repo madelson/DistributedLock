@@ -97,6 +97,6 @@ namespace Medallion.Threading.Tests.SqlServer
             ex.Message.Contains("Deadlock").ShouldEqual(true, ex.ToString());
         }
 
-        private static string UniqueSemaphoreName(string baseName) => $"{baseName}_{TestHelper.FrameworkName}";
+        private static string UniqueSemaphoreName(string baseName) => $"{baseName}_{TargetFramework.Current}";
     }
 }

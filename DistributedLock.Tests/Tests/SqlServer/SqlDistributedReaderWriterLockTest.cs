@@ -121,6 +121,6 @@ namespace Medallion.Threading.Tests.SqlServer
         }
 
         private static string UniqueSafeLockName(string baseName) =>
-            SqlDistributedReaderWriterLock.GetSafeName($"{baseName}_{TestHelper.FrameworkName}");
+            SqlDistributedReaderWriterLock.GetSafeName($"{baseName}_{TargetFramework.Current}");
     }
 }

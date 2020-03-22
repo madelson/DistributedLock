@@ -27,6 +27,7 @@ namespace Medallion.Threading.Tests
                 Username = username,
                 Password = password,
                 PersistSecurityInfo = true,
+                ApplicationName = SqlServerCredentials.ApplicationName,
                 // set a high pool size so that we don't empty the pool through things like lock abandonment tests
                 MaxPoolSize = 500,
             }.ConnectionString;

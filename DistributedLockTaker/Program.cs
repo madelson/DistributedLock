@@ -13,14 +13,6 @@ namespace DistributedLockTaker
 {
     internal static class Program
     {
-        private static readonly string ConnectionString = new SqlConnectionStringBuilder
-        {
-            DataSource = @".\SQLEXPRESS",
-            InitialCatalog = "master",
-            IntegratedSecurity = true
-        }
-        .ConnectionString;
-
         public static int Main(string[] args)
         {
             var type = args[0];
@@ -29,16 +21,16 @@ namespace DistributedLockTaker
             switch (type)
             {
                 case nameof(SqlDistributedLock):
-                    handle = new SqlDistributedLock(name, ConnectionString).Acquire();
+                    handle = new SqlDistributedLock(name, SqlServerCredentials.ConnectionString).Acquire();
                     break;
                 case "Write" + nameof(SqlDistributedReaderWriterLock):
-                    handle = new SqlDistributedReaderWriterLock(name, ConnectionString).AcquireWriteLock();
+                    handle = new SqlDistributedReaderWriterLock(name, SqlServerCredentials.ConnectionString).AcquireWriteLock();
                     break;
                 case nameof(SqlDistributedSemaphore) + "1AsMutex":
-                    handle = new SqlDistributedSemaphore(name, maxCount: 1, connectionString: ConnectionString).Acquire();
+                    handle = new SqlDistributedSemaphore(name, maxCount: 1, connectionString: SqlServerCredentials.ConnectionString).Acquire();
                     break;
                 case nameof(SqlDistributedSemaphore) + "5AsMutex":
-                    handle = new SqlDistributedSemaphore(name, maxCount: 5, connectionString: ConnectionString).Acquire();
+                    handle = new SqlDistributedSemaphore(name, maxCount: 5, connectionString: SqlServerCredentials.ConnectionString).Acquire();
                     break;
                 case nameof(PostgresDistributedLock):
                     handle = new PostgresDistributedLock(new PostgresAdvisoryLockKey(name), PostgresCredentials.GetConnectionString(Environment.CurrentDirectory)).Acquire();

@@ -12,16 +12,7 @@ namespace Medallion.Threading.Tests.SqlServer
 
     public sealed class TestingSqlServerDb : ITestingSqlServerDb, ITestingPrimaryClientDb
     {
-        internal static readonly string ConnectionString = new Microsoft.Data.SqlClient.SqlConnectionStringBuilder
-            {
-                DataSource = @".\SQLEXPRESS",
-                InitialCatalog = "master",
-                IntegratedSecurity = true,
-                ApplicationName = $"{typeof(TestingSqlServerDb).Assembly.GetName().Name} ({TestHelper.FrameworkName})",
-                // set a high pool size so that we don't empty the pool through things like lock abandonment tests
-                MaxPoolSize = 10000,
-            }
-            .ConnectionString;
+        internal static readonly string ConnectionString = SqlServerCredentials.ConnectionString;
 
         private readonly Microsoft.Data.SqlClient.SqlConnectionStringBuilder _connectionStringBuilder =
             new Microsoft.Data.SqlClient.SqlConnectionStringBuilder(ConnectionString);

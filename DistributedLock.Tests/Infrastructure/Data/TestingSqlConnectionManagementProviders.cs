@@ -13,7 +13,7 @@ namespace Medallion.Threading.Tests.Data
                 DataSource = @".\SQLEXPRESS",
                 InitialCatalog = "master",
                 IntegratedSecurity = true,
-                ApplicationName = $"{typeof(ConnectionStringProvider).Assembly.GetName().Name} ({TestHelper.FrameworkName})",
+                ApplicationName = $"{typeof(ConnectionStringProvider).Assembly.GetName().Name} ({TargetFramework.Current})",
                 // set a high pool size so that we don't empty the pool through things like lock abandonment tests
                 MaxPoolSize = 10000,
             }

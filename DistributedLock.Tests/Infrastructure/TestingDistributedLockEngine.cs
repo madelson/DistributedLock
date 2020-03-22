@@ -15,7 +15,7 @@ namespace Medallion.Threading.Tests
         /// test and framework name, thus avoiding potential collisions between test cases
         /// </summary>
         internal string GetUniqueSafeLockName(string baseName = "") =>
-            this.GetSafeName($"{baseName}_{this._currentTestFullName}_{TestHelper.FrameworkName}");
+            this.GetSafeName($"{baseName}_{this._currentTestFullName}_{TargetFramework.Current}");
 
         internal abstract IDistributedLock CreateLockWithExactName(string name);
 

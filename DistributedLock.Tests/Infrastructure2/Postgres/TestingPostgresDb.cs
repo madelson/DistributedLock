@@ -49,7 +49,7 @@ namespace Medallion.Threading.Tests.Postgres
             using var command = connection.CreateCommand();
             // values based on https://www.postgresql.org/docs/12/transaction-iso.html
             command.CommandText = "SELECT REPLACE(current_setting('transaction_isolation'), ' ', '')";
-            return (IsolationLevel)Enum.Parse(typeof(IsolationLevel), (string)command.ExecuteScalar());
+            return (IsolationLevel)Enum.Parse(typeof(IsolationLevel), (string)command.ExecuteScalar(), ignoreCase: true);
         }
 
         public DbConnection CreateConnection() => new NpgsqlConnection(this.ConnectionStringBuilder.ConnectionString);

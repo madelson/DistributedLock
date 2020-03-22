@@ -348,7 +348,7 @@ namespace Medallion.Threading.Tests
 #else
                 "Release";
 #endif
-            var exePath = Path.Combine(TestContext.CurrentContext.TestDirectory, "..", "..", "..", "..", "DistributedLockTaker", "bin", Configuration, TestHelper.FrameworkName, "DistributedLockTaker.exe");
+            var exePath = Path.Combine(TestContext.CurrentContext.TestDirectory, "..", "..", "..", "..", "DistributedLockTaker", "bin", Configuration, TargetFramework.Current, "DistributedLockTaker.exe");
             var command = Command.Run(exePath, args, o => o.WorkingDirectory(TestContext.CurrentContext.TestDirectory).ThrowOnError(true))
                 .RedirectStandardErrorTo(Console.Error);
             this._cleanupActions.Add(() =>
