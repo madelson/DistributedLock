@@ -1,5 +1,3 @@
-using Medallion.Threading.Tests.Data;
-using Medallion.Threading.Tests.SqlServer;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
@@ -9,16 +7,20 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading.Tests
 {
-    // todo convert to include postgres
-    public abstract class SqlDistributedSemaphoreTestCases<TConnectionManagementProvider>
-        where TConnectionManagementProvider : TestingSqlConnectionManagementProvider, new()
+    public abstract class DistributedSemaphoreCoreTestCases<TSemaphoreProvider, TStrategy>
+        where TSemaphoreProvider : TestingSemaphoreProvider<TStrategy>, new()
+        where TStrategy : TestingSynchronizationStrategy, new()
     {
         private static readonly TimeSpan LongTimeout = TimeSpan.FromSeconds(5);
+
+        private TSemaphoreProvider _semaphoreProvider = default!;
+
+        [SetUp] public void SetUp() => this._semaphoreProvider = new TSemaphoreProvider();
+        [TearDown] public void TearDown() => this._semaphoreProvider.Dispose();
 
         [Test]
         public void TestConcurrencyHandling()
         {
-            using var engine = this.CreateEngine();
             const int MaxCount = 3;
 
             var counter = 0;
@@ -26,29 +28,26 @@ namespace Medallion.Threading.Tests
 
             const int Threads = 10;
             const int Trials = 25;
-            using (var barrier = new Barrier(Threads))
-            {
-                var threads = Enumerable.Range(0, Threads)
-                    .Select(_ => new Thread(() =>
+            var barrier = new Barrier(Threads);
+            var threads = Enumerable.Range(0, Threads)
+                .Select(_ => Task.Factory.StartNew(() =>
                     {
-                        var semaphore = engine.CreateSemaphore(nameof(TestConcurrencyHandling), MaxCount);
+                        var semaphore = this._semaphoreProvider.CreateSemaphore(nameof(TestConcurrencyHandling), MaxCount);
 
                         barrier.SignalAndWait();
                         for (var i = 0; i < Trials; ++i)
                         {
-                            using (semaphore.Acquire(LongTimeout))
-                            {
-                                var newCounterValue = Interlocked.Increment(ref counter);
-                                lock (seenCounterValues) { seenCounterValues.Add(newCounterValue); }
-                                Thread.Sleep(10);
-                                Interlocked.Decrement(ref counter);
-                            }
+                            using var _ = semaphore.Acquire(LongTimeout);
+                            var newCounterValue = Interlocked.Increment(ref counter);
+                            lock (seenCounterValues) { seenCounterValues.Add(newCounterValue); }
+                            Thread.Sleep(10);
+                            Interlocked.Decrement(ref counter);
                         }
-                    }))
-                    .ToList();
-                threads.ForEach(t => t.Start());
-                threads.ForEach(t => t.Join());
-            }
+                    }, 
+                    TaskCreationOptions.LongRunning // dedicated thread
+                ))
+                .ToArray();
+            Task.WaitAll(threads);
 
             CollectionAssert.AreEquivalent(new[] { 1, 2, 3 }, seenCounterValues.ToArray());
         }
@@ -56,9 +55,8 @@ namespace Medallion.Threading.Tests
         [Test]
         public void TestDrain()
         {
-            using var engine = this.CreateEngine();
-            var semaphore = engine.CreateSemaphore(nameof(TestDrain), maxCount: 4);
-            var semaphore2 = engine.CreateSemaphore(nameof(TestDrain), maxCount: 4);
+            var semaphore = this._semaphoreProvider.CreateSemaphore(nameof(TestDrain), maxCount: 4);
+            var semaphore2 = this._semaphoreProvider.CreateSemaphore(nameof(TestDrain), maxCount: 4);
 
             var handles = new List<IDisposable> { semaphore.Acquire(LongTimeout) };
             Assert.DoesNotThrow(() => semaphore2.Acquire().Dispose());
@@ -76,8 +74,7 @@ namespace Medallion.Threading.Tests
         [Test]
         public void TestHighTicketCount()
         {
-            using var engine = this.CreateEngine();
-            var semaphore = engine.CreateSemaphore($"s{new string('o', 1000)} many tickets!", int.MaxValue);
+            var semaphore = this._semaphoreProvider.CreateSemaphore($"s{new string('o', 1000)} many tickets!", int.MaxValue);
             var handles = Enumerable.Range(0, 100)
                 .Select(_ => semaphore.Acquire(LongTimeout))
                 .ToList();
@@ -87,7 +84,6 @@ namespace Medallion.Threading.Tests
         [Test]
         public void TestSameNameDifferentCounts()
         {
-            using var engine = this.CreateEngine();
             // if 2 semaphores have different views of what the max count is, things still kind of
             // work. The semaphore with the higher count behaves normally. The semaphore with the lower
             // count behaves normally when the number of contenders is below it's count. After that, it
@@ -96,8 +92,8 @@ namespace Medallion.Threading.Tests
             // 3-semaphore holds tickets 1&2 (no), 1&3 (yes), or 2&3 (yes). This test serves to document
             // the behavior that is more well-defined
 
-            var semaphore2 = engine.CreateSemaphore(nameof(TestSameNameDifferentCounts), 2);
-            var semaphore3 = engine.CreateSemaphore(nameof(TestSameNameDifferentCounts), 3);
+            var semaphore2 = this._semaphoreProvider.CreateSemaphore(nameof(TestSameNameDifferentCounts), 2);
+            var semaphore3 = this._semaphoreProvider.CreateSemaphore(nameof(TestSameNameDifferentCounts), 3);
 
             var handle1 = semaphore2.Acquire(LongTimeout);
             var handle2 = semaphore3.Acquire(LongTimeout);
@@ -119,13 +115,12 @@ namespace Medallion.Threading.Tests
         {
             const int MaxCount = 10;
 
-            using var engine = this.CreateEngine();
             var counter = 0;
             var maxCounterValue = 0;
             var maxCounterValueLock = new object();
             var tasks = Enumerable.Range(1, 100).Select(async _ =>
                 {
-                    var semaphore = engine.CreateSemaphore(nameof(TestSemaphoreParallelism), MaxCount);
+                    var semaphore = this._semaphoreProvider.CreateSemaphore(nameof(TestSemaphoreParallelism), MaxCount);
                     using (await semaphore.AcquireAsync())
                     {
                         // increment going in
@@ -159,7 +154,5 @@ namespace Medallion.Threading.Tests
                 maxCounterValue.ShouldEqual(MaxCount, this.GetType().Name + ": should reach the maximum level of allowed concurrency");
             }
         }
-
-        private TestingSqlDistributedSemaphoreEngine<TConnectionManagementProvider> CreateEngine() => new TestingSqlDistributedSemaphoreEngine<TConnectionManagementProvider>();
     }
 }
