@@ -85,7 +85,7 @@ namespace Medallion.Threading.Internal.Data
         public async ValueTask<bool> GetIsInUseAsync()
         {
             using var mutexHandle = await this._mutex.TryAcquireAsync(TimeSpan.Zero, CancellationToken.None).ConfigureAwait(false);
-            return mutexHandle == null || this._heldLocks.Count == 0;
+            return mutexHandle == null || this._heldLocks.Count != 0;
         }
 
         private Result GetFailureResultNoLock(bool isAlreadyHeld, bool opportunistic, TimeoutValue timeout)
