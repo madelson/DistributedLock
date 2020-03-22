@@ -88,6 +88,11 @@ namespace Medallion.Threading.Tests.Data
                 readerWriterAsMutexProvider.DisableUpgradeLock = true;
             }
 
+            // assign a unique app name to make sure we'll own the entire pool
+            this._lockProvider.Strategy.Db.ConnectionStringBuilder["Application Name"] = DistributedLockHelpers.ToSafeName(
+                this._lockProvider.GetUniqueSafeName(),
+                maxNameLength: this._lockProvider.Strategy.Db.MaxApplicationNameLength, s => s
+            );
             this._lockProvider.Strategy.Db.MaxPoolSize = 1;
 
             async Task Test()
@@ -109,6 +114,11 @@ namespace Medallion.Threading.Tests.Data
                         var handle = await @lock.TryAcquireAsync();
                         if (handle != null) { heldLocks.Add(lockName, handle); }
                     }
+                }
+
+                foreach (var remainingHandle in heldLocks.Values)
+                {
+                    remainingHandle.Dispose();
                 }
             };
 

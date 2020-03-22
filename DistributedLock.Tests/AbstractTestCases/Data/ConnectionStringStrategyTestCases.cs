@@ -28,7 +28,7 @@ namespace Medallion.Threading.Tests.Data
 
             // set a distinctive application name so that we can count how many connections are used
             var applicationName = DistributedLockHelpers.ToSafeName(
-                nameof(TestConnectionDoesNotLeak) + "_" + this.GetType(), 
+                this._lockProvider.GetUniqueSafeName(),
                 maxNameLength: this._lockProvider.Strategy.Db.MaxApplicationNameLength, s => s
             );
             this._lockProvider.Strategy.Db.ConnectionStringBuilder["Application Name"] = applicationName;

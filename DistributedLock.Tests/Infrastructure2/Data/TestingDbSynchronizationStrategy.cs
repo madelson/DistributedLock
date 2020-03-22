@@ -26,6 +26,19 @@ namespace Medallion.Threading.Tests.Data
         protected TestingDbSynchronizationStrategy() : base(new TDb()) { }
 
         public new TDb Db => (TDb)base.Db;
+
+        public override void Dispose()
+        {
+            // if we have a uniquely-named connection, clear it's pool to avoid "leaking" connections into pools we'll never
+            // use again
+            if (!Equals(this.Db.ConnectionStringBuilder["Application Name"], new TDb().ConnectionStringBuilder["Application Name"]))
+            {
+                using var connection = this.Db.CreateConnection();
+                this.Db.ClearPool(connection);
+            }
+
+            base.Dispose();
+        }
     }
 
     public abstract class TestingConnectionStringSynchronizationStrategy<TDb> : TestingDbSynchronizationStrategy<TDb>
@@ -105,7 +118,11 @@ namespace Medallion.Threading.Tests.Data
             this.Db.ClearPool(connection);
         }
 
-        public override void Dispose() => this._disposables.Dispose();
+        public override void Dispose()
+        {
+            this._disposables.Dispose();
+            base.Dispose();
+        }
     }
 
     public sealed class TestingExternalTransactionSynchronizationStrategy<TDb> : TestingExternalConnectionOrTransactionSynchronizationStrategy<TDb>
@@ -150,6 +167,10 @@ namespace Medallion.Threading.Tests.Data
             this.Db.ClearPool(connection);
         }
 
-        public override void Dispose() => this._disposables.Dispose();
+        public override void Dispose()
+        {
+            this._disposables.Dispose();
+            base.Dispose();
+        }
     }
 }
