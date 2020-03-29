@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;netstandard2.1;net461</TargetFrameworks>
-    <RootNamespace>Medallion.Threading</RootNamespace>
+    <RootNamespace>Medallion.Threading.SqlServer</RootNamespace>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
     <WarningLevel>4</WarningLevel>
     <LangVersion>Latest</LangVersion>

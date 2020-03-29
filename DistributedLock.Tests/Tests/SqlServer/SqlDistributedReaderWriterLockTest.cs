@@ -1,10 +1,7 @@
 using NUnit.Framework;
 using System;
 using System.Data.Common;
-using System.Threading;
 using Medallion.Threading.SqlServer;
-using Medallion.Threading.Data;
-using Medallion.Threading.Tests.Data;
 
 namespace Medallion.Threading.Tests.SqlServer
 {

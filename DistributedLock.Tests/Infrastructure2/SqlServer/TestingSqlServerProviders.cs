@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using Medallion.Threading.Data;
 using Medallion.Threading.SqlServer;
 using Medallion.Threading.Tests.Data;
 

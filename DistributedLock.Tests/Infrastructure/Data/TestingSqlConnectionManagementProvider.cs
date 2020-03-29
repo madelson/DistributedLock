@@ -1,4 +1,3 @@
-using Medallion.Threading.Data;
 using System;
 using System.Data.Common;
 

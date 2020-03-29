@@ -1,4 +1,3 @@
-using Medallion.Threading.Data;
 using Medallion.Threading.Internal;
 using Medallion.Threading.SqlServer;
 using Medallion.Threading.Tests.SqlServer;
