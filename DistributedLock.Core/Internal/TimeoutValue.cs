@@ -3,6 +3,7 @@ using System.Threading;
 
 namespace Medallion.Threading.Internal
 {
+    // todo test
     /// <summary>
     /// A type which can only store a valid timeout value
     /// </summary>
@@ -11,7 +12,7 @@ namespace Medallion.Threading.Internal
 #else
     internal
 #endif    
-    readonly struct TimeoutValue : IEquatable<TimeoutValue>
+    readonly struct TimeoutValue : IEquatable<TimeoutValue>, IComparable<TimeoutValue>
     {
         public TimeoutValue(TimeSpan? timeout, string paramName = "timeout")
         {
@@ -47,11 +48,15 @@ namespace Medallion.Threading.Internal
         public override bool Equals(object? obj) => obj is TimeoutValue that && this.Equals(that);
         public override int GetHashCode() => this.InMilliseconds;
 
+        public int CompareTo(TimeoutValue that) =>
+            this.IsInfinite ? (that.IsInfinite ? 0 : 1)
+                : that.IsInfinite ? -1
+                : this.InMilliseconds.CompareTo(that.InMilliseconds);
+
         public static bool operator ==(TimeoutValue a, TimeoutValue b) => a.Equals(b);
         public static bool operator !=(TimeoutValue a, TimeoutValue b) => !(a == b);
 
         public static implicit operator TimeoutValue(TimeSpan? timeout) => new TimeoutValue(timeout);
-
 
         public override string ToString() => 
             this.IsInfinite ? "∞" 

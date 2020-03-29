@@ -33,7 +33,7 @@ namespace Medallion.Threading.Tests.Data
     public class ConnectionInfo
     {
         public string? ConnectionString { get; set; }
-        public SqlDistributedLockConnectionStrategy? Strategy { get; set; }
+        //public SqlDistributedLockConnectionStrategy? Strategy { get; set; }
         public DbConnection? Connection { get; set; }
         public DbTransaction? Transaction { get; set; }
     }

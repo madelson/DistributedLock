@@ -50,10 +50,10 @@ namespace Medallion.Threading.Tests.SqlServer
             var connectionManagementProvider = new TConnectionManagementProvider();
             this.RegisterCleanupAction(connectionManagementProvider.Dispose);
             var connectionInfo = connectionManagementProvider.GetConnectionInfo();
-            if (connectionInfo.Strategy.HasValue)
-            {
-                return new SqlDistributedSemaphore(name, maxCount, connectionInfo.ConnectionString!, connectionInfo.Strategy.Value);
-            }
+            //if (connectionInfo.Strategy.HasValue)
+            //{
+            //    return new SqlDistributedSemaphore(name, maxCount, connectionInfo.ConnectionString!, connectionInfo.Strategy.Value);
+            //}
             if (connectionInfo.ConnectionString != null)
             {
                 return new SqlDistributedSemaphore(name, maxCount, connectionInfo.ConnectionString);
@@ -105,14 +105,14 @@ namespace Medallion.Threading.Tests.SqlServer
         }
     }
 
-    // note: we could make this class generic to test it with every connection strategy. However, there's little value to
-    // retesting all connection modes again with the higher-ticket-count version
-    public class TestingMostlyDrainedSqlSemaphoreDistributedLockEngine : TestingSqlDistributedSemaphoreEngine<DefaultConnectionStringProvider>
-    {
-        public TestingMostlyDrainedSqlSemaphoreDistributedLockEngine() : base(maxCount: 5) { }
+    //// note: we could make this class generic to test it with every connection strategy. However, there's little value to
+    //// retesting all connection modes again with the higher-ticket-count version
+    //public class TestingMostlyDrainedSqlSemaphoreDistributedLockEngine : TestingSqlDistributedSemaphoreEngine<DefaultConnectionStringProvider>
+    //{
+    //    public TestingMostlyDrainedSqlSemaphoreDistributedLockEngine() : base(maxCount: 5) { }
 
-        internal override string CrossProcessLockType => base.CrossProcessLockType + "5";
-    }
+    //    internal override string CrossProcessLockType => base.CrossProcessLockType + "5";
+    //}
 
     public sealed class TestingSqlDistributedSemaphoreEngineFactory : ITestingSqlDistributedLockEngineFactory
     {

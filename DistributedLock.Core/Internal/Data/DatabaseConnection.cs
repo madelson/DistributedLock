@@ -19,87 +19,80 @@ namespace Medallion.Threading.Internal.Data
 #endif
         abstract class DatabaseConnection : IAsyncDisposable
     {
-        private readonly IDbConnection _connection;
-        private readonly TimeoutValue _keepaliveCadence;
         private IDbTransaction? _transaction;
-        private KeepaliveHelper? _keepaliveHelper;
 
-        protected DatabaseConnection(IDbConnection connection, TimeoutValue keepaliveCadence, bool isExternallyOwned)
+        protected DatabaseConnection(IDbConnection connection, bool isExternallyOwned)
         {
-            this._connection = connection;
-            this._keepaliveCadence = keepaliveCadence;
+            this.InnerConnection = connection;
             this.IsExernallyOwned = isExternallyOwned;
+            this.ConnectionMonitor = new ConnectionMonitor(this);
         }
 
-        protected DatabaseConnection(IDbTransaction transaction, TimeoutValue keepaliveCadence, bool isExternallyOwned)
-            : this(transaction.Connection, keepaliveCadence, isExternallyOwned)
+        protected DatabaseConnection(IDbTransaction transaction, bool isExternallyOwned)
+            : this(transaction.Connection, isExternallyOwned)
         {
             if (transaction.Connection == null) { throw new InvalidOperationException("Cannot execute queries against a transaction that has been disposed"); }
 
             this._transaction = transaction;
         }
 
+        internal ConnectionMonitor ConnectionMonitor { get; }
+        internal IDbConnection InnerConnection { get; }
+
         public bool HasTransaction => this._transaction != null;
-        // todo use this for sqlserver
+        
         public bool IsExernallyOwned { get; }
 
         protected internal abstract bool ShouldPrepareCommands { get; }
 
-        internal bool CanExecuteQueries => this._connection.State == ConnectionState.Open && (this._transaction == null || this._transaction.Connection != null);
-        internal KeepaliveHelper? KeepaliveHelper { get; }
+        internal bool CanExecuteQueries => this.InnerConnection.State == ConnectionState.Open && (this._transaction == null || this._transaction.Connection != null);
+        
+        internal void SetKeepaliveCadence(TimeoutValue cadence) => this.ConnectionMonitor.SetKeepaliveCadence(cadence);
 
-        public void StartKeepalive()
-        {
-            if (!this._keepaliveCadence.IsInfinite)
-            {
-                (this._keepaliveHelper ??= new KeepaliveHelper(this, this._keepaliveCadence)).TryStart();
-            }
-        }
-
-        public ValueTask StopKeepaliveAsync() =>
-            this._keepaliveHelper?.TryStopAsync().ConvertToVoid() ?? default;
+        internal IDatabaseConnectionMonitoringHandle GetConnectionMonitoringHandle() => this.ConnectionMonitor.GetMonitoringHandle();
 
         public DatabaseCommand CreateCommand()
         {
-            var command = this._connection.CreateCommand();
+            var command = this.InnerConnection.CreateCommand();
             command.Transaction = this._transaction;
             return new DatabaseCommand(command, this);
         }
 
         // note: we could have this return an IAsyncDisposable which would allow you to close the transaction
         // without closing the connection. However, we don't currently have any use-cases for that
-#if NETSTANDARD2_0 || NET461
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
-#endif
         public async ValueTask BeginTransactionAsync()
 #pragma warning restore CS1998
         {
             Invariant.Require(this._transaction == null);
 
+            using var _ = await this.ConnectionMonitor.AcquireConnectionLockAsync(CancellationToken.None).ConfigureAwait(false);
+
             this._transaction =
 #if NETSTANDARD2_1
-             !SyncOverAsync.IsSynchronous && this._connection is DbConnection dbConnection
+             !SyncOverAsync.IsSynchronous && this.InnerConnection is DbConnection dbConnection
                 ? await dbConnection.BeginTransactionAsync().ConfigureAwait(false)
                 : 
 #elif NETSTANDARD2_0 || NET461
 #else
             ERROR
 #endif
-                this._connection.BeginTransaction();
+                this.InnerConnection.BeginTransaction();
         }
 
         public async ValueTask OpenAsync(CancellationToken cancellationToken)
         {
             if ((cancellationToken.CanBeCanceled || !SyncOverAsync.IsSynchronous)
-                && this._connection is DbConnection dbConnection)
+                && this.InnerConnection is DbConnection dbConnection)
             {
                 await dbConnection.OpenAsync(cancellationToken).ConfigureAwait(false);
             }
             else
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                this._connection.Open();
+                this.InnerConnection.Open();
             }
+
+            this.ConnectionMonitor.Start();
         }
 
         public ValueTask CloseAsync() => this.DisposeOrCloseAsync(isDispose: false);
@@ -107,16 +100,21 @@ namespace Medallion.Threading.Internal.Data
 
         private async ValueTask DisposeOrCloseAsync(bool isDispose)
         {
-            Invariant.Require(!this.IsExernallyOwned);
+            Invariant.Require(isDispose || !this.IsExernallyOwned);
 
-            try { await this.StopKeepaliveAsync().ConfigureAwait(false); }
+            try 
+            { 
+                await (isDispose ? this.ConnectionMonitor.DisposeAsync() : this.ConnectionMonitor.StopAsync()).ConfigureAwait(false); 
+            }
             finally
             {
-                try { await this.DisposeTransactionAsync().ConfigureAwait(false); }
-                finally
+                if (!this.IsExernallyOwned)
                 {
+                    try { await this.DisposeTransactionAsync(isClosingOrDisposingConnection: true).ConfigureAwait(false); }
+                    finally
+                    {
 #if NETSTANDARD2_1
-                if (!SyncOverAsync.IsSynchronous && this._connection is DbConnection dbConnection)
+                if (!SyncOverAsync.IsSynchronous && this.InnerConnection is DbConnection dbConnection)
                 {
                     await (isDispose ? dbConnection.DisposeAsync() : dbConnection.CloseAsync().AsValueTask()).ConfigureAwait(false);
                 }
@@ -125,30 +123,39 @@ namespace Medallion.Threading.Internal.Data
                     SyncDisposeConnection();
                 }
 #elif NETSTANDARD2_0 || NET461
-                    SyncDisposeConnection();
+                        SyncDisposeConnection();
 #else
-            ERROR
+                        ERROR
 #endif
+                    }
                 }
             }
 
             void SyncDisposeConnection()
             {
-                if (isDispose) { this._connection.Dispose(); }
-                else { this._connection.Close(); }
+                if (isDispose) { this.InnerConnection.Dispose(); }
+                else { this.InnerConnection.Close(); }
             }
         }
 
-        public ValueTask DisposeTransactionAsync()
+        public ValueTask DisposeTransactionAsync() => this.DisposeTransactionAsync(isClosingOrDisposingConnection: false);
+
+        private async ValueTask DisposeTransactionAsync(bool isClosingOrDisposingConnection)
         {
             var transaction = this._transaction;
-            if (transaction == null) { return default; }
+            if (transaction == null) { return; }
             this._transaction = null;
+
+            // we don't need the connection lock here if we're closing/disposing, since in that case we stop the monitor first
+            using var _ = isClosingOrDisposingConnection 
+                ? null 
+                : await this.ConnectionMonitor.AcquireConnectionLockAsync(CancellationToken.None).ConfigureAwait(false);
 
 #if NETSTANDARD2_1
             if (!SyncOverAsync.IsSynchronous && transaction is DbTransaction dbTransaction)
             {
-                return dbTransaction.DisposeAsync();
+                await dbTransaction.DisposeAsync().ConfigureAwait(false);
+                return;
             }
 #elif NETSTANDARD2_0 || NET461
 #else
@@ -156,9 +163,10 @@ namespace Medallion.Threading.Internal.Data
 #endif
 
             transaction.Dispose();
-            return default;
         }
 
         protected internal abstract bool IsCommandCancellationException(Exception exception);
+
+        protected internal abstract Task SleepAsync(TimeSpan sleepTime, CancellationToken cancellationToken, Func<DatabaseCommand, CancellationToken, ValueTask<int>> executor);
     }
 }

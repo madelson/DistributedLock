@@ -24,23 +24,18 @@ namespace Medallion.Threading.SqlServer
         private readonly IDbDistributedLock _internalLock;
 
         #region ---- Constructors ----
-        public SqlDistributedReaderWriterLock(string name, string connectionString, bool exactName = false)
-            : this(name, exactName, n => SqlDistributedLock.CreateInternalLock(n, connectionString, SqlDistributedLockConnectionStrategy.Default))
-        {
-        }
-
-        public SqlDistributedReaderWriterLock(string name, string connectionString, SqlDistributedLockConnectionStrategy connectionStrategy, bool exactName = false)
-            : this(name, exactName, n => SqlDistributedLock.CreateInternalLock(n, connectionString, connectionStrategy))
+        public SqlDistributedReaderWriterLock(string name, string connectionString, Action<SqlConnectionOptionsBuilder>? options = null, bool exactName = false)
+            : this(name, exactName, n => SqlDistributedLock.CreateInternalLock(n, connectionString, options))
         {
         }
 
         public SqlDistributedReaderWriterLock(string name, IDbConnection connection, bool exactName = false)
-            : this(name, exactName, n => new ExternalConnectionOrTransactionDbDistributedLock(n, new SqlDatabaseConnection(connection ?? throw new ArgumentNullException(nameof(connection)), Timeout.InfiniteTimeSpan)))
+            : this(name, exactName, n => new ExternalConnectionOrTransactionDbDistributedLock(n, new SqlDatabaseConnection(connection ?? throw new ArgumentNullException(nameof(connection)))))
         {
         }
 
         public SqlDistributedReaderWriterLock(string name, IDbTransaction transaction, bool exactName = false)
-            : this(name, exactName, n => new ExternalConnectionOrTransactionDbDistributedLock(n, new SqlDatabaseConnection(transaction ?? throw new ArgumentNullException(nameof(transaction)), Timeout.InfiniteTimeSpan)))
+            : this(name, exactName, n => new ExternalConnectionOrTransactionDbDistributedLock(n, new SqlDatabaseConnection(transaction ?? throw new ArgumentNullException(nameof(transaction)))))
         {
         }
 

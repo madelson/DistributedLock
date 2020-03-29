@@ -82,5 +82,18 @@ namespace Medallion.Threading.Tests.Core
                 }
             }
         }
+
+        [Test]
+        public void TestComparison()
+        {
+            new TimeoutValue(Timeout.InfiniteTimeSpan).CompareTo(Timeout.InfiniteTimeSpan).ShouldEqual(0);
+            new TimeoutValue(TimeSpan.FromSeconds(1)).CompareTo(TimeSpan.FromSeconds(1)).ShouldEqual(0);
+
+            new TimeoutValue(Timeout.InfiniteTimeSpan).CompareTo(TimeSpan.FromMilliseconds(int.MaxValue)).ShouldEqual(1);
+            new TimeoutValue(TimeSpan.FromMilliseconds(int.MaxValue)).CompareTo(Timeout.InfiniteTimeSpan).ShouldEqual(-1);
+
+            new TimeoutValue(TimeSpan.Zero).CompareTo(TimeSpan.FromSeconds(1)).ShouldEqual(-1);
+            new TimeoutValue(TimeSpan.FromSeconds(1)).CompareTo(TimeSpan.Zero).ShouldEqual(1);
+        }
     }
 }

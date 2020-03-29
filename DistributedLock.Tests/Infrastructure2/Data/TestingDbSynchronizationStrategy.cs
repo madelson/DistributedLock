@@ -46,28 +46,35 @@ namespace Medallion.Threading.Tests.Data
         // the primary ADO client for the database
         where TDb : ITestingPrimaryClientDb, new()
     {
-        protected abstract TestingConnectionStringOptions ConnectionStringOptions { get; }
+        protected abstract bool? UseMultiplexingNotTransaction { get; }
+        public TimeSpan? KeepaliveCadence { get; set; }
 
         public override TestingDbConnectionOptions GetConnectionOptions() =>
-            new TestingDbConnectionOptions { ConnectionString = this.Db.ConnectionStringBuilder.ConnectionString, ConnectionStringOptions = this.ConnectionStringOptions };
+            new TestingDbConnectionOptions 
+            { 
+                ConnectionString = this.Db.ConnectionStringBuilder.ConnectionString, 
+                ConnectionStringUseMultiplexing = this.UseMultiplexingNotTransaction == true,
+                ConnectionStringUseTransaction = this.UseMultiplexingNotTransaction == false,
+                ConnectionStringKeepaliveCadence = this.KeepaliveCadence,
+            };
     }
 
     public sealed class TestingConnectionMultiplexingSynchronizationStrategy<TDb> : TestingConnectionStringSynchronizationStrategy<TDb>
         where TDb : ITestingPrimaryClientDb, new()
     {
-        protected override TestingConnectionStringOptions ConnectionStringOptions => TestingConnectionStringOptions.UseMultiplexing;
+        protected override bool? UseMultiplexingNotTransaction => true;
     }
 
     public sealed class TestingOwnedConnectionSynchronizationStrategy<TDb> : TestingConnectionStringSynchronizationStrategy<TDb>
         where TDb : ITestingPrimaryClientDb, new()
     {
-        protected override TestingConnectionStringOptions ConnectionStringOptions => TestingConnectionStringOptions.None;
+        protected override bool? UseMultiplexingNotTransaction => null;
     }
 
     public sealed class TestingOwnedTransactionSynchronizationStrategy<TDb> : TestingConnectionStringSynchronizationStrategy<TDb>
         where TDb : ITestingPrimaryClientDb, new()
     {
-        protected override TestingConnectionStringOptions ConnectionStringOptions => TestingConnectionStringOptions.UseTransaction;
+        protected override bool? UseMultiplexingNotTransaction => false;
     }
 
     public abstract class TestingExternalConnectionOrTransactionSynchronizationStrategy<TDb> : TestingDbSynchronizationStrategy<TDb>

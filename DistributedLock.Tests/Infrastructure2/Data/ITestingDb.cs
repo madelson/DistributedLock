@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Medallion.Threading.Tests.Data
 {
@@ -30,8 +31,11 @@ namespace Medallion.Threading.Tests.Data
     }
 
     /// <summary>
-    /// Marker interface for the "primary" ADO.NET client for a particular DB backend. For now
+    /// Interface for the "primary" ADO.NET client for a particular DB backend. For now
     /// this is just used to designate Microsoft.Data.SqlClient vs. System.Data.SqlClient
     /// </summary>
-    public interface ITestingPrimaryClientDb : ITestingDb { }
+    public interface ITestingPrimaryClientDb : ITestingDb 
+    {
+        Task KillIdleSessionsAsync(string applicationName, DateTimeOffset expirationDate);
+    }
 }

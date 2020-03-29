@@ -63,5 +63,45 @@ namespace Medallion.Threading.Tests.Data
 
             Assert.Fail("Connection was not released");
         }
+
+        [Test]
+        public void TestKeepaliveProtectsFromIdleSessionKiller()
+        {
+            var applicationName = DistributedLockHelpers.ToSafeName(
+                this._lockProvider.GetUniqueSafeName(),
+                maxNameLength: this._lockProvider.Strategy.Db.MaxApplicationNameLength, s => s
+            );
+            this._lockProvider.Strategy.Db.ConnectionStringBuilder["Application Name"] = applicationName;
+
+            this._lockProvider.Strategy.KeepaliveCadence = TimeSpan.FromSeconds(.05);
+            var @lock = this._lockProvider.CreateLock(nameof(TestKeepaliveProtectsFromIdleSessionKiller));
+
+            using var idleSessionKiller = new IdleSessionKiller(this._lockProvider.Strategy.Db, applicationName, idleTimeout: TimeSpan.FromSeconds(.25));
+                
+            var handle = @lock.Acquire();
+            Thread.Sleep(TimeSpan.FromSeconds(1));
+            Assert.DoesNotThrow(() => handle.Dispose());
+        }
+
+        /// <summary>
+        /// Demonstrates that we don't multi-thread the connection despite running keepalive queries
+        /// </summary>
+        [Test]
+        public void TestKeepaliveDoesNotCreateRaceCondition()
+        {
+            this._lockProvider.Strategy.KeepaliveCadence = TimeSpan.FromMilliseconds(1);
+
+            Assert.DoesNotThrow(() =>
+            {
+                var @lock = this._lockProvider.CreateLock(nameof(TestKeepaliveDoesNotCreateRaceCondition));
+                for (var i = 0; i < 25; ++i)
+                {
+                    using (@lock.Acquire())
+                    {
+                        Thread.Sleep(1);
+                    }
+                }
+            });
+        }
     }
 }

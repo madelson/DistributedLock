@@ -20,14 +20,8 @@ namespace Medallion.Threading.Tests.SqlServer
 
         public override string GetSafeName(string name) => SqlDistributedLock.GetSafeName(name);
 
-        internal static SqlDistributedLockConnectionStrategy ToSqlOptions(TestingConnectionStringOptions options) =>
-                options switch
-                {
-                    TestingConnectionStringOptions.None => SqlDistributedLockConnectionStrategy.Connection,
-                    TestingConnectionStringOptions.UseTransaction => SqlDistributedLockConnectionStrategy.Transaction,
-                    TestingConnectionStringOptions.UseMultiplexing => SqlDistributedLockConnectionStrategy.OptimisticConnectionMultiplexing,
-                    _ => throw new NotSupportedException(options.ToString())
-                };
+        internal static Action<SqlConnectionOptionsBuilder> ToSqlOptions((bool useMultiplexing, bool useTransaction, TimeSpan keepaliveCadence) options) =>
+            o => o.UseMultiplexing(options.useMultiplexing).UseTransaction(options.useTransaction).KeepaliveCadence(options.keepaliveCadence);
     }
 
     public sealed class TestingSqlDistributedReaderWriterLockProvider<TStrategy, TDb> : TestingUpgradeableReaderWriterLockProvider<TStrategy>

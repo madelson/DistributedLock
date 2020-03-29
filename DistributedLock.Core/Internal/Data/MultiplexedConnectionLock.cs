@@ -13,10 +13,10 @@ namespace Medallion.Threading.Internal.Data
     internal sealed class MultiplexedConnectionLock : IAsyncDisposable
     {
         /// <summary>
-        /// Protects access to <see cref="_heldLocks"/> and <see cref="_connection"/>
+        /// Protects access to <see cref="_heldLocksToKeepaliveCadences"/> and <see cref="_connection"/>
         /// </summary>
         private readonly AsyncLock _mutex = AsyncLock.Create();
-        private readonly HashSet<string> _heldLocks = new HashSet<string>();
+        private readonly Dictionary<string, TimeoutValue> _heldLocksToKeepaliveCadences = new Dictionary<string, TimeoutValue>();
         private readonly DatabaseConnection _connection;
 
         public MultiplexedConnectionLock(DatabaseConnection connection)
@@ -28,6 +28,7 @@ namespace Medallion.Threading.Internal.Data
             string name,
             TimeoutValue timeout,
             IDbSynchronizationStrategy<TLockCookie> strategy,
+            TimeoutValue keepaliveCadence,
             CancellationToken cancellationToken,
             bool opportunistic)
             where TLockCookie : class
@@ -44,7 +45,7 @@ namespace Medallion.Threading.Internal.Data
 
             try
             {
-                if (this._heldLocks.Contains(name))
+                if (this._heldLocksToKeepaliveCadences.ContainsKey(name))
                 {
                     // we won't try to hold the same lock twice on one connection. At some point, we could
                     // support this case in-memory using a counter for each multiply-held lock name and being careful
@@ -61,7 +62,8 @@ namespace Medallion.Threading.Internal.Data
                 if (lockCookie != null)
                 {
                     var handle = new Handle<TLockCookie>(this, strategy, name, lockCookie).WithManagedFinalizer();
-                    this._heldLocks.Add(name);
+                    this._heldLocksToKeepaliveCadences.Add(name, keepaliveCadence);
+                    if (!keepaliveCadence.IsInfinite) { this.SetKeepaliveCadenceNoLock(); }
                     return new Result(handle);
                 }
 
@@ -77,7 +79,7 @@ namespace Medallion.Threading.Internal.Data
 
         public ValueTask DisposeAsync()
         {
-            Invariant.Require(this._heldLocks.Count == 0);
+            Invariant.Require(this._heldLocksToKeepaliveCadences.Count == 0);
 
             return this._connection.DisposeAsync();
         }
@@ -85,7 +87,7 @@ namespace Medallion.Threading.Internal.Data
         public async ValueTask<bool> GetIsInUseAsync()
         {
             using var mutexHandle = await this._mutex.TryAcquireAsync(TimeSpan.Zero, CancellationToken.None).ConfigureAwait(false);
-            return mutexHandle == null || this._heldLocks.Count != 0;
+            return mutexHandle == null || this._heldLocksToKeepaliveCadences.Count != 0;
         }
 
         private Result GetFailureResultNoLock(bool isAlreadyHeld, bool opportunistic, TimeoutValue timeout)
@@ -93,7 +95,7 @@ namespace Medallion.Threading.Internal.Data
             // only opportunistic acquisitions trigger retries
             if (!opportunistic) 
             {
-                return new Result(MultiplexedConnectionLockRetry.NoRetry, canSafelyDispose: this._heldLocks.Count == 0); 
+                return new Result(MultiplexedConnectionLockRetry.NoRetry, canSafelyDispose: this._heldLocksToKeepaliveCadences.Count == 0); 
             }
 
             if (isAlreadyHeld)
@@ -104,7 +106,7 @@ namespace Medallion.Threading.Internal.Data
             }
 
             // if we get here, we failed due to a timeout
-            var isHoldingLocks = this._heldLocks.Count != 0;
+            var isHoldingLocks = this._heldLocksToKeepaliveCadences.Count != 0;
 
             if (timeout.IsZero)
             {
@@ -135,16 +137,38 @@ namespace Medallion.Threading.Internal.Data
             }
             finally
             {
-                this._heldLocks.Remove(name);
+                if (this._heldLocksToKeepaliveCadences.TryGetValue(name, out var keepaliveCadence))
+                {
+                    this._heldLocksToKeepaliveCadences.Remove(name);
+                    if (!keepaliveCadence.IsInfinite)
+                    {
+                        // note: we do this even if we're about to close the connection because we'll want 
+                        // the correct cadence set when and if we re-open
+                        this.SetKeepaliveCadenceNoLock();
+                    }
+                }
                 await this.CloseConnectionIfNeededNoLockAsync().ConfigureAwait(false);
             }
         }
 
         private ValueTask CloseConnectionIfNeededNoLockAsync()
         {
-            return this._heldLocks.Count == 0 && this._connection.CanExecuteQueries
+            return this._heldLocksToKeepaliveCadences.Count == 0 && this._connection.CanExecuteQueries
                 ? this._connection.CloseAsync()
                 : default;
+        }
+
+        private void SetKeepaliveCadenceNoLock()
+        {
+            TimeoutValue minCadence = Timeout.InfiniteTimeSpan;
+            foreach (var kvp in this._heldLocksToKeepaliveCadences)
+            {
+                if (kvp.Value.CompareTo(minCadence) < 0)
+                {
+                    minCadence = kvp.Value;
+                }
+            }
+            this._connection.SetKeepaliveCadence(minCadence);
         }
 
         public readonly struct Result

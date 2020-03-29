@@ -20,16 +20,8 @@ namespace Medallion.Threading.Postgres
         private readonly IDbDistributedLock _internalLock;
 
         // todo revisit API
-        public PostgresDistributedLock(PostgresAdvisoryLockKey key, string connectionString, bool useMultiplexing = true)
-            : this(
-                key,
-                useMultiplexing
-                    ? new OptimisticConnectionMultiplexingDbDistributedLock(
-                        key.ToString(),
-                        connectionString ?? throw new ArgumentNullException(nameof(connectionString)),
-                        PostgresMultiplexedConnectionLockPool.Instance
-                    )
-                    : CreateOwnedConnectionLock(key, connectionString))
+        public PostgresDistributedLock(PostgresAdvisoryLockKey key, string connectionString, Action<PostgresConnectionOptionsBuilder>? options = null)
+            : this(key, CreateInternalLock(key, connectionString, options))
         {
         }
 
@@ -38,7 +30,7 @@ namespace Medallion.Threading.Postgres
                 key, 
                 new ExternalConnectionOrTransactionDbDistributedLock(
                     key.ToString(), 
-                    new PostgresDatabaseConnection(connection ?? throw new ArgumentNullException(nameof(connection)), Timeout.InfiniteTimeSpan)
+                    new PostgresDatabaseConnection(connection ?? throw new ArgumentNullException(nameof(connection)))
                 ))
         {
         }
@@ -64,15 +56,18 @@ namespace Medallion.Threading.Postgres
         // todo remove
         public bool WillGoAsync(TimeoutValue timeout, CancellationToken cancellationToken) => false;
 
-        private static IDbDistributedLock CreateOwnedConnectionLock(PostgresAdvisoryLockKey key, string connectionString)
+        private static IDbDistributedLock CreateInternalLock(PostgresAdvisoryLockKey key, string connectionString, Action<PostgresConnectionOptionsBuilder>? options)
         {
             if (connectionString == null) { throw new ArgumentNullException(nameof(connectionString)); }
 
-            return new OwnedConnectionOrTransactionDbDistributedLock(
-                key.ToString(),
-                () => new PostgresDatabaseConnection(connectionString, Timeout.InfiniteTimeSpan),
-                useTransaction: false
-            );
+            var (keepaliveCadence, useMultiplexing) = PostgresConnectionOptionsBuilder.GetOptions(options);
+
+            if (useMultiplexing)
+            {
+                return new OptimisticConnectionMultiplexingDbDistributedLock(key.ToString(), connectionString, PostgresMultiplexedConnectionLockPool.Instance, keepaliveCadence);
+            }
+
+            return new OwnedConnectionOrTransactionDbDistributedLock(key.ToString(), () => new PostgresDatabaseConnection(connectionString), useTransaction: false, keepaliveCadence);
         }
     }
 }

@@ -45,6 +45,7 @@ namespace Medallion.Threading.Internal.Data
             string name,
             TimeoutValue timeout,
             IDbSynchronizationStrategy<TLockCookie> strategy,
+            TimeoutValue keepaliveCadence,
             CancellationToken cancellationToken)
             where TLockCookie : class
         {
@@ -56,7 +57,7 @@ namespace Medallion.Threading.Internal.Data
                 var canSafelyDisposeExistingLock = false;
                 try
                 {
-                    var opportunisticResult = await existingLock.TryAcquireAsync(name, timeout, strategy, cancellationToken, opportunistic: true).ConfigureAwait(false);
+                    var opportunisticResult = await TryAcquireAsync(existingLock, opportunistic: true).ConfigureAwait(false);
                     if (opportunisticResult.Handle != null) { return opportunisticResult.Handle; }
                     // this will always be false if handle is non-null, so we can set if afterwards
                     canSafelyDisposeExistingLock = opportunisticResult.CanSafelyDispose;
@@ -66,7 +67,7 @@ namespace Medallion.Threading.Internal.Data
                         case MultiplexedConnectionLockRetry.NoRetry:
                             return null;
                         case MultiplexedConnectionLockRetry.RetryOnThisLock:
-                            var retryOnThisLockResult = await existingLock.TryAcquireAsync(name, timeout, strategy, cancellationToken, opportunistic: false).ConfigureAwait(false);
+                            var retryOnThisLockResult = await TryAcquireAsync(existingLock, opportunistic: false).ConfigureAwait(false);
                             canSafelyDisposeExistingLock = retryOnThisLockResult.CanSafelyDispose;
                             return retryOnThisLockResult.Handle;
                         case MultiplexedConnectionLockRetry.Retry:
@@ -87,7 +88,7 @@ namespace Medallion.Threading.Internal.Data
             MultiplexedConnectionLock.Result? result = null;
             try
             {
-                result = await @lock.TryAcquireAsync(name, timeout, strategy, cancellationToken, opportunistic: false).ConfigureAwait(false);
+                result = await TryAcquireAsync(@lock, opportunistic: false).ConfigureAwait(false);
             }
             finally
             {
@@ -95,6 +96,9 @@ namespace Medallion.Threading.Internal.Data
                 await this.StoreOrDisposeLockAsync(connectionString, @lock, shouldDispose: result?.CanSafelyDispose ?? true).ConfigureAwait(false);
             }
             return result.Value.Handle;
+
+            ValueTask<MultiplexedConnectionLock.Result> TryAcquireAsync(MultiplexedConnectionLock @lock, bool opportunistic) =>
+                @lock.TryAcquireAsync(name, timeout, strategy, keepaliveCadence, cancellationToken, opportunistic);
         }
 
         private async ValueTask<MultiplexedConnectionLock?> GetOrCreateLockAsync(string connectionString)

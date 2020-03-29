@@ -20,12 +20,18 @@ namespace Medallion.Threading.Internal.Data
         private readonly string _name;
         private readonly Func<DatabaseConnection> _connectionFactory;
         private readonly bool _useTransaction;
+        private readonly TimeoutValue _keepaliveCadence;
 
-        public OwnedConnectionOrTransactionDbDistributedLock(string name, Func<DatabaseConnection> connectionFactory, bool useTransaction)
+        public OwnedConnectionOrTransactionDbDistributedLock(
+            string name, 
+            Func<DatabaseConnection> connectionFactory, 
+            bool useTransaction,
+            TimeoutValue keepaliveCadence)
         {
             this._name = name;
             this._connectionFactory = connectionFactory;
             this._useTransaction = useTransaction;
+            this._keepaliveCadence = keepaliveCadence;
         }
 
         public async ValueTask<IDistributedLockHandle?> TryAcquireAsync<TLockCookie>(
@@ -56,6 +62,10 @@ namespace Medallion.Threading.Internal.Data
                 if (lockCookie != null)
                 {
                     result = new Handle<TLockCookie>(connection, strategy, this._name, lockCookie, this._useTransaction);
+                    if (!this._keepaliveCadence.IsInfinite)
+                    {
+                        connection.SetKeepaliveCadence(this._keepaliveCadence);
+                    }
                 }
             }
             finally
@@ -128,7 +138,7 @@ namespace Medallion.Threading.Internal.Data
                         // If we're not using a transaction, explicit release is required due to connection pooling. 
                         // For a pooled connection, simply calling Dispose() will not release the lock: it just 
                         // returns the connection to the pool
-                        if (!this._useTransaction && this.Connection.CanExecuteQueries)
+                        if (!this._useTransaction)
                         {
                             await this._strategy.ReleaseAsync(this.Connection, this._name, this._lockCookie).ConfigureAwait(false);
                         }

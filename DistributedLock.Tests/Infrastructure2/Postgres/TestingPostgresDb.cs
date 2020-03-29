@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Medallion.Threading.Tests.Postgres
 {
@@ -53,5 +54,22 @@ namespace Medallion.Threading.Tests.Postgres
         }
 
         public DbConnection CreateConnection() => new NpgsqlConnection(this.ConnectionStringBuilder.ConnectionString);
+
+        public async Task KillIdleSessionsAsync(string applicationName, DateTimeOffset expirationDate)
+        {
+            using var connection = new NpgsqlConnection(ConnectionString);
+            await connection.OpenAsync();
+            using var command = connection.CreateCommand();
+            // based on https://stackoverflow.com/questions/13236160/is-there-a-timeout-for-idle-postgresql-connections
+            command.CommandText = @"
+                SELECT pg_terminate_backend(pid)
+                FROM pg_stat_activity
+                WHERE application_name = @applicationName
+                    AND state = 'idle'
+                    AND state_change < @expirationDate";
+            command.Parameters.AddWithValue("applicationName", applicationName);
+            command.Parameters.AddWithValue("expirationDate", expirationDate);
+            await command.ExecuteNonQueryAsync();
+        }
     }
 }

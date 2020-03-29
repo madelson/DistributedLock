@@ -32,10 +32,10 @@ namespace Medallion.Threading.Tests.SqlServer
             var connectionManagementProvider = new TConnectionManagementProvider();
             this.RegisterCleanupAction(connectionManagementProvider.Dispose);
             var connectionInfo = connectionManagementProvider.GetConnectionInfo();
-            if (connectionInfo.Strategy.HasValue)
-            {
-                return new SqlDistributedReaderWriterLock(name, connectionInfo.ConnectionString!, connectionInfo.Strategy.Value);
-            }
+            //if (connectionInfo.Strategy.HasValue)
+            //{
+            //    return new SqlDistributedReaderWriterLock(name, connectionInfo.ConnectionString!, connectionInfo.Strategy.Value);
+            //}
             if (connectionInfo.ConnectionString != null)
             {
                 return new SqlDistributedReaderWriterLock(name, connectionInfo.ConnectionString);

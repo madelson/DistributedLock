@@ -6,23 +6,25 @@ using System.Collections.Generic;
 using System.Data;
 using System.Reflection;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Medallion.Threading.SqlServer
 {
     internal sealed class SqlDatabaseConnection : DatabaseConnection
     {
-        public SqlDatabaseConnection(IDbConnection connection, TimeoutValue keepaliveCadence, bool isExternallyOwned = true)
-            : base(connection, keepaliveCadence, isExternallyOwned: isExternallyOwned)
+        public SqlDatabaseConnection(IDbConnection connection, bool isExternallyOwned = true)
+            : base(connection, isExternallyOwned: isExternallyOwned)
         {
         }
 
-        public SqlDatabaseConnection(IDbTransaction transaction, TimeoutValue keepaliveCadence)
-            : base(transaction, keepaliveCadence, isExternallyOwned: true)
+        public SqlDatabaseConnection(IDbTransaction transaction)
+            : base(transaction, isExternallyOwned: true)
         {
         }
 
-        public SqlDatabaseConnection(string connectionString, TimeoutValue keepaliveCadence)
-            : base(new SqlConnection(connectionString), keepaliveCadence, isExternallyOwned: false)
+        public SqlDatabaseConnection(string connectionString)
+            : this(new SqlConnection(connectionString), isExternallyOwned: false)
         {
         }
 
@@ -54,6 +56,18 @@ namespace Medallion.Threading.SqlServer
 
             // this shows up when you call DbCommand.Cancel()
             return exception is InvalidOperationException;
+        }
+
+        protected override Task SleepAsync(TimeSpan sleepTime, CancellationToken cancellationToken, Func<DatabaseCommand, CancellationToken, ValueTask<int>> executor)
+        {
+            Invariant.Require(sleepTime >= TimeSpan.Zero && sleepTime < TimeSpan.FromDays(1));
+
+            var command = this.CreateCommand();
+            command.SetCommandText(@"WAITFOR DELAY @delay");
+            command.AddParameter("delay", sleepTime.ToString(@"hh\:mm\:ss\.fff"), DbType.AnsiStringFixedLength);
+            command.SetTimeout(sleepTime);
+
+            return executor(command, cancellationToken).AsTask();
         }
     }
 }

@@ -1,6 +1,7 @@
 using Medallion.Threading.Data;
 using Medallion.Threading.Internal;
 using Medallion.Threading.SqlServer;
+using Medallion.Threading.Tests.SqlServer;
 using NUnit.Framework;
 using System;
 using System.Data.Common;
@@ -9,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading.Tests.Data
 {
-    // todo should this be extended to cover all DatabaseConnections?
+    // todo should this be extended to cover all DatabaseConnections? if not it should move out of Data
     public class SqlDatabaseConnectionTest
     {
         [Test, Combinatorial]
@@ -73,9 +74,8 @@ namespace Medallion.Threading.Tests.Data
         private static SqlDatabaseConnection CreateConnection(bool isSystemDataSqlClient) =>
             new SqlDatabaseConnection(
                 isSystemDataSqlClient
-                    ? new System.Data.SqlClient.SqlConnection(ConnectionStringProvider.ConnectionString).As<DbConnection>()
-                    : new Microsoft.Data.SqlClient.SqlConnection(ConnectionStringProvider.ConnectionString),
-                keepaliveCadence: Timeout.InfiniteTimeSpan,
+                    ? new System.Data.SqlClient.SqlConnection(TestingSqlServerDb.ConnectionString).As<DbConnection>()
+                    : new Microsoft.Data.SqlClient.SqlConnection(TestingSqlServerDb.ConnectionString),
                 isExternallyOwned: false
             );
     }

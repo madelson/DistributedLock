@@ -17,24 +17,8 @@ namespace Medallion.Threading.SqlServer
         private readonly SqlSemaphore _strategy;
 
         #region ---- Constructors ----
-        /// <summary>
-        /// Creates a semaphore with name <paramref name="name"/> that can be acquired up to <paramref name="maxCount"/> 
-        /// times concurrently. Uses the given <paramref name="connectionString"/> to connect to the database.
-        /// 
-        /// Uses <see cref="SqlDistributedLockConnectionStrategy.Default"/>
-        /// </summary>
-        public SqlDistributedSemaphore(string name, int maxCount, string connectionString)
-            : this(name, maxCount, connectionString, SqlDistributedLockConnectionStrategy.Default)
-        {
-        }
-
-        /// <summary>
-        /// Creates a semaphore with name <paramref name="name"/> that can be acquired up to <paramref name="maxCount"/> 
-        /// times concurrently. Uses the given <paramref name="connectionString"/> to connect to the database via the strategy
-        /// specified by <paramref name="connectionStrategy"/>
-        /// </summary>
-        public SqlDistributedSemaphore(string name, int maxCount, string connectionString, SqlDistributedLockConnectionStrategy connectionStrategy)
-            : this(name, maxCount, name => SqlDistributedLock.CreateInternalLock(name, connectionString, connectionStrategy))
+        public SqlDistributedSemaphore(string name, int maxCount, string connectionString, Action<SqlConnectionOptionsBuilder>? options = null)
+            : this(name, maxCount, name => SqlDistributedLock.CreateInternalLock(name, connectionString, options))
         {
         }
 
@@ -45,7 +29,7 @@ namespace Medallion.Threading.SqlServer
         /// not attempt to open, close, or dispose it
         /// </summary>
         public SqlDistributedSemaphore(string name, int maxCount, IDbConnection connection)
-            : this(name, maxCount, name => new ExternalConnectionOrTransactionDbDistributedLock(name, new SqlDatabaseConnection(connection ?? throw new ArgumentNullException(nameof(connection)), Timeout.InfiniteTimeSpan)))
+            : this(name, maxCount, name => new ExternalConnectionOrTransactionDbDistributedLock(name, new SqlDatabaseConnection(connection ?? throw new ArgumentNullException(nameof(connection)))))
         {
         }
 
@@ -56,7 +40,7 @@ namespace Medallion.Threading.SqlServer
         /// the <see cref="SqlDistributedSemaphore"/> will not attempt to open, close, commit, roll back, or dispose them
         /// </summary>
         public SqlDistributedSemaphore(string name, int maxCount, IDbTransaction transaction)
-            : this(name, maxCount, name => new ExternalConnectionOrTransactionDbDistributedLock(name, new SqlDatabaseConnection(transaction ?? throw new ArgumentNullException(nameof(transaction)), Timeout.InfiniteTimeSpan)))
+            : this(name, maxCount, name => new ExternalConnectionOrTransactionDbDistributedLock(name, new SqlDatabaseConnection(transaction ?? throw new ArgumentNullException(nameof(transaction)))))
         {
         }
 

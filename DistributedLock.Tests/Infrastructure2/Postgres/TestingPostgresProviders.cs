@@ -12,8 +12,11 @@ namespace Medallion.Threading.Tests.Postgres
         public override IDistributedLock CreateLockWithExactName(string name) =>
             this.Strategy.GetConnectionOptions()
                 .Create(
-                    (connectionString, options) =>
-                        new PostgresDistributedLock(new PostgresAdvisoryLockKey(name, allowHashing: false), connectionString, useMultiplexing: options == TestingConnectionStringOptions.UseMultiplexing),
+                    (connectionString, options) => new PostgresDistributedLock(
+                        new PostgresAdvisoryLockKey(name, allowHashing: false), 
+                        connectionString, 
+                        o => o.UseMultiplexing(options.useMultiplexing).KeepaliveCadence(options.keepaliveCadence)
+                    ),
                     connection => new PostgresDistributedLock(new PostgresAdvisoryLockKey(name, allowHashing: false), connection),
                     transaction => new PostgresDistributedLock(new PostgresAdvisoryLockKey(name, allowHashing: false), transaction.Connection)
             );

@@ -61,21 +61,21 @@ namespace Medallion.Threading.Internal.Data
 
         #region ---- Execution ----
         public ValueTask<int> ExecuteNonQueryAsync(CancellationToken cancellationToken, bool disallowAsyncCancellation = false) =>
-            this.ExecuteNonQueryAsync(cancellationToken, disallowAsyncCancellation, isKeepaliveQuery: false);
+            this.ExecuteNonQueryAsync(cancellationToken, disallowAsyncCancellation, isConnectionMonitoringQuery: false);
 
         // internal API for KeepaliveHelper
-        internal ValueTask<int> ExecuteNonQueryAsync(CancellationToken cancellationToken, bool disallowAsyncCancellation, bool isKeepaliveQuery) =>
-            this.ExecuteAsync((c, t) => c.ExecuteNonQueryAsync(t), c => c.ExecuteNonQuery(), cancellationToken, disallowAsyncCancellation, isKeepaliveQuery);
+        internal ValueTask<int> ExecuteNonQueryAsync(CancellationToken cancellationToken, bool disallowAsyncCancellation, bool isConnectionMonitoringQuery) =>
+            this.ExecuteAsync((c, t) => c.ExecuteNonQueryAsync(t), c => c.ExecuteNonQuery(), cancellationToken, disallowAsyncCancellation, isConnectionMonitoringQuery);
 
         public ValueTask<object> ExecuteScalarAsync(CancellationToken cancellationToken, bool disallowAsyncCancellation = false) =>
-            this.ExecuteAsync((c, t) => c.ExecuteScalarAsync(t), c => c.ExecuteScalar(), cancellationToken, disallowAsyncCancellation, isKeepaliveQuery: false);
+            this.ExecuteAsync((c, t) => c.ExecuteScalarAsync(t), c => c.ExecuteScalar(), cancellationToken, disallowAsyncCancellation, isConnectionMonitoringQuery: false);
 
         private async ValueTask<TResult> ExecuteAsync<TResult>(
             Func<DbCommand, CancellationToken, Task<TResult>> executeAsync,
             Func<IDbCommand, TResult> executeSync,
             CancellationToken cancellationToken,
             bool disallowAsyncCancellation,
-            bool isKeepaliveQuery)
+            bool isConnectionMonitoringQuery)
         {
             if (this._connection.ShouldPrepareCommands)
             {
@@ -86,7 +86,7 @@ namespace Medallion.Threading.Internal.Data
             {
                 if (!cancellationToken.CanBeCanceled)
                 {
-                    using var _ = await this.AcquireKeepaliveLockIfNeeded(isKeepaliveQuery).ConfigureAwait(false);
+                    using var _ = await this.AcquireConnectionLockIfNeeded(isConnectionMonitoringQuery).ConfigureAwait(false);
                     return await executeAsync(dbCommand, CancellationToken.None).ConfigureAwait(false);
                 }
                 else if (!disallowAsyncCancellation)
@@ -95,7 +95,7 @@ namespace Medallion.Threading.Internal.Data
                         (dbCommand, executeAsync),
                         (state, cancellationToken) => state.executeAsync(state.dbCommand, cancellationToken).AsValueTask(),
                         cancellationToken,
-                        isKeepaliveQuery
+                        isConnectionMonitoringQuery
                     ).ConfigureAwait(false);
                 }
                 else
@@ -138,7 +138,7 @@ namespace Medallion.Threading.Internal.Data
                         (command: this._command, executeSync),
                         (state, cancellationToken) => state.executeSync(state.command).AsValueTask(),
                         cancellationToken,
-                        isKeepaliveQuery
+                        isConnectionMonitoringQuery
                     ).ConfigureAwait(false);
                 }
                 finally
@@ -148,7 +148,7 @@ namespace Medallion.Threading.Internal.Data
                 }
             }
 
-            using var __ = await this.AcquireKeepaliveLockIfNeeded(isKeepaliveQuery).ConfigureAwait(false);
+            using var __ = await this.AcquireConnectionLockIfNeeded(isConnectionMonitoringQuery).ConfigureAwait(false);
             return executeSync(this._command);
         }
 
@@ -156,13 +156,13 @@ namespace Medallion.Threading.Internal.Data
             TState state,
             Func<TState, CancellationToken, ValueTask<TResult>> executeAsync,
             CancellationToken cancellationToken,
-            bool isKeepaliveQuery)
+            bool isConnectionMonitoringQuery)
         {
             Invariant.Require(cancellationToken.CanBeCanceled);
 
             try
             {
-                using var _ = await this.AcquireKeepaliveLockIfNeeded(isKeepaliveQuery).ConfigureAwait(false);
+                using var _ = await this.AcquireConnectionLockIfNeeded(isConnectionMonitoringQuery).ConfigureAwait(false);
                 return await executeAsync(state, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception ex)
@@ -184,6 +184,7 @@ namespace Medallion.Threading.Internal.Data
 #if NETSTANDARD2_1
             if (!SyncOverAsync.IsSynchronous && this._command is DbCommand dbCommand)
             {
+                // todo does canceling prepareasync doom pg transaction?
                 return dbCommand.PrepareAsync(cancellationToken).AsValueTask();
             }
 #elif !NETSTANDARD2_0 && !NET461
@@ -199,10 +200,10 @@ namespace Medallion.Threading.Internal.Data
 
         // NOTE: we do not accept cancellation token here since the keepalive lock should never be held for very long except in
         // bug scenarios (e. g. multi-threaded use of a connection)
-        private ValueTask<IDisposable?> AcquireKeepaliveLockIfNeeded(bool isKeepaliveQuery) =>
-            isKeepaliveQuery
+        private ValueTask<IDisposable?> AcquireConnectionLockIfNeeded(bool isConnectionMonitoringQuery) =>
+            isConnectionMonitoringQuery
                 ? default(IDisposable?).AsValueTask()
-                : this._connection.KeepaliveHelper?.ConnectionLock.TryAcquireAsync(Timeout.InfiniteTimeSpan, CancellationToken.None) 
+                : this._connection.ConnectionMonitor?.AcquireConnectionLockAsync(CancellationToken.None).Convert(To<IDisposable?>.ValueTask)
                     ?? default(IDisposable?).AsValueTask();
     }
 }

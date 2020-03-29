@@ -4,7 +4,7 @@ using Medallion.Threading.Tests.Data;
 using Microsoft.Data.SqlClient;
 using NUnit.Framework;
 using System;
-using System.Data.Common;
+using System.Data;
 using System.Threading.Tasks;
 
 namespace Medallion.Threading.Tests.SqlServer
@@ -14,15 +14,13 @@ namespace Medallion.Threading.Tests.SqlServer
         [Test]
         public void TestBadConstructorArguments()
         {
-            Assert.Catch<ArgumentNullException>(() => new SqlDistributedLock(null!, ConnectionStringProvider.ConnectionString));
-            Assert.Catch<ArgumentNullException>(() => new SqlDistributedLock(null!, ConnectionStringProvider.ConnectionString, exactName: true));
+            Assert.Catch<ArgumentNullException>(() => new SqlDistributedLock(null!, TestingSqlServerDb.ConnectionString));
+            Assert.Catch<ArgumentNullException>(() => new SqlDistributedLock(null!, TestingSqlServerDb.ConnectionString, exactName: true));
             Assert.Catch<ArgumentNullException>(() => new SqlDistributedLock("a", default(string)!));
-            Assert.Catch<ArgumentNullException>(() => new SqlDistributedLock("a", default(DbTransaction)!));
-            Assert.Catch<ArgumentNullException>(() => new SqlDistributedLock("a", default(DbConnection)!));
-            Assert.Catch<ArgumentException>(() => new SqlDistributedLock("a", ConnectionStringProvider.ConnectionString, (SqlDistributedLockConnectionStrategy)(-1)));
-            Assert.Catch<ArgumentException>(() => new SqlDistributedLock("a", ConnectionStringProvider.ConnectionString, (SqlDistributedLockConnectionStrategy)5));
-            Assert.Catch<FormatException>(() => new SqlDistributedLock(new string('a', SqlDistributedLock.MaxNameLength + 1), ConnectionStringProvider.ConnectionString, exactName: true));
-            Assert.DoesNotThrow(() => new SqlDistributedLock(new string('a', SqlDistributedLock.MaxNameLength), ConnectionStringProvider.ConnectionString, exactName: true));
+            Assert.Catch<ArgumentNullException>(() => new SqlDistributedLock("a", default(IDbTransaction)!));
+            Assert.Catch<ArgumentNullException>(() => new SqlDistributedLock("a", default(IDbConnection)!));
+            Assert.Catch<FormatException>(() => new SqlDistributedLock(new string('a', SqlDistributedLock.MaxNameLength + 1), TestingSqlServerDb.ConnectionString, exactName: true));
+            Assert.DoesNotThrow(() => new SqlDistributedLock(new string('a', SqlDistributedLock.MaxNameLength), TestingSqlServerDb.ConnectionString, exactName: true));
         }
 
         [Test]
@@ -44,7 +42,7 @@ namespace Medallion.Threading.Tests.SqlServer
         [Test]
         public async Task TestSqlCommandMustParticipateInTransaction()
         {
-            using var connection = new SqlConnection(SqlServerProvider.ConnectionString);
+            using var connection = new SqlConnection(TestingSqlServerDb.ConnectionString);
             await connection.OpenAsync();
 
             using var transaction = connection.BeginTransaction();

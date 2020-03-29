@@ -110,5 +110,54 @@ namespace Medallion.Threading.Tests.Postgres
             var ex = Assert.Throws<InvalidOperationException>(() => connection.BeginTransaction().Dispose());
             Assert.That(ex.Message, Does.Contain("A transaction is already in progress"));
         }
+
+        [Test]
+        public async Task TestDoesNotDetectConnectionBreakViaState()
+        {
+            using var connection = new NpgsqlConnection(TestingPostgresDb.ConnectionString);
+            await connection.OpenAsync();
+
+            using var getPidCommand = connection.CreateCommand();
+            getPidCommand.CommandText = "SELECT pg_backend_pid()";
+            var pid = (int)(await getPidCommand.ExecuteScalarAsync());
+
+            var stateChangedEvent = new ManualResetEventSlim(initialState: false);
+            connection.StateChange += (_, _2) => stateChangedEvent.Set();
+
+            // kill the connection from the back end
+            using var killingConnection = new NpgsqlConnection(TestingPostgresDb.ConnectionString);
+            await killingConnection.OpenAsync();
+            using var killCommand = killingConnection.CreateCommand();
+            killCommand.CommandText = $"SELECT pg_terminate_backend({pid})";
+            await killCommand.ExecuteNonQueryAsync();
+
+            Assert.IsFalse(stateChangedEvent.Wait(TimeSpan.FromSeconds(.1)));
+
+            Assert.Throws<NpgsqlException>(() => getPidCommand.ExecuteScalar());
+            Assert.IsTrue(stateChangedEvent.Wait(TimeSpan.FromSeconds(5)));
+        }
+
+        // replicates https://github.com/npgsql/npgsql/issues/2912
+        [Test]
+        public async Task TestPrepareThrowsNullReferenceExceptionOnTerminatedConnection()
+        {
+            using var connection = new NpgsqlConnection(TestingPostgresDb.ConnectionString);
+            await connection.OpenAsync();
+
+            using var getPidCommand = connection.CreateCommand();
+            getPidCommand.CommandText = "SELECT pg_backend_pid()";
+            var pid = (int)(await getPidCommand.ExecuteScalarAsync());
+
+            // kill the connection from the back end
+            using var killingConnection = new NpgsqlConnection(TestingPostgresDb.ConnectionString);
+            await killingConnection.OpenAsync();
+            using var killCommand = killingConnection.CreateCommand();
+            killCommand.CommandText = $"SELECT pg_terminate_backend({pid})";
+            await killCommand.ExecuteNonQueryAsync();
+
+            await Task.Delay(10);
+
+            Assert.ThrowsAsync<NullReferenceException>(() => getPidCommand.PrepareAsync());
+        }
     }
 }

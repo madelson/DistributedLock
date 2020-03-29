@@ -51,7 +51,7 @@ namespace Medallion.Threading.Postgres
                 // roll back a save point without knowing that it has been set up, we start the save point in its own
                 // query before we try-catch
                 using var setSavePointCommand = connection.CreateCommand();
-                setSavePointCommand.SetCommandText($"SAVEPOINT " + SavePointName);
+                setSavePointCommand.SetCommandText("SAVEPOINT " + SavePointName);
                 await setSavePointCommand.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
             }
 
@@ -110,8 +110,8 @@ namespace Medallion.Threading.Postgres
                 {
                     // attempt to clear the timeout variables we set
                     using var rollBackSavePointCommand = connection.CreateCommand();
-                    acquireCommand.SetCommandText("ROLLBACK TO SAVEPOINT " + SavePointName);
-                    await acquireCommand.ExecuteNonQueryAsync(CancellationToken.None).ConfigureAwait(false);
+                    rollBackSavePointCommand.SetCommandText("ROLLBACK TO SAVEPOINT " + SavePointName);
+                    await rollBackSavePointCommand.ExecuteNonQueryAsync(CancellationToken.None).ConfigureAwait(false);
                 }
             }
         }
@@ -136,8 +136,8 @@ namespace Medallion.Threading.Postgres
                                 ON d.oid = l.database
                             WHERE l.locktype = 'advisory' 
                                 AND {AddPGLocksFilterParametersAndGetFilterExpression(command, key)} 
-                                AND l.pid = pg_backend_pid() 
-                                AND d.datname = current_database()
+                                AND l.pid = pg_catalog.pg_backend_pid() 
+                                AND d.datname = pg_catalog.current_database()
                         ) 
                             THEN {AlreadyHeldReturnCode}
                         ELSE
@@ -165,7 +165,7 @@ namespace Medallion.Threading.Postgres
                 // OR (SELECT 1 FROM (SELECT pg_advisory_lock(@key)) f)
                 var isTry = timeout.IsZero;
                 if (!isTry) { commandText.Append("(SELECT 1 FROM (SELECT "); }
-                commandText.Append("pg");
+                commandText.Append("pg_catalog.pg");
                 if (isTry) { commandText.Append("_try"); }
                 commandText.Append("_advisory");
                 commandText.Append("_lock");
@@ -202,7 +202,7 @@ namespace Medallion.Threading.Postgres
         private async ValueTask ReleaseAsync(DatabaseConnection connection, PostgresAdvisoryLockKey key, bool isTry)
         {
             using var command = connection.CreateCommand();
-            command.SetCommandText($"SELECT pg_advisory_unlock({AddKeyParametersAndGetKeyArguments(command, key)})");
+            command.SetCommandText($"SELECT pg_catalog.pg_advisory_unlock({AddKeyParametersAndGetKeyArguments(command, key)})");
             var result = (bool)await command.ExecuteScalarAsync(CancellationToken.None).ConfigureAwait(false);
             if (!isTry && !result)
             {
