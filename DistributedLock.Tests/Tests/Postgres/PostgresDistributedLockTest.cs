@@ -18,7 +18,7 @@ namespace Medallion.Threading.Tests.Postgres
         [Test]
         public async Task TestInt64AndInt32PairKeyNamespacesAreDifferent()
         {
-            var connectionString = PostgresProvider.ConnectionString;
+            var connectionString = TestingPostgresDb.ConnectionString;
             var key1 = new PostgresAdvisoryLockKey(0);
             var key2 = new PostgresAdvisoryLockKey(0, 0);
             var @lock1 = new PostgresDistributedLock(key1, connectionString);
@@ -34,11 +34,11 @@ namespace Medallion.Threading.Tests.Postgres
         [Test]
         public async Task TestWorksWithAmbientTransaction()
         {
-            using var connection = new NpgsqlConnection(PostgresProvider.ConnectionString);
+            using var connection = new NpgsqlConnection(TestingPostgresDb.ConnectionString);
             await connection.OpenAsync();
 
             var connectionLock = new PostgresDistributedLock(new PostgresAdvisoryLockKey("AmbTrans"), connection);
-            var otherLock = new PostgresDistributedLock(connectionLock.Key, PostgresProvider.ConnectionString);
+            var otherLock = new PostgresDistributedLock(connectionLock.Key, TestingPostgresDb.ConnectionString);
             using var otherLockHandle = await otherLock.AcquireAsync();
 
             using (var transaction = connection.BeginTransaction())

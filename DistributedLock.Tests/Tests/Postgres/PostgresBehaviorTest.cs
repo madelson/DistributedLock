@@ -22,7 +22,7 @@ namespace Medallion.Threading.Tests.Postgres
         [Test]
         public async Task TestPostgresCommandAutomaticallyParticipatesInTransaction()
         {
-            using var connection = new NpgsqlConnection(PostgresProvider.ConnectionString);
+            using var connection = new NpgsqlConnection(TestingPostgresDb.ConnectionString);
             await connection.OpenAsync();
 
             using var transaction = await connection.BeginTransactionAsync();
@@ -65,7 +65,7 @@ namespace Medallion.Threading.Tests.Postgres
 
             async Task RunTransactionWithAbortAsync(bool useSavePoint)
             {
-                using var connection = new NpgsqlConnection(PostgresProvider.ConnectionString);
+                using var connection = new NpgsqlConnection(TestingPostgresDb.ConnectionString);
                 await connection.OpenAsync();
 
                 using (connection.BeginTransaction())
@@ -100,7 +100,7 @@ namespace Medallion.Threading.Tests.Postgres
         [Test]
         public async Task TestCanDetectTransactionWithBeginTransactionException()
         {
-            using var connection = new NpgsqlConnection(PostgresProvider.ConnectionString);
+            using var connection = new NpgsqlConnection(TestingPostgresDb.ConnectionString);
             await connection.OpenAsync();
 
             Assert.DoesNotThrow(() => connection.BeginTransaction().Dispose());
