@@ -89,10 +89,7 @@ namespace Medallion.Threading.Tests.Data
             }
 
             // assign a unique app name to make sure we'll own the entire pool
-            this._lockProvider.Strategy.Db.ConnectionStringBuilder["Application Name"] = DistributedLockHelpers.ToSafeName(
-                this._lockProvider.GetUniqueSafeName(),
-                maxNameLength: this._lockProvider.Strategy.Db.MaxApplicationNameLength, s => s
-            );
+            this._lockProvider.Strategy.SetUniqueApplicationName();
             this._lockProvider.Strategy.Db.MaxPoolSize = 1;
 
             async Task Test()

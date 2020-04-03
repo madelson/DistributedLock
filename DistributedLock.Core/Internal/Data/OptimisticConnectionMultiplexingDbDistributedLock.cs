@@ -28,7 +28,7 @@ namespace Medallion.Threading.Internal.Data
             this._connectionString = connectionString;
             this._multiplexedConnectionLockPool = multiplexedConnectionLockPool;
             this._keepaliveCadence = keepaliveCadence;
-            this._fallbackLock = new OwnedConnectionOrTransactionDbDistributedLock(
+            this._fallbackLock = new DedicatedConnectionOrTransactionDbDistributedLock(
                 name, 
                 () => this._multiplexedConnectionLockPool.ConnectionFactory(this._connectionString),
                 useTransaction: false,

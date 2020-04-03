@@ -63,7 +63,9 @@ namespace Medallion.Threading.Internal.Data
         public ValueTask<int> ExecuteNonQueryAsync(CancellationToken cancellationToken, bool disallowAsyncCancellation = false) =>
             this.ExecuteNonQueryAsync(cancellationToken, disallowAsyncCancellation, isConnectionMonitoringQuery: false);
 
-        // internal API for KeepaliveHelper
+        /// <summary>
+        /// Internal API for <see cref="ConnectionMonitor"/>
+        /// </summary>
         internal ValueTask<int> ExecuteNonQueryAsync(CancellationToken cancellationToken, bool disallowAsyncCancellation, bool isConnectionMonitoringQuery) =>
             this.ExecuteAsync((c, t) => c.ExecuteNonQueryAsync(t), c => c.ExecuteNonQuery(), cancellationToken, disallowAsyncCancellation, isConnectionMonitoringQuery);
 
@@ -77,16 +79,12 @@ namespace Medallion.Threading.Internal.Data
             bool disallowAsyncCancellation,
             bool isConnectionMonitoringQuery)
         {
-            if (this._connection.ShouldPrepareCommands)
-            {
-                await this.PrepareAsync(cancellationToken).ConfigureAwait(false);
-            }
-
             if (!SyncOverAsync.IsSynchronous && this._command is DbCommand dbCommand)
             {
                 if (!cancellationToken.CanBeCanceled)
                 {
                     using var _ = await this.AcquireConnectionLockIfNeeded(isConnectionMonitoringQuery).ConfigureAwait(false);
+                    await this.PrepareIfNeededAsync(CancellationToken.None).ConfigureAwait(false);
                     return await executeAsync(dbCommand, CancellationToken.None).ConfigureAwait(false);
                 }
                 else if (!disallowAsyncCancellation)
@@ -160,9 +158,10 @@ namespace Medallion.Threading.Internal.Data
         {
             Invariant.Require(cancellationToken.CanBeCanceled);
 
+            using var _ = await this.AcquireConnectionLockIfNeeded(isConnectionMonitoringQuery).ConfigureAwait(false);
+            await this.PrepareIfNeededAsync(cancellationToken).ConfigureAwait(false);
             try
             {
-                using var _ = await this.AcquireConnectionLockIfNeeded(isConnectionMonitoringQuery).ConfigureAwait(false);
                 return await executeAsync(state, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception ex)
@@ -179,19 +178,23 @@ namespace Medallion.Threading.Internal.Data
             }
         }
 
-        private ValueTask PrepareAsync(CancellationToken cancellationToken)
+        private ValueTask PrepareIfNeededAsync(CancellationToken cancellationToken)
         {
-#if NETSTANDARD2_1
-            if (!SyncOverAsync.IsSynchronous && this._command is DbCommand dbCommand)
+            if (this._connection.ShouldPrepareCommands)
             {
-                // todo does canceling prepareasync doom pg transaction?
-                return dbCommand.PrepareAsync(cancellationToken).AsValueTask();
-            }
+#if NETSTANDARD2_1
+                if (!SyncOverAsync.IsSynchronous && this._command is DbCommand dbCommand)
+                {
+                    // todo does canceling prepareasync doom pg transaction?
+                    return dbCommand.PrepareAsync(cancellationToken).AsValueTask();
+                }
 #elif !NETSTANDARD2_0 && !NET461
-            ERROR
+                ERROR
 #endif
 
-            this._command.Prepare();
+                this._command.Prepare();
+            }
+
             return default;
         }
 #endregion

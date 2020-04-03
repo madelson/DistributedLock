@@ -3,6 +3,7 @@ using Medallion.Threading.Internal;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
@@ -26,6 +27,7 @@ namespace Medallion.Threading.Tests
         {
             this._cleanupActions.ForEach(a => a());
             this._cleanupActions.Clear();
+            this._lockProvider.Dispose();
         }
 
         [Test]
@@ -254,17 +256,101 @@ namespace Medallion.Threading.Tests
         }
 
         [Test]
+        public async Task TestHandleLostTriggersCorrectly()
+        {
+            // pre-create the lock so that semaphore5 tickets don't get created on the connection
+            // we're going to kill
+            this._lockProvider.CreateLock(nameof(TestHandleLostTriggersCorrectly));
+
+            var handleLostHelper = this._lockProvider.Strategy.PrepareForHandleLost();
+
+            var @lock = this._lockProvider.CreateLock(nameof(TestHandleLostTriggersCorrectly));
+
+            using var handle = await @lock.AcquireAsync();
+
+            handle.HandleLostToken.CanBeCanceled.ShouldEqual(handleLostHelper != null);
+            Assert.IsFalse(handle.HandleLostToken.IsCancellationRequested);
+
+            if (handleLostHelper != null)
+            {
+                using var canceledEvent = new ManualResetEventSlim(initialState: false);
+                using var registration = handle.HandleLostToken.Register(canceledEvent.Set);
+
+                Assert.IsFalse(canceledEvent.Wait(TimeSpan.FromSeconds(.05)));
+
+                handleLostHelper.Dispose();
+
+                Assert.IsTrue(canceledEvent.Wait(TimeSpan.FromSeconds(10)));
+                Assert.IsTrue(handle.HandleLostToken.IsCancellationRequested);
+            }
+
+            // todo revisit behavior here and in similar cases; do we want to fail hard on Dispose if the handle is lost?
+            try { await handle.DisposeAsync(); }
+            catch { }
+
+            Assert.Throws<ObjectDisposedException>(() => handle.HandleLostToken.GetType());
+        }
+
+        [Test]
+        public async Task TestHandleLostReturnsAlreadyCanceledIfHandleAlreadyLost()
+        {
+            // pre-create the lock so that semaphore5 tickets don't get created on the connection
+            // we're going to kill
+            this._lockProvider.CreateLock(nameof(TestHandleLostReturnsAlreadyCanceledIfHandleAlreadyLost));
+
+            var handleLostHelper = this._lockProvider.Strategy.PrepareForHandleLost();
+            if (handleLostHelper == null)
+            {
+                Assert.Pass();
+            }
+
+            var @lock = this._lockProvider.CreateLock(nameof(TestHandleLostReturnsAlreadyCanceledIfHandleAlreadyLost));
+
+            using var handle = await @lock.AcquireAsync();
+
+            handleLostHelper!.Dispose();
+
+            using var canceledEvent = new ManualResetEventSlim(initialState: false);
+            handle.HandleLostToken.Register(canceledEvent.Set);
+            Assert.IsTrue(canceledEvent.Wait(TimeSpan.FromSeconds(5)));
+            
+            // todo revisit
+            try { handle.Dispose(); }
+            catch { }
+        }
+
+        [Test]
+        public void TestCanSafelyDisposeWhileMonitoring()
+        {
+            var @lock = this._lockProvider.CreateLock(nameof(TestCanSafelyDisposeWhileMonitoring));
+
+            using var handle = @lock.Acquire();
+
+            // force monitoring to happen
+            using var canceledEvent = new ManualResetEventSlim(initialState: false);
+            using var registration = handle.HandleLostToken.Register(canceledEvent.Set);
+            Assert.IsFalse(canceledEvent.Wait(TimeSpan.FromSeconds(.05)));
+
+            Assert.DoesNotThrow(handle.Dispose);
+        }
+
+        [Test]
         public async Task TestLockAbandonment()
         {
-            var lockName = nameof(TestLockAbandonment);
-            new Action<string>(name => this._lockProvider.CreateLock(name).Acquire())(lockName);
+            const string LockName = nameof(TestLockAbandonment);
 
+            // pre-create the lock so that the semaphore5 provider will allocate the extra tickets
+            // against a connection that won't get cleand up when we force additional cleanup
+            this._lockProvider.CreateLock(LockName);
+
+            this._lockProvider.Strategy.PrepareForHandleAbandonment();
+            new Action<string>(name => this._lockProvider.CreateLock(name).Acquire())(LockName);
             GC.Collect();
             GC.WaitForPendingFinalizers();
             await ManagedFinalizerQueue.Instance.FinalizeAsync();
             this._lockProvider.Strategy.PerformAdditionalCleanupForHandleAbandonment();
 
-            using var handle = this._lockProvider.CreateLock(lockName).TryAcquire();
+            using var handle = this._lockProvider.CreateLock(LockName).TryAcquire();
             Assert.IsNotNull(handle, this.GetType().Name);
         }
 

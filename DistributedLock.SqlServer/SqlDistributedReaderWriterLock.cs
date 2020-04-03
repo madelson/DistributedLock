@@ -29,12 +29,12 @@ namespace Medallion.Threading.SqlServer
         }
 
         public SqlDistributedReaderWriterLock(string name, IDbConnection connection, bool exactName = false)
-            : this(name, exactName, n => new ExternalConnectionOrTransactionDbDistributedLock(n, new SqlDatabaseConnection(connection ?? throw new ArgumentNullException(nameof(connection)))))
+            : this(name, exactName, n => SqlDistributedLock.CreateInternalLock(n, connection))
         {
         }
 
         public SqlDistributedReaderWriterLock(string name, IDbTransaction transaction, bool exactName = false)
-            : this(name, exactName, n => new ExternalConnectionOrTransactionDbDistributedLock(n, new SqlDatabaseConnection(transaction ?? throw new ArgumentNullException(nameof(transaction)))))
+            : this(name, exactName, n => SqlDistributedLock.CreateInternalLock(n, transaction))
         {
         }
 

@@ -20,7 +20,7 @@ namespace Medallion.Threading.Tests.Data
                 while (!cancellationToken.IsCancellationRequested)
                 {
                     var expirationDate = DateTimeOffset.Now - idleTimeout;
-                    await db.KillIdleSessionsAsync(applicationName, expirationDate);
+                    await db.KillSessionsAsync(applicationName, expirationDate);
                     await Task.Delay(TimeSpan.FromTicks(idleTimeout.Ticks / 2), cancellationToken);
                 }
             });

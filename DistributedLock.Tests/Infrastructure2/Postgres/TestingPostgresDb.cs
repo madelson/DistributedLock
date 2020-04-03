@@ -1,6 +1,7 @@
 ﻿using Medallion.Threading.Internal;
 using Medallion.Threading.Tests.Data;
 using Npgsql;
+using NpgsqlTypes;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
@@ -55,7 +56,7 @@ namespace Medallion.Threading.Tests.Postgres
 
         public DbConnection CreateConnection() => new NpgsqlConnection(this.ConnectionStringBuilder.ConnectionString);
 
-        public async Task KillIdleSessionsAsync(string applicationName, DateTimeOffset expirationDate)
+        public async Task KillSessionsAsync(string applicationName, DateTimeOffset? idleSince)
         {
             using var connection = new NpgsqlConnection(ConnectionString);
             await connection.OpenAsync();
@@ -65,10 +66,13 @@ namespace Medallion.Threading.Tests.Postgres
                 SELECT pg_terminate_backend(pid)
                 FROM pg_stat_activity
                 WHERE application_name = @applicationName
-                    AND state = 'idle'
-                    AND state_change < @expirationDate";
+                    AND (
+                        @idleSince IS NULL
+                        OR (state = 'idle' AND state_change < @idleSince)
+                    )";
             command.Parameters.AddWithValue("applicationName", applicationName);
-            command.Parameters.AddWithValue("expirationDate", expirationDate);
+            command.Parameters.Add(new NpgsqlParameter("idleSince", idleSince ?? DBNull.Value.As<object>()) { NpgsqlDbType = NpgsqlDbType.TimestampTz });
+
             await command.ExecuteNonQueryAsync();
         }
     }

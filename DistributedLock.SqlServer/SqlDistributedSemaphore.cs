@@ -17,7 +17,7 @@ namespace Medallion.Threading.SqlServer
 
         #region ---- Constructors ----
         public SqlDistributedSemaphore(string name, int maxCount, string connectionString, Action<SqlConnectionOptionsBuilder>? options = null)
-            : this(name, maxCount, name => SqlDistributedLock.CreateInternalLock(name, connectionString, options))
+            : this(name, maxCount, n => SqlDistributedLock.CreateInternalLock(n, connectionString, options))
         {
         }
 
@@ -28,7 +28,7 @@ namespace Medallion.Threading.SqlServer
         /// not attempt to open, close, or dispose it
         /// </summary>
         public SqlDistributedSemaphore(string name, int maxCount, IDbConnection connection)
-            : this(name, maxCount, name => new ExternalConnectionOrTransactionDbDistributedLock(name, new SqlDatabaseConnection(connection ?? throw new ArgumentNullException(nameof(connection)))))
+            : this(name, maxCount, n => SqlDistributedLock.CreateInternalLock(n, connection))
         {
         }
 
@@ -39,7 +39,7 @@ namespace Medallion.Threading.SqlServer
         /// the <see cref="SqlDistributedSemaphore"/> will not attempt to open, close, commit, roll back, or dispose them
         /// </summary>
         public SqlDistributedSemaphore(string name, int maxCount, IDbTransaction transaction)
-            : this(name, maxCount, name => new ExternalConnectionOrTransactionDbDistributedLock(name, new SqlDatabaseConnection(transaction ?? throw new ArgumentNullException(nameof(transaction)))))
+            : this(name, maxCount, n => SqlDistributedLock.CreateInternalLock(n, transaction))
         {
         }
 

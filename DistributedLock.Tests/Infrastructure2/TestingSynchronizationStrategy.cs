@@ -10,7 +10,9 @@ namespace Medallion.Threading.Tests
     /// </summary>
     public abstract class TestingSynchronizationStrategy : IDisposable
     {
+        public virtual void PrepareForHandleAbandonment() { }
         public virtual void PerformAdditionalCleanupForHandleAbandonment() { }
+        public virtual IDisposable? PrepareForHandleLost() => null;
         public virtual void Dispose() { }
     }
 }

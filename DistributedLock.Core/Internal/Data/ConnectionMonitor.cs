@@ -77,7 +77,7 @@ namespace Medallion.Threading.Internal.Data
                 {
                     // If we're monitoring, then the connection will almost constantly be in use. 
                     // Fire state changed to cancel that query and clear it up
-                    if (this.HasRegisteredMonitoringHandlesNoLock)
+                    if (this._state == State.Active && this.HasRegisteredMonitoringHandlesNoLock)
                     {
                         this.FireStateChangedNoLock();
                     }
@@ -119,9 +119,6 @@ namespace Medallion.Threading.Internal.Data
 
         public IDatabaseConnectionMonitoringHandle GetMonitoringHandle()
         {
-            Invariant.Require(!this._isExternallyOwnedConnection);
-
-            bool wasMonitoring;
             lock (this.Lock)
             {
                 // Since this will be called via non-thread-safe paths, we do a true
@@ -143,19 +140,20 @@ namespace Medallion.Threading.Internal.Data
                     return NullHandle.Instance;
                 }
 
-                wasMonitoring = this.HasRegisteredMonitoringHandlesNoLock;
+                var hadRegisteredMonitoringHandles = this.HasRegisteredMonitoringHandlesNoLock;
 
                 var connectionLostTokenSource = new CancellationTokenSource();
                 var handle = new MonitoringHandle(this, connectionLostTokenSource.Token);
                 (this._monitoringHandleRegistrations ??= new Dictionary<MonitoringHandle, CancellationTokenSource>())
                     .Add(handle, connectionLostTokenSource);
 
-                if (!this.StartMonitorWorkerIfNeededNoLock() && !wasMonitoring)
+                if (!this.StartMonitorWorkerIfNeededNoLock() 
+                    && !hadRegisteredMonitoringHandles
+                    && this._state == State.Active)
                 {
-                    Invariant.Require(this._state == State.Active);
-
                     // If we get here, it means we already had an active worker which was not monitoring (doing
-                    // keepalive, for example). That worker is likely asleep, so we fire state changed to wake it up
+                    // keepalive). That worker is likely asleep, so we fire state changed to wake it up and have it
+                    // switch over to monitoring
                     this.FireStateChangedNoLock();
                 }
 
@@ -172,10 +170,13 @@ namespace Medallion.Threading.Internal.Data
                     this._monitoringHandleRegistrations.Remove(handle);
                     cancellationTokenSource.Dispose();
 
-                    // NOTE: here we COULD check for Active + no more monitoring handles and fire state change. However,
-                    // There's little benefit since our monitoring query doesn't last that long and will discover this change
-                    // on the next iteration anyway. Furthermore, in many cases when this happens we're about to be Stopped
-                    // or Disposed which will do the same thing
+                    // If we've removed the last reason to be monitoring, fire state changed to stop the monitoring process.
+                    // Without this, the next query that attempts to acquire the connection lock will not think we are monitoring
+                    // and therefore will not fire state change. Then, it will get stuck waiting for the monitoring query to complete
+                    if (this._monitoringHandleRegistrations.Count == 0 && this._state == State.Active)
+                    {
+                        this.FireStateChangedNoLock();
+                    }
                 }
             }
         }
@@ -319,8 +320,6 @@ namespace Medallion.Threading.Internal.Data
 
         private void FireStateChangedNoLock()
         {
-            Invariant.Require(this._monitorStateChangedTokenSource != null && this._monitoringWorkerTask != null);
-
             this._monitorStateChangedTokenSource!.Cancel();
             this._monitorStateChangedTokenSource.Dispose();
             this._monitorStateChangedTokenSource = new CancellationTokenSource();
@@ -357,7 +356,7 @@ namespace Medallion.Threading.Internal.Data
             if (!this._weakConnection.TryGetTarget(out var connection)) { return false; }
 
             // don't pass token here: this should finish quickly and we don't want to throw
-            await this._connectionLock.AcquireAsync(CancellationToken.None).ConfigureAwait(false);
+            using var _ = await this._connectionLock.AcquireAsync(CancellationToken.None).ConfigureAwait(false);
 
             // 1-min increments is kind of an arbitrary choice. We want to avoid this being too short since each time
             // we "come up to breathe" that's a waste of resource. We also want to avoid this being too long since

@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Medallion.Threading.Tests
@@ -117,6 +118,35 @@ namespace Medallion.Threading.Tests
             using var upgradeHandle = @lock.AcquireUpgradeableReadLock();
             upgradeHandle.UpgradeToWriteLock();
             Assert.Catch<InvalidOperationException>(() => upgradeHandle.TryUpgradeToWriteLock());
+        }
+
+        [Test]
+        public async Task TestCanUpgradeHandleWhileMonitoring()
+        {
+            var handleLostHelper = this._lockProvider.Strategy.PrepareForHandleLost();
+
+            var @lock = this._lockProvider.CreateUpgradeableReaderWriterLock(nameof(TestCanUpgradeHandleWhileMonitoring));
+
+            using var handle = await @lock.AcquireUpgradeableReadLockAsync();
+
+            // start monitoring
+            using var canceledEvent = new ManualResetEventSlim(initialState: false);
+            using var registration = handle.HandleLostToken.Register(canceledEvent.Set);
+            Assert.IsFalse(canceledEvent.Wait(TimeSpan.FromSeconds(.05)));
+
+            Assert.DoesNotThrowAsync(() => handle.UpgradeToWriteLockAsync().AsTask());
+
+            Assert.IsFalse(canceledEvent.Wait(TimeSpan.FromSeconds(.05)));
+
+            if (handleLostHelper != null)
+            {
+                handleLostHelper.Dispose();
+                Assert.IsTrue(canceledEvent.Wait(TimeSpan.FromSeconds(10)));
+            }
+
+            // todo revisit
+            try { await handle.DisposeAsync(); }
+            catch { }
         }
     }
 }

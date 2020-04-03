@@ -26,12 +26,7 @@ namespace Medallion.Threading.Postgres
         }
 
         public PostgresDistributedLock(PostgresAdvisoryLockKey key, IDbConnection connection)
-            : this(
-                key, 
-                new ExternalConnectionOrTransactionDbDistributedLock(
-                    key.ToString(), 
-                    new PostgresDatabaseConnection(connection ?? throw new ArgumentNullException(nameof(connection)))
-                ))
+            : this(key, CreateInternalLock(key, connection))
         {
         }
 
@@ -67,7 +62,13 @@ namespace Medallion.Threading.Postgres
                 return new OptimisticConnectionMultiplexingDbDistributedLock(key.ToString(), connectionString, PostgresMultiplexedConnectionLockPool.Instance, keepaliveCadence);
             }
 
-            return new OwnedConnectionOrTransactionDbDistributedLock(key.ToString(), () => new PostgresDatabaseConnection(connectionString), useTransaction: false, keepaliveCadence);
+            return new DedicatedConnectionOrTransactionDbDistributedLock(key.ToString(), () => new PostgresDatabaseConnection(connectionString), useTransaction: false, keepaliveCadence);
+        }
+
+        private static IDbDistributedLock CreateInternalLock(PostgresAdvisoryLockKey key, IDbConnection connection)
+        {
+            if (connection == null) { throw new ArgumentNullException(nameof(connection)); }
+            return new DedicatedConnectionOrTransactionDbDistributedLock(key.ToString(), () => new PostgresDatabaseConnection(connection));
         }
     }
 }

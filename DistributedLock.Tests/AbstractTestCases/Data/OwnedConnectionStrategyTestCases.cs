@@ -32,12 +32,7 @@ namespace Medallion.Threading.Tests.Data
             // application name and therefore won't be counted or killed
             this._lockProvider.CreateLock(nameof(TestIdleSessionKiller));
 
-            var applicationName = DistributedLockHelpers.ToSafeName(
-                this._lockProvider.GetUniqueSafeName(),
-                maxNameLength: this._lockProvider.Strategy.Db.MaxApplicationNameLength, s => s
-            );
-            this._lockProvider.Strategy.Db.ConnectionStringBuilder["Application Name"] = applicationName;
-
+            var applicationName = this._lockProvider.Strategy.SetUniqueApplicationName();
             var @lock = this._lockProvider.CreateLock(nameof(TestIdleSessionKiller));
 
             // go through one acquire/dispose cycle to ensure all commands are prepared. Due to 

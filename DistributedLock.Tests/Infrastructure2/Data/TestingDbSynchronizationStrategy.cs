@@ -1,7 +1,10 @@
-﻿using System;
+﻿using Medallion.Threading.Internal;
+using NUnit.Framework;
+using System;
 using System.Collections.Generic;
 using System.Data.Common;
 using System.Text;
+using System.Threading;
 
 namespace Medallion.Threading.Tests.Data
 {
@@ -18,6 +21,17 @@ namespace Medallion.Threading.Tests.Data
         public ITestingDb Db { get; }
 
         public abstract TestingDbConnectionOptions GetConnectionOptions();
+
+        public string SetUniqueApplicationName(string baseName = "")
+        {
+            var applicationName = DistributedLockHelpers.ToSafeName(
+                $"{(baseName.Length > 0 ? baseName + "_" : string.Empty)}{TestContext.CurrentContext.Test.FullName}_{TargetFramework.Current}",
+                maxNameLength: this.Db.MaxApplicationNameLength, 
+                s => s
+            );
+            this.Db.ConnectionStringBuilder["Application Name"] = applicationName;
+            return applicationName;
+        }
     }
 
     public abstract class TestingDbSynchronizationStrategy<TDb> : TestingDbSynchronizationStrategy
@@ -49,7 +63,7 @@ namespace Medallion.Threading.Tests.Data
         protected abstract bool? UseMultiplexingNotTransaction { get; }
         public TimeSpan? KeepaliveCadence { get; set; }
 
-        public override TestingDbConnectionOptions GetConnectionOptions() =>
+        public sealed override TestingDbConnectionOptions GetConnectionOptions() =>
             new TestingDbConnectionOptions 
             { 
                 ConnectionString = this.Db.ConnectionStringBuilder.ConnectionString, 
@@ -57,6 +71,30 @@ namespace Medallion.Threading.Tests.Data
                 ConnectionStringUseTransaction = this.UseMultiplexingNotTransaction == false,
                 ConnectionStringKeepaliveCadence = this.KeepaliveCadence,
             };
+
+        public sealed override IDisposable? PrepareForHandleLost() =>
+            new HandleLostScope(this.SetUniqueApplicationName(nameof(PrepareForHandleLost)), this.Db);
+
+        private class HandleLostScope : IDisposable
+        {
+            private string? _applicationName;
+            private readonly TDb _db;
+
+            public HandleLostScope(string applicationName, TDb testingDb)
+            {
+                this._applicationName = applicationName;
+                this._db = testingDb;
+            }
+
+            public void Dispose()
+            {
+                var applicationName = Interlocked.Exchange(ref this._applicationName, null);
+                if (applicationName != null)
+                {
+                    this._db.KillSessionsAsync(applicationName).Wait();
+                }
+            }
+        }
     }
 
     public sealed class TestingConnectionMultiplexingSynchronizationStrategy<TDb> : TestingConnectionStringSynchronizationStrategy<TDb>
@@ -84,22 +122,48 @@ namespace Medallion.Threading.Tests.Data
         /// Starts a new "ambient" connection or transaction that future locks will be created with
         /// </summary>
         public abstract void StartAmbient();
+
+        protected abstract void EndAmbient();
+
+        /// <summary>
+        /// If <see cref="StartAmbient"/> has been called, returns the current ambient connection
+        /// </summary>
+        public abstract DbConnection? AmbientConnection { get; }
+
+        public sealed override IDisposable? PrepareForHandleLost()
+        {
+            this.StartAmbient();
+            return this.AmbientConnection;
+        }
+
+        public sealed override void PrepareForHandleAbandonment() => this.StartAmbient();
+
+        public sealed override void PerformAdditionalCleanupForHandleAbandonment()
+        {
+            this.AmbientConnection!.Dispose();
+            using var connection = this.Db.CreateConnection();
+            this.Db.ClearPool(connection);
+            this.EndAmbient();
+        }
     }
 
     public sealed class TestingExternalConnectionSynchronizationStrategy<TDb> : TestingExternalConnectionOrTransactionSynchronizationStrategy<TDb>
         where TDb : ITestingDb, new()
     {
         private readonly DisposableCollection _disposables = new DisposableCollection();
+        private DbConnection? _ambientConnection;
 
-        public DbConnection? AmbientConnection { get; private set; }
+        public override DbConnection? AmbientConnection => this._ambientConnection;
 
         public override void StartAmbient()
         {
             // clear first so GetConnectionOptions will make a new connection
-            this.AmbientConnection = null;
+            this._ambientConnection = null;
 
-            this.AmbientConnection = this.GetConnectionOptions().Connection;
+            this._ambientConnection = this.GetConnectionOptions().Connection;
         }
+
+        protected override void EndAmbient() => this._ambientConnection = null;
 
         public override TestingDbConnectionOptions GetConnectionOptions()
         {
@@ -117,14 +181,6 @@ namespace Medallion.Threading.Tests.Data
             return new TestingDbConnectionOptions { Connection = connection };
         }
 
-        public override void PerformAdditionalCleanupForHandleAbandonment()
-        {
-            if (this.AmbientConnection != null) { throw new InvalidOperationException("cannot perform abandonment cleanup with an ambient connection"); }
-            this._disposables.ClearAndDisposeAll();
-            using var connection = this.Db.CreateConnection();
-            this.Db.ClearPool(connection);
-        }
-
         public override void Dispose()
         {
             this._disposables.Dispose();
@@ -138,6 +194,7 @@ namespace Medallion.Threading.Tests.Data
         private readonly DisposableCollection _disposables = new DisposableCollection();
 
         public DbTransaction? AmbientTransaction { get; private set; }
+        public override DbConnection? AmbientConnection => this.AmbientTransaction?.Connection;
 
         public override void StartAmbient()
         {
@@ -146,6 +203,8 @@ namespace Medallion.Threading.Tests.Data
 
             this.AmbientTransaction = this.GetConnectionOptions().Transaction;
         }
+
+        protected override void EndAmbient() => this.AmbientTransaction = null;
 
         public override TestingDbConnectionOptions GetConnectionOptions()
         {
@@ -164,14 +223,6 @@ namespace Medallion.Threading.Tests.Data
             }
 
             return new TestingDbConnectionOptions { Transaction = transaction };
-        }
-
-        public override void PerformAdditionalCleanupForHandleAbandonment()
-        {
-            if (this.AmbientTransaction != null) { throw new InvalidOperationException("cannot perform abandonment cleanup with an ambient transaction"); }
-            this._disposables.ClearAndDisposeAll();
-            using var connection = this.Db.CreateConnection();
-            this.Db.ClearPool(connection);
         }
 
         public override void Dispose()

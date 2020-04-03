@@ -39,10 +39,7 @@ namespace Medallion.Threading.Tests.Data
             this._lockProvider.CreateLock(nameof(TestIsolationLevelLeakage));
 
             // use a unique pool of size 1 so we can reclaim the connection after we use it and test for leaks
-            this._lockProvider.Strategy.Db.ConnectionStringBuilder["Application Name"] = DistributedLockHelpers.ToSafeName(
-                this._lockProvider.GetUniqueSafeName(),
-                maxNameLength: this._lockProvider.Strategy.Db.MaxApplicationNameLength, s => s
-            );
+            this._lockProvider.Strategy.SetUniqueApplicationName();
             this._lockProvider.Strategy.Db.MaxPoolSize = 1;
 
             AssertHasDefaultIsolationLevel();

@@ -27,11 +27,7 @@ namespace Medallion.Threading.Tests.Data
             this._lockProvider.CreateLock(nameof(TestConnectionDoesNotLeak));
 
             // set a distinctive application name so that we can count how many connections are used
-            var applicationName = DistributedLockHelpers.ToSafeName(
-                this._lockProvider.GetUniqueSafeName(),
-                maxNameLength: this._lockProvider.Strategy.Db.MaxApplicationNameLength, s => s
-            );
-            this._lockProvider.Strategy.Db.ConnectionStringBuilder["Application Name"] = applicationName;
+            var applicationName = this._lockProvider.Strategy.SetUniqueApplicationName();
 
             var @lock = this._lockProvider.CreateLock(nameof(TestConnectionDoesNotLeak));
             for (var i = 0; i < 30; ++i)
@@ -67,11 +63,7 @@ namespace Medallion.Threading.Tests.Data
         [Test]
         public void TestKeepaliveProtectsFromIdleSessionKiller()
         {
-            var applicationName = DistributedLockHelpers.ToSafeName(
-                this._lockProvider.GetUniqueSafeName(),
-                maxNameLength: this._lockProvider.Strategy.Db.MaxApplicationNameLength, s => s
-            );
-            this._lockProvider.Strategy.Db.ConnectionStringBuilder["Application Name"] = applicationName;
+            var applicationName = this._lockProvider.Strategy.SetUniqueApplicationName();
 
             this._lockProvider.Strategy.KeepaliveCadence = TimeSpan.FromSeconds(.05);
             var @lock = this._lockProvider.CreateLock(nameof(TestKeepaliveProtectsFromIdleSessionKiller));

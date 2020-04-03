@@ -34,9 +34,12 @@ namespace Medallion.Threading.Tests.Data
             
             nonAmbientConnectionLock.IsHeld().ShouldEqual(true, this.GetType().Name);
 
-            this._lockProvider.Strategy.AmbientConnection!.Dispose();
+            this._lockProvider.Strategy.AmbientConnection!.Close();
 
-            Assert.DoesNotThrow(handle.Dispose);
+            // Note: in version 1.0 we'd avoid throwing in this scenario. However, that approach could hide bugs because
+            // merely closing the connection doesn't release the lock: it just returns the connection to the pool where
+            // it will continue to hold the lock until it is used again.
+            Assert.Throws<InvalidOperationException>(() => handle.Dispose());
 
             // lock can be re-acquired
             nonAmbientConnectionLock.IsHeld().ShouldEqual(false);

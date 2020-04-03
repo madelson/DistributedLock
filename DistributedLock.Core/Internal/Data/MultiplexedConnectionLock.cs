@@ -196,21 +196,51 @@ namespace Medallion.Threading.Internal.Data
             where TLockCookie : class
         {
             private readonly string _name;
-            private RefBox<(MultiplexedConnectionLock @lock, IDbSynchronizationStrategy<TLockCookie> strategy, TLockCookie lockCookie)>? _box;
+            private RefBox<(MultiplexedConnectionLock @lock, IDbSynchronizationStrategy<TLockCookie> strategy, TLockCookie lockCookie, IDatabaseConnectionMonitoringHandle? monitoringHandle)>? _box;
 
             public Handle(MultiplexedConnectionLock @lock, IDbSynchronizationStrategy<TLockCookie> strategy, string name, TLockCookie lockCookie)
             {
                 this._name = name;
-                this._box = RefBox.Create((@lock, strategy, lockCookie));
+                this._box = RefBox.Create((@lock, strategy, lockCookie, default(IDatabaseConnectionMonitoringHandle)));
             }
 
-            public CancellationToken HandleLostToken => throw new NotImplementedException();
+            public CancellationToken HandleLostToken
+            {
+                get
+                {
+                    var existingBox = Volatile.Read(ref this._box);
+
+                    if (existingBox != null && existingBox.Value.monitoringHandle == null)
+                    {
+                        var newHandle = existingBox.Value.@lock._connection.ConnectionMonitor.GetMonitoringHandle();
+                        var newContents = existingBox.Value;
+                        newContents.monitoringHandle = newHandle;
+                        var newBox = RefBox.Create(newContents);
+                        var newExistingBox = Interlocked.CompareExchange(ref this._box, newBox, comparand: existingBox);
+                        if (newExistingBox == existingBox)
+                        {
+                            return newHandle.ConnectionLostToken;
+                        }
+
+                        existingBox = newExistingBox;
+                    }
+
+                    if (existingBox == null) { throw this.ObjectDisposed(); }
+
+                    // must exist here since we only clear the box on dispose or update the contents when creating a token
+                    return existingBox.Value.monitoringHandle!.ConnectionLostToken;
+                }
+            }
 
             public ValueTask DisposeAsync()
             {
-                return RefBox.TryConsume(ref this._box, out var contents)
-                    ? contents.@lock.ReleaseAsync(contents.strategy, this._name, contents.lockCookie)
-                    : default;
+                if (RefBox.TryConsume(ref this._box, out var contents))
+                {
+                    contents.monitoringHandle?.Dispose();
+                    return contents.@lock.ReleaseAsync(contents.strategy, this._name, contents.lockCookie);
+                }
+
+                return default;
             }
 
             void IDisposable.Dispose() => SyncOverAsync.Run(@this => @this.DisposeAsync(), this, willGoAsync: false);

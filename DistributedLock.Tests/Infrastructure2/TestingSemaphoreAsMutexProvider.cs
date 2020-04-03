@@ -35,6 +35,9 @@ namespace Medallion.Threading.Tests
                 if (!this._mostlyDrainedSemaphoreNames.Contains(name))
                 {
                     this._mostlyDrainedSemaphoreNames.Add(name);
+
+                    // If our max count is > 1, we'll acquire the extra tickets such that any resolved semaphore
+                    // functions as a mutex
                     for (var i = 0; i < this._maxCount - 1; ++i)
                     {
                         this._disposables.Add(

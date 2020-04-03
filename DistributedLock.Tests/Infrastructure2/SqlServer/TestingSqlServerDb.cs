@@ -60,7 +60,7 @@ namespace Medallion.Threading.Tests.SqlServer
 
         public DbConnection CreateConnection() => new Microsoft.Data.SqlClient.SqlConnection(this.ConnectionStringBuilder.ConnectionString);
 
-        public async Task KillIdleSessionsAsync(string applicationName, DateTimeOffset expirationDate)
+        public async Task KillSessionsAsync(string applicationName, DateTimeOffset? idleSince)
         {
             using var connection = new Microsoft.Data.SqlClient.SqlConnection(ConnectionString);
             await connection.OpenAsync();
@@ -70,10 +70,15 @@ namespace Medallion.Threading.Tests.SqlServer
                 SELECT session_id FROM sys.dm_exec_sessions
                 WHERE session_id != @@SPID
                     AND program_name = @applicationName
-                    AND (last_request_start_time IS NULL OR last_request_start_time <= @expirationDate)
-                    AND (last_request_end_time IS NULL OR last_request_end_time <= @expirationDate)";
+                    AND (
+                        @idleSince IS NULL
+                        OR (    
+                            (last_request_start_time IS NULL OR last_request_start_time <= @idleSince)
+                            AND (last_request_end_time IS NULL OR last_request_end_time <= @idleSince)
+                        )
+                    )";
             findIdleSessionsCommand.Parameters.AddWithValue("applicationName", applicationName);
-            findIdleSessionsCommand.Parameters.AddWithValue("expirationDate", expirationDate.DateTime);
+            findIdleSessionsCommand.Parameters.AddWithValue("idleSince", idleSince?.DateTime ?? DBNull.Value.As<object>()).SqlDbType = SqlDbType.DateTime;
 
             var spidsToKill = new List<short>();
             using (var idleSessionsReader = await findIdleSessionsCommand.ExecuteReaderAsync())

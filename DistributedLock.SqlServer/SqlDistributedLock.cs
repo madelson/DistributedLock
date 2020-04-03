@@ -23,12 +23,12 @@ namespace Medallion.Threading.SqlServer
         }
 
         public SqlDistributedLock(string name, IDbConnection connection, bool exactName = false)
-            : this(name, exactName, n => new ExternalConnectionOrTransactionDbDistributedLock(n, new SqlDatabaseConnection(connection ?? throw new ArgumentNullException(nameof(connection)))))
+            : this(name, exactName, n => CreateInternalLock(n, connection))
         {
         }
 
         public SqlDistributedLock(string name, IDbTransaction transaction, bool exactName = false)
-            : this(name, exactName, n => new ExternalConnectionOrTransactionDbDistributedLock(n, new SqlDatabaseConnection(transaction ?? throw new ArgumentNullException(nameof(transaction)))))
+            : this(name, exactName, n => CreateInternalLock(n, transaction))
         {
         }
 
@@ -80,7 +80,19 @@ namespace Medallion.Threading.SqlServer
                 return new OptimisticConnectionMultiplexingDbDistributedLock(name, connectionString, SqlMultiplexedConnectionLockPool.Instance, keepaliveCadence);
             }
 
-            return new OwnedConnectionOrTransactionDbDistributedLock(name, () => new SqlDatabaseConnection(connectionString), useTransaction: useTransaction, keepaliveCadence);
+            return new DedicatedConnectionOrTransactionDbDistributedLock(name, () => new SqlDatabaseConnection(connectionString), useTransaction: useTransaction, keepaliveCadence);
+        }
+
+        internal static IDbDistributedLock CreateInternalLock(string name, IDbConnection connection)
+        {
+            if (connection == null) { throw new ArgumentNullException(nameof(connection)); }
+            return new DedicatedConnectionOrTransactionDbDistributedLock(name, () => new SqlDatabaseConnection(connection));
+        }
+
+        internal static IDbDistributedLock CreateInternalLock(string name, IDbTransaction transaction)
+        {
+            if (transaction == null) { throw new ArgumentNullException(nameof(transaction)); }
+            return new DedicatedConnectionOrTransactionDbDistributedLock(name, () => new SqlDatabaseConnection(transaction));
         }
     }
 }

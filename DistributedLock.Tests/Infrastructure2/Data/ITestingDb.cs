@@ -36,6 +36,6 @@ namespace Medallion.Threading.Tests.Data
     /// </summary>
     public interface ITestingPrimaryClientDb : ITestingDb 
     {
-        Task KillIdleSessionsAsync(string applicationName, DateTimeOffset expirationDate);
+        Task KillSessionsAsync(string applicationName, DateTimeOffset? idleSince = null);
     }
 }

@@ -29,10 +29,8 @@ namespace Medallion.Threading.Internal.Data
         }
 
         protected DatabaseConnection(IDbTransaction transaction, bool isExternallyOwned)
-            : this(transaction.Connection, isExternallyOwned)
+            : this(transaction.Connection ?? throw new InvalidOperationException("Cannot execute queries against a transaction that has been disposed"), isExternallyOwned)
         {
-            if (transaction.Connection == null) { throw new InvalidOperationException("Cannot execute queries against a transaction that has been disposed"); }
-
             this._transaction = transaction;
         }
 

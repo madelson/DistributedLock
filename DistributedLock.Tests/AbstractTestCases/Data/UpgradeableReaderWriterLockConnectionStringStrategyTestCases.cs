@@ -23,11 +23,7 @@ namespace Medallion.Threading.Tests.Data
         [Test]
         public void TestKeepaliveProtectsFromIdleSessionKillerAfterFailedUpgrade()
         {
-            var applicationName = DistributedLockHelpers.ToSafeName(
-                this._lockProvider.GetUniqueSafeName(),
-                maxNameLength: this._lockProvider.Strategy.Db.MaxApplicationNameLength, s => s
-            );
-            this._lockProvider.Strategy.Db.ConnectionStringBuilder["Application Name"] = applicationName;
+            var applicationName = this._lockProvider.Strategy.SetUniqueApplicationName();
 
             this._lockProvider.Strategy.KeepaliveCadence = TimeSpan.FromSeconds(.1);
             var @lock = this._lockProvider.CreateUpgradeableReaderWriterLock(nameof(TestKeepaliveProtectsFromIdleSessionKillerAfterFailedUpgrade));
