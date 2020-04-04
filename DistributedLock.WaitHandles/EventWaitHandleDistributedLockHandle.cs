@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using Medallion.Threading.Internal;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Medallion.Threading.WaitHandles
@@ -12,7 +13,8 @@ namespace Medallion.Threading.WaitHandles
             this._event = @event;
         }
 
-        CancellationToken IDistributedLockHandle.HandleLostToken => CancellationToken.None;
+        CancellationToken IDistributedLockHandle.HandleLostToken => 
+            Volatile.Read(ref this._event) != null ? CancellationToken.None : throw this.ObjectDisposed();
 
         public void Dispose()
         {
