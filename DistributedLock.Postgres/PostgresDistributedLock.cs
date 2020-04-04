@@ -51,7 +51,7 @@ namespace Medallion.Threading.Postgres
         // todo remove
         public bool WillGoAsync(TimeoutValue timeout, CancellationToken cancellationToken) => false;
 
-        private static IDbDistributedLock CreateInternalLock(PostgresAdvisoryLockKey key, string connectionString, Action<PostgresConnectionOptionsBuilder>? options)
+        internal static IDbDistributedLock CreateInternalLock(PostgresAdvisoryLockKey key, string connectionString, Action<PostgresConnectionOptionsBuilder>? options)
         {
             if (connectionString == null) { throw new ArgumentNullException(nameof(connectionString)); }
 
@@ -65,7 +65,7 @@ namespace Medallion.Threading.Postgres
             return new DedicatedConnectionOrTransactionDbDistributedLock(key.ToString(), () => new PostgresDatabaseConnection(connectionString), useTransaction: false, keepaliveCadence);
         }
 
-        private static IDbDistributedLock CreateInternalLock(PostgresAdvisoryLockKey key, IDbConnection connection)
+        internal static IDbDistributedLock CreateInternalLock(PostgresAdvisoryLockKey key, IDbConnection connection)
         {
             if (connection == null) { throw new ArgumentNullException(nameof(connection)); }
             return new DedicatedConnectionOrTransactionDbDistributedLock(key.ToString(), () => new PostgresDatabaseConnection(connection));

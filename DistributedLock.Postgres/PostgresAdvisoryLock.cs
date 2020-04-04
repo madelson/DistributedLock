@@ -21,7 +21,8 @@ namespace Medallion.Threading.Postgres
 
         private static readonly object Cookie = new object();
 
-        public static readonly PostgresAdvisoryLock ExclusiveLock = new PostgresAdvisoryLock(isShared: false);
+        public static readonly PostgresAdvisoryLock ExclusiveLock = new PostgresAdvisoryLock(isShared: false),
+            SharedLock = new PostgresAdvisoryLock(isShared: true);
 
         private readonly bool _isShared;
 
@@ -202,7 +203,7 @@ namespace Medallion.Threading.Postgres
         private async ValueTask ReleaseAsync(DatabaseConnection connection, PostgresAdvisoryLockKey key, bool isTry)
         {
             using var command = connection.CreateCommand();
-            command.SetCommandText($"SELECT pg_catalog.pg_advisory_unlock({AddKeyParametersAndGetKeyArguments(command, key)})");
+            command.SetCommandText($"SELECT pg_catalog.pg_advisory_unlock{(this._isShared ? "_shared" : string.Empty)}({AddKeyParametersAndGetKeyArguments(command, key)})");
             var result = (bool)await command.ExecuteScalarAsync(CancellationToken.None).ConfigureAwait(false);
             if (!isTry && !result)
             {

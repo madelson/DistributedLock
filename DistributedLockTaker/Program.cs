@@ -35,6 +35,9 @@ namespace DistributedLockTaker
                 case nameof(PostgresDistributedLock):
                     handle = new PostgresDistributedLock(new PostgresAdvisoryLockKey(name), PostgresCredentials.GetConnectionString(Environment.CurrentDirectory)).Acquire();
                     break;
+                case "Write" + nameof(PostgresDistributedReaderWriterLock):
+                    handle = new PostgresDistributedReaderWriterLock(new PostgresAdvisoryLockKey(name), PostgresCredentials.GetConnectionString(Environment.CurrentDirectory)).AcquireWriteLock();
+                    break;
                 case nameof(EventWaitHandleDistributedLock):
                     handle = new EventWaitHandleDistributedLock(name).Acquire();
                     break;
