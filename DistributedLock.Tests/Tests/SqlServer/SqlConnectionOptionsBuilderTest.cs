@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Medallion.Threading.Tests.Tests.SqlServer
+namespace Medallion.Threading.Tests.SqlServer
 {
     public class SqlConnectionOptionsBuilderTest
     {
