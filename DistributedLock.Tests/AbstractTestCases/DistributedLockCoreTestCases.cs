@@ -381,19 +381,7 @@ namespace Medallion.Threading.Tests
         }
 
         [Test]
-        public void TestCrossProcessAbandonmentAsync()
-        {
-            this.CrossProcessAbandonmentHelper(asyncWait: true, kill: false);
-        }
-
-        [Test]
         public void TestCrossProcessAbandonmentWithKill()
-        {
-            this.CrossProcessAbandonmentHelper(asyncWait: false, kill: true);
-        }
-
-        [Test]
-        public void TestCrossProcessAbandonmentWithKillAsync()
         {
             this.CrossProcessAbandonmentHelper(asyncWait: true, kill: true);
         }
