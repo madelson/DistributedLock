@@ -192,7 +192,8 @@ namespace Medallion.Threading.Tests
         }
 
         [Test]
-        public void TestGetSafeLockName()
+        [NonParallelizable] // takes locks with known names
+        public void TestGetSafeName()
         {
             Assert.Catch<ArgumentNullException>(() => this._lockProvider.GetSafeName(null!));
 
