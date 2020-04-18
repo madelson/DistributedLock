@@ -1,9 +1,7 @@
-using Medallion.Threading.Internal;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
-using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -281,8 +279,8 @@ namespace Medallion.Threading.Internal.Data
                     // cancel in a background thread in case we have hangs or errors
                     Task.Run(() =>
                     {
-                        cancellationTokenSource.Cancel();
-                        cancellationTokenSource.Dispose();
+                        try { cancellationTokenSource.Cancel(); }
+                        finally { cancellationTokenSource.Dispose(); }
                     });
                 }
                 else
@@ -361,18 +359,18 @@ namespace Medallion.Threading.Internal.Data
             // 1-min increments is kind of an arbitrary choice. We want to avoid this being too short since each time
             // we "come up to breathe" that's a waste of resource. We also want to avoid this being too long since
             // in case people have some kind of monitoring set up for hanging queries
-            await new NonThrowingAwaitable(connection.SleepAsync(
-                sleepTime: TimeSpan.FromMinutes(1),
-                cancellationToken: cancellationToken,
-                executor: (command, token) => command.ExecuteNonQueryAsync(token, disallowAsyncCancellation: false, isConnectionMonitoringQuery: true)
-            ));
+            await connection.SleepAsync(
+                    sleepTime: TimeSpan.FromMinutes(1),
+                    cancellationToken: cancellationToken,
+                    executor: (command, token) => command.ExecuteNonQueryAsync(token, disallowAsyncCancellation: false, isConnectionMonitoringQuery: true)
+                ).TryAwait();
 
             return true;
         }
 
         private async Task<bool> DoKeepaliveAsync(TimeoutValue keepaliveCadence, CancellationToken stateChangedToken)
         {
-            await new NonThrowingAwaitable(Task.Delay(keepaliveCadence.InMilliseconds, stateChangedToken));
+            await Task.Delay(keepaliveCadence.InMilliseconds, stateChangedToken).TryAwait();
             if (stateChangedToken.IsCancellationRequested) { return true; }
 
             // retrieve only after the delay to avoid this reference longer than needed
@@ -386,11 +384,9 @@ namespace Medallion.Threading.Internal.Data
             {
                 using var command = connection.CreateCommand();
                 command.SetCommandText("SELECT 0 /* DistributedLock connection keepalive */");
-                await new NonThrowingAwaitable(
-                    // Since this query is very fast and non-blocking, we don't bother trying to cancel it. This avoids having 
-                    // to deal with the overhead of throwing exceptions within ExecuteNonQueryAsync()
-                    command.ExecuteNonQueryAsync(CancellationToken.None, disallowAsyncCancellation: false, isConnectionMonitoringQuery: true).AsTask()
-                );
+                // Since this query is very fast and non-blocking, we don't bother trying to cancel it. This avoids having 
+                // to deal with the overhead of throwing exceptions within ExecuteNonQueryAsync()
+                await command.ExecuteNonQueryAsync(CancellationToken.None, disallowAsyncCancellation: false, isConnectionMonitoringQuery: true).AsTask().TryAwait();
             }
 
             return true;
@@ -444,29 +440,6 @@ namespace Medallion.Threading.Internal.Data
             AutoStopped,
             Stopped,
             Disposed,
-        }
-
-        /// <summary>
-        /// Throwing exceptions is slow and our workflow has us canceling tasks in the common case. Using this special awaitable
-        /// allows for us to await those tasks without causing a thrown exception
-        /// </summary>
-        private readonly struct NonThrowingAwaitable : ICriticalNotifyCompletion
-        {
-            private readonly ConfiguredTaskAwaitable.ConfiguredTaskAwaiter _taskAwaiter;
-
-            public NonThrowingAwaitable(Task task)
-            {
-                this._taskAwaiter = task.ConfigureAwait(false).GetAwaiter();
-            }
-
-            public readonly NonThrowingAwaitable GetAwaiter() => this;
-
-            public bool IsCompleted => this._taskAwaiter.IsCompleted;
-
-            public readonly void GetResult() { } // does NOT call _taskAwaiter.GetResult() since that could throw!
-
-            public void OnCompleted(Action continuation) => this._taskAwaiter.OnCompleted(continuation);
-            public void UnsafeOnCompleted(Action continuation) => this._taskAwaiter.UnsafeOnCompleted(continuation);
         }
     }
 }

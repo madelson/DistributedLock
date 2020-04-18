@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 
 namespace Medallion.Threading.Tests
 {
@@ -18,6 +19,8 @@ namespace Medallion.Threading.Tests
                     .Push(resource);
             }
         }
+
+        public void Add(Action cleanupAction) => this.Add(new ReleaseAction(cleanupAction));
 
         public void ClearAndDisposeAll() => this.InternalClearAndDisposeAll(isDispose: false);
 
@@ -50,6 +53,15 @@ namespace Medallion.Threading.Tests
                     throw new AggregateException(exceptions).Flatten();
                 }
             }
+        }
+
+        private class ReleaseAction : IDisposable
+        {
+            private Action? _action;
+
+            public ReleaseAction(Action action) { this._action = action; }
+
+            public void Dispose() => Interlocked.Exchange(ref this._action, null)?.Invoke();
         }
     }
 }

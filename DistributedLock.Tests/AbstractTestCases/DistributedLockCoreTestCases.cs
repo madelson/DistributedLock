@@ -122,7 +122,7 @@ namespace Medallion.Threading.Tests
 
                 var syncAcquireTask = Task.Run(() => @lock.Acquire(timeout));
                 syncAcquireTask.ContinueWith(_ => { }).Wait(waitTime).ShouldEqual(true, "sync acquire");
-                Assert.IsInstanceOf<TimeoutException>(syncAcquireTask.Exception!.InnerException, "sync acquire");
+                Assert.IsInstanceOf<TimeoutException>(syncAcquireTask.Exception?.InnerException, "sync acquire");
 
                 var asyncAcquireTask = @lock.AcquireAsync(timeout).AsTask();
                 asyncAcquireTask.ContinueWith(_ => { }).Wait(waitTime).ShouldEqual(true, "async acquire");
@@ -163,6 +163,8 @@ namespace Medallion.Threading.Tests
         [Test]
         public void TestParallelism()
         {
+            this._lockProvider.Strategy.PrepareForHighContention();
+
             // NOTE: if this test fails for Postgres, we may need to raise the default connection limit. This can 
             // be done by setting max_connections in C:\Program Files\PostgreSQL\<version>\data\postgresql.conf or 
             // /var/lib/pgsql/<version>/data/postgresql.conf and then restarting Postgres.
@@ -172,16 +174,16 @@ namespace Medallion.Threading.Tests
             var tasks = Enumerable.Range(1, 100).Select(async _ =>
                 {
                     var @lock = this._lockProvider.CreateLock("parallel_test");
-                    using (await @lock.AcquireAsync())
+                    await using (await @lock.AcquireAsync())
                     {
-                            // increment going in
-                            Interlocked.Increment(ref counter);
+                        // increment going in
+                        Interlocked.Increment(ref counter);
 
-                            // hang out for a bit to ensure concurrency
-                            await Task.Delay(TimeSpan.FromMilliseconds(10));
+                        // hang out for a bit to ensure concurrency
+                        await Task.Delay(TimeSpan.FromMilliseconds(10));
 
-                            // decrement and return on the way out (returns # inside the lock when this left ... should be 0)
-                            return Interlocked.Decrement(ref counter);
+                        // decrement and return on the way out (returns # inside the lock when this left ... should be 0)
+                        return Interlocked.Decrement(ref counter);
                     }
                 })
                 .ToList();
@@ -397,8 +399,8 @@ namespace Medallion.Threading.Tests
             var @lock = this._lockProvider.CreateLockWithExactName(name);
 
             var acquireTask = asyncWait
-                ? @lock.TryAcquireAsync(TimeSpan.FromSeconds(10)).AsTask()
-                : Task.Run(() => @lock.TryAcquire(TimeSpan.FromSeconds(10)));
+                ? @lock.TryAcquireAsync(TimeSpan.FromSeconds(20)).AsTask()
+                : Task.Run(() => @lock.TryAcquire(TimeSpan.FromSeconds(20)));
             acquireTask.Wait(TimeSpan.FromSeconds(.1)).ShouldEqual(false, this.GetType().Name);
 
             if (kill)

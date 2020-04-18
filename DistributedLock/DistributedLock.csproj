@@ -40,6 +40,7 @@
     <ProjectReference Include="..\DistributedLock.Postgres\DistributedLock.Postgres.csproj" />
     <ProjectReference Include="..\DistributedLock.SqlServer\DistributedLock.SqlServer.csproj" />
     <ProjectReference Include="..\DistributedLock.WaitHandles\DistributedLock.WaitHandles.csproj" />
+    <ProjectReference Include="..\DistributedLock.Azure\DistributedLock.Azure.csproj" />
   </ItemGroup>
 
 </Project>

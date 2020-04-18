@@ -13,6 +13,7 @@ namespace Medallion.Threading.Tests
         public virtual void PrepareForHandleAbandonment() { }
         public virtual void PerformAdditionalCleanupForHandleAbandonment() { }
         public virtual IDisposable? PrepareForHandleLost() => null;
+        public virtual void PrepareForHighContention() { }
         public virtual void Dispose() { }
     }
 }

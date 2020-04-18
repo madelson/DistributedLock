@@ -43,6 +43,7 @@ namespace Medallion.Threading.Internal
         public int InSeconds => this.IsInfinite ? throw new InvalidOperationException("infinite timeout cannot be converted to seconds") : this.InMilliseconds / 1000;
         public bool IsInfinite => this.InMilliseconds == Timeout.Infinite;
         public bool IsZero => this.InMilliseconds == 0;
+        public TimeSpan TimeSpan => TimeSpan.FromMilliseconds(this.InMilliseconds);
 
         public bool Equals(TimeoutValue that) => this.InMilliseconds == that.InMilliseconds;
         public override bool Equals(object? obj) => obj is TimeoutValue that && this.Equals(that);
@@ -61,6 +62,6 @@ namespace Medallion.Threading.Internal
         public override string ToString() => 
             this.IsInfinite ? "∞" 
                 : this.IsZero ? "0" 
-                : TimeSpan.FromMilliseconds(this.InMilliseconds).ToString();
+                : this.TimeSpan.ToString();
     }
 }

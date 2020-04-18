@@ -7,5 +7,7 @@
 // build in DEBUG if we rely on internal APIs that are not meant to be public
 #if !DEBUG
 [assembly: InternalsVisibleTo("DistributedLock.EventWaitHandles")]
+[assembly: InternalsVisibleTo("DistributedLock.SqlServer")]
 [assembly: InternalsVisibleTo("DistributedLock.Postgres")]
+[assembly: InternalsVisibleTo("DistributedLock.Azure")]
 #endif

@@ -11,13 +11,15 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DistributedLockTaker", "Dis
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DistributedLock.Postgres", "DistributedLock.Postgres\DistributedLock.Postgres.csproj", "{2646CB8F-FB5E-4712-8B1B-C1F991228A14}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DistributedLock.Core", "DistributedLock.Core\DistributedLock.Core.csproj", "{AC520183-960F-401F-9990-835916291335}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DistributedLock.Core", "DistributedLock.Core\DistributedLock.Core.csproj", "{AC520183-960F-401F-9990-835916291335}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DistributedLock.WaitHandles", "DistributedLock.WaitHandles\DistributedLock.WaitHandles.csproj", "{6D2323D2-5784-4165-9EF6-2D812615BE30}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DistributedLock.WaitHandles", "DistributedLock.WaitHandles\DistributedLock.WaitHandles.csproj", "{6D2323D2-5784-4165-9EF6-2D812615BE30}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DistributedLockCodeGen", "DistributedLockCodeGen\DistributedLockCodeGen.csproj", "{FD0A6F2C-277A-492F-85FE-26A3FBD0383B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DistributedLockCodeGen", "DistributedLockCodeGen\DistributedLockCodeGen.csproj", "{FD0A6F2C-277A-492F-85FE-26A3FBD0383B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DistributedLock.SqlServer", "DistributedLock.SqlServer\DistributedLock.SqlServer.csproj", "{A7C39A34-B8FA-48B0-87C4-65FE2A8BD62B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DistributedLock.SqlServer", "DistributedLock.SqlServer\DistributedLock.SqlServer.csproj", "{A7C39A34-B8FA-48B0-87C4-65FE2A8BD62B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DistributedLock.Azure", "DistributedLock.Azure\DistributedLock.Azure.csproj", "{1C5E80A9-343A-44AA-A40E-00EAFE485D36}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -57,6 +59,10 @@ Global
 		{A7C39A34-B8FA-48B0-87C4-65FE2A8BD62B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A7C39A34-B8FA-48B0-87C4-65FE2A8BD62B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A7C39A34-B8FA-48B0-87C4-65FE2A8BD62B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1C5E80A9-343A-44AA-A40E-00EAFE485D36}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1C5E80A9-343A-44AA-A40E-00EAFE485D36}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1C5E80A9-343A-44AA-A40E-00EAFE485D36}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1C5E80A9-343A-44AA-A40E-00EAFE485D36}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

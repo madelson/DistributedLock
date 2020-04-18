@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 namespace Medallion.Threading.Internal
@@ -38,6 +39,41 @@ namespace Medallion.Threading.Internal
         // todo rethink message here; should this return "handle" or something more generic since it might be an internal type?
         public static ObjectDisposedException ObjectDisposed<T>(this T _) where T : IAsyncDisposable =>
             throw new ObjectDisposedException(typeof(T).ToString());
+
+        public static NonThrowingAwaitable<TTask> TryAwait<TTask>(this TTask task) where TTask : Task =>
+            new NonThrowingAwaitable<TTask>(task);
+
+        /// <summary>
+        /// Throwing exceptions is slow and our workflow has us canceling tasks in the common case. Using this special awaitable
+        /// allows for us to await those tasks without causing a thrown exception
+        /// </summary>
+        public readonly struct NonThrowingAwaitable<TTask> : ICriticalNotifyCompletion
+            where TTask : Task
+        {
+            private readonly TTask _task;
+            private readonly ConfiguredTaskAwaitable.ConfiguredTaskAwaiter _taskAwaiter;
+
+            public NonThrowingAwaitable(TTask task)
+            {
+                this._task = task;
+                this._taskAwaiter = task.ConfigureAwait(false).GetAwaiter();
+            }
+
+            public NonThrowingAwaitable<TTask> GetAwaiter() => this;
+
+            public bool IsCompleted => this._taskAwaiter.IsCompleted;
+
+            public TTask GetResult()
+            {
+                // does NOT call _taskAwaiter.GetResult() since that could throw!
+
+                Invariant.Require(this._task.IsCompleted);
+                return this._task;
+            }
+
+            public void OnCompleted(Action continuation) => this._taskAwaiter.OnCompleted(continuation);
+            public void UnsafeOnCompleted(Action continuation) => this._taskAwaiter.UnsafeOnCompleted(continuation);
+        }
     }
 
     /// <summary>

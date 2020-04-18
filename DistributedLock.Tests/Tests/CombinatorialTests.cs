@@ -6,6 +6,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+namespace Medallion.Threading.Tests.Azure
+{
+    public class Core_AzureBlobLease_AzureBlobLeaseSynchronizationStrategyTest : DistributedLockCoreTestCases<TestingAzureBlobLeaseDistributedLockProvider, TestingAzureBlobLeaseSynchronizationStrategy> { }
+}
+
 namespace Medallion.Threading.Tests.Postgres
 {
     public class ConnectionStringStrategy_Postgres_ConnectionMultiplexingSynchronizationStrategy_PostgresDb_ConnectionMultiplexingSynchronizationStrategy_PostgresDb_PostgresDbTest : ConnectionStringStrategyTestCases<TestingPostgresDistributedLockProvider<TestingConnectionMultiplexingSynchronizationStrategy<TestingPostgresDb>>, TestingConnectionMultiplexingSynchronizationStrategy<TestingPostgresDb>, TestingPostgresDb> { }

@@ -3,6 +3,8 @@ using Medallion.Threading.SqlServer;
 using Medallion.Threading.WaitHandles;
 using Medallion.Threading.Postgres;
 using Medallion.Threading.Tests;
+using Medallion.Threading.Azure;
+using Azure.Storage.Blobs;
 #if NET471
 using System.Data.SqlClient;
 #elif NETCOREAPP3_1
@@ -40,6 +42,13 @@ namespace DistributedLockTaker
                     break;
                 case nameof(EventWaitHandleDistributedLock):
                     handle = new EventWaitHandleDistributedLock(name).Acquire();
+                    break;
+                case nameof(AzureBlobLeaseDistributedLock):
+                    handle = new AzureBlobLeaseDistributedLock(
+                            new BlobClient(AzureCredentials.ConnectionString, AzureCredentials.DefaultBlobContainerName, name),
+                            o => o.Duration(TimeSpan.FromSeconds(15))
+                        )
+                        .Acquire();
                     break;
                 default:
                     Console.Error.WriteLine($"type: {type}");
