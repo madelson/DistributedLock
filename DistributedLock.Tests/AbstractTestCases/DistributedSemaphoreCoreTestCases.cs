@@ -132,7 +132,7 @@ namespace Medallion.Threading.Tests
                         }
 
                         // hang out for a bit to ensure concurrency
-                        await Task.Delay(TimeSpan.FromMilliseconds(15));
+                        await Task.Delay(TimeSpan.FromMilliseconds(30));
 
                         // decrement and return on the way out (returns # inside the lock when this left ... should be 0)
                         return Interlocked.Decrement(ref counter);
