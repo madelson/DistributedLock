@@ -21,6 +21,9 @@
     <RepositoryUrl>https://github.com/madelson/DistributedLock</RepositoryUrl>
     <FileVersion>1.0.0.0</FileVersion>
     <PackageReleaseNotes>See https://github.com/madelson/DistributedLock#release-notes</PackageReleaseNotes>
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>..\DistributedLock.snk</AssemblyOriginatorKeyFile>
+    <DelaySign>false</DelaySign>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
