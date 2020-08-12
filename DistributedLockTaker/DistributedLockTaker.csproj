@@ -9,7 +9,6 @@
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>..\DistributedLock.snk</AssemblyOriginatorKeyFile>
-    <DelaySign>false</DelaySign>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)'=='Debug'">

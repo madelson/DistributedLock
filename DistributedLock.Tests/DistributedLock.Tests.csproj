@@ -9,7 +9,6 @@
     <RootNamespace>Medallion.Threading.Tests</RootNamespace>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>..\DistributedLock.snk</AssemblyOriginatorKeyFile>
-    <DelaySign>false</DelaySign>
   </PropertyGroup>
 
   <ItemGroup>

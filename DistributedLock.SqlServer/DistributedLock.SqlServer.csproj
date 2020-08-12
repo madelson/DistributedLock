@@ -23,7 +23,6 @@
     <PackageReleaseNotes>See https://github.com/madelson/DistributedLock#release-notes</PackageReleaseNotes>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>..\DistributedLock.snk</AssemblyOriginatorKeyFile>
-    <DelaySign>false</DelaySign>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">

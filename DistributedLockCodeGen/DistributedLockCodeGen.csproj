@@ -7,7 +7,6 @@
     <Nullable>enable</Nullable>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>..\DistributedLock.snk</AssemblyOriginatorKeyFile>
-    <DelaySign>false</DelaySign>
   </PropertyGroup>
 
   <ItemGroup>
