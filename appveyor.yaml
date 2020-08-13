@@ -1,9 +1,7 @@
 version: 1.0.{build}
-
-before_build:
-  - nuget restore
-
-build:
-  verbosity: minimal
-
 image: Visual Studio 2019
+build_script:
+- cmd: >-
+    nuget restore
+
+    msbuild /p:Configuration=Release DistributedLock.sln
