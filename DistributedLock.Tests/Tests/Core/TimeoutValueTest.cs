@@ -6,6 +6,7 @@ using System.Threading;
 
 namespace Medallion.Threading.Tests.Core
 {
+    [Category("CI")]
     public class TimeoutValueTest
     {
         [Test]

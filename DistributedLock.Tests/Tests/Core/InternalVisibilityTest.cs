@@ -3,6 +3,7 @@ using System.Linq;
 
 namespace Medallion.Threading.Tests.Core
 {
+    [Category("CI")]
     public class InternalVisibilityTest
     {
         [Test]

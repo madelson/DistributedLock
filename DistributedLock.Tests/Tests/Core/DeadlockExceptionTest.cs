@@ -5,6 +5,7 @@ using System.Runtime.Serialization.Formatters.Binary;
 
 namespace Medallion.Threading.Tests.Core
 {
+    [Category("CI")]
     public class DeadlockExceptionTest
     {
         [Test]

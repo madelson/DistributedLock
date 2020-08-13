@@ -7,6 +7,7 @@ using System.Text.RegularExpressions;
 
 namespace DistributedLockCodeGen
 {
+    [Category("CI")]
     public class DocCommentGenerator
     {
         [Test]

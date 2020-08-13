@@ -8,6 +8,7 @@ using System.Text.RegularExpressions;
 
 namespace Medallion.Threading.Tests
 {
+    [Category("CI")]
     public class TestSetupTest
     {
         [Test]

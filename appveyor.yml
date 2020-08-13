@@ -1,6 +1,13 @@
 version: 1.0.{build}
+
 image: Visual Studio 2019
+
 before_build:
   - nuget restore
 build:
   verbosity: minimal
+  
+# only test categories that don't depend on external things
+test:
+  categories:
+    - CI

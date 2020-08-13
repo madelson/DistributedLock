@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading.Tests.Core
 {
+    [Category("CI")]
     public class SyncOverAsyncTest
     {
         [Test]
