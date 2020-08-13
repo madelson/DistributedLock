@@ -55,7 +55,8 @@ $@"namespace {g.Key}
             if (expectedTestContents != existingContents)
             {
                 File.WriteAllText(combinatorialTestsFile, expectedTestContents);
-                Assert.Fail("Updated " + combinatorialTestsFile);
+                Assert.Fail("Updated " + combinatorialTestsFile
+                    + $"**** EXPECTED **** \r\n{expectedTestContents}\r\n **** FOUND **** {existingContents ?? "NULL"}");
             }
         }
         
