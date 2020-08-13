@@ -4,6 +4,7 @@ using System.Text;
 
 namespace Medallion.Threading.Tests.WaitHandles
 {
+    [SupportsContinuousIntegration]
     public sealed class TestingWaitHandlesSynchronizationStrategy : TestingSynchronizationStrategy
     {
     }

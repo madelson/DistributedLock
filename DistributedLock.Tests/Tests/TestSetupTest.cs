@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text.RegularExpressions;
 
 namespace Medallion.Threading.Tests
@@ -83,7 +84,10 @@ $@"namespace {g.Key}
             // remove words that are very common and therefore don't add much to the name
             var testClassName = Regex.Replace(GetTestClassName(testClassType), "Distributed|Lock|Testing|TestCases", string.Empty) + "Test";
 
-            var declaration = $@"public class {testClassName} : {GetCSharpName(testClassType)} {{ }}";
+            var supportsContinousIntegration = testClassType.GetGenericArguments()
+                .All(a => a.GetCustomAttribute<SupportsContinuousIntegrationAttribute>() != null);
+
+            var declaration = $@"{(supportsContinousIntegration ? "[Category(\"CI\")] " : null)}public class {testClassName} : {GetCSharpName(testClassType)} {{ }}";
 
             var namespaces = Traverse.DepthFirst(testClassType, t => t.GetGenericArguments())
                 .Select(t => t.Namespace ?? string.Empty)

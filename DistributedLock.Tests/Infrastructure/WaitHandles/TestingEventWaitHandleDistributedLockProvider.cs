@@ -5,6 +5,7 @@ using System.Text;
 
 namespace Medallion.Threading.Tests.WaitHandles
 {
+    [SupportsContinuousIntegration]
     public sealed class TestingEventWaitHandleDistributedLockProvider : TestingLockProvider<TestingWaitHandlesSynchronizationStrategy>
     {
         public override IDistributedLock CreateLockWithExactName(string name) => new EventWaitHandleDistributedLock(name, exactName: true);

@@ -168,5 +168,5 @@ namespace Medallion.Threading.Tests.SqlServer
 
 namespace Medallion.Threading.Tests.WaitHandles
 {
-    public class Core_EventWaitHandle_WaitHandlesSynchronizationStrategyTest : DistributedLockCoreTestCases<TestingEventWaitHandleDistributedLockProvider, TestingWaitHandlesSynchronizationStrategy> { }
+    [Category("CI")] public class Core_EventWaitHandle_WaitHandlesSynchronizationStrategyTest : DistributedLockCoreTestCases<TestingEventWaitHandleDistributedLockProvider, TestingWaitHandlesSynchronizationStrategy> { }
 }
