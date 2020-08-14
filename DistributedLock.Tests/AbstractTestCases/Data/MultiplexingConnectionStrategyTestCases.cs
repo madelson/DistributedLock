@@ -19,7 +19,7 @@ namespace Medallion.Threading.Tests.Data
         [TearDown] public void TearDown() => this._lockProvider.Dispose();
 
         /// <summary>
-        /// Similar to <see cref="DistributedLockCoreTestCases{TLockProvider}.TestLockAbandonment"/> but demonstrates 
+        /// Similar to <see cref="DistributedLockCoreTestCases{TLockProvider, TStrategy}.TestLockAbandonment"/> but demonstrates 
         /// the time-based cleanup loop rather than forcing a cleanup
         /// </summary>
         [Test]

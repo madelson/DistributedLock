@@ -41,7 +41,7 @@ namespace Medallion.Threading.Internal.Data
         
         public bool IsExernallyOwned { get; }
 
-        protected internal abstract bool ShouldPrepareCommands { get; }
+        public abstract bool ShouldPrepareCommands { get; }
 
         internal bool CanExecuteQueries => this.InnerConnection.State == ConnectionState.Open && (this._transaction == null || this._transaction.Connection != null);
         
@@ -163,8 +163,8 @@ namespace Medallion.Threading.Internal.Data
             transaction.Dispose();
         }
 
-        protected internal abstract bool IsCommandCancellationException(Exception exception);
+        public abstract bool IsCommandCancellationException(Exception exception);
 
-        protected internal abstract Task SleepAsync(TimeSpan sleepTime, CancellationToken cancellationToken, Func<DatabaseCommand, CancellationToken, ValueTask<int>> executor);
+        public abstract Task SleepAsync(TimeSpan sleepTime, CancellationToken cancellationToken, Func<DatabaseCommand, CancellationToken, ValueTask<int>> executor);
     }
 }

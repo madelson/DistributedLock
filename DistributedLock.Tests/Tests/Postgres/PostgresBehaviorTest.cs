@@ -25,7 +25,12 @@ namespace Medallion.Threading.Tests.Postgres
             using var connection = new NpgsqlConnection(TestingPostgresDb.ConnectionString);
             await connection.OpenAsync();
 
-            using var transaction = await connection.BeginTransactionAsync();
+            using var transaction =
+#if NETCOREAPP3_1
+                await connection.BeginTransactionAsync();
+#elif NET471
+                connection.BeginTransaction();
+#endif
 
             using var commandInTransaction = connection.CreateCommand();
             commandInTransaction.Transaction = transaction;

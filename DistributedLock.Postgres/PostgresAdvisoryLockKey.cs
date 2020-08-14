@@ -6,17 +6,27 @@ using System.Text;
 
 namespace Medallion.Threading.Postgres
 {
+    /// <summary>
+    /// Acts as the "name" of a distributed lock in Postgres. Consists of one 64-bit value or two 32-bit values (the spaces do not overlap).
+    /// See https://www.postgresql.org/docs/12/functions-admin.html#FUNCTIONS-ADVISORY-LOCKS
+    /// </summary>
     public readonly struct PostgresAdvisoryLockKey : IEquatable<PostgresAdvisoryLockKey>
     {
         private readonly long _key;
         private readonly KeyEncoding _keyEncoding;
 
+        /// <summary>
+        /// Constructs a key from a single 64-bit value
+        /// </summary>
         public PostgresAdvisoryLockKey(long key)
         {
             this._key = key;
             this._keyEncoding = KeyEncoding.Int64;
         }
 
+        /// <summary>
+        /// Constructs a key from a pair of 32-bit values
+        /// </summary>
         public PostgresAdvisoryLockKey(int key1, int key2)
         {
             this._key = CombineKeys(key1, key2);
@@ -24,6 +34,17 @@ namespace Medallion.Threading.Postgres
         }
 
         // todo should allow hashing be default (exact name)?
+        /// <summary>
+        /// Constructs a key based on a string <paramref name="name"/>.
+        /// 
+        /// If the string is of the form "{16-digit hex}" or "{8-digit hex},{8-digit hex}", this will be parsed into numeric keys.
+        /// 
+        /// If the string is an ascii string with 9 or fewer characters, it will be mapped to a key that does not collide with
+        /// any other key based on such a string or based on a 32-bit value.
+        /// 
+        /// Other string names will be rejected unless <paramref name="allowHashing"/> is specified, in which case it will be hashed to
+        /// a 64-bit key value.
+        /// </summary>
         public PostgresAdvisoryLockKey(string name, bool allowHashing = false)
         {
             if (name == null) { throw new ArgumentNullException(nameof(name)); }
@@ -67,17 +88,36 @@ namespace Medallion.Threading.Postgres
         // pg_locks lookups we have to split the key anyway
         internal (int key1, int key2) Keys => SplitKeys(this._key);
 
+        /// <summary>
+        /// Implements <see cref="IEquatable{T}.Equals(T)"/>
+        /// </summary>
         public bool Equals(PostgresAdvisoryLockKey that) => this.ToTuple().Equals(that.ToTuple());
 
+        /// <summary>
+        /// Implements <see cref="Object.Equals(object)"/>
+        /// </summary>
         public override bool Equals(object obj) => obj is PostgresAdvisoryLockKey that && this.Equals(that);
 
+        /// <summary>
+        /// Implements <see cref="Object.GetHashCode"/>
+        /// </summary>
         public override int GetHashCode() => this.ToTuple().GetHashCode();
 
+        /// <summary>
+        /// Provides equality based on <see cref="Equals(PostgresAdvisoryLockKey)"/>
+        /// </summary>
         public static bool operator ==(PostgresAdvisoryLockKey a, PostgresAdvisoryLockKey b) => a.Equals(b);
+        /// <summary>
+        /// Provides inequality based on <see cref="Equals(PostgresAdvisoryLockKey)"/>
+        /// </summary>
         public static bool operator !=(PostgresAdvisoryLockKey a, PostgresAdvisoryLockKey b) => !(a == b);
 
         private (long, bool) ToTuple() => (this._key, this.HasSingleKey);
 
+        /// <summary>
+        /// Returns a string representation of the key that can be round-tripped through
+        /// <see cref="PostgresAdvisoryLockKey(String, Boolean)"/>
+        /// </summary>
         public override string ToString() => this._keyEncoding switch
         {
             KeyEncoding.Int64 => ToHashString(this._key),
@@ -201,24 +241,22 @@ namespace Medallion.Threading.Postgres
                 int.TryParse(text, NumberStyles.AllowHexSpecifier, NumberFormatInfo.InvariantInfo, out key);
         }
 
-        public static long HashString(string name)
+        private static long HashString(string name)
         {
             // The hash result from SHA1 is too large, so we have to truncate (recommended practice and does not
             // weaken the hash other than due to using fewer bytes)
 
-            using (var sha1 = SHA1.Create())
-            {
-                var hashBytes = sha1.ComputeHash(Encoding.UTF8.GetBytes(name));
+            using var sha1 = SHA1.Create();
+            var hashBytes = sha1.ComputeHash(Encoding.UTF8.GetBytes(name));
 
-                // We don't use BitConverter here because we want to be endianess-agnostic. 
-                // However, this code replicates that result on little-endian
-                var result = 0L;
-                for (var i = sizeof(long) - 1; i >= 0; --i)
-                {
-                    result = (result << 8) | hashBytes[i];
-                }
-                return result;
+            // We don't use BitConverter here because we want to be endianess-agnostic. 
+            // However, this code replicates that result on little-endian
+            var result = 0L;
+            for (var i = sizeof(long) - 1; i >= 0; --i)
+            {
+                result = (result << 8) | hashBytes[i];
             }
+            return result;
         }
 
         private static string ToHashString((int key1, int key2) keys) => FormattableString.Invariant($"{keys.key1:x8}{HashStringSeparator}{keys.key2:x8}");

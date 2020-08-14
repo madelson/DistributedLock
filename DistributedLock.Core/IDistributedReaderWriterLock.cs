@@ -4,6 +4,9 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading
 {
+    /// <summary>
+    /// Provides distributed locking functionality comparable to <see cref="ReaderWriterLock"/>
+    /// </summary>
     public interface IDistributedReaderWriterLock
     {
         /// <summary>

@@ -28,14 +28,14 @@ namespace Medallion.Threading.Postgres
         }
 
         // see https://www.npgsql.org/doc/prepare.html
-        protected override bool ShouldPrepareCommands => true;
+        public override bool ShouldPrepareCommands => true;
 
-        protected override bool IsCommandCancellationException(Exception exception) =>
+        public override bool IsCommandCancellationException(Exception exception) =>
             exception is PostgresException postgresException
                 // cancellation error code from https://www.postgresql.org/docs/10/errcodes-appendix.html
                 && postgresException.SqlState == "57014";
 
-        protected override async Task SleepAsync(TimeSpan sleepTime, CancellationToken cancellationToken, Func<DatabaseCommand, CancellationToken, ValueTask<int>> executor)
+        public override async Task SleepAsync(TimeSpan sleepTime, CancellationToken cancellationToken, Func<DatabaseCommand, CancellationToken, ValueTask<int>> executor)
         {
             Invariant.Require(sleepTime >= TimeSpan.Zero);
 

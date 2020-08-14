@@ -23,16 +23,39 @@ namespace Medallion.Threading.SqlServer
         private readonly IDbDistributedLock _internalLock;
 
         #region ---- Constructors ----
+        /// <summary>
+        /// Constructs a new lock using the provided <paramref name="name"/>. 
+        /// 
+        /// The provided <paramref name="connectionString"/> will be used to connect to the database.
+        /// 
+        /// Unless <paramref name="exactName"/> is specified, <see cref="GetSafeName(string)"/> will be used to ensure name validity.
+        /// </summary>
         public SqlDistributedReaderWriterLock(string name, string connectionString, Action<SqlConnectionOptionsBuilder>? options = null, bool exactName = false)
             : this(name, exactName, n => SqlDistributedLock.CreateInternalLock(n, connectionString, options))
         {
         }
 
+        /// <summary>
+        /// Constructs a new lock using the provided <paramref name="name"/>.
+        /// 
+        /// The provided <paramref name="connection"/> will be used to connect to the database and will provide lock scope. It is assumed to be externally managed and
+        /// will not be opened or closed.
+        /// 
+        /// Unless <paramref name="exactName"/> is specified, <see cref="GetSafeName(string)"/> will be used to ensure name validity.
+        /// </summary>
         public SqlDistributedReaderWriterLock(string name, IDbConnection connection, bool exactName = false)
             : this(name, exactName, n => SqlDistributedLock.CreateInternalLock(n, connection))
         {
         }
 
+        /// <summary>
+        /// Constructs a new lock using the provided <paramref name="name"/>.
+        /// 
+        /// The provided <paramref name="transaction"/> will be used to connect to the database and will provide lock scope. It is assumed to be externally managed and
+        /// will not be committed or rolled back.
+        /// 
+        /// Unless <paramref name="exactName"/> is specified, <see cref="GetSafeName(string)"/> will be used to ensure name validity.
+        /// </summary>
         public SqlDistributedReaderWriterLock(string name, IDbTransaction transaction, bool exactName = false)
             : this(name, exactName, n => SqlDistributedLock.CreateInternalLock(n, transaction))
         {
@@ -55,9 +78,12 @@ namespace Medallion.Threading.SqlServer
         }
         #endregion
 
+        /// <summary>
+        /// Implements <see cref="IDistributedLock.Name"/>
+        /// </summary>
         public string Name { get; }
 
-        public bool IsReentrant => throw new NotImplementedException();
+        bool IDistributedReaderWriterLock.IsReentrant => throw new NotImplementedException();
 
         /// <summary>
         /// The maximum allowed length for lock names. See https://msdn.microsoft.com/en-us/library/ms189823.aspx

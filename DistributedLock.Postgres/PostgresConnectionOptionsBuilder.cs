@@ -6,6 +6,9 @@ using System.Threading;
 
 namespace Medallion.Threading.Postgres
 {
+    /// <summary>
+    /// Specifies options for connecting to and locking against a Postgres database
+    /// </summary>
     public sealed class PostgresConnectionOptionsBuilder
     {
         private TimeoutValue? _keepaliveCadence;

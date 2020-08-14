@@ -35,7 +35,7 @@ namespace Medallion.Threading.Tests.SqlServer
         /// <summary>
         /// This test justifies why we have constructors for SQL Server locks that take in a <see cref="System.Data.IDbTransaction"/>.
         /// Otherwise, you can't have a lock use the same connection as a transaction you're working on. Compare to
-        /// <see cref="Postgres.PostgresDistributedLockTest.TestPostgresCommandAutomaticallyParticipatesInTransaction"/>
+        /// <see cref="Postgres.PostgresDistributedLockTest.TestWorksWithAmbientTransaction"/>
         /// </summary>
         [Test]
         public async Task TestSqlCommandMustParticipateInTransaction()

@@ -7,6 +7,9 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading.WaitHandles
 {
+    /// <summary>
+    /// A distributed lock based on a global <see cref="EventWaitHandle"/> on Windows.
+    /// </summary>
     public sealed partial class EventWaitHandleDistributedLock : IInternalDistributedLock<EventWaitHandleDistributedLockHandle>
     {
         internal const string GlobalPrefix = @"Global\";
@@ -14,6 +17,14 @@ namespace Medallion.Threading.WaitHandles
 
         private readonly TimeoutValue _abandonmentCheckCadence;
 
+        /// <summary>
+        /// Constructs a lock with the given <paramref name="name"/>.
+        /// 
+        /// <paramref name="abandonmentCheckCadence"/> specifies how frequently we refresh our <see cref="EventWaitHandle"/> object in case it is abandoned by
+        /// its original owner. The default is 2s.
+        /// 
+        /// Unless <paramref name="exactName"/> is specified, <see cref="GetSafeName(string)"/> will be called on the provided <paramref name="name"/>.
+        /// </summary>
         public EventWaitHandleDistributedLock(string name, TimeSpan? abandonmentCheckCadence = null, bool exactName = false)
         {
             if (exactName)
@@ -46,10 +57,16 @@ namespace Medallion.Threading.WaitHandles
         // 260 based on LINQPad experimentation
         public static int MaxNameLength => 260;
 
+        /// <summary>
+        /// Implements <see cref="IDistributedLock.Name"/>
+        /// </summary>
         public string Name { get; }
 
         bool IDistributedLock.IsReentrant => false;
 
+        /// <summary>
+        /// Equivalent to <see cref="IDistributedLockProvider.GetSafeLockName(string)"/>
+        /// </summary>
         public static string GetSafeName(string name)
         {
             if (name == null) { throw new ArgumentNullException(nameof(name)); }

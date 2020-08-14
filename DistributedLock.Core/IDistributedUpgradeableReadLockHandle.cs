@@ -4,6 +4,9 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading
 {
+    /// <summary>
+    /// A <see cref="IDistributedLockHandle"/> that can be upgraded to a write lock
+    /// </summary>
     public interface IDistributedLockUpgradeableHandle : IDistributedLockHandle
     {
         /// <summary>

@@ -6,16 +6,28 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading.SqlServer
 {
+    /// <summary>
+    /// Implements <see cref="IDistributedLockHandle"/>
+    /// </summary>
     public abstract class SqlDistributedReaderWriterLockHandle : IDistributedLockHandle
     {
         // forbid external inheritors
         internal SqlDistributedReaderWriterLockHandle() { }
 
+        /// <summary>
+        /// Implements <see cref="IDistributedLockHandle.HandleLostToken"/>
+        /// </summary>
         public abstract CancellationToken HandleLostToken { get; }
 
         // todo should we have a common DisposeSyncOverAsync() extension for this?
+        /// <summary>
+        /// Releases the lock
+        /// </summary>
         public void Dispose() => SyncOverAsync.Run(@this => @this.DisposeAsync(), this, willGoAsync: false);
 
+        /// <summary>
+        /// Releases the lock asynchronously
+        /// </summary>
         public abstract ValueTask DisposeAsync();
     }
 
@@ -33,6 +45,9 @@ namespace Medallion.Threading.SqlServer
         public override ValueTask DisposeAsync() => Interlocked.Exchange(ref this._innerHandle, null)?.DisposeAsync() ?? default;
     }
 
+    /// <summary>
+    /// Implements <see cref="IDistributedLockUpgradeableHandle"/>
+    /// </summary>
     public sealed class SqlDistributedReaderWriterLockUpgradeableHandle : SqlDistributedReaderWriterLockHandle, IInternalDistributedLockUpgradeableHandle
     {
         private RefBox<(IDistributedLockHandle innerHandle, IDbDistributedLock @lock, IDistributedLockHandle? upgradedHandle)>? _box;
@@ -42,8 +57,14 @@ namespace Medallion.Threading.SqlServer
             this._box = RefBox.Create((innerHandle, @lock, default(IDistributedLockHandle?)));
         }
 
+        /// <summary>
+        /// Implements <see cref="IDistributedLockHandle.HandleLostToken"/>
+        /// </summary>
         public override CancellationToken HandleLostToken => (this._box ?? throw this.ObjectDisposed()).Value.innerHandle.HandleLostToken;
 
+        /// <summary>
+        /// Releases the lock asynchronously
+        /// </summary>
         public override async ValueTask DisposeAsync()
         {
             if (RefBox.TryConsume(ref this._box, out var contents))
@@ -53,15 +74,27 @@ namespace Medallion.Threading.SqlServer
             }
         }
 
+        /// <summary>
+        /// Implements <see cref="IDistributedLockUpgradeableHandle.TryUpgradeToWriteLock(TimeSpan, CancellationToken)"/>
+        /// </summary>
         public bool TryUpgradeToWriteLock(TimeSpan timeout = default, CancellationToken cancellationToken = default) =>
             DistributedLockHelpers.TryUpgradeToWriteLock(this, timeout, cancellationToken);
 
+        /// <summary>
+        /// Implements <see cref="IDistributedLockUpgradeableHandle.TryUpgradeToWriteLockAsync(TimeSpan, CancellationToken)"/>
+        /// </summary>
         public ValueTask<bool> TryUpgradeToWriteLockAsync(TimeSpan timeout = default, CancellationToken cancellationToken = default) =>
             this.As<IInternalDistributedLockUpgradeableHandle>().InternalTryUpgradeToWriteLockAsync(timeout, cancellationToken);
 
+        /// <summary>
+        /// Implements <see cref="IDistributedLockUpgradeableHandle.UpgradeToWriteLock(TimeSpan?, CancellationToken)"/>
+        /// </summary>
         public void UpgradeToWriteLock(TimeSpan? timeout = null, CancellationToken cancellationToken = default) =>
             DistributedLockHelpers.UpgradeToWriteLock(this, timeout, cancellationToken);
 
+        /// <summary>
+        /// Implements <see cref="IDistributedLockUpgradeableHandle.UpgradeToWriteLockAsync(TimeSpan?, CancellationToken)"/>
+        /// </summary>
         public ValueTask UpgradeToWriteLockAsync(TimeSpan? timeout = null, CancellationToken cancellationToken = default) =>
             DistributedLockHelpers.UpgradeToWriteLockAsync(this, timeout, cancellationToken);
 

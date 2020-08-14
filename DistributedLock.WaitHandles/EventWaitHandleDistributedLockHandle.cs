@@ -1,9 +1,13 @@
 ﻿using Medallion.Threading.Internal;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Medallion.Threading.WaitHandles
 {
+    /// <summary>
+    /// See <see cref="IDistributedLockHandle"/>
+    /// </summary>
     public sealed class EventWaitHandleDistributedLockHandle : IDistributedLockHandle
     {
         private EventWaitHandle? _event;
@@ -16,6 +20,9 @@ namespace Medallion.Threading.WaitHandles
         CancellationToken IDistributedLockHandle.HandleLostToken => 
             Volatile.Read(ref this._event) != null ? CancellationToken.None : throw this.ObjectDisposed();
 
+        /// <summary>
+        /// Releases the lock
+        /// </summary>
         public void Dispose()
         {
             var @event = Interlocked.Exchange(ref this._event, null);
@@ -26,6 +33,9 @@ namespace Medallion.Threading.WaitHandles
             }
         }
 
+        /// <summary>
+        /// Releases the lock asynchronously
+        /// </summary>
         public ValueTask DisposeAsync()
         {
             this.Dispose();

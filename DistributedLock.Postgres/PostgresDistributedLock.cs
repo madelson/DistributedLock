@@ -20,11 +20,18 @@ namespace Medallion.Threading.Postgres
         private readonly IDbDistributedLock _internalLock;
 
         // todo revisit API
+        /// <summary>
+        /// Constructs a lock with the given <paramref name="key"/> (effectively the lock name), <paramref name="connectionString"/>,
+        /// and <paramref name="options"/>
+        /// </summary>
         public PostgresDistributedLock(PostgresAdvisoryLockKey key, string connectionString, Action<PostgresConnectionOptionsBuilder>? options = null)
             : this(key, CreateInternalLock(key, connectionString, options))
         {
         }
 
+        /// <summary>
+        /// Constructs a lock with the given <paramref name="key"/> (effectively the lock name) and <paramref name="connection"/>.
+        /// </summary>
         public PostgresDistributedLock(PostgresAdvisoryLockKey key, IDbConnection connection)
             : this(key, CreateInternalLock(key, connection))
         {
@@ -37,19 +44,25 @@ namespace Medallion.Threading.Postgres
         }
 
         // todo consider API with name
+        /// <summary>
+        /// The lock name
+        /// </summary>
         public PostgresAdvisoryLockKey Key { get; }
 
         string IDistributedLock.Name => this.Key.ToString();
 
         bool IDistributedLock.IsReentrant => false;
 
+        /// <summary>
+        /// Equivalent to <see cref="IDistributedLockProvider.GetSafeLockName(string)"/>
+        /// </summary>
         public static PostgresAdvisoryLockKey GetSafeName(string name) => new PostgresAdvisoryLockKey(name, allowHashing: true);
 
         ValueTask<PostgresDistributedLockHandle?> IInternalDistributedLock<PostgresDistributedLockHandle>.InternalTryAcquireAsync(TimeoutValue timeout, CancellationToken cancellationToken) =>
             this._internalLock.TryAcquireAsync(timeout, PostgresAdvisoryLock.ExclusiveLock, cancellationToken, contextHandle: null).Wrap(h => new PostgresDistributedLockHandle(h));
 
         // todo remove
-        public bool WillGoAsync(TimeoutValue timeout, CancellationToken cancellationToken) => false;
+        bool IInternalDistributedLock<PostgresDistributedLockHandle>.WillGoAsync(TimeoutValue timeout, CancellationToken cancellationToken) => false;
 
         internal static IDbDistributedLock CreateInternalLock(PostgresAdvisoryLockKey key, string connectionString, Action<PostgresConnectionOptionsBuilder>? options)
         {

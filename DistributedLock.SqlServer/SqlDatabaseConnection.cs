@@ -29,9 +29,9 @@ namespace Medallion.Threading.SqlServer
         }
 
         // SQLServer gets no benefit from this
-        protected override bool ShouldPrepareCommands => false;
+        public override bool ShouldPrepareCommands => false;
 
-        protected override bool IsCommandCancellationException(Exception exception)
+        public override bool IsCommandCancellationException(Exception exception)
         {
             const int CanceledNumber = 0;
 
@@ -58,7 +58,7 @@ namespace Medallion.Threading.SqlServer
             return exception is InvalidOperationException;
         }
 
-        protected override Task SleepAsync(TimeSpan sleepTime, CancellationToken cancellationToken, Func<DatabaseCommand, CancellationToken, ValueTask<int>> executor)
+        public override Task SleepAsync(TimeSpan sleepTime, CancellationToken cancellationToken, Func<DatabaseCommand, CancellationToken, ValueTask<int>> executor)
         {
             Invariant.Require(sleepTime >= TimeSpan.Zero && sleepTime < TimeSpan.FromDays(1));
 

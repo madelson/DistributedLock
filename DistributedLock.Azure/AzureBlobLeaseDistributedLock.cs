@@ -11,6 +11,9 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading.Azure
 {
+    /// <summary>
+    /// Implements a <see cref="IDistributedLock"/> based on Azure blob leases
+    /// </summary>
     public sealed partial class AzureBlobLeaseDistributedLock : IInternalDistributedLock<AzureBlobLeaseDistributedLockHandle>
     {
         /// <summary>
@@ -22,12 +25,18 @@ namespace Medallion.Threading.Azure
         private readonly BlobClientWrapper _blobClient;
         private readonly (TimeoutValue duration, TimeoutValue renewalCadence, TimeSpan minBusyWaitSleepTime, TimeSpan maxBusyWaitSleepTime) _options;
 
+        /// <summary>
+        /// Constructs a lock that will lease the provided <paramref name="blobClient"/>
+        /// </summary>
         public AzureBlobLeaseDistributedLock(BlobBaseClient blobClient, Action<AzureBlobLeaseOptionsBuilder>? options = null)
         {
             this._blobClient = new BlobClientWrapper(blobClient ?? throw new ArgumentNullException(nameof(blobClient)));
             this._options = AzureBlobLeaseOptionsBuilder.GetOptions(options);
         }
 
+        /// <summary>
+        /// Constructs a lock that will lease a blob based on <paramref name="name"/> within the provided <paramref name="blobContainerClient"/>.
+        /// </summary>
         public AzureBlobLeaseDistributedLock(BlobContainerClient blobContainerClient, string name, Action<AzureBlobLeaseOptionsBuilder>? options = null)
         {
             if (blobContainerClient == null) { throw new ArgumentNullException(nameof(blobContainerClient)); }
@@ -37,6 +46,9 @@ namespace Medallion.Threading.Azure
             this._options = AzureBlobLeaseOptionsBuilder.GetOptions(options);
         }
 
+        /// <summary>
+        /// Implements <see cref="IDistributedLock.Name"/>
+        /// </summary>
         public string Name => this._blobClient.Name;
 
         bool IDistributedLock.IsReentrant => false;
@@ -150,7 +162,7 @@ namespace Medallion.Threading.Azure
         }
 
         // todo remove
-        public bool WillGoAsync(TimeoutValue timeout, CancellationToken cancellationToken) => false;
+        bool IInternalDistributedLock<AzureBlobLeaseDistributedLockHandle>.WillGoAsync(TimeoutValue timeout, CancellationToken cancellationToken) => false;
 
         internal sealed class InternalHandle : IDistributedLockHandle
         {
@@ -226,7 +238,7 @@ namespace Medallion.Threading.Azure
                         return;
                     }
 
-                    var renewOrCheckStatus = await TryRenewOrCheckHandleAsync(weakThis, handleLostSource, cancellationToken).ConfigureAwait(false);
+                    var renewOrCheckStatus = await TryRenewOrCheckHandleAsync(weakThis, cancellationToken).ConfigureAwait(false);
                     if (renewOrCheckStatus != RenewOrCheckStatus.Continue)
                     {
                         if (renewOrCheckStatus == RenewOrCheckStatus.HandleLost)
@@ -261,8 +273,7 @@ namespace Medallion.Threading.Azure
             }
 
             private static async ValueTask<RenewOrCheckStatus> TryRenewOrCheckHandleAsync(
-                WeakReference<InternalHandle> weakThis, 
-                CancellationTokenSource handleLostSource,
+                WeakReference<InternalHandle> weakThis,
                 CancellationToken cancellationToken)
             {
                 if (!weakThis.TryGetTarget(out var @this)) { return RenewOrCheckStatus.HandleGarbageCollected; }

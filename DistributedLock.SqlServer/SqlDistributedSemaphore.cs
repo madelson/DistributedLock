@@ -16,6 +16,10 @@ namespace Medallion.Threading.SqlServer
         private readonly SqlSemaphore _strategy;
 
         #region ---- Constructors ----
+        /// <summary>
+        /// Creates a semaphore with name <paramref name="name"/> that can be acquired up to <paramref name="maxCount"/> 
+        /// times concurrently. The provided <paramref name="connectionString"/> will be used to connect to the database.
+        /// </summary>
         public SqlDistributedSemaphore(string name, int maxCount, string connectionString, Action<SqlConnectionOptionsBuilder>? options = null)
             : this(name, maxCount, n => SqlDistributedLock.CreateInternalLock(n, connectionString, options))
         {
@@ -53,6 +57,9 @@ namespace Medallion.Threading.SqlServer
         }
         #endregion
 
+        /// <summary>
+        /// Implements <see cref="IDistributedLock.Name"/>
+        /// </summary>
         public string Name { get; }
 
         /// <summary>

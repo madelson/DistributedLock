@@ -15,7 +15,7 @@ namespace Medallion.Threading.Tests.Core
             Assert.IsNotEmpty(internalNamespaceTypes);
 
 #if !DEBUG
-            Assert.IsEmpty(internalNamespaceTypes.Where(t => !t.IsPublic));
+            Assert.IsEmpty(internalNamespaceTypes.Where(t => t.IsPublic));
 #endif
         }
     }

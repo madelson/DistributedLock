@@ -1,5 +1,4 @@
-﻿using Medallion.Collections;
-using NUnit.Framework;
+﻿using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -90,7 +89,7 @@ $@"namespace {g.Key}
 
             var declaration = $@"{(supportsContinousIntegration ? "[Category(\"CI\")] " : null)}public class {testClassName} : {GetCSharpName(testClassType)} {{ }}";
 
-            var namespaces = Traverse.DepthFirst(testClassType, t => t.GetGenericArguments())
+            var namespaces = TraverseDepthFirst(testClassType, t => t.GetGenericArguments())
                 .Select(t => t.Namespace ?? string.Empty)
                 .Distinct()
                 .Where(ns => ns.StartsWith(typeof(TestSetupTest).Namespace!))
@@ -108,7 +107,7 @@ $@"namespace {g.Key}
             var genericParameterTypes = genericTypeDefinition.GetGenericArguments()
                 .Select(this.GetTypesForGenericParameter)
                 .ToArray();
-            var allCombinations = Traverse.DepthFirst(
+            var allCombinations = TraverseDepthFirst(
                     root: (index: 0, value: Enumerable.Empty<Type>()),
                     children: t => t.index == genericParameterTypes.Length
                         ? Enumerable.Empty<(int index, IEnumerable<Type> value)>()
@@ -152,9 +151,50 @@ $@"namespace {g.Key}
             if (!@base.IsGenericType) { return false; }
 
             var baseDefinition = @base.GetGenericTypeDefinition();
-            return Traverse.Along(derived, t => t.BaseType)
+            return TraverseAlong(derived, t => t.BaseType)
                 .Concat(derived.GetInterfaces())
                 .Any(t => t.IsConstructedGenericType && t.GetGenericTypeDefinition() == baseDefinition);
+        }
+
+        // simplified versions of Traverse methods since Traverse is not strong-named
+
+        private static IEnumerable<T> TraverseDepthFirst<T>(T root, Func<T, IEnumerable<T>> children)
+        {
+            yield return root;
+
+            var stack = new Stack<IEnumerator<T>>();
+            stack.Push(children(root).GetEnumerator());
+
+            try
+            {
+                while (true)
+                {
+                    if (stack.Peek().MoveNext())
+                    {
+                        yield return stack.Peek().Current;
+                        stack.Push(children(stack.Peek().Current).GetEnumerator());
+                    }
+                    else
+                    {
+                        stack.Peek().Dispose();
+                        stack.Pop();
+                        if (stack.Count == 0) { break; }
+                    }
+                }
+            }
+            finally
+            {
+                while (stack.Count > 0) { stack.Pop().Dispose(); }
+            }
+        }
+
+        private static IEnumerable<T> TraverseAlong<T>(T? root, Func<T, T?> next)
+            where T : class
+        {
+            for (T? node = root; node != null; node = next(node))
+            {
+                yield return node;
+            }
         }
     }
 }

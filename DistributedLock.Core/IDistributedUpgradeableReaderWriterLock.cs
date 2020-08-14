@@ -4,6 +4,11 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading
 {
+    /// <summary>
+    /// Extends <see cref="IDistributedReaderWriterLock"/> with the ability to take an "upgrade" lock. Like a read lock, an upgrade lock 
+    /// allows for other concurrent read locks, but not for other upgrade or write locks. However, an upgrade lock can also be upgraded to a write
+    /// lock without releasing the underlying handle.
+    /// </summary>
     public interface IDistributedUpgradeableReaderWriterLock : IDistributedReaderWriterLock
     {
         /// <summary>

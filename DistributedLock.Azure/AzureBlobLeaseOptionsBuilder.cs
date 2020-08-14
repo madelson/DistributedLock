@@ -6,6 +6,9 @@ using System.Threading;
 
 namespace Medallion.Threading.Azure
 {
+    /// <summary>
+    /// Specifies options for an Azure blob lease
+    /// </summary>
     public sealed class AzureBlobLeaseOptionsBuilder
     {
         /// <summary>

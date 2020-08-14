@@ -7,6 +7,9 @@ using System.Threading;
 
 namespace Medallion.Threading.SqlServer
 {
+    /// <summary>
+    /// Specifies options for connecting to and locking against a SQL database
+    /// </summary>
     public sealed class SqlConnectionOptionsBuilder
     {
         private TimeoutValue? _keepaliveCadence;

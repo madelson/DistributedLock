@@ -8,6 +8,11 @@
     /// </summary>
     public interface IDistributedLockProvider
     {
+        /// <summary>
+        /// Constructs an <see cref="IDistributedLock"/> instance with the given <paramref name="name"/>. Unless
+        /// <paramref name="exactName"/> is set to true, <see cref="GetSafeLockName(string)"/> will be used to
+        /// ensure that the name will work with the underlying locking system.
+        /// </summary>
         IDistributedLock CreateLock(string name, bool exactName = false);
 
         /// <summary>

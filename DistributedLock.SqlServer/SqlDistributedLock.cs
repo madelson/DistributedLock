@@ -17,16 +17,39 @@ namespace Medallion.Threading.SqlServer
 
         // todo connection factory API (to allow for access tokens)?
 
+        /// <summary>
+        /// Constructs a new lock using the provided <paramref name="name"/>. 
+        /// 
+        /// The provided <paramref name="connectionString"/> will be used to connect to the database.
+        /// 
+        /// Unless <paramref name="exactName"/> is specified, <see cref="GetSafeName(string)"/> will be used to ensure name validity.
+        /// </summary>
         public SqlDistributedLock(string name, string connectionString, Action<SqlConnectionOptionsBuilder>? options = null, bool exactName = false)
             : this(name, exactName, n => CreateInternalLock(n, connectionString, options))
         {
         }
 
+        /// <summary>
+        /// Constructs a new lock using the provided <paramref name="name"/>.
+        /// 
+        /// The provided <paramref name="connection"/> will be used to connect to the database and will provide lock scope. It is assumed to be externally managed and
+        /// will not be opened or closed.
+        /// 
+        /// Unless <paramref name="exactName"/> is specified, <see cref="GetSafeName(string)"/> will be used to ensure name validity.
+        /// </summary>
         public SqlDistributedLock(string name, IDbConnection connection, bool exactName = false)
             : this(name, exactName, n => CreateInternalLock(n, connection))
         {
         }
 
+        /// <summary>
+        /// Constructs a new lock using the provided <paramref name="name"/>.
+        /// 
+        /// The provided <paramref name="transaction"/> will be used to connect to the database and will provide lock scope. It is assumed to be externally managed and
+        /// will not be committed or rolled back.
+        /// 
+        /// Unless <paramref name="exactName"/> is specified, <see cref="GetSafeName(string)"/> will be used to ensure name validity.
+        /// </summary>
         public SqlDistributedLock(string name, IDbTransaction transaction, bool exactName = false)
             : this(name, exactName, n => CreateInternalLock(n, transaction))
         {
@@ -54,9 +77,12 @@ namespace Medallion.Threading.SqlServer
         public static int MaxNameLength => 255;
 
         // todo should this be the safe name or the user-provided name? Should we even expose this?
+        /// <summary>
+        /// Implements <see cref="IDistributedLock.Name"/>
+        /// </summary>
         public string Name { get; }
 
-        public bool IsReentrant => throw new NotImplementedException("todo");
+        bool IDistributedLock.IsReentrant => throw new NotImplementedException("todo");
 
         /// <summary>
         /// Given <paramref name="name"/>, constructs a lock name which is safe for use with <see cref="SqlDistributedLock"/>
