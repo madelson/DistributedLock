@@ -13,10 +13,10 @@
     <Version>1.0.0-alpha01</Version>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <Authors>Michael Adelson</Authors>
-    <Description>TODO</Description>
+    <Description>Provides a distributed locking implementation based on Azure blob leases</Description>
     <Copyright>Copyright © 2020 Michael Adelson</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageTags>distributed lock async waithandle mutex sql postgres</PackageTags>
+    <PackageTags>distributed lock async azure blob lease</PackageTags>
     <PackageProjectUrl>https://github.com/madelson/DistributedLock</PackageProjectUrl>
     <RepositoryUrl>https://github.com/madelson/DistributedLock</RepositoryUrl>
     <FileVersion>1.0.0.0</FileVersion>

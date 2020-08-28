@@ -13,10 +13,10 @@
     <Version>1.0.0-alpha01</Version>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <Authors>Michael Adelson</Authors>
-    <Description>TODO</Description>
+    <Description>Provides a distributed lock implementation based on global WaitHandle objects in Windows</Description>
     <Copyright>Copyright © 2020 Michael Adelson</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageTags>TODO</PackageTags>
+    <PackageTags>distributed lock async mutex waithandle</PackageTags>
     <PackageProjectUrl>https://github.com/madelson/DistributedLock</PackageProjectUrl>
     <RepositoryUrl>https://github.com/madelson/DistributedLock</RepositoryUrl>
     <FileVersion>1.0.0.0</FileVersion>
