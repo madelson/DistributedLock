@@ -188,6 +188,7 @@ namespace Medallion.Threading.Tests.Azure
         }
 
         [Test]
+        [NonParallelizable, Retry(tryCount: 3)] // timing-sensitive
         public void TestTriggersHandleLostIfLeaseExpiresNaturally()
         {
             using var provider = new TestingAzureBlobLeaseDistributedLockProvider();

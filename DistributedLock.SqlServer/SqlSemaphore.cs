@@ -457,9 +457,11 @@ namespace Medallion.Threading.SqlServer
                         AND (@{LockScopeVariable} = 'Session' OR APPLOCK_MODE('public', @{TicketLockNameParameter}, 'Session') = 'NoLock')
                     BEGIN
                         {C/* "allowOneWait" will be specified when we are in a busy wait loop. To avoid burning CPU we pick the first unheld ticket we come
-                             across and allow that wait to be 1ms instead of 0. This is preferable to doing WAITFOR since the wait will be broken if that ticket
-                             becomes available. */}
-                        {(allowOneWait ? "DECLARE @lockTimeoutMillis INT = CASE @anyNotHeld WHEN 0 THEN 1 ELSE 0 END" : null)}
+                             across and allow that wait to be 32ms instead of 0. This is preferable to doing WAITFOR since the wait will be broken if that ticket
+                             becomes available. Note that we used to wait just 1ms here. However, in testing that proved flaky in detecting
+                             deadlocks; empirically, 32ms seems to be sufficient to work reliably. The longer wait should also reduce the
+                             CPU load without meaningfully adding delay overhead. */}
+                        {(allowOneWait ? "DECLARE @lockTimeoutMillis INT = CASE @anyNotHeld WHEN 0 THEN 32 ELSE 0 END" : null)}
                         SET @anyNotHeld = 1
 
                         {(

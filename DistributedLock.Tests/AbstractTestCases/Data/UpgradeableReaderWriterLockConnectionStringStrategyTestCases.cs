@@ -21,6 +21,7 @@ namespace Medallion.Threading.Tests.Data
         /// Tests the logic where upgrading a connection stops and restarts the keepalive
         /// </summary>
         [Test]
+        [NonParallelizable, Retry(tryCount: 3)] // this test is somewhat timing sensitive
         public void TestKeepaliveProtectsFromIdleSessionKillerAfterFailedUpgrade()
         {
             var applicationName = this._lockProvider.Strategy.SetUniqueApplicationName();
