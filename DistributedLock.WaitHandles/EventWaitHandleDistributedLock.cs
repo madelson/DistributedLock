@@ -170,7 +170,6 @@ namespace Medallion.Threading.WaitHandles
 
         private EventWaitHandle CreateEvent()
         {
-            // based on http://stackoverflow.com/questions/2590334/creating-a-cross-process-eventwaithandle
             var security = new EventWaitHandleSecurity();
             // allow anyone to wait on and signal this lock
             security.AddAccessRule(
@@ -181,17 +180,38 @@ namespace Medallion.Threading.WaitHandles
                 )
             );
 
-            var @event = new EventWaitHandle(
-                // if we create, start as unlocked
-                initialState: true,
-                // allow only one thread to hold the lock
-                mode: EventResetMode.AutoReset,
-                name: this.Name,
-                createdNew: out _
-            );
-            @event.SetAccessControl(security);
+            const int MaxTries = 3;
+            var tries = 0;
+            
+            while (true)
+            {
+                ++tries;
+                try
+                {
+                    // based on http://stackoverflow.com/questions/2590334/creating-a-cross-process-eventwaithandle
+                    var @event = new EventWaitHandle(
+                        // if we create, start as unlocked
+                        initialState: true,
+                        // allow only one thread to hold the lock
+                        mode: EventResetMode.AutoReset,
+                        name: this.Name,
+                        createdNew: out _
+                    );
+                    @event.SetAccessControl(security);
+                    return @event;
+                }
+                // fallback handling based on https://stackoverflow.com/questions/1784392/my-eventwaithandle-says-access-to-the-path-is-denied-but-its-not
+                catch (UnauthorizedAccessException) when (tries <= MaxTries)
+                {
+                    if (EventWaitHandle.TryOpenExisting(this.Name, out var existing))
+                    {
+                        return existing;
+                    }
+                }
 
-            return @event;
+                // if we fail both, we might be in a race. Add in a small random sleep to attempt desynchronization
+                Thread.Sleep(new Random(Guid.NewGuid().GetHashCode()).Next(10 * tries));
+            }
         }
 
         bool IInternalDistributedLock<EventWaitHandleDistributedLockHandle>.WillGoAsync(TimeoutValue timeout, CancellationToken cancellationToken) => false;
