@@ -20,9 +20,10 @@ namespace Medallion.Threading.Tests.Data
         [TearDown] public void TearDown() => this._lockProvider.Dispose();
 
         [Test]
+        [NonParallelizable, Retry(tryCount: 3)] // timing sensitive for SqlSemaphore (see comment in that file regarding the 32ms wait)
         public void TestDeadlockDetection()
         {
-            var timeout = TimeSpan.FromSeconds(30);
+            var timeout = TimeSpan.FromSeconds(15);
 
             using var barrier = new Barrier(participantCount: 2);
             const string LockName1 = nameof(TestDeadlockDetection) + "_1",
