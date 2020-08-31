@@ -65,7 +65,7 @@ namespace Medallion.Threading.Internal
 
             public CancellationToken HandleLostToken => this._innerHandle.HandleLostToken;
 
-            public void Dispose() => SyncOverAsync.Run(@this => @this.DisposeAsync(), this, false);
+            public void Dispose() => SyncOverAsync.Run(@this => @this.DisposeAsync(), this);
 
             public ValueTask DisposeAsync()
             {
@@ -83,16 +83,14 @@ namespace Medallion.Threading.Internal
             where THandle : class, IDistributedLockHandle =>
             SyncOverAsync.Run(
                 state => AcquireAsync(state.@lock, state.timeout, state.cancellationToken),
-                (@lock, timeout, cancellationToken),
-                willGoAsync: @lock.WillGoAsync(timeout, cancellationToken)
+                (@lock, timeout, cancellationToken)
             );
 
         public static THandle? TryAcquire<THandle>(IInternalDistributedLock<THandle> @lock, TimeSpan timeout, CancellationToken cancellationToken)
             where THandle : class, IDistributedLockHandle =>
             SyncOverAsync.Run(
                 state => state.@lock.InternalTryAcquireAsync(state.timeout, state.cancellationToken),
-                (@lock, timeout, cancellationToken),
-                willGoAsync: @lock.WillGoAsync(timeout, cancellationToken)
+                (@lock, timeout, cancellationToken)
             );
         #endregion
 
@@ -105,16 +103,14 @@ namespace Medallion.Threading.Internal
             where THandle : class, IDistributedLockHandle =>
             SyncOverAsync.Run(
                 state => AcquireAsync(state.@lock, state.timeout, state.cancellationToken, state.isWrite),
-                (@lock, timeout, cancellationToken, isWrite),
-                willGoAsync: false
+                (@lock, timeout, cancellationToken, isWrite)
             );
 
         public static THandle? TryAcquire<THandle>(IInternalDistributedReaderWriterLock<THandle> @lock, TimeSpan timeout, CancellationToken cancellationToken, bool isWrite)
             where THandle : class, IDistributedLockHandle =>
             SyncOverAsync.Run(
                 state => state.@lock.InternalTryAcquireAsync(state.timeout, state.cancellationToken, state.isWrite),
-                (@lock, timeout, cancellationToken, isWrite),
-                willGoAsync: false
+                (@lock, timeout, cancellationToken, isWrite)
             );
         #endregion
 
@@ -129,8 +125,7 @@ namespace Medallion.Threading.Internal
             where TUpgradeableHandle : class, IDistributedLockUpgradeableHandle =>
             SyncOverAsync.Run(
                 state => AcquireUpgradeableReadLockAsync(state.@lock, state.timeout, state.cancellationToken),
-                (@lock, timeout, cancellationToken),
-                willGoAsync: false
+                (@lock, timeout, cancellationToken)
             );
 
         public static TUpgradeableHandle? TryAcquireUpgradeableReadLock<THandle, TUpgradeableHandle>(IInternalDistributedUpgradeableReaderWriterLock<THandle, TUpgradeableHandle> @lock, TimeSpan timeout, CancellationToken cancellationToken)
@@ -138,8 +133,7 @@ namespace Medallion.Threading.Internal
             where TUpgradeableHandle : class, IDistributedLockUpgradeableHandle =>
             SyncOverAsync.Run(
                 state => state.@lock.InternalTryAcquireUpgradeableReadLockAsync(state.timeout, state.cancellationToken),
-                (@lock, timeout, cancellationToken),
-                willGoAsync: false
+                (@lock, timeout, cancellationToken)
             );
         #endregion
 
@@ -148,10 +142,10 @@ namespace Medallion.Threading.Internal
            handle.InternalTryUpgradeToWriteLockAsync(timeout, cancellationToken).ThrowTimeoutIfFalse();
 
         public static void UpgradeToWriteLock(IDistributedLockUpgradeableHandle handle, TimeSpan? timeout, CancellationToken cancellationToken) =>
-            SyncOverAsync.Run(t => t.handle.UpgradeToWriteLockAsync(t.timeout, t.cancellationToken), (handle, timeout, cancellationToken), false);
+            SyncOverAsync.Run(t => t.handle.UpgradeToWriteLockAsync(t.timeout, t.cancellationToken), (handle, timeout, cancellationToken));
 
         public static bool TryUpgradeToWriteLock(IDistributedLockUpgradeableHandle handle, TimeSpan timeout, CancellationToken cancellationToken) =>
-            SyncOverAsync.Run(t => t.handle.TryUpgradeToWriteLockAsync(t.timeout, t.cancellationToken), (handle, timeout, cancellationToken), false);
+            SyncOverAsync.Run(t => t.handle.TryUpgradeToWriteLockAsync(t.timeout, t.cancellationToken), (handle, timeout, cancellationToken));
         #endregion
 
         private static Exception LockTimeout() => new TimeoutException("Timeout exceeded when trying to acquire the lock");

@@ -161,9 +161,6 @@ namespace Medallion.Threading.Azure
             return new AzureBlobLeaseDistributedLockHandle(internalHandle);
         }
 
-        // todo remove
-        bool IInternalDistributedLock<AzureBlobLeaseDistributedLockHandle>.WillGoAsync(TimeoutValue timeout, CancellationToken cancellationToken) => false;
-
         internal sealed class InternalHandle : IDistributedLockHandle
         {
             private readonly CancellationTokenSource _renewalCancellationSource = new CancellationTokenSource();
@@ -192,7 +189,7 @@ namespace Medallion.Threading.Azure
 
             public string LeaseId => this._leaseClient.LeaseId;
 
-            public void Dispose() => SyncOverAsync.Run(@this => @this.DisposeAsync(), this, false);
+            public void Dispose() => SyncOverAsync.Run(@this => @this.DisposeAsync(), this);
 
             public async ValueTask DisposeAsync()
             {

@@ -23,7 +23,7 @@ namespace Medallion.Threading.SqlServer
         /// <summary>
         /// Releases the lock
         /// </summary>
-        public void Dispose() => SyncOverAsync.Run(@this => @this.DisposeAsync(), this, willGoAsync: false);
+        public void Dispose() => SyncOverAsync.Run(@this => @this.DisposeAsync(), this);
 
         /// <summary>
         /// Releases the lock asynchronously

@@ -243,7 +243,7 @@ namespace Medallion.Threading.Internal.Data
                 return default;
             }
 
-            void IDisposable.Dispose() => SyncOverAsync.Run(@this => @this.DisposeAsync(), this, willGoAsync: false);
+            void IDisposable.Dispose() => SyncOverAsync.Run(@this => @this.DisposeAsync(), this);
         }
     }
 

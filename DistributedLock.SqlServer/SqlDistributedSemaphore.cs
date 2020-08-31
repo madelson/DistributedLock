@@ -76,7 +76,7 @@ namespace Medallion.Threading.SqlServer
         /// <param name="cancellationToken">Specifies a token by which the wait can be canceled</param>
         /// <returns>A <see cref="SqlDistributedSemaphoreHandle"/> which can be used to release the ticket or null on failure</returns>
         public SqlDistributedSemaphoreHandle? TryAcquire(TimeSpan timeout = default, CancellationToken cancellationToken = default) =>
-            SyncOverAsync.Run(t => t.@this.TryAcquireAsync(t.timeout, t.cancellationToken), (@this: this, timeout, cancellationToken), false);
+            SyncOverAsync.Run(t => t.@this.TryAcquireAsync(t.timeout, t.cancellationToken), (@this: this, timeout, cancellationToken));
 
         /// <summary>
         /// Acquires a semaphore ticket synchronously, failing with <see cref="TimeoutException"/> if the attempt times out. Usage: 
@@ -92,7 +92,7 @@ namespace Medallion.Threading.SqlServer
         /// <param name="cancellationToken">Specifies a token by which the wait can be canceled</param>
         /// <returns>A <see cref="SqlDistributedSemaphoreHandle"/> which can be used to release the ticket</returns>
         public SqlDistributedSemaphoreHandle Acquire(TimeSpan? timeout = null, CancellationToken cancellationToken = default) =>
-            SyncOverAsync.Run(t => t.@this.AcquireAsync(t.timeout, t.cancellationToken), (@this: this, timeout, cancellationToken), false);
+            SyncOverAsync.Run(t => t.@this.AcquireAsync(t.timeout, t.cancellationToken), (@this: this, timeout, cancellationToken));
 
         /// <summary>
         /// Attempts to acquire a semaphore ticket asynchronously. Usage: 

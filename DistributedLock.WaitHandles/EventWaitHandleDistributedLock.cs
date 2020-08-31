@@ -213,7 +213,5 @@ namespace Medallion.Threading.WaitHandles
                 Thread.Sleep(new Random(Guid.NewGuid().GetHashCode()).Next(10 * tries));
             }
         }
-
-        bool IInternalDistributedLock<EventWaitHandleDistributedLockHandle>.WillGoAsync(TimeoutValue timeout, CancellationToken cancellationToken) => false;
     }
 }

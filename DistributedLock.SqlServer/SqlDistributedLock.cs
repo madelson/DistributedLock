@@ -90,8 +90,6 @@ namespace Medallion.Threading.SqlServer
         public static string GetSafeName(string name) =>
             DistributedLockHelpers.ToSafeName(name, MaxNameLength, s => s);
 
-        bool IInternalDistributedLock<SqlDistributedLockHandle>.WillGoAsync(TimeoutValue timeout, CancellationToken cancellationToken) => false;
-
         ValueTask<SqlDistributedLockHandle?> IInternalDistributedLock<SqlDistributedLockHandle>.InternalTryAcquireAsync(TimeoutValue timeout, CancellationToken cancellationToken) =>
             this._internalLock.TryAcquireAsync(timeout, SqlApplicationLock.ExclusiveLock, cancellationToken, contextHandle: null).Wrap(h => new SqlDistributedLockHandle(h));
 

@@ -34,7 +34,7 @@ namespace Medallion.Threading.Azure
         /// <summary>
         /// Releases the lock
         /// </summary>
-        public void Dispose() => SyncOverAsync.Run(@this => @this.DisposeAsync(), this, false);
+        public void Dispose() => SyncOverAsync.Run(@this => @this.DisposeAsync(), this);
 
         /// <summary>
         /// Releases the lock asynchronously

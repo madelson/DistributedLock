@@ -11,7 +11,7 @@ namespace Medallion.Threading.Tests.Tests
     {
         private static object[] DistributedLockAssemblies => typeof(ApiTest).Assembly
             .GetReferencedAssemblies()
-            .Where(a => a.Name.StartsWith("DistributedLock."))
+            .Where(a => a.Name!.StartsWith("DistributedLock."))
             .ToArray<object>();
 
         [TestCaseSource(nameof(DistributedLockAssemblies))]
@@ -20,11 +20,11 @@ namespace Medallion.Threading.Tests.Tests
             var assembly = Assembly.Load(assemblyName);
             var publicTypes = assembly.GetTypes()
 #if DEBUG
-                .Where(t => assemblyName.Name != "DistributedLock.Core" || !t.Namespace.Contains(".Internal"))
+                .Where(t => assemblyName.Name != "DistributedLock.Core" || !t.Namespace!.Contains(".Internal"))
 #endif
                 .Where(t => t.IsPublic);
 
-            var expectedNamespace = assemblyName.Name.Replace("DistributedLock", "Medallion.Threading")
+            var expectedNamespace = assemblyName.Name!.Replace("DistributedLock", "Medallion.Threading")
                 .Replace(".Core", string.Empty);
             foreach (var type in publicTypes)
             {

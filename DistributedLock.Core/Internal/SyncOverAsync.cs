@@ -24,7 +24,7 @@ namespace Medallion.Threading.Internal
         // todo get rid of WillGoAsync, replace with a debug-only API for turning on these assertions that a test can use
         // e. g. using (SyncOverAsync.SyncMode()) { Assert.DoesNotThrow(() => handle.Dispose()); }
 
-        public static void Run<TState>(Func<TState, ValueTask> action, TState state, bool willGoAsync)
+        public static void Run<TState>(Func<TState, ValueTask> action, TState state)
         {
             Run(
                 async s =>
@@ -32,23 +32,13 @@ namespace Medallion.Threading.Internal
                     await s.action(s.state).ConfigureAwait(false);
                     return true;
                 },
-                (action, state),
-                willGoAsync
+                (action, state)
             );
         }
 
-        public static TResult Run<TState, TResult>(Func<TState, ValueTask<TResult>> action, TState state, bool willGoAsync)
+        public static TResult Run<TState, TResult>(Func<TState, ValueTask<TResult>> action, TState state)
         {
             Invariant.Require(!_isSynchronous);
-
-            if (willGoAsync)
-            {
-                var task = action(state);
-                Invariant.Require(!task.IsCompleted);
-                // call AsTask(), since https://docs.microsoft.com/en-us/dotnet/api/system.threading.tasks.valuetask-1?view=netcore-3.1
-                // says that we should not call GetAwaiter().GetResult() except on a completed ValueTask
-                return task.AsTask().GetAwaiter().GetResult();
-            }
 
             try
             {
@@ -56,6 +46,16 @@ namespace Medallion.Threading.Internal
 
                 var task = action(state);
                 Invariant.Require(task.IsCompleted);
+
+                // this should never happen (and can't in the debug build). However, to make absolutely sure we have this as 
+                // fallback logic for the release build
+                if (!task.IsCompleted)
+                {
+                    // call AsTask(), since https://docs.microsoft.com/en-us/dotnet/api/system.threading.tasks.valuetask-1?view=netcore-3.1
+                    // says that we should not call GetAwaiter().GetResult() except on a completed ValueTask
+                    return task.AsTask().GetAwaiter().GetResult();
+                }
+
                 return task.GetAwaiter().GetResult();
             }
             finally

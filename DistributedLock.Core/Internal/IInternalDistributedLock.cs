@@ -19,10 +19,5 @@ namespace Medallion.Threading.Internal
 
         // internals
         ValueTask<THandle?> InternalTryAcquireAsync(TimeoutValue timeout, CancellationToken cancellationToken);
-        // todo remove
-        /// <summary>
-        /// In a sync-over-async scenario, determines whether the code will need to go async anyway
-        /// </summary>
-        bool WillGoAsync(TimeoutValue timeout, CancellationToken cancellationToken);
     }
 }

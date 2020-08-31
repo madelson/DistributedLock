@@ -9,24 +9,22 @@ namespace Medallion.Threading.Tests.Core
     public class SyncOverAsyncTest
     {
         [Test]
-        public void TestSyncOverAsyncVoid([Values] bool willGoAsync)
+        public void TestSyncOverAsyncVoid()
         {
             var currentThread = Thread.CurrentThread;
             SyncOverAsync.Run<(int a, int b, Thread startingThread, bool expectAsync)>(
                 async state => await AddAsync(state.a, state.b, state.startingThread, state.expectAsync),
-                (1, 2, currentThread, willGoAsync),
-                willGoAsync: willGoAsync
+                (1, 2, currentThread, false)
             );
         }
 
         [Test]
-        public void TestSyncOverAsyncWithResult([Values] bool willGoAsync)
+        public void TestSyncOverAsyncWithResult()
         {
             var currentThread = Thread.CurrentThread;
             var result = SyncOverAsync.Run(
                 async ((int a, int b, Thread startingThread, bool expectAsync) state) => await AddAsync(state.a, state.b, state.startingThread, state.expectAsync),
-                (1, 2, currentThread, willGoAsync),
-                willGoAsync: willGoAsync
+                (1, 2, currentThread, false)
             );
             Assert.AreEqual(3, result);
         }
