@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 namespace Medallion.Threading.WaitHandles
 {
     /// <summary>
-    /// See <see cref="IDistributedLockHandle"/>
+    /// Implements <see cref="IDistributedLockHandle"/>
     /// </summary>
     public sealed class EventWaitHandleDistributedLockHandle : IDistributedLockHandle
     {

@@ -1,11 +1,13 @@
-using Medallion.Threading.WaitHandles;
+﻿using Medallion.Threading.WaitHandles;
 using NUnit.Framework;
 using System;
+using System.Collections.Generic;
+using System.Text;
 
-namespace Medallion.Threading.Tests.WaitHandles
+namespace Medallion.Threading.Tests.Tests.WaitHandles
 {
     [Category("CI")]
-    public class EventWaitHandleDistributedLockTest
+    public class WaitHandleDistributedSemaphoreTest
     {
         [TestCase(null, NameStyle.Exact, ExpectedResult = typeof(ArgumentNullException))]
         [TestCase(null, NameStyle.Safe, ExpectedResult = typeof(ArgumentNullException))]
@@ -21,22 +23,22 @@ namespace Medallion.Threading.Tests.WaitHandles
                 this.TestWorkingName(name, NameStyle.Safe); // should always work
             }
 
-            return Assert.Catch(() => CreateLock(name!, nameStyle)).GetType();
+            return Assert.Catch(() => CreateAsLock(name!, nameStyle)).GetType();
         }
 
         [TestCase(" \t", NameStyle.AddPrefix)]
         [TestCase("/a/b/c", NameStyle.AddPrefix)]
         [TestCase("\r\n", NameStyle.AddPrefix)]
         public void TestWorkingName(string name, NameStyle nameStyle) =>
-            Assert.DoesNotThrow(() => CreateLock(name, nameStyle).Acquire().Dispose());
+            Assert.DoesNotThrow(() => CreateAsLock(name, nameStyle).Acquire().Dispose());
 
         [Test]
         public void TestMaxLengthNames()
         {
-            EventWaitHandleDistributedLock.MaxNameLength.ShouldEqual(DistributedWaitHandleHelpers.MaxNameLength);
-            
-            var maxLengthName = DistributedWaitHandleHelpers.GlobalPrefix 
-                + new string('a', EventWaitHandleDistributedLock.MaxNameLength - DistributedWaitHandleHelpers.GlobalPrefix.Length);
+            WaitHandleDistributedSemaphore.MaxNameLength.ShouldEqual(DistributedWaitHandleHelpers.MaxNameLength);
+
+            var maxLengthName = DistributedWaitHandleHelpers.GlobalPrefix
+                + new string('a', WaitHandleDistributedSemaphore.MaxNameLength - DistributedWaitHandleHelpers.GlobalPrefix.Length);
             this.TestWorkingName(maxLengthName, NameStyle.Exact);
             this.TestBadName(maxLengthName + "a", NameStyle.Exact);
         }
@@ -44,7 +46,7 @@ namespace Medallion.Threading.Tests.WaitHandles
         [Test]
         public void TestGarbageCollection()
         {
-            var @lock = CreateLock("gc_test", NameStyle.AddPrefix);
+            var @lock = CreateAsLock("gc_test", NameStyle.AddPrefix);
             WeakReference AbandonLock() => new WeakReference(@lock.Acquire());
 
             var weakHandle = AbandonLock();
@@ -64,21 +66,22 @@ namespace Medallion.Threading.Tests.WaitHandles
             (DistributedWaitHandleHelpers.MaxNameLength - DistributedWaitHandleHelpers.GlobalPrefix.Length)
                 .ShouldEqual(MaxNameLengthWithoutGlobalPrefix);
 
-            EventWaitHandleDistributedLock.GetSafeName("").ShouldEqual(@"Global\EMPTYz4PhNX7vuL3xVChQ1m2AB9Yg5AULVxXcg/SpIdNs6c5H0NE8XYXysP+DGNKHfuwvY7kxvUdBeoGlODJ6+SfaPg==");
-            EventWaitHandleDistributedLock.GetSafeName("abc").ShouldEqual(@"Global\abc");
-            EventWaitHandleDistributedLock.GetSafeName("\\").ShouldEqual(@"Global\_CgzRFsLFf7El/ZraEx9sqWRYeplYohSBSmI9sYIe1c4y2u7ECFoU4x2QCjV7HiVJMZsuDMLIz7r8akpKr+viAw==");
-            EventWaitHandleDistributedLock.GetSafeName(new string('a', MaxNameLengthWithoutGlobalPrefix))
+            WaitHandleDistributedSemaphore.GetSafeName("").ShouldEqual(@"Global\EMPTYz4PhNX7vuL3xVChQ1m2AB9Yg5AULVxXcg/SpIdNs6c5H0NE8XYXysP+DGNKHfuwvY7kxvUdBeoGlODJ6+SfaPg==");
+            WaitHandleDistributedSemaphore.GetSafeName("abc").ShouldEqual(@"Global\abc");
+            WaitHandleDistributedSemaphore.GetSafeName("\\").ShouldEqual(@"Global\_CgzRFsLFf7El/ZraEx9sqWRYeplYohSBSmI9sYIe1c4y2u7ECFoU4x2QCjV7HiVJMZsuDMLIz7r8akpKr+viAw==");
+            WaitHandleDistributedSemaphore.GetSafeName(new string('a', MaxNameLengthWithoutGlobalPrefix))
                 .ShouldEqual(@"Global\" + new string('a', MaxNameLengthWithoutGlobalPrefix));
-            EventWaitHandleDistributedLock.GetSafeName(new string('\\', MaxNameLengthWithoutGlobalPrefix))
+            WaitHandleDistributedSemaphore.GetSafeName(new string('\\', MaxNameLengthWithoutGlobalPrefix))
                 .ShouldEqual(@"Global\_____________________________________________________________________________________________________________________________________________________________________Y7DJXlpJeJjeX5XAOWV+ka/3ONBj5dHhKWcSH4pd5AC9YHFm+l1gBArGpBSBn3WcX00ArcDtKw7g24kJaHLifQ==");
-            EventWaitHandleDistributedLock.GetSafeName(new string('x', MaxNameLengthWithoutGlobalPrefix + 1))
+            WaitHandleDistributedSemaphore.GetSafeName(new string('x', MaxNameLengthWithoutGlobalPrefix + 1))
                 .ShouldEqual(@"Global\xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxsrCnXZ1XHiT//dOSBfAU0iC4Gtnlr0dQACBUK8Ev2OdRYJ9jcvbiqVCv/rjyPemTW9AvOonkdr0B2bG04gmeYA==");
         }
 
-        private static EventWaitHandleDistributedLock CreateLock(string name, NameStyle nameStyle) => 
-            new EventWaitHandleDistributedLock(
-                (nameStyle == NameStyle.AddPrefix ? DistributedWaitHandleHelpers.GlobalPrefix + name : name), 
-                abandonmentCheckCadence: TimeSpan.FromSeconds(.3), 
+        private static WaitHandleDistributedSemaphore CreateAsLock(string name, NameStyle nameStyle) =>
+            new WaitHandleDistributedSemaphore(
+                (nameStyle == NameStyle.AddPrefix ? DistributedWaitHandleHelpers.GlobalPrefix + name : name),
+                maxCount: 1,
+                abandonmentCheckCadence: TimeSpan.FromSeconds(.3),
                 exactName: nameStyle != NameStyle.Safe
             );
 

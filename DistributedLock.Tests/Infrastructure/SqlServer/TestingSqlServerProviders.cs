@@ -42,7 +42,7 @@ namespace Medallion.Threading.Tests.SqlServer
         where TStrategy : TestingDbSynchronizationStrategy<TDb>, new()
         where TDb : ITestingSqlServerDb, new()
     {
-        public override SqlDistributedSemaphore CreateSemaphoreWithExactName(string name, int maxCount) =>
+        public override IDistributedSemaphore CreateSemaphoreWithExactName(string name, int maxCount) =>
             this.Strategy.GetConnectionOptions()
                 .Create(
                     (connectionString, options) =>

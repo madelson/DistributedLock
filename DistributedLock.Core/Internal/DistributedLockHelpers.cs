@@ -137,6 +137,26 @@ namespace Medallion.Threading.Internal
             );
         #endregion
 
+        #region ---- IInternalDistributedSemaphore implementations ----
+        public static ValueTask<THandle> AcquireAsync<THandle>(IInternalDistributedSemaphore<THandle> @lock, TimeSpan? timeout, CancellationToken cancellationToken)
+            where THandle : class, IDistributedLockHandle =>
+            @lock.InternalTryAcquireAsync(timeout, cancellationToken).ThrowTimeoutIfNull(@object: "semaphore");
+
+        public static THandle Acquire<THandle>(IInternalDistributedSemaphore<THandle> @lock, TimeSpan? timeout, CancellationToken cancellationToken)
+            where THandle : class, IDistributedLockHandle =>
+            SyncOverAsync.Run(
+                state => AcquireAsync(state.@lock, state.timeout, state.cancellationToken),
+                (@lock, timeout, cancellationToken)
+            );
+
+        public static THandle? TryAcquire<THandle>(IInternalDistributedSemaphore<THandle> @lock, TimeSpan timeout, CancellationToken cancellationToken)
+            where THandle : class, IDistributedLockHandle =>
+            SyncOverAsync.Run(
+                state => state.@lock.InternalTryAcquireAsync(state.timeout, state.cancellationToken),
+                (@lock, timeout, cancellationToken)
+            );
+        #endregion
+
         #region ---- IDistributedLockUpgradeableHandle implementations ----
         public static ValueTask UpgradeToWriteLockAsync(IInternalDistributedLockUpgradeableHandle handle, TimeSpan? timeout, CancellationToken cancellationToken) =>
            handle.InternalTryUpgradeToWriteLockAsync(timeout, cancellationToken).ThrowTimeoutIfFalse();
@@ -148,9 +168,9 @@ namespace Medallion.Threading.Internal
             SyncOverAsync.Run(t => t.handle.TryUpgradeToWriteLockAsync(t.timeout, t.cancellationToken), (handle, timeout, cancellationToken));
         #endregion
 
-        private static Exception LockTimeout() => new TimeoutException("Timeout exceeded when trying to acquire the lock");
+        private static Exception LockTimeout(string? @object = null) => new TimeoutException($"Timeout exceeded when trying to acquire the {@object ?? "lock"}");
 
-        public static async ValueTask<T> ThrowTimeoutIfNull<T>(this ValueTask<T?> task) where T : class =>
+        public static async ValueTask<T> ThrowTimeoutIfNull<T>(this ValueTask<T?> task, string? @object = null) where T : class =>
             await task.ConfigureAwait(false) ?? throw LockTimeout();
 
         private static async ValueTask ThrowTimeoutIfFalse(this ValueTask<bool> task)

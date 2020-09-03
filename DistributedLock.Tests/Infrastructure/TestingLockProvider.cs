@@ -11,6 +11,8 @@ namespace Medallion.Threading.Tests
 
         public virtual TStrategy Strategy => this._lazyStrategy.Value;
 
+        public virtual bool SupportsCrossProcessAbandonment => true;
+
         public abstract IDistributedLock CreateLockWithExactName(string name);
         public abstract string GetSafeName(string name);
 

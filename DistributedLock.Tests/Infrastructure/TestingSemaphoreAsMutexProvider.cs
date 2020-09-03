@@ -61,9 +61,9 @@ namespace Medallion.Threading.Tests
 
         private class SemaphoreAsMutex : IDistributedLock
         {
-            private readonly Threading.SqlServer.SqlDistributedSemaphore _semaphore;
+            private readonly IDistributedSemaphore _semaphore;
 
-            public SemaphoreAsMutex(Threading.SqlServer.SqlDistributedSemaphore semaphore)
+            public SemaphoreAsMutex(IDistributedSemaphore semaphore)
             {
                 this._semaphore = semaphore;
             }
@@ -98,5 +98,7 @@ namespace Medallion.Threading.Tests
         where TStrategy : TestingSynchronizationStrategy, new()
     {
         public TestingSemaphore5AsMutexProvider() : base(maxCount: 5) { }
+
+        public override bool SupportsCrossProcessAbandonment => this.Strategy.SupportsCrossProcessSingleSemaphoreTicketAbandonment;
     }
 }

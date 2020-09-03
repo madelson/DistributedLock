@@ -12,11 +12,11 @@ namespace DistributedLockCodeGen
     public class GenerateIDistributedLockImplementations
     {
         [Test]
-        public void GenerateForIDistributedLock()
+        public void GenerateForIDistributedLockAndSemaphore([Values("Lock", "Semaphore")] string name)
         {
             var files = CodeGenHelpers.EnumerateSolutionFiles()
-                .Where(f => f.IndexOf("DistributedLock.Core", StringComparison.OrdinalIgnoreCase) < 0)
-                .Where(f => f.EndsWith("DistributedLock.cs", StringComparison.OrdinalIgnoreCase) && Path.GetFileName(f)[0] != 'I');
+                .Where(f => f.IndexOf($"Distributed{name}.Core", StringComparison.OrdinalIgnoreCase) < 0)
+                .Where(f => f.EndsWith($"Distributed{name}.cs", StringComparison.OrdinalIgnoreCase) && Path.GetFileName(f)[0] != 'I');
             
             var errors = new List<string>();
             foreach (var file in files)
@@ -28,7 +28,7 @@ namespace DistributedLockCodeGen
                     continue; 
                 }
 
-                if (!lockCode.Contains(": IInternalDistributedLock<"))
+                if (!lockCode.Contains($": IInternalDistributed{name}<"))
                 {
                     errors.Add($"{file} does not implement the expected interface");
                     continue;
@@ -38,10 +38,10 @@ namespace DistributedLockCodeGen
                 var handleType = lockType + "Handle";
 
                 var explicitImplementations = new StringBuilder();
-                const string Interface = "IDistributedLock", InterfaceHandle = Interface + "Handle";
+                var @interface = $"IDistributed{name}";
                 foreach (var method in new[] { "TryAcquire", "Acquire", "TryAcquireAsync", "AcquireAsync" })
                 {
-                    AppendExplicitInterfaceMethod(explicitImplementations, Interface, method, InterfaceHandle);
+                    AppendExplicitInterfaceMethod(explicitImplementations, @interface, method, "IDistributedLockHandle");
                 }
 
                 var @namespace = Regex.Match(lockCode, @"\nnamespace (?<namespace>\S+)").Groups["namespace"].Value;
@@ -65,7 +65,7 @@ namespace {@namespace}
             DistributedLockHelpers.Acquire(this, timeout, cancellationToken);
 
         public ValueTask<{handleType}?> TryAcquireAsync(TimeSpan timeout = default, CancellationToken cancellationToken = default) =>
-            this.As<IInternalDistributedLock<{handleType}>>().InternalTryAcquireAsync(timeout, cancellationToken);
+            this.As<IInternalDistributed{name}<{handleType}>>().InternalTryAcquireAsync(timeout, cancellationToken);
 
         public ValueTask<{handleType}> AcquireAsync(TimeSpan? timeout = null, CancellationToken cancellationToken = default) =>
             DistributedLockHelpers.AcquireAsync(this, timeout, cancellationToken);
@@ -73,7 +73,7 @@ namespace {@namespace}
 }}";
                 code = DocCommentGenerator.AddDocComments(code);
 
-                var outputPath = Path.Combine(Path.GetDirectoryName(file)!, Path.GetFileNameWithoutExtension(file) + ".IDistributedLock.cs");
+                var outputPath = Path.Combine(Path.GetDirectoryName(file)!, Path.GetFileNameWithoutExtension(file) + $".IDistributed{name}.cs");
                 if (!File.Exists(outputPath) || File.ReadAllText(outputPath) != code)
                 {
                     File.WriteAllText(outputPath, code);

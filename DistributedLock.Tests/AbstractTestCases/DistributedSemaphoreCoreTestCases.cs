@@ -82,34 +82,6 @@ namespace Medallion.Threading.Tests
         }
 
         [Test]
-        public void TestSameNameDifferentCounts()
-        {
-            // if 2 semaphores have different views of what the max count is, things still kind of
-            // work. The semaphore with the higher count behaves normally. The semaphore with the lower
-            // count behaves normally when the number of contenders is below it's count. After that, it
-            // behaves unpredictably. For example, if we have counts 2 and 3 and the 3-semaphore holds 2 tickets,
-            // then the 2-semaphore might or might not be able to acquire a ticket depending on whether the
-            // 3-semaphore holds tickets 1&2 (no), 1&3 (yes), or 2&3 (yes). This test serves to document
-            // the behavior that is more well-defined
-
-            var semaphore2 = this._semaphoreProvider.CreateSemaphore(nameof(TestSameNameDifferentCounts), 2);
-            var semaphore3 = this._semaphoreProvider.CreateSemaphore(nameof(TestSameNameDifferentCounts), 3);
-
-            var handle1 = semaphore2.Acquire(LongTimeout);
-            var handle2 = semaphore3.Acquire(LongTimeout);
-            var handle3 = semaphore3.Acquire(LongTimeout);
-            semaphore2.TryAcquire().ShouldEqual(null);
-            semaphore3.TryAcquire().ShouldEqual(null);
-
-            handle1.Dispose();
-            handle1 = semaphore3.Acquire(LongTimeout);
-
-            handle1.Dispose();
-            handle2.Dispose();
-            handle3.Dispose();
-        }
-
-        [Test]
         [NonParallelizable] // somewhat perf-sensitive
         public void TestSemaphoreParallelism()
         {

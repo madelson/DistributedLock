@@ -43,6 +43,12 @@ namespace DistributedLockTaker
                 case nameof(EventWaitHandleDistributedLock):
                     handle = new EventWaitHandleDistributedLock(name).Acquire();
                     break;
+                case nameof(WaitHandleDistributedSemaphore) + "1AsMutex":
+                    handle = new WaitHandleDistributedSemaphore(name, maxCount: 1).Acquire();
+                    break;
+                case nameof(WaitHandleDistributedSemaphore) + "5AsMutex":
+                    handle = new WaitHandleDistributedSemaphore(name, maxCount: 5).Acquire();
+                    break;
                 case nameof(AzureBlobLeaseDistributedLock):
                     handle = new AzureBlobLeaseDistributedLock(
                             new BlobClient(AzureCredentials.ConnectionString, AzureCredentials.DefaultBlobContainerName, name),

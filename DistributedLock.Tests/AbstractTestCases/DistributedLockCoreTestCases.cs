@@ -413,8 +413,15 @@ namespace Medallion.Threading.Tests
                 command.StandardInput.Flush();
             }
 
-            using var handle = acquireTask.Result;
-            Assert.IsNotNull(handle, this.GetType().Name);
+            if (this._lockProvider.SupportsCrossProcessAbandonment)
+            {
+                using var handle = acquireTask.Result;
+                Assert.IsNotNull(handle, this.GetType().Name);
+            }
+            else
+            {
+                Assert.IsFalse(acquireTask.Wait(TimeSpan.FromSeconds(1)));
+            }
         }
 
         private Command RunLockTaker(TLockProvider engine, params string[] args)
