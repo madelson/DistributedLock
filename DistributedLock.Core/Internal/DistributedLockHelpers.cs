@@ -171,7 +171,7 @@ namespace Medallion.Threading.Internal
         private static Exception LockTimeout(string? @object = null) => new TimeoutException($"Timeout exceeded when trying to acquire the {@object ?? "lock"}");
 
         public static async ValueTask<T> ThrowTimeoutIfNull<T>(this ValueTask<T?> task, string? @object = null) where T : class =>
-            await task.ConfigureAwait(false) ?? throw LockTimeout();
+            await task.ConfigureAwait(false) ?? throw LockTimeout(@object);
 
         private static async ValueTask ThrowTimeoutIfFalse(this ValueTask<bool> task)
         {
