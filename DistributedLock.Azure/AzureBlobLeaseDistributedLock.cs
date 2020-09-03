@@ -51,8 +51,6 @@ namespace Medallion.Threading.Azure
         /// </summary>
         public string Name => this._blobClient.Name;
 
-        bool IDistributedLock.IsReentrant => false;
-
         // implementation based on https://docs.microsoft.com/en-us/rest/api/storageservices/naming-and-referencing-containers--blobs--and-metadata#blob-names
         internal static string GetSafeName(string name, BlobContainerClient blobContainerClient)
         {

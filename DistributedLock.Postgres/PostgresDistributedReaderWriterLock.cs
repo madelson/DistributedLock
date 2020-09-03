@@ -54,8 +54,6 @@ namespace Medallion.Threading.Postgres
         /// </summary>
         public static PostgresAdvisoryLockKey GetSafeName(string name) => PostgresDistributedLock.GetSafeName(name);
 
-        bool IDistributedReaderWriterLock.IsReentrant => throw new NotImplementedException();
-
         ValueTask<PostgresDistributedReaderWriterLockHandle?> IInternalDistributedReaderWriterLock<PostgresDistributedReaderWriterLockHandle>.InternalTryAcquireAsync(
             TimeoutValue timeout,
             CancellationToken cancellationToken,

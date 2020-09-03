@@ -83,8 +83,6 @@ namespace Medallion.Threading.SqlServer
         /// </summary>
         public string Name { get; }
 
-        bool IDistributedReaderWriterLock.IsReentrant => throw new NotImplementedException();
-
         /// <summary>
         /// The maximum allowed length for lock names. See https://msdn.microsoft.com/en-us/library/ms189823.aspx
         /// </summary>

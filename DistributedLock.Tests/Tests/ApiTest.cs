@@ -51,7 +51,7 @@ namespace Medallion.Threading.Tests.Tests
         [TestCaseSource(nameof(DistributedLockAssemblies))]
         public void TestLibrariesUseConfigureAwaitFalse(AssemblyName assemblyName)
         {
-            var projectDirectory = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(CurrentFilePath()), "..", "..", assemblyName.Name));
+            var projectDirectory = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(CurrentFilePath())!, "..", "..", assemblyName.Name!));
             var codeFiles = Directory.GetFiles(projectDirectory, "*.cs", SearchOption.AllDirectories);
             Assert.IsNotEmpty(codeFiles);
 

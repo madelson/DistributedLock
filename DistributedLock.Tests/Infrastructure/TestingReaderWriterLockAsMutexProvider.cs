@@ -56,8 +56,6 @@ namespace Medallion.Threading.Tests
 
             string IDistributedLock.Name => this._readerWriterLock.Name;
 
-            bool IDistributedLock.IsReentrant => this._readerWriterLock.IsReentrant;
-
             IDistributedLockHandle IDistributedLock.Acquire(TimeSpan? timeout, CancellationToken cancellationToken) =>
                this.ShouldUseUpgrade(out var upgradeable)
                     ? upgradeable.AcquireUpgradeableReadLock(timeout, cancellationToken)

@@ -82,8 +82,6 @@ namespace Medallion.Threading.SqlServer
         /// </summary>
         public string Name { get; }
 
-        bool IDistributedLock.IsReentrant => throw new NotImplementedException("todo");
-
         /// <summary>
         /// Given <paramref name="name"/>, constructs a lock name which is safe for use with <see cref="SqlDistributedLock"/>
         /// </summary>

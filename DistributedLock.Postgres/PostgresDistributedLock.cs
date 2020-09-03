@@ -51,8 +51,6 @@ namespace Medallion.Threading.Postgres
 
         string IDistributedLock.Name => this.Key.ToString();
 
-        bool IDistributedLock.IsReentrant => false;
-
         /// <summary>
         /// Equivalent to <see cref="IDistributedLockProvider.GetSafeLockName(string)"/>
         /// </summary>

@@ -70,8 +70,6 @@ namespace Medallion.Threading.Tests
 
             string IDistributedLock.Name => throw new NotImplementedException();
 
-            bool IDistributedLock.IsReentrant => throw new NotImplementedException();
-
             IDistributedLockHandle IDistributedLock.Acquire(TimeSpan? timeout, CancellationToken cancellationToken) =>
                 this._semaphore.Acquire(timeout, cancellationToken);
 

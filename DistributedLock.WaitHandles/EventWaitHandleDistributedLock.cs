@@ -38,8 +38,6 @@ namespace Medallion.Threading.WaitHandles
         /// </summary>
         public string Name { get; }
 
-        bool IDistributedLock.IsReentrant => false;
-
         /// <summary>
         /// Equivalent to <see cref="IDistributedLockProvider.GetSafeLockName(string)"/>
         /// </summary>

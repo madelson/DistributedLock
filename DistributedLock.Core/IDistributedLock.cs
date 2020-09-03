@@ -16,12 +16,6 @@ namespace Medallion.Threading
         string Name { get; }
 
         /// <summary>
-        /// Whether the lock can be acquired multiple times by the same user.
-        /// Equivalent to <see cref="LockRecursionPolicy.SupportsRecursion"/>
-        /// </summary>
-        bool IsReentrant { get; }
-
-        /// <summary>
         /// Attempts to acquire the lock synchronously. Usage: 
         /// <code>
         ///     using (var handle = myLock.TryAcquire(...))
@@ -37,7 +31,8 @@ namespace Medallion.Threading
         IDistributedLockHandle? TryAcquire(TimeSpan timeout = default, CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Acquires the lock synchronously, failing with <see cref="TimeoutException"/> if the attempt times out. Usage: 
+        /// Acquires the lock synchronously, failing
+        /// with <see cref="TimeoutException"/> if the attempt times out. Usage: 
         /// <code>
         ///     using (myLock.Acquire(...))
         ///     {
