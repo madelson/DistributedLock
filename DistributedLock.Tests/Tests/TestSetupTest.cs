@@ -51,12 +51,14 @@ $@"namespace {g.Key}
 )}";
 
             var existingContents = File.Exists(combinatorialTestsFile) ? File.ReadAllText(combinatorialTestsFile) : null;
-            if (expectedTestContents != existingContents)
+            if (NormalizeWhitespace(expectedTestContents) != NormalizeWhitespace(existingContents))
             {
-                File.WriteAllText(combinatorialTestsFile, expectedTestContents);
                 Assert.Fail("Updated " + combinatorialTestsFile
                     + $"**** EXPECTED **** \r\n{expectedTestContents}\r\n **** FOUND **** {existingContents ?? "NULL"}");
             }
+            File.WriteAllText(combinatorialTestsFile, expectedTestContents);
+
+            static string NormalizeWhitespace(string code) => Regex.Replace(code, @"\s+", string.Empty);
         }
         
         private static (string declaration, string @namespace) GetTestClassDeclaration(Type testClassType)
