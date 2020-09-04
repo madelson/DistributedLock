@@ -1,8 +1,10 @@
-﻿using Medallion.Threading.WaitHandles;
+﻿using Medallion.Threading.Internal;
+using Medallion.Threading.WaitHandles;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Medallion.Threading.Tests.Tests.WaitHandles
 {
@@ -44,7 +46,7 @@ namespace Medallion.Threading.Tests.Tests.WaitHandles
         }
 
         [Test]
-        public void TestGarbageCollection()
+        public async Task TestGarbageCollection()
         {
             var @lock = CreateAsLock("gc_test", NameStyle.AddPrefix);
             WeakReference AbandonLock() => new WeakReference(@lock.Acquire());
@@ -52,6 +54,7 @@ namespace Medallion.Threading.Tests.Tests.WaitHandles
             var weakHandle = AbandonLock();
             GC.Collect();
             GC.WaitForPendingFinalizers();
+            await ManagedFinalizerQueue.Instance.FinalizeAsync();
 
             weakHandle.IsAlive.ShouldEqual(false);
             using var handle = @lock.TryAcquire();
