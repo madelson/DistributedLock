@@ -16,7 +16,7 @@ namespace DistributedLockCodeGen
             var changes = CodeGenHelpers.EnumerateSolutionFiles()
                 .Select(f => (file: f, code: File.ReadAllText(f)))
                 .Select(t => (t.file, t.code, updatedCode: AddDocComments(t.code)))
-                .Where(t => t.updatedCode != t.code)
+                .Where(t => CodeGenHelpers.NormalizeCodeWhitespace(t.updatedCode) != CodeGenHelpers.NormalizeCodeWhitespace(t.code))
                 .ToList();
             changes.ForEach(t => File.WriteAllText(t.file, t.updatedCode));
             Assert.IsEmpty(changes.Select(t => t.file));

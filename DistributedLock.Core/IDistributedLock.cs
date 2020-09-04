@@ -31,8 +31,7 @@ namespace Medallion.Threading
         IDistributedLockHandle? TryAcquire(TimeSpan timeout = default, CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Acquires the lock synchronously, failing
-        /// with <see cref="TimeoutException"/> if the attempt times out. Usage: 
+        /// Acquires the lock synchronously, failing with <see cref="TimeoutException"/> if the attempt times out. Usage: 
         /// <code>
         ///     using (myLock.Acquire(...))
         ///     {
