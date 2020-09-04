@@ -74,7 +74,7 @@ namespace {@namespace}
                 code = DocCommentGenerator.AddDocComments(code);
 
                 var outputPath = Path.Combine(Path.GetDirectoryName(file)!, Path.GetFileNameWithoutExtension(file) + $".IDistributed{name}.cs");
-                if (!File.Exists(outputPath) || File.ReadAllText(outputPath) != code)
+                if (!File.Exists(outputPath) || CodeGenHelpers.NormalizeCodeWhitespace(File.ReadAllText(outputPath)) != CodeGenHelpers.NormalizeCodeWhitespace(code))
                 {
                     File.WriteAllText(outputPath, code);
                     errors.Add($"updated {file}");
@@ -172,7 +172,7 @@ namespace {@namespace}
                 code = DocCommentGenerator.AddDocComments(code);
 
                 var outputPath = Path.Combine(Path.GetDirectoryName(file)!, $"{Path.GetFileNameWithoutExtension(file)}.IDistributed{(isUpgradeable ? "Upgradeable" : "")}ReaderWriterLock.cs");
-                if (!File.Exists(outputPath) || File.ReadAllText(outputPath) != code)
+                if (!File.Exists(outputPath) || CodeGenHelpers.NormalizeCodeWhitespace(File.ReadAllText(outputPath)) != CodeGenHelpers.NormalizeCodeWhitespace(code))
                 {
                     File.WriteAllText(outputPath, code);
                     errors.Add($"updated {file}");

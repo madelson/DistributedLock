@@ -58,7 +58,7 @@ $@"namespace {g.Key}
             }
             File.WriteAllText(combinatorialTestsFile, expectedTestContents);
 
-            static string NormalizeWhitespace(string code) => Regex.Replace(code, @"\s+", string.Empty);
+            static string NormalizeWhitespace(string code) => code.Trim().Replace("\r\n", "\n");
         }
         
         private static (string declaration, string @namespace) GetTestClassDeclaration(Type testClassType)
