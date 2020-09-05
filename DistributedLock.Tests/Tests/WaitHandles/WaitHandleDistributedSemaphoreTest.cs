@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading.Tests.Tests.WaitHandles
 {
-    [Category("CI")]
+    [Category("CIWindows")]
     public class WaitHandleDistributedSemaphoreTest
     {
         [TestCase(null, NameStyle.Exact, ExpectedResult = typeof(ArgumentNullException))]

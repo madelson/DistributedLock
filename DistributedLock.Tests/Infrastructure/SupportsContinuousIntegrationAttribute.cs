@@ -10,5 +10,6 @@ namespace Medallion.Threading.Tests
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
     internal class SupportsContinuousIntegrationAttribute : Attribute
     {
+        public bool WindowsOnly { get; set; }
     }
 }

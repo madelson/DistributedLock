@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Medallion.Threading.Tests.WaitHandles
 {
-    [SupportsContinuousIntegration]
+    [SupportsContinuousIntegration(WindowsOnly = true)]
     public sealed class TestingEventWaitHandleDistributedLockProvider : TestingLockProvider<TestingWaitHandlesSynchronizationStrategy>
     {
         public override IDistributedLock CreateLockWithExactName(string name) => new EventWaitHandleDistributedLock(name, exactName: true);
@@ -13,7 +13,7 @@ namespace Medallion.Threading.Tests.WaitHandles
         public override string GetSafeName(string name) => EventWaitHandleDistributedLock.GetSafeName(name);
     }
 
-    [SupportsContinuousIntegration]
+    [SupportsContinuousIntegration(WindowsOnly = true)]
     public sealed class TestingWaitHandleDistributedSemaphoreProvider : TestingSemaphoreProvider<TestingWaitHandlesSynchronizationStrategy>
     {
         public override IDistributedSemaphore CreateSemaphoreWithExactName(string name, int maxCount) => new WaitHandleDistributedSemaphore(name, maxCount, exactName: true);

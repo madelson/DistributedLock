@@ -168,8 +168,8 @@ namespace Medallion.Threading.Tests.SqlServer
 
 namespace Medallion.Threading.Tests.WaitHandles
 {
-    [Category("CI")] public class Core_EventWaitHandle_WaitHandlesSynchronizationStrategyTest : DistributedLockCoreTestCases<TestingEventWaitHandleDistributedLockProvider, TestingWaitHandlesSynchronizationStrategy> { }
-    [Category("CI")] public class SemaphoreCore_WaitHandleSemaphore_WaitHandlesSynchronizationStrategyTest : DistributedSemaphoreCoreTestCases<TestingWaitHandleDistributedSemaphoreProvider, TestingWaitHandlesSynchronizationStrategy> { }
+    [Category("CIWindows")] public class Core_EventWaitHandle_WaitHandlesSynchronizationStrategyTest : DistributedLockCoreTestCases<TestingEventWaitHandleDistributedLockProvider, TestingWaitHandlesSynchronizationStrategy> { }
+    [Category("CIWindows")] public class SemaphoreCore_WaitHandleSemaphore_WaitHandlesSynchronizationStrategyTest : DistributedSemaphoreCoreTestCases<TestingWaitHandleDistributedSemaphoreProvider, TestingWaitHandlesSynchronizationStrategy> { }
     public class Core_Semaphore1AsMutex_WaitHandleSemaphore_WaitHandlesSynchronizationStrategy_WaitHandlesSynchronizationStrategyTest : DistributedLockCoreTestCases<TestingSemaphore1AsMutexProvider<TestingWaitHandleDistributedSemaphoreProvider, TestingWaitHandlesSynchronizationStrategy>, TestingWaitHandlesSynchronizationStrategy> { }
     public class Core_Semaphore5AsMutex_WaitHandleSemaphore_WaitHandlesSynchronizationStrategy_WaitHandlesSynchronizationStrategyTest : DistributedLockCoreTestCases<TestingSemaphore5AsMutexProvider<TestingWaitHandleDistributedSemaphoreProvider, TestingWaitHandlesSynchronizationStrategy>, TestingWaitHandlesSynchronizationStrategy> { }
 }

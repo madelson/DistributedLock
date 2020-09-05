@@ -13,3 +13,14 @@ build:
 test:
   categories:
     - CI
+	
+for:
+-
+  matrix:
+    only:
+	  - image: Visual Studio 2019
+	  
+  test:
+    categories:
+	  - CI
+	  - CIWindows

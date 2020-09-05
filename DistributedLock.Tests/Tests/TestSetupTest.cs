@@ -53,12 +53,12 @@ $@"namespace {g.Key}
             var existingContents = File.Exists(combinatorialTestsFile) ? File.ReadAllText(combinatorialTestsFile) : null;
             if (NormalizeWhitespace(expectedTestContents) != NormalizeWhitespace(existingContents))
             {
+                File.WriteAllText(combinatorialTestsFile, expectedTestContents);
                 Assert.Fail("Updated " + combinatorialTestsFile
                     + $"**** EXPECTED **** \r\n{expectedTestContents}\r\n **** FOUND **** {existingContents ?? "NULL"}");
             }
-            File.WriteAllText(combinatorialTestsFile, expectedTestContents);
 
-            static string NormalizeWhitespace(string code) => code.Trim().Replace("\r\n", "\n");
+            static string? NormalizeWhitespace(string? code) => code?.Trim().Replace("\r\n", "\n");
         }
         
         private static (string declaration, string @namespace) GetTestClassDeclaration(Type testClassType)
@@ -86,10 +86,14 @@ $@"namespace {g.Key}
             // remove words that are very common and therefore don't add much to the name
             var testClassName = Regex.Replace(GetTestClassName(testClassType), "Distributed|Lock|Testing|TestCases", string.Empty) + "Test";
 
-            var supportsContinousIntegration = testClassType.GetGenericArguments()
-                .All(a => a.GetCustomAttribute<SupportsContinuousIntegrationAttribute>() != null);
-
-            var declaration = $@"{(supportsContinousIntegration ? "[Category(\"CI\")] " : null)}public class {testClassName} : {GetCSharpName(testClassType)} {{ }}";
+            var supportsContinuousIntegrationAttributes = testClassType.GetGenericArguments()
+                .Select(a => a.GetCustomAttribute<SupportsContinuousIntegrationAttribute>())
+                .ToArray();
+            var categoryAttribute = supportsContinuousIntegrationAttributes.Any(a => a == null) ? string.Empty
+                : supportsContinuousIntegrationAttributes.Any(a => a.WindowsOnly) ? "[Category(\"CIWindows\")] "
+                : "[Category(\"CI\")] ";
+            
+            var declaration = $@"{categoryAttribute}public class {testClassName} : {GetCSharpName(testClassType)} {{ }}";
 
             var namespaces = TraverseDepthFirst(testClassType, t => t.GetGenericArguments())
                 .Select(t => t.Namespace ?? string.Empty)

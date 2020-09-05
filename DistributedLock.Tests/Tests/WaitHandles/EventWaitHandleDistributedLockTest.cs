@@ -4,7 +4,7 @@ using System;
 
 namespace Medallion.Threading.Tests.WaitHandles
 {
-    [Category("CI")]
+    [Category("CIWindows")]
     public class EventWaitHandleDistributedLockTest
     {
         [TestCase(null, NameStyle.Exact, ExpectedResult = typeof(ArgumentNullException))]
