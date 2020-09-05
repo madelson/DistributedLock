@@ -90,7 +90,7 @@ $@"namespace {g.Key}
                 .Select(a => a.GetCustomAttribute<SupportsContinuousIntegrationAttribute>())
                 .ToArray();
             var categoryAttribute = supportsContinuousIntegrationAttributes.Any(a => a == null) ? string.Empty
-                : supportsContinuousIntegrationAttributes.Any(a => a.WindowsOnly) ? "[Category(\"CIWindows\")] "
+                : supportsContinuousIntegrationAttributes.Any(a => a!.WindowsOnly) ? "[Category(\"CIWindows\")] "
                 : "[Category(\"CI\")] ";
             
             var declaration = $@"{categoryAttribute}public class {testClassName} : {GetCSharpName(testClassType)} {{ }}";
