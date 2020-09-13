@@ -77,7 +77,7 @@ namespace Medallion.Threading.Sql
                             ELSE 
                             BEGIN
                                 SET @resourceName = SUBSTRING(@resourceNames, @startLocation, LEN(@resourceNames) - @startLocation + 1);
-                                SET @commapos = -2; -- This will cause break out of loop after execute command with the remainder of the string
+                                SET @commapos = -1; -- This will cause break out of loop after execute command with the remainder of the string
                             END;
                             EXEC @result = dbo.sp_getapplock @Resource=@resourceName, @LockMode=@LockMode, @LockOwner=@LockOwner, @LockTimeout=@LockTimeout;
                             IF (@result < 0)
@@ -135,7 +135,7 @@ namespace Medallion.Threading.Sql
                         ELSE 
                         BEGIN
                             SET @resourceName = SUBSTRING(@resourceNames, @startLocation, LEN(@resourceNames) - @startLocation + 1);
-                            SET @commapos = -2; -- This will cause break out of loop after execute command with the remainder of the string
+                            SET @commapos = -1; -- This will cause break out of loop after execute command with the remainder of the string
                         END;
 
                         EXEC @result = dbo.sp_releaseapplock @Resource=@resourceName, @LockOwner=@LockOwner;
