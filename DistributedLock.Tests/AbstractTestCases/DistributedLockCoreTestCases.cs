@@ -224,7 +224,8 @@ namespace Medallion.Threading.Tests
             // (which only supports very short ASCII string names). Finally, we re-run through GetSafeName to pick up any special prefix
             // that is needed (e. g. for wait handles)
             using var sha1 = SHA1.Create();
-            var uniqueHashName = Convert.ToBase64String(sha1.ComputeHash(Encoding.UTF8.GetBytes(this._lockProvider.GetUniqueSafeName())))
+            var uniqueHashName = BitConverter.ToString(sha1.ComputeHash(Encoding.UTF8.GetBytes(this._lockProvider.GetUniqueSafeName())))
+                .Replace("-", string.Empty)
                 // normalize to upper case per https://docs.microsoft.com/en-us/visualstudio/code-quality/ca1308?view=vs-2019
                 .ToUpperInvariant();
             var lowerBaseName = $"{uniqueHashName.Substring(0, 6)}_a";
