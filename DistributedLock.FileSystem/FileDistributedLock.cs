@@ -46,6 +46,9 @@ namespace Medallion.Threading.FileSystem
         }
 
         // todo revisit API
+        /// <summary>
+        /// Implements <see cref="IDistributedLock.Name"/>
+        /// </summary>
         public string Name { get; }
 
         private string Directory => this._cachedDirectory ??= Path.GetDirectoryName(this.Name);

@@ -23,15 +23,24 @@ namespace Medallion.Threading.WaitHandles
             this._finalizerRegistration = ManagedFinalizerQueue.Instance.Register(this, this._semaphoreReleaser);
         }
 
+        /// <summary>
+        /// Implements <see cref="IDistributedLockHandle.HandleLostToken"/>
+        /// </summary>
         public CancellationToken HandleLostToken =>
             Volatile.Read(ref this._finalizerRegistration) != null ? CancellationToken.None : throw this.ObjectDisposed();
 
+        /// <summary>
+        /// Releases the semaphore ticket
+        /// </summary>
         public void Dispose()
         {
             Interlocked.Exchange(ref this._finalizerRegistration, null)?.Dispose();
             this._semaphoreReleaser.Dispose();
         }
 
+        /// <summary>
+        /// Releases the semaphore ticket
+        /// </summary>
         public ValueTask DisposeAsync()
         {
             this.Dispose();
