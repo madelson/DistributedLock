@@ -47,6 +47,7 @@
     <ProjectReference Include="..\DistributedLock.SqlServer\DistributedLock.SqlServer.csproj" />
     <ProjectReference Include="..\DistributedLock.WaitHandles\DistributedLock.WaitHandles.csproj" />
     <ProjectReference Include="..\DistributedLock.Azure\DistributedLock.Azure.csproj" />
+    <ProjectReference Include="..\DistributedLock.FileSystem\DistributedLock.FileSystem.csproj" />
   </ItemGroup>
 
 </Project>

@@ -224,17 +224,29 @@ namespace Medallion.Threading.Tests
             // (which only supports very short ASCII string names). Finally, we re-run through GetSafeName to pick up any special prefix
             // that is needed (e. g. for wait handles)
             using var sha1 = SHA1.Create();
-            var uniqueHashName = Convert.ToBase64String(sha1.ComputeHash(Encoding.UTF8.GetBytes(this._lockProvider.GetUniqueSafeName())));
-            var lowerName = this._lockProvider.GetSafeName($"{uniqueHashName.Substring(0, 6)}_a");
-            var upperName = this._lockProvider.GetSafeName($"{uniqueHashName.Substring(0, 6)}_A");
-            // make sure we succeeded in generating what we set out ot generate
+            var uniqueHashName = Convert.ToBase64String(sha1.ComputeHash(Encoding.UTF8.GetBytes(this._lockProvider.GetUniqueSafeName())))
+                // normalize to upper case per https://docs.microsoft.com/en-us/visualstudio/code-quality/ca1308?view=vs-2019
+                .ToUpperInvariant();
+            var lowerBaseName = $"{uniqueHashName.Substring(0, 6)}_a";
+            var lowerName = this._lockProvider.GetSafeName(lowerBaseName);
+            var upperBaseName = $"{uniqueHashName.Substring(0, 6)}_A";
+            var upperName = this._lockProvider.GetSafeName(upperBaseName);
+            // make sure we succeeded in generating what we set out to generate
             Assert.AreNotEqual(lowerName, upperName);
-            Assert.IsTrue(StringComparer.OrdinalIgnoreCase.Equals(lowerName, upperName));
-
-            await using (await this._lockProvider.CreateLockWithExactName(lowerName).AcquireAsync())
-            await using (var handle = await this._lockProvider.CreateLockWithExactName(upperName).TryAcquireAsync())
+            if (StringComparer.OrdinalIgnoreCase.Equals(lowerName, upperName))
             {
-                Assert.IsNotNull(handle);
+                // if the names vary only by case, test that they are different locks
+                await using (await this._lockProvider.CreateLockWithExactName(lowerName).AcquireAsync())
+                await using (var handle = await this._lockProvider.CreateLockWithExactName(upperName).TryAcquireAsync())
+                {
+                    Assert.IsNotNull(handle);
+                }
+            }
+            else
+            {
+                // otherwise, check that the names still contain the suffixes we added
+                Assert.That(lowerName, Does.Contain(lowerBaseName));
+                Assert.That(upperName, Does.Contain(upperBaseName));
             }
         }
 

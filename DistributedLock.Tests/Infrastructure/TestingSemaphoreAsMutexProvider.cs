@@ -84,6 +84,7 @@ namespace Medallion.Threading.Tests
         }
     }
 
+    [SupportsContinuousIntegration]
     public sealed class TestingSemaphore1AsMutexProvider<TSemaphoreProvider, TStrategy> : TestingSemaphoreAsMutexProvider<TSemaphoreProvider, TStrategy>
         where TSemaphoreProvider : TestingSemaphoreProvider<TStrategy>, new()
         where TStrategy : TestingSynchronizationStrategy, new()
@@ -91,6 +92,7 @@ namespace Medallion.Threading.Tests
         public TestingSemaphore1AsMutexProvider() : base(maxCount: 1) { }
     }
 
+    [SupportsContinuousIntegration]
     public sealed class TestingSemaphore5AsMutexProvider<TSemaphoreProvider, TStrategy> : TestingSemaphoreAsMutexProvider<TSemaphoreProvider, TStrategy>
         where TSemaphoreProvider : TestingSemaphoreProvider<TStrategy>, new()
         where TStrategy : TestingSynchronizationStrategy, new()
