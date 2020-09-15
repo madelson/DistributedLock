@@ -446,6 +446,14 @@ namespace Medallion.Threading.Tests
                 "Release";
 #endif
             var exePath = Path.Combine(TestContext.CurrentContext.TestDirectory, "..", "..", "..", "..", "DistributedLockTaker", "bin", Configuration, TargetFramework.Current, "DistributedLockTaker.exe");
+            
+            // todo clean up
+            if (!File.Exists(exePath))
+            {
+                var exes = Directory.GetFiles(Path.Combine(TestContext.CurrentContext.TestDirectory, "..", "..", "..", ".."), "*.exe", SearchOption.AllDirectories);
+                Assert.Fail($"Could not find {exePath}. Found {string.Join(Environment.NewLine, exes)}");
+            }
+
             var command = Command.Run(exePath, args, o => o.WorkingDirectory(TestContext.CurrentContext.TestDirectory).ThrowOnError(true))
                 .RedirectStandardErrorTo(Console.Error);
             this._cleanupActions.Add(() =>
