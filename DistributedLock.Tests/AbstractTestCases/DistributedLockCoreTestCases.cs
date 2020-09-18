@@ -450,8 +450,9 @@ namespace Medallion.Threading.Tests
             // todo clean up
             if (!File.Exists(exePath))
             {
-                var exes = Directory.GetFiles(Path.Combine(TestContext.CurrentContext.TestDirectory, "..", "..", "..", ".."), "*.exe", SearchOption.AllDirectories);
-                Assert.Fail($"Could not find {exePath}. Found {string.Join(Environment.NewLine, exes)}");
+                var exes = Directory.GetFiles(Path.GetFullPath(Path.Combine(TestContext.CurrentContext.TestDirectory, "..", "..", "..", "..")), "*", SearchOption.AllDirectories)
+                    .Where(e => e.Contains("bin"));
+                Assert.Fail($"Could not find {Path.GetFullPath(exePath)}. Found {string.Join(Environment.NewLine, exes)}");
             }
 
             var command = Command.Run(exePath, args, o => o.WorkingDirectory(TestContext.CurrentContext.TestDirectory).ThrowOnError(true))
