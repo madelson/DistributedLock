@@ -3,6 +3,7 @@ using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
@@ -118,19 +119,83 @@ namespace Medallion.Threading.Tests.Tests.FileSystem
             var exception = Assert.Throws<InvalidOperationException>(() => @lock.Acquire().Dispose());
             Assert.That(exception.Message, Does.Contain("because it is already the name of a directory"));
         }
-        
-        [Test]
-        public void TestEmptyNameIsAllowed()
-        {
-            var @lock = new FileDistributedLock(LockFileDirectoryInfo, string.Empty);
-            Assert.DoesNotThrow(() => @lock.Acquire().Dispose());
-        }
 
         [Test]
-        public void TestLongNamesAreAllowed()
+        public void TestEmptyNameIsAllowed() => AssertCanUseName(string.Empty);
+
+        [Test]
+        public void TestLongNamesAreAllowed() => AssertCanUseName(new string('a', ushort.MaxValue));
+
+        [TestCase(".")]
+        [TestCase("..")]
+        [TestCase("...")]
+        [TestCase("....")]
+        [TestCase("A.")]
+        [TestCase("A..")]
+        [TestCase(".A")]
+        [TestCase("..A")]
+        [TestCase(" ")]
+        [TestCase("  ")]
+        [TestCase("   ")]
+        [TestCase("A ")]
+        [TestCase(" A")]
+        [TestCase(" .")]
+        [TestCase(". ")]
+        [TestCase(". .")]
+        [TestCase(" .. ")]
+        [TestCase("\t.")]
+        [TestCase(" \t")]
+        public void TestStrangePaths(string name)
         {
-            var @lock = new FileDistributedLock(LockFileDirectoryInfo, new string('a', ushort.MaxValue));
-            Assert.DoesNotThrow(() => @lock.Acquire().Dispose());
+            AssertCanUseName(name);
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                var @lock = new FileDistributedLock(LockFileDirectoryInfo, name);
+                CanCreateFileWithName(name).ShouldEqual(Path.GetFileName(@lock.Name) == name, $"Name was {@lock.Name}");
+            }
+        }
+
+        [TestCase("CON")]
+        [TestCase("PRN")]
+        [TestCase("AUX")]
+        [TestCase("NUL")]
+        [TestCase("COM1")]
+        [TestCase("COM2")]
+        [TestCase("COM3")]
+        [TestCase("COM4")]
+        [TestCase("COM5")]
+        [TestCase("COM6")]
+        [TestCase("COM7")]
+        [TestCase("COM8")]
+        [TestCase("COM9")]
+        [TestCase("LPT1")]
+        [TestCase("LPT2")]
+        [TestCase("LPT3")]
+        [TestCase("LPT4")]
+        [TestCase("LPT5")]
+        [TestCase("LPT6")]
+        [TestCase("LPT7")]
+        [TestCase("LPT8")]
+        [TestCase("LPT9")]
+        public void TestReservedWindowsNamesAreAllowed(string name)
+        {
+            var variants = new[]
+            {
+                name,
+                name.ToLowerInvariant() + ".txt",
+                name[0] + name.Substring(1).ToLowerInvariant(),
+            };
+            foreach (var variant in variants)
+            {
+                AssertCanUseName(variant);
+
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                {
+                    Assert.IsFalse(CanCreateFileWithName(variant), variant);
+                    Assert.AreNotEqual(name, Path.GetFileName(new FileDistributedLock(LockFileDirectoryInfo, name).Name), variant);
+                }
+            }
         }
 
         [Test]
@@ -145,6 +210,7 @@ namespace Medallion.Threading.Tests.Tests.FileSystem
             Check(@"\A\", shouldEscape: true);
             Check("<", shouldEscape: true);
             Check(">", shouldEscape: true);
+            Check("\0", shouldEscape: true);
 
             void Check(string name, bool shouldEscape)
             {
@@ -162,8 +228,11 @@ namespace Medallion.Threading.Tests.Tests.FileSystem
         }
 
         [TestCase("", ExpectedResult = "EMPTY_A4ED4E8E7DBB4757AF1BE51A3C139F84P6AD62YPPHO33YTKIBUM5WBQHQVBCSXA")]
-        [TestCase(".", ExpectedResult = "_LIYISOQPXAPX3NYVHPC2EK4WEOU6OW7Y")]
-        [TestCase("..", ExpectedResult = "__G2H2MVGLQK7QVO2MAWVKSVSKM26KX5S6")]
+        [TestCase(".", ExpectedResult = "_.LIYISOQPXAPX3NYVHPC2EK4WEOU6OW7Y")]
+        [TestCase("..", ExpectedResult = "_..G2H2MVGLQK7QVO2MAWVKSVSKM26KX5S6")]
+        [TestCase("...", ExpectedResult = "_...2ZDJLYOT376KUA5OQFR2OERKUXIH4A7R")]
+        [TestCase("LPT1", ExpectedResult = "_LPT1VUGMI6NJVPIYUGXMY4K6ETA3232OR2B5")]
+        [TestCase(" ", ExpectedResult = "_ ZPD253R4AYXN6RS7UP6A3FYDCXHBXKUY")]
         [TestCase("_", ExpectedResult = "_")]
         [TestCase(@"cool<>!/:x\zzz", ExpectedResult = "cool__!__x_zzzATJSHZSADXN7WTL4DBU6JULFTEDVFF3L")]
         [TestCase(
@@ -227,7 +296,28 @@ namespace Medallion.Threading.Tests.Tests.FileSystem
             }
         }
 
-        // hash char usage (should use all 32 chars about evenly across many hashes)
+        private static void AssertCanUseName(string name)
+        {
+            var @lock = new FileDistributedLock(LockFileDirectoryInfo, name);
+            IDistributedLockHandle? handle = null;
+            Assert.DoesNotThrow(() => handle = @lock.TryAcquire(), name);
+            Assert.IsNotNull(handle, name);
+            handle!.Dispose();
+        }
 
+        private static bool CanCreateFileWithName(string name)
+        {
+            var path = Path.Combine(LockFileDirectory, name);
+            try
+            {
+                File.OpenWrite(path).Dispose();
+                File.Delete(path);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
     }
 }

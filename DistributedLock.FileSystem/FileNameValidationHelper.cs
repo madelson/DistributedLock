@@ -2,14 +2,54 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 
 namespace Medallion.Threading.FileSystem
 {
+    /// <summary>
+    /// Helper class for validating file names and converting lock names to valid file names. 
+    /// 
+    /// The approach taken here aims to ensure consistent behavior across platforms wherever possible. This is important
+    /// to allow for locking files on a shared network drive for example (whether file locks work with the particular NFS
+    /// is another issue but at least we don't want to be burned by naming discrepancy).
+    /// </summary>
     internal static class FileNameValidationHelper
     {
-        private static readonly HashSet<char> InvalidFileNameChars = new HashSet<char>(Path.GetInvalidFileNameChars());
+        /// <summary>
+        /// The set of invalid file name characters for Windows, which is a superset of what is invalid on Unix.
+        /// For consistent behavior across platforms, we consider all of these characters invalid when constructing
+        /// lock file names from lock names. Pulled from dotnet/runtime github
+        /// </summary>
+        internal static readonly IReadOnlyCollection<char> UnixAndWindowsInvalidFileNameChars = new char[]
+        {
+            '\"', '<', '>', '|', '\0',
+            (char)1, (char)2, (char)3, (char)4, (char)5, (char)6, (char)7, (char)8, (char)9, (char)10,
+            (char)11, (char)12, (char)13, (char)14, (char)15, (char)16, (char)17, (char)18, (char)19, (char)20,
+            (char)21, (char)22, (char)23, (char)24, (char)25, (char)26, (char)27, (char)28, (char)29, (char)30,
+            (char)31, ':', '*', '?', '\\', '/'
+        };
+
+        private static readonly HashSet<char> InvalidFileNameChars = new HashSet<char>(
+            // we fully expect this union to always be a noop, but I'm putting it here defensively in case
+            // this runs on a system that returns an invalid char not captured in the above
+            UnixAndWindowsInvalidFileNameChars.Union(Path.GetInvalidFileNameChars())
+        );
+
+        /// <summary>
+        /// Windows disallows these special names when used exactly or when followed by a . + other characters (an extension).
+        /// See https://stackoverflow.com/questions/1976007/what-characters-are-forbidden-in-windows-and-linux-directory-names/1976131
+        /// </summary>
+        internal static readonly HashSet<string> ReservedWindowsFileNames = new HashSet<string>(
+            new[]
+            {
+                "CON", "CONIN$", "CONOUT$", "PRN", "AUX", "NUL",
+                "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9",
+                "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9"
+            },
+            StringComparer.OrdinalIgnoreCase
+        );
 
         internal const int MaxPathLengthWindows = 260,
             MinFileNameLength = 12,
@@ -97,14 +137,19 @@ namespace Medallion.Threading.FileSystem
             const char ReplacementChar = '_';
             Invariant.Require(!InvalidFileNameChars.Contains(ReplacementChar));
 
-            // handle special relative path names (which should not be allowed)
-            switch (name)
+            // Handle special relative path names (which should not be allowed). Note that (at least 
+            // on Windows) passing more than 2 dots gets treated like "..'. Windows also does not seem
+            // to like file name consisting of any mix of dots and/or spaces
+            if (name.All(ch => ch == '.' || ch == ' '))
             {
-                case ".":
-                    return ReplacementChar.ToString();
-                case "..":
-                    return new string(ReplacementChar, count: 2);
-                // fall through
+                return ReplacementChar + name;
+            }
+
+            // Handle windows reserved names. We do this even on non-windows OS's for consistency across platforms
+            var firstDotIndex = name.IndexOf('.');
+            if (ReservedWindowsFileNames.Contains(firstDotIndex >= 0 ? name.Substring(0, firstDotIndex) : name))
+            {
+                return ReplacementChar + name;
             }
 
             StringBuilder? builder = null;
@@ -117,7 +162,7 @@ namespace Medallion.Threading.FileSystem
                     builder ??= new StringBuilder(name.Length).Append(name, startIndex: 0, count: i);
                     builder.Append(ReplacementChar);
                 }
-                // we want to respect the casing of lock names. We normalize to upper case
+                // We want to respect the casing of lock names. We normalize to upper case
                 // per https://docs.microsoft.com/en-us/visualstudio/code-quality/ca1308?view=vs-2019
                 else if (builder == null && char.ToUpperInvariant(@char) != @char)
                 {
