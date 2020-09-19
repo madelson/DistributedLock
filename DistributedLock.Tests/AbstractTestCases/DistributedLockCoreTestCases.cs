@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
@@ -445,15 +446,8 @@ namespace Medallion.Threading.Tests
 #else
                 "Release";
 #endif
-            var exePath = Path.Combine(TestContext.CurrentContext.TestDirectory, "..", "..", "..", "..", "DistributedLockTaker", "bin", Configuration, TargetFramework.Current, "DistributedLockTaker.exe");
-            
-            // todo clean up
-            if (!File.Exists(exePath))
-            {
-                var exes = Directory.GetFiles(Path.GetFullPath(Path.Combine(TestContext.CurrentContext.TestDirectory, "..", "..", "..", "..")), "*", SearchOption.AllDirectories)
-                    .Where(e => e.Contains("bin"));
-                Assert.Fail($"Could not find {Path.GetFullPath(exePath)}. Found {string.Join(Environment.NewLine, exes)}");
-            }
+            var exeExtension = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? ".exe" : string.Empty;
+            var exePath = Path.Combine(TestContext.CurrentContext.TestDirectory, "..", "..", "..", "..", "DistributedLockTaker", "bin", Configuration, TargetFramework.Current, "DistributedLockTaker" + exeExtension);
 
             var command = Command.Run(exePath, args, o => o.WorkingDirectory(TestContext.CurrentContext.TestDirectory).ThrowOnError(true))
                 .RedirectStandardErrorTo(Console.Error);
