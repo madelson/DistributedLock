@@ -111,7 +111,7 @@ namespace Medallion.Threading.Tests
         }
 
         [Test]
-        [NonParallelizable] // timing-sensitive
+        [NonParallelizable, Retry(tryCount: 3)] // timing-sensitive
         public void TestTimeouts()
         {
             var @lock = this._lockProvider.CreateLock(nameof(TestTimeouts));
