@@ -104,9 +104,20 @@ namespace Medallion.Threading.Tests.Tests.FileSystem
             var @lock = new FileDistributedLock(LockFileDirectoryInfo, nameof(TestFileCannotBeModifiedOrDeletedWhileHeld));
             using (@lock.Acquire())
             {
-                Assert.Throws<IOException>(() => File.WriteAllText(@lock.Name, "contents"));
-                Assert.Throws<IOException>(() => File.ReadAllText(@lock.Name));
-                Assert.Throws<IOException>(() => File.Delete(@lock.Name));
+                Assert.Throws<IOException>(() => File.WriteAllText(@lock.Name, "contents"), "write");
+                Assert.Throws<IOException>(() => File.ReadAllText(@lock.Name), "read");
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                {
+                    Assert.Throws<IOException>(() => File.Delete(@lock.Name), "delete");
+                }
+                else
+                {
+                    // on unix, locking a file doesn't prevent unliking
+                    // https://stackoverflow.com/questions/2028874/what-happens-to-an-open-file-handle-on-linux-if-the-pointed-file-gets-moved-or-d
+                    Assert.DoesNotThrow(() => File.Delete(@lock.Name));
+                    using var reaquireHandle = @lock.TryAcquire();
+                    Assert.IsNull(reaquireHandle);
+                }
             }
         }
 
