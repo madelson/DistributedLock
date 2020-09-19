@@ -112,11 +112,11 @@ namespace Medallion.Threading.Tests.Tests.FileSystem
                 }
                 else
                 {
-                    // on unix, locking a file doesn't prevent unliking
+                    // on unix, locking a file doesn't prevent unliking, so deletion effectively unlocks
                     // https://stackoverflow.com/questions/2028874/what-happens-to-an-open-file-handle-on-linux-if-the-pointed-file-gets-moved-or-d
                     Assert.DoesNotThrow(() => File.Delete(@lock.Name));
                     using var reaquireHandle = @lock.TryAcquire();
-                    Assert.IsNull(reaquireHandle);
+                    Assert.IsNotNull(reaquireHandle);
                 }
             }
         }
