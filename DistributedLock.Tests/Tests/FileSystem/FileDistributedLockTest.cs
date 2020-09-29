@@ -266,7 +266,8 @@ namespace Medallion.Threading.Tests.FileSystem
             static void Check(string name, bool shouldEscape)
             {
                 var @lock = new FileDistributedLock(LockFileDirectoryInfo, name);
-                @lock.Name.StartsWith(LockFileDirectory + Path.DirectorySeparatorChar + name)
+                // ordinal required for null char comparison (see https://github.com/dotnet/runtime/issues/4673)
+                @lock.Name.StartsWith(LockFileDirectory + Path.DirectorySeparatorChar + name, StringComparison.Ordinal)
                     .ShouldEqual(!shouldEscape, $"'{name}', {@lock.Name}");
             }
         }
