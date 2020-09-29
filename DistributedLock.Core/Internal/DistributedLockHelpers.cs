@@ -25,9 +25,8 @@ namespace Medallion.Threading.Internal
                 return name;
             }
 
-            var nameBytes = Encoding.UTF8.GetBytes(name); 
             using var sha = SHA512.Create();
-            var hash = Convert.ToBase64String(sha.ComputeHash(nameBytes));
+            var hash = Convert.ToBase64String(sha.ComputeHash(Encoding.UTF8.GetBytes(name)));
 
             if (hash.Length >= maxNameLength)
             {
