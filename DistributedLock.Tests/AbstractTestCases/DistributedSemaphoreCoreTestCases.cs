@@ -82,7 +82,7 @@ namespace Medallion.Threading.Tests
         }
 
         [Test]
-        [NonParallelizable] // somewhat perf-sensitive
+        [NonParallelizable, Retry(tryCount: 3)] // somewhat perf-sensitive
         public void TestSemaphoreParallelism()
         {
             const int MaxCount = 10;

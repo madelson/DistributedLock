@@ -5,9 +5,14 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Medallion.Threading.Azure
+namespace Medallion.Threading.Internal
 {
-    internal static class BusyWaitHelper
+#if DEBUG
+    public
+#else
+    internal
+#endif
+        static class BusyWaitHelper
     {
         public static async ValueTask<TResult?> WaitAsync<TState, TResult>(
             TState state,
@@ -18,6 +23,8 @@ namespace Medallion.Threading.Azure
             CancellationToken cancellationToken)
             where TResult : class
         {
+            Invariant.Require(minSleepTime <= maxSleepTime);
+
             var initialResult = await tryGetValue(state, cancellationToken).ConfigureAwait(false);
             if (initialResult != null || timeout.IsZero)
             {

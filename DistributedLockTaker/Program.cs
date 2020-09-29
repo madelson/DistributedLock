@@ -5,6 +5,8 @@ using Medallion.Threading.Postgres;
 using Medallion.Threading.Tests;
 using Medallion.Threading.Azure;
 using Azure.Storage.Blobs;
+using Medallion.Threading.FileSystem;
+using System.IO;
 #if NET471
 using System.Data.SqlClient;
 #elif NETCOREAPP3_1
@@ -55,6 +57,9 @@ namespace DistributedLockTaker
                             o => o.Duration(TimeSpan.FromSeconds(15))
                         )
                         .Acquire();
+                    break;
+                case nameof(FileDistributedLock):
+                    handle = new FileDistributedLock(new FileInfo(name)).Acquire();
                     break;
                 default:
                     Console.Error.WriteLine($"type: {type}");

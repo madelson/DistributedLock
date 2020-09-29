@@ -67,10 +67,11 @@ namespace Medallion.Threading.Tests.Tests
         }
 
         private static IEnumerable<Type> GetPublicTypes(Assembly assembly) => assembly.GetTypes()
+                .Where(t => t.IsPublic || t.IsNestedPublic)
 #if DEBUG
                 .Where(t => !(t.Namespace!.Contains(".Internal") && assembly.GetName().Name == "DistributedLock.Core"))
 #endif
-                .Where(t => t.IsPublic || t.IsNestedPublic);
+            ;
 
         private static string CurrentFilePath([CallerFilePath] string filePath = "") => filePath;
     }

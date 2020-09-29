@@ -9,6 +9,9 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading.WaitHandles
 {
+    /// <summary>
+    /// Implements a distributed semaphore based on a global <see cref="Semaphore"/>
+    /// </summary>
     public sealed partial class WaitHandleDistributedSemaphore : IInternalDistributedSemaphore<WaitHandleDistributedSemaphoreHandle>
     {
         private readonly int _maxCount;
@@ -36,6 +39,10 @@ namespace Medallion.Threading.WaitHandles
         /// </summary>
         public static int MaxNameLength => DistributedWaitHandleHelpers.MaxNameLength;
 
+        /// <summary>
+        /// Returns either the provided <paramref name="name"/> or a transformed version of <paramref name="name"/> which
+        /// is safe to use with the "exactName" constructor parameter.
+        /// </summary>
         public static string GetSafeName(string name) => DistributedWaitHandleHelpers.GetSafeName(name);
 
         /// <summary>

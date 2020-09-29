@@ -11,6 +11,11 @@ namespace Medallion.Threading.Tests.Azure
     public class Core_AzureBlobLease_AzureBlobLeaseSynchronizationStrategyTest : DistributedLockCoreTestCases<TestingAzureBlobLeaseDistributedLockProvider, TestingAzureBlobLeaseSynchronizationStrategy> { }
 }
 
+namespace Medallion.Threading.Tests.FileSystem
+{
+    [Category("CI")] public class Core_File_FileSynchronizationStrategyTest : DistributedLockCoreTestCases<TestingFileDistributedLockProvider, TestingLockFileSynchronizationStrategy> { }
+}
+
 namespace Medallion.Threading.Tests.Postgres
 {
     public class ConnectionStringStrategy_Postgres_ConnectionMultiplexingSynchronizationStrategy_PostgresDb_ConnectionMultiplexingSynchronizationStrategy_PostgresDb_PostgresDbTest : ConnectionStringStrategyTestCases<TestingPostgresDistributedLockProvider<TestingConnectionMultiplexingSynchronizationStrategy<TestingPostgresDb>>, TestingConnectionMultiplexingSynchronizationStrategy<TestingPostgresDb>, TestingPostgresDb> { }
@@ -168,8 +173,8 @@ namespace Medallion.Threading.Tests.SqlServer
 
 namespace Medallion.Threading.Tests.WaitHandles
 {
-    [Category("CIWindows")] public class Core_EventWaitHandle_WaitHandlesSynchronizationStrategyTest : DistributedLockCoreTestCases<TestingEventWaitHandleDistributedLockProvider, TestingWaitHandlesSynchronizationStrategy> { }
-    [Category("CIWindows")] public class SemaphoreCore_WaitHandleSemaphore_WaitHandlesSynchronizationStrategyTest : DistributedSemaphoreCoreTestCases<TestingWaitHandleDistributedSemaphoreProvider, TestingWaitHandlesSynchronizationStrategy> { }
-    public class Core_Semaphore1AsMutex_WaitHandleSemaphore_WaitHandlesSynchronizationStrategy_WaitHandlesSynchronizationStrategyTest : DistributedLockCoreTestCases<TestingSemaphore1AsMutexProvider<TestingWaitHandleDistributedSemaphoreProvider, TestingWaitHandlesSynchronizationStrategy>, TestingWaitHandlesSynchronizationStrategy> { }
-    public class Core_Semaphore5AsMutex_WaitHandleSemaphore_WaitHandlesSynchronizationStrategy_WaitHandlesSynchronizationStrategyTest : DistributedLockCoreTestCases<TestingSemaphore5AsMutexProvider<TestingWaitHandleDistributedSemaphoreProvider, TestingWaitHandlesSynchronizationStrategy>, TestingWaitHandlesSynchronizationStrategy> { }
+    [Category("CIWindows")] public class Core_EventWaitHandle_WaitHandleSynchronizationStrategyTest : DistributedLockCoreTestCases<TestingEventWaitHandleDistributedLockProvider, TestingWaitHandleSynchronizationStrategy> { }
+    [Category("CIWindows")] public class Core_Semaphore1AsMutex_WaitHandleSemaphore_WaitHandleSynchronizationStrategy_WaitHandleSynchronizationStrategyTest : DistributedLockCoreTestCases<TestingSemaphore1AsMutexProvider<TestingWaitHandleDistributedSemaphoreProvider, TestingWaitHandleSynchronizationStrategy>, TestingWaitHandleSynchronizationStrategy> { }
+    [Category("CIWindows")] public class Core_Semaphore5AsMutex_WaitHandleSemaphore_WaitHandleSynchronizationStrategy_WaitHandleSynchronizationStrategyTest : DistributedLockCoreTestCases<TestingSemaphore5AsMutexProvider<TestingWaitHandleDistributedSemaphoreProvider, TestingWaitHandleSynchronizationStrategy>, TestingWaitHandleSynchronizationStrategy> { }
+    [Category("CIWindows")] public class SemaphoreCore_WaitHandleSemaphore_WaitHandleSynchronizationStrategyTest : DistributedSemaphoreCoreTestCases<TestingWaitHandleDistributedSemaphoreProvider, TestingWaitHandleSynchronizationStrategy> { }
 }

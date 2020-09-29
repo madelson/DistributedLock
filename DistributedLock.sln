@@ -19,7 +19,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DistributedLockCodeGen", "D
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DistributedLock.SqlServer", "DistributedLock.SqlServer\DistributedLock.SqlServer.csproj", "{A7C39A34-B8FA-48B0-87C4-65FE2A8BD62B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DistributedLock.Azure", "DistributedLock.Azure\DistributedLock.Azure.csproj", "{1C5E80A9-343A-44AA-A40E-00EAFE485D36}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DistributedLock.Azure", "DistributedLock.Azure\DistributedLock.Azure.csproj", "{1C5E80A9-343A-44AA-A40E-00EAFE485D36}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DistributedLock.FileSystem", "DistributedLock.FileSystem\DistributedLock.FileSystem.csproj", "{6B0DBD7E-3A43-4FED-82BA-9927360E1D92}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -63,6 +65,10 @@ Global
 		{1C5E80A9-343A-44AA-A40E-00EAFE485D36}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1C5E80A9-343A-44AA-A40E-00EAFE485D36}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1C5E80A9-343A-44AA-A40E-00EAFE485D36}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6B0DBD7E-3A43-4FED-82BA-9927360E1D92}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6B0DBD7E-3A43-4FED-82BA-9927360E1D92}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6B0DBD7E-3A43-4FED-82BA-9927360E1D92}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6B0DBD7E-3A43-4FED-82BA-9927360E1D92}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
