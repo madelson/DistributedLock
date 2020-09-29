@@ -42,7 +42,7 @@ namespace Medallion.Threading.FileSystem
         /// </summary>
         public FileDistributedLock(DirectoryInfo lockFileDirectory, string name)
         {
-            this.Name = FileNameValidationHelper.GetLockFileName(lockFileDirectory, name, exactName: false);
+            this.Name = FileNameValidationHelper.GetLockFileName(lockFileDirectory, name);
         }
 
         // todo revisit API

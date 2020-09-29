@@ -3,12 +3,13 @@ using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Medallion.Threading.Tests.Tests.FileSystem
+namespace Medallion.Threading.Tests.FileSystem
 {
     [Category("CI")]
     public class FileDistributedLockTest
@@ -33,16 +34,6 @@ namespace Medallion.Threading.Tests.Tests.FileSystem
 
             Assert.Throws<ArgumentNullException>(() => new FileDistributedLock(default!, "name"));
             Assert.Throws<ArgumentNullException>(() => new FileDistributedLock(LockFileDirectoryInfo, default!));
-
-            Assert.Throws<FormatException>(() => FileNameValidationHelper.GetLockFileName(LockFileDirectoryInfo, string.Empty, exactName: true));
-            Assert.Throws<FormatException>(() => FileNameValidationHelper.GetLockFileName(LockFileDirectoryInfo, ".", exactName: true));
-            Assert.Throws<FormatException>(() => FileNameValidationHelper.GetLockFileName(LockFileDirectoryInfo, "..", exactName: true));
-
-            try { Path.GetFullPath(Path.Combine(LockFileDirectory, new string('a', 5000))); }
-            catch (PathTooLongException)
-            {
-                Assert.Throws<FormatException>(() => FileNameValidationHelper.GetLockFileName(LockFileDirectoryInfo, new string('a', 5000), exactName: true));
-            }
         }
 
         [Test, Combinatorial]
@@ -76,7 +67,10 @@ namespace Medallion.Threading.Tests.Tests.FileSystem
             var @lock = constructFromFileInfo 
                 ? new FileDistributedLock(new FileInfo(fileName))
                 : new FileDistributedLock(new DirectoryInfo(directoryName), Path.GetFileName(fileName));
-            @lock.Name.ShouldEqual(fileName);
+            if (constructFromFileInfo)
+            {
+                @lock.Name.ShouldEqual(fileName);
+            }
 
             Directory.Exists(directoryName).ShouldEqual(alreadyExists != "nothing");
             File.Exists(fileName).ShouldEqual(alreadyExists == "file");
@@ -84,13 +78,13 @@ namespace Medallion.Threading.Tests.Tests.FileSystem
             using (@lock.Acquire())
             {
                 Assert.IsTrue(Directory.Exists(directoryName));
-                Assert.IsTrue(File.Exists(fileName));
+                Assert.IsTrue(File.Exists(@lock.Name));
             }
 
             Assert.IsTrue(Directory.Exists(directoryName));
-            Assert.IsFalse(File.Exists(fileName));
+            Assert.IsFalse(File.Exists(@lock.Name));
 
-            string Hash(string text)
+            static string Hash(string text)
             {
                 using var md5 = MD5.Create();
                 var hashBytes = md5.ComputeHash(Encoding.UTF8.GetBytes($"{text}_{TestContext.CurrentContext.Test.FullName}_{TargetFramework.Current}"));
@@ -137,6 +131,42 @@ namespace Medallion.Threading.Tests.Tests.FileSystem
         [Test]
         public void TestLongNamesAreAllowed() => AssertCanUseName(new string('a', ushort.MaxValue));
 
+        [Test]
+        public void TestHandlesLongDirectoryNames()
+        {
+            var tooLongDirectory = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+                ? AppContext.TryGetSwitch("Switch.System.IO.UseLegacyPathHandling", out var useLegacyPathHandling) && useLegacyPathHandling
+                    ? BuildLongDirectory(259 - (FileNameValidationHelper.MinFileNameLength - 1))
+                    : BuildLongDirectory(short.MaxValue - (FileNameValidationHelper.MinFileNameLength - 1))
+                : BuildLongDirectory(4096 - (FileNameValidationHelper.MinFileNameLength - 1));
+
+            Assert.Throws<PathTooLongException>(() => new FileDistributedLock(tooLongDirectory, new string('a', FileNameValidationHelper.MinFileNameLength)));
+
+            var almostTooLongDirectory = new DirectoryInfo(tooLongDirectory.FullName.Substring(0, tooLongDirectory.FullName.Length - 1));
+            AssertCanUseName(new string('a', FileNameValidationHelper.MinFileNameLength));
+            AssertCanUseName(new string('a', 100 * FileNameValidationHelper.MinFileNameLength));
+
+            var almostTooLongBytesDirectory = new DirectoryInfo(almostTooLongDirectory.FullName.Replace("aaaa", "🦉"));
+            Encoding.UTF8.GetByteCount(almostTooLongBytesDirectory.FullName).ShouldEqual(Encoding.UTF8.GetByteCount(almostTooLongDirectory.FullName));
+            AssertCanUseName(new string('a', FileNameValidationHelper.MinFileNameLength));
+            AssertCanUseName(new string('a', FileNameValidationHelper.MinFileNameLength + 1));
+
+            static DirectoryInfo BuildLongDirectory(int length)
+            {
+                var name = new StringBuilder(LockFileDirectory);
+                while (name.Length < length)
+                {
+                    name.Append(Path.DirectorySeparatorChar)
+                        .Append('a', 100); // shorter than 255 max name lengths
+                }
+                name.Length = length;
+                // make sure we don't have separators near the end that block trimming
+                name[name.Length - 1] = 'b';
+                name[name.Length - 2] = 'b';
+                return new DirectoryInfo(name.ToString());
+            }
+        }
+
         [TestCase(".")]
         [TestCase("..")]
         [TestCase("...")]
@@ -156,14 +186,17 @@ namespace Medallion.Threading.Tests.Tests.FileSystem
         [TestCase(" .. ")]
         [TestCase("\t.")]
         [TestCase(" \t")]
-        public void TestStrangePaths(string name)
-        {
-            AssertCanUseName(name);
+        public void TestStrangePaths(string name) => AssertCanUseName(name);
 
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        [TestCase("a.")]
+        [TestCase("a ")]
+        public void TestTrailingWhitespaceOrDotDoesNotCauseCollision(string name)
+        {
+            var @lock = new FileDistributedLock(LockFileDirectoryInfo, name);
+            using (@lock.Acquire())
             {
-                var @lock = new FileDistributedLock(LockFileDirectoryInfo, name);
-                CanCreateFileWithName(name).ShouldEqual(Path.GetFileName(@lock.Name) == name, $"Name was {@lock.Name}");
+                using var handle = new FileDistributedLock(LockFileDirectoryInfo, name.Trim('.').Trim(' ')).TryAcquire();
+                Assert.IsNotNull(handle);
             }
         }
 
@@ -180,6 +213,8 @@ namespace Medallion.Threading.Tests.Tests.FileSystem
         [TestCase("COM7")]
         [TestCase("COM8")]
         [TestCase("COM9")]
+        [TestCase("CONIN$")]
+        [TestCase("CONOUT$")]
         [TestCase("LPT1")]
         [TestCase("LPT2")]
         [TestCase("LPT3")]
@@ -214,7 +249,7 @@ namespace Medallion.Threading.Tests.Tests.FileSystem
         {
             Check("A", shouldEscape: false);
             Check("A_B", shouldEscape: false);
-            Check(string.Empty, shouldEscape: true);
+            Check(string.Empty, shouldEscape: false);
             Check(".", shouldEscape: true);
             Check("..", shouldEscape: true);
             Check("/A/", shouldEscape: true);
@@ -223,11 +258,16 @@ namespace Medallion.Threading.Tests.Tests.FileSystem
             Check(">", shouldEscape: true);
             Check("\0", shouldEscape: true);
 
-            void Check(string name, bool shouldEscape)
+            foreach (var invalidChar in Path.GetInvalidFileNameChars())
+            {
+                Check("_" + invalidChar, shouldEscape: true);
+            }
+
+            static void Check(string name, bool shouldEscape)
             {
                 var @lock = new FileDistributedLock(LockFileDirectoryInfo, name);
-                (@lock.Name == LockFileDirectory + Path.DirectorySeparatorChar + name)
-                    .ShouldEqual(!shouldEscape);
+                @lock.Name.StartsWith(LockFileDirectory + Path.DirectorySeparatorChar + name)
+                    .ShouldEqual(!shouldEscape, $"'{name}', {@lock.Name}");
             }
         }
 
@@ -235,23 +275,33 @@ namespace Medallion.Threading.Tests.Tests.FileSystem
         public void TestForcesCaseSensitivity()
         {
             Path.GetFileName(new FileDistributedLock(LockFileDirectoryInfo, "lower").Name)
-                .ShouldEqual("lower_PRE5SHQAMC324P4C6UKD4R4VMGGJMF6T");
+                .ShouldEqual("lowerPRE5SHQAMC324P4C6UKD4R4VMGGJMF6T.lock");
         }
 
-        [TestCase("", ExpectedResult = "EMPTY_A4ED4E8E7DBB4757AF1BE51A3C139F84P6AD62YPPHO33YTKIBUM5WBQHQVBCSXA")]
-        [TestCase(".", ExpectedResult = "_.LIYISOQPXAPX3NYVHPC2EK4WEOU6OW7Y")]
-        [TestCase("..", ExpectedResult = "_..G2H2MVGLQK7QVO2MAWVKSVSKM26KX5S6")]
-        [TestCase("...", ExpectedResult = "_...2ZDJLYOT376KUA5OQFR2OERKUXIH4A7R")]
-        [TestCase("LPT1", ExpectedResult = "_LPT1VUGMI6NJVPIYUGXMY4K6ETA3232OR2B5")]
-        [TestCase(" ", ExpectedResult = "_ ZPD253R4AYXN6RS7UP6A3FYDCXHBXKUY")]
-        [TestCase("_", ExpectedResult = "_")]
-        [TestCase(@"cool<>!/:x\zzz", ExpectedResult = "cool__!__x_zzzATJSHZSADXN7WTL4DBU6JULFTEDVFF3L")]
+        [TestCase("", ExpectedResult = "P6AD62YPPHO33YTKIBUM5WBQHQVBCSXA.lock")]
+        [TestCase(".", ExpectedResult = "_LIYISOQPXAPX3NYVHPC2EK4WEOU6OW7Y.lock")]
+        [TestCase("..", ExpectedResult = "__G2H2MVGLQK7QVO2MAWVKSVSKM26KX5S6.lock")]
+        [TestCase("...", ExpectedResult = "___2ZDJLYOT376KUA5OQFR2OERKUXIH4A7R.lock")]
+        [TestCase("LPT1", ExpectedResult = "LPT1VUGMI6NJVPIYUGXMY4K6ETA3232OR2B5.lock")]
+        [TestCase(" ", ExpectedResult = "_ZPD253R4AYXN6RS7UP6A3FYDCXHBXKUY.lock")]
+        [TestCase("_", ExpectedResult = "_3VP7XSELHOF3DU4D257KSSAQD3WR4SSL.lock")]
+        [TestCase(@"cool<>!/:x\zzz", ExpectedResult = "cool_____x_zzzATJSHZSADXN7WTL4DBU6JULFTEDVFF3L.lock")]
         [TestCase(
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-            ExpectedResult = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaXTSAJQWFKOYRBNXC6DV3HRZWQJANRKCX"
+            ExpectedResult = "aaaaaaaaaaaaaaaaaaaaaaaaaaaXTSAJQWFKOYRBNXC6DV3HRZWQJANRKCX.lock"
         )]
-        [TestCase("ABC", ExpectedResult = "ABC")]
-        [TestCase("abc", ExpectedResult = "abc_56LLTQOSBT6ULGHITLS4KQEIRREMO53J")]
+        [TestCase("ABC", ExpectedResult = "ABCZJ4QR6TVN4A3KMGQ4BUKHOWQYFRLXSB3.lock")]
+        [TestCase("abc", ExpectedResult = "abc56LLTQOSBT6ULGHITLS4KQEIRREMO53J.lock")]
+        // 255 UTF8 bytes
+        [TestCase(
+            "🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉123",
+            ExpectedResult = "___________________________VA7XJG3JUQKTL6AU2KWPHVQFK43N4DVW.lock"
+        )]
+        // 256 UTF8 bytes
+        [TestCase(
+            "🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉1234",
+            ExpectedResult = "___________________________NOLT44QRLWYINT53TY2I4H34X4AU4O46.lock"
+        )]
         public string TestSafeNameCompatibility(string name)
         {
             // meant to be consistent length across platforms
@@ -279,12 +329,12 @@ namespace Medallion.Threading.Tests.Tests.FileSystem
                 }
 
                 var @lock = new FileDistributedLock(directoryInfo, new string(nameChars));
-                var hashStart = @lock.Name.Length - FileNameValidationHelper.HashLengthInChars;
-                if (@lock.Name[hashStart - 1] != '_') { Assert.Fail("Bad name format"); }
+                var lockFileNameWithoutExtension = Path.GetFileNameWithoutExtension(@lock.Name);
+                var hashStart = lockFileNameWithoutExtension.Length - FileNameValidationHelper.HashLengthInChars;
 
-                for (var j = hashStart; j < @lock.Name.Length; ++j)
+                for (var j = hashStart; j < lockFileNameWithoutExtension.Length; ++j)
                 {
-                    ++charCounts[@lock.Name[j]];
+                    ++charCounts[lockFileNameWithoutExtension[j]];
                 }
             }
 
@@ -307,9 +357,9 @@ namespace Medallion.Threading.Tests.Tests.FileSystem
             }
         }
 
-        private static void AssertCanUseName(string name)
+        private static void AssertCanUseName(string name, DirectoryInfo? directory = null)
         {
-            var @lock = new FileDistributedLock(LockFileDirectoryInfo, name);
+            var @lock = new FileDistributedLock(directory ?? LockFileDirectoryInfo, name);
             IDistributedLockHandle? handle = null;
             Assert.DoesNotThrow(() => handle = @lock.TryAcquire(), name);
             Assert.IsNotNull(handle, name);
@@ -318,9 +368,9 @@ namespace Medallion.Threading.Tests.Tests.FileSystem
 
         private static bool CanCreateFileWithName(string name)
         {
-            var path = Path.Combine(LockFileDirectory, name);
             try
             {
+                var path = Path.Combine(LockFileDirectory, name);
                 File.OpenWrite(path).Dispose();
                 File.Delete(path);
                 return true;

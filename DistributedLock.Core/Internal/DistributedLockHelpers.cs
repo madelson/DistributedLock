@@ -15,7 +15,7 @@ namespace Medallion.Threading.Internal
 #endif
     static class DistributedLockHelpers
     {
-        public static string ToSafeName(string name, int maxNameLength, Func<string, string> convertToValidName, Func<byte[], string>? hashName = null)
+        public static string ToSafeName(string name, int maxNameLength, Func<string, string> convertToValidName)
         {
             if (name == null) { throw new ArgumentNullException(nameof(name)); }
 
@@ -25,17 +25,9 @@ namespace Medallion.Threading.Internal
                 return name;
             }
 
-            var nameBytes = Encoding.UTF8.GetBytes(name);
-            string hash;
-            if (hashName != null)
-            {
-                hash = hashName(nameBytes);
-            }
-            else
-            {
-                using var sha = SHA512.Create();
-                hash = Convert.ToBase64String(sha.ComputeHash(nameBytes));
-            }
+            var nameBytes = Encoding.UTF8.GetBytes(name); 
+            using var sha = SHA512.Create();
+            var hash = Convert.ToBase64String(sha.ComputeHash(nameBytes));
 
             if (hash.Length >= maxNameLength)
             {
