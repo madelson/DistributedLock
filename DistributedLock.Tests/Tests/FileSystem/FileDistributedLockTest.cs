@@ -134,13 +134,20 @@ namespace Medallion.Threading.Tests.FileSystem
         [Test]
         public void TestHandlesLongDirectoryNames()
         {
-            var tooLongDirectory = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
-                ? AppContext.TryGetSwitch("Switch.System.IO.UseLegacyPathHandling", out var useLegacyPathHandling) && useLegacyPathHandling
+            DirectoryInfo tooLongDirectory;
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                tooLongDirectory = AppContext.TryGetSwitch("Switch.System.IO.UseLegacyPathHandling", out var useLegacyPathHandling) && useLegacyPathHandling
                     ? BuildLongDirectory(259 - (FileNameValidationHelper.MinFileNameLength - 1))
-                    : BuildLongDirectory(short.MaxValue - (FileNameValidationHelper.MinFileNameLength - 1))
-                : BuildLongDirectory(4096 - (FileNameValidationHelper.MinFileNameLength - 1));
+                    : BuildLongDirectory(short.MaxValue - (FileNameValidationHelper.MinFileNameLength - 1));
 
-            Assert.Throws<PathTooLongException>(() => new FileDistributedLock(tooLongDirectory, new string('a', FileNameValidationHelper.MinFileNameLength)));
+                // we only check this on Windows currently since AppVeyor linux does not see to have a length restriction
+                Assert.Throws<PathTooLongException>(() => new FileDistributedLock(tooLongDirectory, new string('a', FileNameValidationHelper.MinFileNameLength)));
+            }
+            else 
+            {
+                tooLongDirectory = BuildLongDirectory(4096 - (FileNameValidationHelper.MinFileNameLength - 1));
+            }
 
             var almostTooLongDirectory = new DirectoryInfo(tooLongDirectory.FullName.Substring(0, tooLongDirectory.FullName.Length - 1));
             AssertCanUseName(new string('a', FileNameValidationHelper.MinFileNameLength));
