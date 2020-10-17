@@ -8,7 +8,7 @@ using System.Runtime.CompilerServices;
 using System.IO;
 using System.Text.RegularExpressions;
 
-namespace Medallion.Threading.Tests.Tests
+namespace Medallion.Threading.Tests
 {
     [Category("CI")]
     public class ApiTest

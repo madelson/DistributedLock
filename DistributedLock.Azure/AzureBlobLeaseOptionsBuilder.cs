@@ -120,7 +120,7 @@ namespace Medallion.Threading.Azure
             var durationToUse = options?._duration ?? DefaultLeaseDuration;
             return (
                 duration: durationToUse,
-                renewalCadence: options?._renewalCadence ?? TimeSpan.FromMilliseconds(durationToUse.InMilliseconds / 3.0),
+                renewalCadence: options?._renewalCadence ?? (durationToUse.IsInfinite ? Timeout.InfiniteTimeSpan : TimeSpan.FromMilliseconds(durationToUse.InMilliseconds / 3.0)),
                 minBusyWaitSleepTime: options?._minBusyWaitSleepTime?.TimeSpan ?? TimeSpan.FromMilliseconds(250),
                 maxBusyWaitSleepTime: options?._maxBusyWaitSleepTime?.TimeSpan ?? TimeSpan.FromSeconds(1)
             );

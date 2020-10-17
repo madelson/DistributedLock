@@ -7,6 +7,10 @@ using Medallion.Threading.Azure;
 using Azure.Storage.Blobs;
 using Medallion.Threading.FileSystem;
 using System.IO;
+using Medallion.Threading.Redis;
+using StackExchange.Redis;
+using System.Linq;
+using Medallion.Threading;
 #if NET471
 using System.Data.SqlClient;
 #elif NETCOREAPP3_1
@@ -61,6 +65,15 @@ namespace DistributedLockTaker
                 case nameof(FileDistributedLock):
                     handle = new FileDistributedLock(new FileInfo(name)).Acquire();
                     break;
+                case nameof(RedisDistributedLock) + "1":
+                    handle = AcquireRedisLock(name, serverCount: 1);
+                    break;
+                case nameof(RedisDistributedLock) + "3":
+                    handle = AcquireRedisLock(name, serverCount: 3);
+                    break;
+                case nameof(RedisDistributedLock) + "2x1":
+                    handle = AcquireRedisLock(name, serverCount: 2); // we know the last will fail; don't bother (we also don't know its port)
+                    break;
                 default:
                     Console.Error.WriteLine($"type: {type}");
                     return 123;
@@ -76,5 +89,14 @@ namespace DistributedLockTaker
 
             return 0;
         }
+
+        private static IDistributedLockHandle AcquireRedisLock(string name, int serverCount) => 
+            new RedisDistributedLock(
+                name,
+                RedisPorts.DefaultPorts.Take(serverCount)
+                    .Select(port => ConnectionMultiplexer.Connect($"localhost:{port}").GetDatabase()), 
+                o => o.Expiry(TimeSpan.FromSeconds(.5))
+            )
+            .Acquire();
     }
 }

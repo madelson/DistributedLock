@@ -18,6 +18,10 @@ namespace Medallion.Threading.Azure
         internal AzureBlobLeaseDistributedLockHandle(AzureBlobLeaseDistributedLock.InternalHandle internalHandle)
         {
             this._internalHandle = internalHandle;
+            // Because this is a lease, managed finalization mostly won't be strictly necessary here. Where it comes in handy is:
+            // (1) Ensuring blob deletion if we own the blob
+            // (2) Helping release infinite-duration leases (rare case)
+            // (3) In testing, avoiding having to wait 15+ seconds for lease expiration
             this._finalizerRegistration = ManagedFinalizerQueue.Instance.Register(this, internalHandle);
         }
 
