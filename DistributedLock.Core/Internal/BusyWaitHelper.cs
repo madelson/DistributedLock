@@ -18,12 +18,13 @@ namespace Medallion.Threading.Internal
             TState state,
             Func<TState, CancellationToken, ValueTask<TResult?>> tryGetValue, 
             TimeoutValue timeout,
-            TimeSpan minSleepTime,
-            TimeSpan maxSleepTime,
+            TimeoutValue minSleepTime,
+            TimeoutValue maxSleepTime,
             CancellationToken cancellationToken)
             where TResult : class
         {
-            Invariant.Require(minSleepTime <= maxSleepTime);
+            Invariant.Require(minSleepTime.CompareTo(maxSleepTime) <= 0);
+            Invariant.Require(!maxSleepTime.IsInfinite);
 
             var initialResult = await tryGetValue(state, cancellationToken).ConfigureAwait(false);
             if (initialResult != null || timeout.IsZero)
@@ -34,10 +35,10 @@ namespace Medallion.Threading.Internal
             using var _ = CreateMergedCancellationTokenSourceSource(timeout, cancellationToken, out var mergedCancellationToken);
 
             var random = new Random(Guid.NewGuid().GetHashCode());
-            var sleepRangeMillis = maxSleepTime.TotalMilliseconds - minSleepTime.TotalMilliseconds;
+            var sleepRangeMillis = maxSleepTime.InMilliseconds - minSleepTime.InMilliseconds;
             while (true)
             {
-                var sleepTime = minSleepTime + TimeSpan.FromMilliseconds(random.NextDouble() * sleepRangeMillis);
+                var sleepTime = minSleepTime.TimeSpan + TimeSpan.FromMilliseconds(random.NextDouble() * sleepRangeMillis);
                 try
                 {
                     await SyncOverAsync.Delay(sleepTime, mergedCancellationToken).ConfigureAwait(false);

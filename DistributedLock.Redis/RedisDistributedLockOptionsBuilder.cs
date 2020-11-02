@@ -164,8 +164,8 @@ namespace Medallion.Threading.Redis
             return new RedisDistributedLockOptions(
                 redLockTimeouts: new RedLockTimeouts(expiry: expiry, minValidityTime: minValidityTime),
                 extensionCadence: extensionCadence,
-                minBusyWaitSleepTime: options?._minBusyWaitSleepTime?.TimeSpan ?? TimeSpan.FromMilliseconds(10),
-                maxBusyWaitSleepTime: options?._maxBusyWaitSleepTime?.TimeSpan ?? TimeSpan.FromSeconds(0.8)
+                minBusyWaitSleepTime: options?._minBusyWaitSleepTime ?? TimeSpan.FromMilliseconds(10),
+                maxBusyWaitSleepTime: options?._maxBusyWaitSleepTime ?? TimeSpan.FromSeconds(0.8)
             );
         }
     }
@@ -175,8 +175,8 @@ namespace Medallion.Threading.Redis
         public RedisDistributedLockOptions(
             RedLockTimeouts redLockTimeouts,
             TimeoutValue extensionCadence,
-            TimeSpan minBusyWaitSleepTime,
-            TimeSpan maxBusyWaitSleepTime)
+            TimeoutValue minBusyWaitSleepTime,
+            TimeoutValue maxBusyWaitSleepTime)
         {
             this.RedLockTimeouts = redLockTimeouts;
             this.ExtensionCadence = extensionCadence;
@@ -186,7 +186,7 @@ namespace Medallion.Threading.Redis
 
         public RedLockTimeouts RedLockTimeouts { get; }
         public TimeoutValue ExtensionCadence { get; }
-        public TimeSpan MinBusyWaitSleepTime { get; }
-        public TimeSpan MaxBusyWaitSleepTime { get; }
+        public TimeoutValue MinBusyWaitSleepTime { get; }
+        public TimeoutValue MaxBusyWaitSleepTime { get; }
     }
 }

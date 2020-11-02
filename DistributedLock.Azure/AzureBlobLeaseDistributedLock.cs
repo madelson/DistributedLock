@@ -23,7 +23,7 @@ namespace Medallion.Threading.Azure
         private static readonly string CreatedMetadataKey = $"__DistributedLock";
 
         private readonly BlobClientWrapper _blobClient;
-        private readonly (TimeoutValue duration, TimeoutValue renewalCadence, TimeSpan minBusyWaitSleepTime, TimeSpan maxBusyWaitSleepTime) _options;
+        private readonly (TimeoutValue duration, TimeoutValue renewalCadence, TimeoutValue minBusyWaitSleepTime, TimeoutValue maxBusyWaitSleepTime) _options;
 
         /// <summary>
         /// Constructs a lock that will lease the provided <paramref name="blobClient"/>
