@@ -6,18 +6,24 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Medallion.Threading.Redis
+namespace Medallion.Threading.Redis.RedLock
 {
+    internal interface IRedLockReleasableSynchronizationPrimitive
+    {
+        Task ReleaseAsync(IDatabaseAsync database, bool fireAndForget);
+        void Release(IDatabase database, bool fireAndForget);
+    }
+
     /// <summary>
     /// Implements the release operation in the RedLock algorithm. See https://redis.io/topics/distlock
     /// </summary>
     internal readonly struct RedLockRelease
     {
-        private readonly IRedisSynchronizationPrimitive _primitive;
+        private readonly IRedLockReleasableSynchronizationPrimitive _primitive;
         private readonly IReadOnlyDictionary<IDatabase, Task<bool>> _tryAcquireOrRenewTasks;
         
         public RedLockRelease(
-            IRedisSynchronizationPrimitive primitive,
+            IRedLockReleasableSynchronizationPrimitive primitive,
             IReadOnlyDictionary<IDatabase, Task<bool>> tryAcquireOrRenewTasks)
         {
             this._primitive = primitive;

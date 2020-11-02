@@ -8,10 +8,19 @@ using System.Threading;
 
 namespace Medallion.Threading.Tests.Redis
 {
-    public sealed class TestingRedisSynchronizationStrategy : TestingSynchronizationStrategy
+    public sealed class TestingRedisSynchronizationStrategy<TDatabaseProvider> : TestingSynchronizationStrategy
+        where TDatabaseProvider : TestingRedisDatabaseProvider, new()
     {
         private bool _preparedForHandleLost, _preparedForHandleAbandonment;
         private Action? _killHandleAction;
+        private Action<RedisDistributedLockOptionsBuilder>? _options;
+
+        public TDatabaseProvider DatabaseProvider { get; } = new TDatabaseProvider();
+
+        public void SetOptions(Action<RedisDistributedLockOptionsBuilder>? options)
+        {
+            this._options = options;
+        }
 
         public void Options(RedisDistributedLockOptionsBuilder options)
         {
@@ -21,8 +30,14 @@ namespace Medallion.Threading.Tests.Redis
             }
             if (this._preparedForHandleAbandonment)
             {
-                options.Expiry(TimeSpan.FromSeconds(.2));
+                options.Expiry(TimeSpan.FromSeconds(.2))
+                    // the reader writer lock requires that the busy wait sleep time is shorter
+                    // than the expiry, so adjust for that
+                    // todo should this be more automatic?
+                    .BusyWaitSleepTime(TimeSpan.FromSeconds(.01), TimeSpan.FromSeconds(.1));    
             }
+
+            this._options?.Invoke(options);
         }
 
         public override IDisposable? PrepareForHandleLost()
@@ -50,9 +65,9 @@ namespace Medallion.Threading.Tests.Redis
 
         private class HandleLostScope : IDisposable
         {
-            private TestingRedisSynchronizationStrategy? _strategy;
+            private TestingRedisSynchronizationStrategy<TDatabaseProvider>? _strategy;
 
-            public HandleLostScope(TestingRedisSynchronizationStrategy strategy)
+            public HandleLostScope(TestingRedisSynchronizationStrategy<TDatabaseProvider> strategy)
             {
                 this._strategy = strategy;
             }

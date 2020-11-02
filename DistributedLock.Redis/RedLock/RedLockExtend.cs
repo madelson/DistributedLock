@@ -7,19 +7,25 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Medallion.Threading.Redis
+namespace Medallion.Threading.Redis.RedLock
 {
+    internal interface IRedLockExtensibleSynchronizationPrimitive  : IRedLockReleasableSynchronizationPrimitive
+    {
+        TimeoutValue AcquireTimeout { get; }
+        Task<bool> TryExtendAsync(IDatabaseAsync database);
+    }
+
     /// <summary>
     /// Implements the extend operation in the RedLock algorithm. See https://redis.io/topics/distlock
     /// </summary>
     internal readonly struct RedLockExtend
     {
-        private readonly IRedisSynchronizationPrimitive _primitive;
+        private readonly IRedLockExtensibleSynchronizationPrimitive _primitive;
         private readonly Dictionary<IDatabase, Task<bool>> _tryAcquireOrRenewTasks;
         private readonly CancellationToken _cancellationToken;
 
         public RedLockExtend(
-            IRedisSynchronizationPrimitive primitive, 
+            IRedLockExtensibleSynchronizationPrimitive primitive, 
             Dictionary<IDatabase, Task<bool>> tryAcquireOrRenewTasks, 
             CancellationToken cancellationToken)
         {

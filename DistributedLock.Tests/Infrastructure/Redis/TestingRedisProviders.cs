@@ -1,73 +1,51 @@
 ﻿using Medallion.Threading.Redis;
-using Medallion.Threading.Tests.Redis;
-using StackExchange.Redis;
+using NUnit.Framework;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Text;
 
 namespace Medallion.Threading.Tests.Redis
 {
-    public abstract class TestingRedisDistributedLockProvider : TestingLockProvider<TestingRedisSynchronizationStrategy>
+    public sealed class TestingRedisDistributedLockProvider<TDatabaseProvider> : TestingLockProvider<TestingRedisSynchronizationStrategy<TDatabaseProvider>>
+        where TDatabaseProvider : TestingRedisDatabaseProvider, new()
     {
-        private readonly IReadOnlyList<IDatabase> _databases;        
-
-        protected TestingRedisDistributedLockProvider(IEnumerable<IDatabase> databases)
-        {
-            this._databases = databases.ToArray();
-        }
-
-        protected TestingRedisDistributedLockProvider(int serverCount)
-            : this(Enumerable.Range(0, serverCount).Select(i => RedisServer.GetDefaultServer(i).Multiplexer.GetDatabase()))
-        {
-        }
-
         public override IDistributedLock CreateLockWithExactName(string name)
         {
-            var @lock = new RedisDistributedLock(name, this._databases, this.Strategy.Options);
+            var @lock = new RedisDistributedLock(name, this.Strategy.DatabaseProvider.Databases, this.Strategy.Options);
             this.Strategy.RegisterKillHandleAction(
-                () => this._databases.Take((this._databases.Count / 2) + 1)
+                () => this.Strategy.DatabaseProvider.Databases.Take((this.Strategy.DatabaseProvider.Databases.Count / 2) + 1)
                     .ToList()
                     .ForEach(db => db.KeyDelete(@lock.Key))
             );
             return @lock;
         }
 
-        public override string GetSafeName(string name) => name ?? throw new ArgumentNullException(nameof(name));
+        public override string GetSafeName(string name) => new RedisDistributedLock(name, this.Strategy.DatabaseProvider.Databases).Name;
 
-        public override string GetCrossProcessLockType() => $"{nameof(RedisDistributedLock)}{this.CrossProcessLockTypeSuffix}";
-
-        protected virtual string CrossProcessLockTypeSuffix => this._databases.Count.ToString();
+        public override string GetCrossProcessLockType() => $"{nameof(RedisDistributedLock)}{this.Strategy.DatabaseProvider.CrossProcessLockTypeSuffix}";
     }
 
-    public sealed class TestingRedisSingleServerDistributedLockProvider : TestingRedisDistributedLockProvider
+    public sealed class TestingRedisDistributedReaderWriterLockProvider<TDatabaseProvider> : TestingReaderWriterLockProvider<TestingRedisSynchronizationStrategy<TDatabaseProvider>>
+        where TDatabaseProvider : TestingRedisDatabaseProvider, new()
     {
-        public TestingRedisSingleServerDistributedLockProvider() : base(serverCount: 1) { }
-    }
-
-    public sealed class TestingRedis3ServerDistributedLockProvider : TestingRedisDistributedLockProvider
-    {
-        public TestingRedis3ServerDistributedLockProvider() : base(serverCount: 3) { }
-    }
-
-    public sealed class TestingRedis2x1ServerDistributedLockProvider : TestingRedisDistributedLockProvider
-    {
-        private static readonly IDatabase DeadDatabase;
-
-        static TestingRedis2x1ServerDistributedLockProvider()
+        public override IDistributedReaderWriterLock CreateReaderWriterLockWithExactName(string name)
         {
-            var server = new RedisServer();
-            DeadDatabase = server.Multiplexer.GetDatabase();
-            using var process = Process.GetProcessById(server.ProcessId);
-            process.Kill();
+            var @lock = new RedisDistributedReaderWriterLock(name, this.Strategy.DatabaseProvider.Databases, this.Strategy.Options);
+            this.Strategy.RegisterKillHandleAction(
+                () => this.Strategy.DatabaseProvider.Databases.Take((this.Strategy.DatabaseProvider.Databases.Count / 2) + 1)
+                    .ToList()
+                    .ForEach(db => 
+                    {
+                        db.KeyDelete(@lock.ReaderKey);
+                        db.KeyDelete(@lock.WriterKey);
+                    })
+            );
+            return @lock;
         }
 
-        public TestingRedis2x1ServerDistributedLockProvider()
-            : base(Enumerable.Range(0, 2).Select(i => RedisServer.GetDefaultServer(i).Multiplexer.GetDatabase()).Append(DeadDatabase))
-        {
-        }
+        public override string GetSafeName(string name) => new RedisDistributedReaderWriterLock(name, this.Strategy.DatabaseProvider.Databases).Name;
 
-        protected override string CrossProcessLockTypeSuffix => "2x1";
+        public override string GetCrossProcessLockType(ReaderWriterLockType type) => $"{type}{nameof(RedisDistributedReaderWriterLock)}{this.Strategy.DatabaseProvider.CrossProcessLockTypeSuffix}";
     }
 }

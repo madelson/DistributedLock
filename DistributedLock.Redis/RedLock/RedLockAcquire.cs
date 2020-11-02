@@ -8,19 +8,26 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Medallion.Threading.Redis
+namespace Medallion.Threading.Redis.RedLock
 {
+    internal interface IRedLockAcquirableSynchronizationPrimitive : IRedLockReleasableSynchronizationPrimitive
+    {
+        TimeoutValue AcquireTimeout { get; }
+        Task<bool> TryAcquireAsync(IDatabaseAsync database);
+        bool TryAcquire(IDatabase database);
+    }
+
     /// <summary>
     /// Implements the acquire operation in the RedLock algorithm. See https://redis.io/topics/distlock
     /// </summary>
     internal readonly struct RedLockAcquire
     {
-        private readonly IRedisSynchronizationPrimitive _primitive;
+        private readonly IRedLockAcquirableSynchronizationPrimitive _primitive;
         private readonly IReadOnlyList<IDatabase> _databases;
         private readonly CancellationToken _cancellationToken;
 
         public RedLockAcquire(
-            IRedisSynchronizationPrimitive primitive, 
+            IRedLockAcquirableSynchronizationPrimitive primitive, 
             IReadOnlyList<IDatabase> databases,
             CancellationToken cancellationToken)
         {
@@ -178,7 +185,7 @@ namespace Medallion.Threading.Redis
                 // make sure we didn't time out
                 if (this._primitive.AcquireTimeout.CompareTo(stopwatch.Elapsed) >= 0)
                 {
-                    return new Dictionary<IDatabase, Task<bool>> { [database] = Task.FromResult(true) };
+                    return new Dictionary<IDatabase, Task<bool>> { [database] = Task.FromResult(success) };
                 }
 
                 this._primitive.Release(database, fireAndForget: true); // timed out, so release

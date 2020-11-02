@@ -11,6 +11,8 @@ using Medallion.Threading.Redis;
 using StackExchange.Redis;
 using System.Linq;
 using Medallion.Threading;
+using System.Drawing.Text;
+using System.Collections.Generic;
 #if NET471
 using System.Data.SqlClient;
 #elif NETCOREAPP3_1
@@ -74,6 +76,15 @@ namespace DistributedLockTaker
                 case nameof(RedisDistributedLock) + "2x1":
                     handle = AcquireRedisLock(name, serverCount: 2); // we know the last will fail; don't bother (we also don't know its port)
                     break;
+                case "Write" + nameof(RedisDistributedReaderWriterLock) + "1":
+                    handle = AcquireRedisWriteLock(name, serverCount: 1);
+                    break;
+                case "Write" + nameof(RedisDistributedReaderWriterLock) + "3":
+                    handle = AcquireRedisWriteLock(name, serverCount: 3);
+                    break;
+                case "Write" + nameof(RedisDistributedReaderWriterLock) + "2x1":
+                    handle = AcquireRedisWriteLock(name, serverCount: 2); // we know the last will fail; don't bother (we also don't know its port)
+                    break;
                 default:
                     Console.Error.WriteLine($"type: {type}");
                     return 123;
@@ -91,12 +102,16 @@ namespace DistributedLockTaker
         }
 
         private static IDistributedLockHandle AcquireRedisLock(string name, int serverCount) => 
-            new RedisDistributedLock(
-                name,
-                RedisPorts.DefaultPorts.Take(serverCount)
-                    .Select(port => ConnectionMultiplexer.Connect($"localhost:{port}").GetDatabase()), 
-                o => o.Expiry(TimeSpan.FromSeconds(.5))
-            )
-            .Acquire();
+            new RedisDistributedLock(name, GetRedisDatabases(serverCount), RedisOptions).Acquire();
+
+        private static IDistributedLockHandle AcquireRedisWriteLock(string name, int serverCount) =>
+            new RedisDistributedReaderWriterLock(name, GetRedisDatabases(serverCount), RedisOptions).AcquireWriteLock();
+
+        private static IEnumerable<IDatabase> GetRedisDatabases(int serverCount) => RedisPorts.DefaultPorts.Take(serverCount)
+            .Select(port => ConnectionMultiplexer.Connect($"localhost:{port}").GetDatabase());
+
+        private static void RedisOptions(RedisDistributedLockOptionsBuilder options) => 
+            options.Expiry(TimeSpan.FromSeconds(.5)) // short expiry for abandonment testing
+                .BusyWaitSleepTime(TimeSpan.FromSeconds(.1), TimeSpan.FromSeconds(.3)); 
     }
 }

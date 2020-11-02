@@ -95,6 +95,13 @@ namespace Medallion.Threading.Internal
             public void OnCompleted(Action continuation) => this._taskAwaiter.OnCompleted(continuation);
             public void UnsafeOnCompleted(Action continuation) => this._taskAwaiter.UnsafeOnCompleted(continuation);
         }
+
+        public static bool TryGetValue<T>(this T? nullable, out T value)
+            where T : struct
+        {
+            value = nullable.GetValueOrDefault();
+            return nullable.HasValue;
+        }
     }
 
     /// <summary>

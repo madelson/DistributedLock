@@ -1,4 +1,5 @@
 ﻿using Medallion.Threading.Internal;
+using Medallion.Threading.Redis.RedLock;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -109,7 +110,7 @@ namespace Medallion.Threading.Redis
             return this;
         }
 
-        internal static (TimeoutValue expiry, TimeoutValue extensionCadence, TimeoutValue minValidityTime, TimeSpan minBusyWaitSleepTime, TimeSpan maxBusyWaitSleepTime) GetOptions(Action<RedisDistributedLockOptionsBuilder>? optionsBuilder)
+        internal static RedisDistributedLockOptions GetOptions(Action<RedisDistributedLockOptionsBuilder>? optionsBuilder)
         {
             RedisDistributedLockOptionsBuilder? options;
             if (optionsBuilder != null)
@@ -160,13 +161,32 @@ namespace Medallion.Threading.Redis
                 extensionCadence = TimeSpan.FromMilliseconds(minValidityTime.InMilliseconds / 3.0);
             }
 
-            return (
-                expiry,
-                extensionCadence,
-                minValidityTime,
+            return new RedisDistributedLockOptions(
+                redLockTimeouts: new RedLockTimeouts(expiry: expiry, minValidityTime: minValidityTime),
+                extensionCadence: extensionCadence,
                 minBusyWaitSleepTime: options?._minBusyWaitSleepTime?.TimeSpan ?? TimeSpan.FromMilliseconds(10),
                 maxBusyWaitSleepTime: options?._maxBusyWaitSleepTime?.TimeSpan ?? TimeSpan.FromSeconds(0.8)
             );
         }
+    }
+
+    internal readonly struct RedisDistributedLockOptions
+    {
+        public RedisDistributedLockOptions(
+            RedLockTimeouts redLockTimeouts,
+            TimeoutValue extensionCadence,
+            TimeSpan minBusyWaitSleepTime,
+            TimeSpan maxBusyWaitSleepTime)
+        {
+            this.RedLockTimeouts = redLockTimeouts;
+            this.ExtensionCadence = extensionCadence;
+            this.MinBusyWaitSleepTime = minBusyWaitSleepTime;
+            this.MaxBusyWaitSleepTime = maxBusyWaitSleepTime;
+        }
+
+        public RedLockTimeouts RedLockTimeouts { get; }
+        public TimeoutValue ExtensionCadence { get; }
+        public TimeSpan MinBusyWaitSleepTime { get; }
+        public TimeSpan MaxBusyWaitSleepTime { get; }
     }
 }

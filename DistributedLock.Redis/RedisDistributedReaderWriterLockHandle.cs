@@ -1,6 +1,5 @@
 ﻿using Medallion.Threading.Internal;
 using Medallion.Threading.Redis.RedLock;
-using StackExchange.Redis;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,13 +10,13 @@ using System.Threading.Tasks;
 namespace Medallion.Threading.Redis
 {
     /// <summary>
-    /// Implements <see cref="IDistributedLockHandle"/> for <see cref="RedisDistributedLock"/>
+    /// Implements <see cref="IDistributedLockHandle"/> for <see cref="RedisDistributedReaderWriterLock"/>
     /// </summary>
-    public sealed class RedisDistributedLockHandle : IDistributedLockHandle
+    public sealed class RedisDistributedReaderWriterLockHandle : IDistributedLockHandle
     {
         private RedLockHandle? _innerHandle;
 
-        internal RedisDistributedLockHandle(RedLockHandle innerHandle)
+        internal RedisDistributedReaderWriterLockHandle(RedLockHandle innerHandle)
         {
             this._innerHandle = innerHandle;
         }

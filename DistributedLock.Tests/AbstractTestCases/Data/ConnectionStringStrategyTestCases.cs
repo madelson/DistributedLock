@@ -61,6 +61,7 @@ namespace Medallion.Threading.Tests.Data
         }
 
         [Test]
+        [NonParallelizable, Retry(3)] // timing-sensitive
         public void TestKeepaliveProtectsFromIdleSessionKiller()
         {
             var applicationName = this._lockProvider.Strategy.SetUniqueApplicationName();

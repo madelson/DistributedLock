@@ -58,11 +58,11 @@ namespace Medallion.Threading.Tests.Redis
         public void TestDefaults()
         {
             var defaultOptions = RedisDistributedLockOptionsBuilder.GetOptions(null);
-            defaultOptions.expiry.ShouldEqual(RedisDistributedLockOptionsBuilder.DefaultExpiry);
-            defaultOptions.minValidityTime.ShouldEqual(TimeSpan.FromSeconds(27));
-            defaultOptions.extensionCadence.ShouldEqual(TimeSpan.FromSeconds(9));
-            defaultOptions.minBusyWaitSleepTime.ShouldEqual(TimeSpan.FromMilliseconds(10));
-            defaultOptions.maxBusyWaitSleepTime.ShouldEqual(TimeSpan.FromMilliseconds(800));
+            defaultOptions.RedLockTimeouts.Expiry.ShouldEqual(RedisDistributedLockOptionsBuilder.DefaultExpiry);
+            defaultOptions.RedLockTimeouts.MinValidityTime.ShouldEqual(TimeSpan.FromSeconds(27));
+            defaultOptions.ExtensionCadence.ShouldEqual(TimeSpan.FromSeconds(9));
+            defaultOptions.MinBusyWaitSleepTime.ShouldEqual(TimeSpan.FromMilliseconds(10));
+            defaultOptions.MaxBusyWaitSleepTime.ShouldEqual(TimeSpan.FromMilliseconds(800));
         }
 
         private static void GetOptions(Action<RedisDistributedLockOptionsBuilder> options) =>
