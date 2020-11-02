@@ -1,5 +1,4 @@
 ﻿using Medallion.Threading.Redis;
-using Medallion.Threading.Tests.Redis;
 using Moq;
 using NUnit.Framework;
 using StackExchange.Redis;
