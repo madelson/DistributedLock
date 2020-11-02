@@ -9,7 +9,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Medallion.Threading.Tests.Tests.Redis
+namespace Medallion.Threading.Tests.Redis
 {
     public class RedisDistributedReaderWriterLockTest
     {
