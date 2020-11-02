@@ -8,6 +8,11 @@ namespace Medallion.Threading.Tests
 {
     internal static class TestHelper
     {
+        /// <summary>
+        /// Returns a name that is unique to the current test and target framework but stable otherwise.
+        /// </summary>
+        public static string UniqueName => $"{TestContext.CurrentContext.Test.FullName}_{TargetFramework.Current}";
+
         public static T ShouldEqual<T>(this T @this, T that, string? message = null)
         {
             Assert.AreEqual(actual: @this, expected: that, message: message);

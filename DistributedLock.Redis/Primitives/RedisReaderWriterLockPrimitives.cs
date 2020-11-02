@@ -48,7 +48,7 @@ namespace Medallion.Threading.Redis.Primitives
             if redis.call('sismember', @readerKey, @lockId) == 0 then
                 return 0
             end
-            if readerTtl < @expiryMillis then
+            if redis.call('pttl', @readerKey) < tonumber(@expiryMillis) then
                 redis.call('pexpire', @readerKey, @expiryMillis)
             end
             return 1",
