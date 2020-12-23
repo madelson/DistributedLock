@@ -6,8 +6,9 @@ image:
 
 before_build:
   - nuget restore
-build:
-  verbosity: minimal
+
+build_script:
+  - dotnet build DistributedLock.sln -c Release
   
 # only test categories that don't depend on external things
 test:
