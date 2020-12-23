@@ -20,11 +20,17 @@ namespace Medallion.Threading.Redis
         private readonly IReadOnlyList<IDatabase> _databases;
         private readonly RedisDistributedLockOptions _options;
 
+        /// <summary>
+        /// Constructs a semaphore named <paramref name="key"/> using the provided <paramref name="maxCount"/>, <paramref name="database"/>, and <paramref name="options"/>.
+        /// </summary>
         public RedisDistributedSemaphore(RedisKey key, int maxCount, IDatabase database, Action<RedisDistributedLockOptionsBuilder>? options = null)
             : this(key, maxCount, new[] { database ?? throw new ArgumentNullException(nameof(database)) }, options)
         {
         }
 
+        /// <summary>
+        /// Constructs a semaphore named <paramref name="key"/> using the provided <paramref name="maxCount"/>, <paramref name="databases"/>, and <paramref name="options"/>.
+        /// </summary>
         public RedisDistributedSemaphore(RedisKey key, int maxCount, IEnumerable<IDatabase> databases, Action<RedisDistributedLockOptionsBuilder>? options = null)
         {
             if (key == default(RedisKey)) { throw new ArgumentNullException(nameof(key)); }
@@ -39,6 +45,10 @@ namespace Medallion.Threading.Redis
         }
         
         internal RedisKey Key { get; }
+
+        /// <summary>
+        /// Implements <see cref="IDistributedLock.Name"/>
+        /// </summary>
         public string Name => this.Key.ToString();
 
         ValueTask<RedisDistributedSemaphoreHandle?> IInternalDistributedSemaphore<RedisDistributedSemaphoreHandle>.InternalTryAcquireAsync(TimeoutValue timeout, CancellationToken cancellationToken) =>

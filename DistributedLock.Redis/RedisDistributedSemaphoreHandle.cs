@@ -9,6 +9,9 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading.Redis
 {
+    /// <summary>
+    /// Implements <see cref="IDistributedLockHandle"/> for a <see cref="RedisDistributedSemaphore"/>
+    /// </summary>
     public sealed class RedisDistributedSemaphoreHandle : IDistributedLockHandle
     {
         private RedLockHandle? _innerHandle;

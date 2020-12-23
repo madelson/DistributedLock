@@ -4,9 +4,6 @@ image:
   - Visual Studio 2019
   - Ubuntu
 
-before_build:
-  - nuget restore
-
 build_script:
   - dotnet build DistributedLock.sln -c Release
   

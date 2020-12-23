@@ -19,11 +19,17 @@ namespace Medallion.Threading.Redis
         private readonly IReadOnlyList<IDatabase> _databases;
         private readonly RedisDistributedLockOptions _options;
         
+        /// <summary>
+        /// Constructs a lock named <paramref name="key"/> using the provided <paramref name="database"/> and <paramref name="options"/>.
+        /// </summary>
         public RedisDistributedLock(RedisKey key, IDatabase database, Action<RedisDistributedLockOptionsBuilder>? options = null)
             : this(key, new[] { database ?? throw new ArgumentNullException(nameof(database)) }, options)
         {
         }
 
+        /// <summary>
+        /// Constructs a lock named <paramref name="key"/> using the provided <paramref name="databases"/> and <paramref name="options"/>.
+        /// </summary>
         public RedisDistributedLock(RedisKey key, IEnumerable<IDatabase> databases, Action<RedisDistributedLockOptionsBuilder>? options = null)
         {
             if (key == default(RedisKey)) { throw new ArgumentNullException(nameof(key)); }
@@ -35,7 +41,14 @@ namespace Medallion.Threading.Redis
             this._options = RedisDistributedLockOptionsBuilder.GetOptions(options);
         }
 
+        /// <summary>
+        /// The Redis key used to implement the lock
+        /// </summary>
         public RedisKey Key { get; }
+
+        /// <summary>
+        /// Implements <see cref="IDistributedLock.Name"/>
+        /// </summary>
         public string Name => this.Key.ToString();
 
         ValueTask<RedisDistributedLockHandle?> IInternalDistributedLock<RedisDistributedLockHandle>.InternalTryAcquireAsync(TimeoutValue timeout, CancellationToken cancellationToken) =>

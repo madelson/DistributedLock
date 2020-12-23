@@ -4,7 +4,6 @@ using Medallion.Threading.Redis.RedLock;
 using StackExchange.Redis;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -20,11 +19,17 @@ namespace Medallion.Threading.Redis
         private readonly IReadOnlyList<IDatabase> _databases;
         private readonly RedisDistributedLockOptions _options;
 
+        /// <summary>
+        /// Constructs a lock named <paramref name="name"/> using the provided <paramref name="database"/> and <paramref name="options"/>.
+        /// </summary>
         public RedisDistributedReaderWriterLock(string name, IDatabase database, Action<RedisDistributedLockOptionsBuilder>? options = null)
             : this(name, new[] { database ?? throw new ArgumentNullException(nameof(database)) }, options)
         {
         }
 
+        /// <summary>
+        /// Constructs a lock named <paramref name="name"/> using the provided <paramref name="databases"/> and <paramref name="options"/>.
+        /// </summary>
         public RedisDistributedReaderWriterLock(string name, IEnumerable<IDatabase> databases, Action<RedisDistributedLockOptionsBuilder>? options = null)
         {
             if (name == null) { throw new ArgumentNullException(nameof(name)); }
@@ -48,6 +53,9 @@ namespace Medallion.Threading.Redis
         internal RedisKey ReaderKey { get; }
         internal RedisKey WriterKey { get; }
 
+        /// <summary>
+        /// Implements <see cref="IDistributedReaderWriterLock.Name"/>
+        /// </summary>
         public string Name { get; }
 
         ValueTask<RedisDistributedReaderWriterLockHandle?> IInternalDistributedReaderWriterLock<RedisDistributedReaderWriterLockHandle>.InternalTryAcquireAsync(
