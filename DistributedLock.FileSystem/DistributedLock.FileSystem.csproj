@@ -10,7 +10,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <Version>1.0.0-alpha01</Version>
+    <Version>1.0.0-alpha02</Version>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <Authors>Michael Adelson</Authors>
     <Description>Provides a distributed lock implementation based on file locks</Description>
