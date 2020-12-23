@@ -85,6 +85,22 @@ namespace DistributedLockTaker
                 case "Write" + nameof(RedisDistributedReaderWriterLock) + "2x1":
                     handle = AcquireRedisWriteLock(name, serverCount: 2); // we know the last will fail; don't bother (we also don't know its port)
                     break;
+                case string _ when type.StartsWith(nameof(RedisDistributedSemaphore)):
+                    {
+                        var maxCount = type.EndsWith("1AsMutex") ? 1
+                            : type.EndsWith("5AsMutex") ? 5
+                            : throw new ArgumentException(type);
+                        var serverCount = int.Parse(type.Substring(nameof(RedisDistributedSemaphore).Length, 1));
+                        handle = new RedisDistributedSemaphore(
+                            name, 
+                            maxCount, 
+                            GetRedisDatabases(serverCount),
+                            // in order to see abandonment work in a reasonable timeframe, use very short expiry
+                            options => options.Expiry(TimeSpan.FromSeconds(1))
+                                .BusyWaitSleepTime(TimeSpan.FromSeconds(.1), TimeSpan.FromSeconds(.3))
+                        ).Acquire();
+                        break;
+                    }
                 default:
                     Console.Error.WriteLine($"type: {type}");
                     return 123;

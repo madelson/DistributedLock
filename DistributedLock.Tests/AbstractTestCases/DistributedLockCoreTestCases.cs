@@ -182,7 +182,6 @@ namespace Medallion.Threading.Tests
                             Assert.Fail("Concurrent lock acquisitions");
                         }
 
-
                         // hang out for a bit to ensure concurrency
                         await Task.Delay(TimeSpan.FromMilliseconds(10));
 

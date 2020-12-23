@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace Medallion.Threading.Tests.Redis
@@ -17,6 +18,7 @@ namespace Medallion.Threading.Tests.Redis
         {
             var redisScriptFields = typeof(RedisScript<>).Assembly
                 .GetTypes()
+                .Where(t => t.GetCustomAttribute<CompilerGeneratedAttribute>() == null)
                 .SelectMany(t => t.GetFields(BindingFlags.Instance | BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public))
                 .Where(f => f.FieldType.IsGenericType && f.FieldType.GetGenericTypeDefinition() == typeof(RedisScript<>));
             foreach (var field in redisScriptFields)

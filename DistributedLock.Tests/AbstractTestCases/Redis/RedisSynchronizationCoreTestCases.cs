@@ -28,6 +28,8 @@ namespace Medallion.Threading.Tests.Redis
         [Test]
         public void TestMajorityFaultingDatabasesCauseAcquireToThrow()
         {
+            CheckProviderCompatibility();
+
             var databases = Enumerable.Range(0, 3).Select(_ => CreateDatabaseMock()).ToArray();
             MockDatabase(databases[0], () => throw new TimeZoneNotFoundException());
             MockDatabase(databases[2], () => throw new ArrayTypeMismatchException());
@@ -48,6 +50,8 @@ namespace Medallion.Threading.Tests.Redis
         [NonParallelizable] // timing-sensitive
         public async Task TestMajorityHangingDatabasesCauseAcquireToFail()
         {
+            CheckProviderCompatibility();
+
             using var @event = new ManualResetEventSlim(initialState: false);
             var databases = Enumerable.Range(0, 3).Select(_ => CreateDatabaseMock()).ToArray();
             MockDatabase(databases[1], () => { @event.Wait(); return true; });
@@ -66,6 +70,8 @@ namespace Medallion.Threading.Tests.Redis
         [Test]
         public void TestMajorityFaultingDatabasesCauseReleaseToThrow()
         {
+            CheckProviderCompatibility();
+
             var databases = Enumerable.Range(0, 5).Select(_ => CreateDatabaseMock()).ToArray();
             this._provider.Strategy.DatabaseProvider.Databases = databases.Select(d => d.Object).ToArray();
             var @lock = this._provider.CreateLock("lock");
@@ -80,6 +86,8 @@ namespace Medallion.Threading.Tests.Redis
         [NonParallelizable, Retry(tryCount: 3)] // timing-sensitive
         public async Task TestAcquireFailsIfItTakesTooLong([Values] bool synchronous)
         {
+            CheckProviderCompatibility();
+
             var database = CreateDatabaseMock();
             MockDatabase(database, () => { Thread.Sleep(50); return true; });
 
@@ -95,6 +103,8 @@ namespace Medallion.Threading.Tests.Redis
         [NonParallelizable] // timing-sensitive
         public async Task TestFailedAcquireReleasesWhatHasAlreadyBeenAcquired()
         {
+            CheckProviderCompatibility();
+
             using var @event = new ManualResetEventSlim();
             var failDatabase = CreateDatabaseMock();
             MockDatabase(failDatabase, () => { @event.Wait(); return false; });
@@ -130,6 +140,21 @@ namespace Medallion.Threading.Tests.Redis
                 .Returns(() => RedisResult.Create(returns()));
             mockDatabase.Setup(d => d.ScriptEvaluateAsync(It.IsAny<string>(), It.IsAny<RedisKey[]>(), It.IsAny<RedisValue[]>(), It.IsAny<CommandFlags>()))
                 .Returns(() => Task.Run(() => RedisResult.Create(returns())));
+            mockDatabase.Setup(d => d.SortedSetRemove(It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<CommandFlags>()))
+                .Returns(() => (bool)RedisResult.Create(returns()));
+            mockDatabase.Setup(d => d.SortedSetRemoveAsync(It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<CommandFlags>()))
+                .Returns(() => Task.Run(() => (bool)RedisResult.Create(returns())));
+        }
+
+        private static void CheckProviderCompatibility()
+        {
+            // The semaphore5 provider is not compatible with this test class because it will attempt to acquire locks upon creation
+            // which will fail due to our mocked DB setup.
+            if (typeof(TLockProvider).IsConstructedGenericType
+                && typeof(TLockProvider).GetGenericTypeDefinition() == typeof(TestingSemaphore5AsMutexProvider<,>))
+            {
+                Assert.Pass("The provider is incompatible");
+            }
         }
     }
 }

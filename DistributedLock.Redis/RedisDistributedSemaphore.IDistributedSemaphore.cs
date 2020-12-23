@@ -1,23 +1,22 @@
 using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Medallion.Threading.Internal;
 
-namespace Medallion.Threading
+namespace Medallion.Threading.Redis
 {
-    /// <summary>
-    /// A synchronization primitive which restricts access to a resource or critical section of code to a fixed number of concurrent threads/processes.
-    /// Compare to <see cref="Semaphore"/>.
-    /// </summary>
-    public interface IDistributedSemaphore
+    public partial class RedisDistributedSemaphore
     {
-        // TODO maxcount?
+        // AUTO-GENERATED
 
-        /// <summary>
-        /// A name that uniquely identifies the semaphore
-        /// </summary>
-        string Name { get; }
+        IDistributedLockHandle? IDistributedSemaphore.TryAcquire(TimeSpan timeout, CancellationToken cancellationToken) =>
+            this.TryAcquire(timeout, cancellationToken);
+        IDistributedLockHandle IDistributedSemaphore.Acquire(TimeSpan? timeout, CancellationToken cancellationToken) =>
+            this.Acquire(timeout, cancellationToken);
+        ValueTask<IDistributedLockHandle?> IDistributedSemaphore.TryAcquireAsync(TimeSpan timeout, CancellationToken cancellationToken) =>
+            this.TryAcquireAsync(timeout, cancellationToken).Convert(To<IDistributedLockHandle?>.ValueTask);
+        ValueTask<IDistributedLockHandle> IDistributedSemaphore.AcquireAsync(TimeSpan? timeout, CancellationToken cancellationToken) =>
+            this.AcquireAsync(timeout, cancellationToken).Convert(To<IDistributedLockHandle>.ValueTask);
 
         /// <summary>
         /// Attempts to acquire a semaphore ticket synchronously. Usage: 
@@ -31,8 +30,9 @@ namespace Medallion.Threading
         /// </summary>
         /// <param name="timeout">How long to wait before giving up on the acquisition attempt. Defaults to 0</param>
         /// <param name="cancellationToken">Specifies a token by which the wait can be canceled</param>
-        /// <returns>An <see cref="IDistributedLockHandle"/> which can be used to release the ticket or null on failure</returns>
-        IDistributedLockHandle? TryAcquire(TimeSpan timeout = default, CancellationToken cancellationToken = default);
+        /// <returns>A <see cref="RedisDistributedSemaphoreHandle"/> which can be used to release the ticket or null on failure</returns>
+        public RedisDistributedSemaphoreHandle? TryAcquire(TimeSpan timeout = default, CancellationToken cancellationToken = default) =>
+            DistributedLockHelpers.TryAcquire(this, timeout, cancellationToken);
 
         /// <summary>
         /// Acquires a semaphore ticket synchronously, failing with <see cref="TimeoutException"/> if the attempt times out. Usage: 
@@ -46,8 +46,9 @@ namespace Medallion.Threading
         /// </summary>
         /// <param name="timeout">How long to wait before giving up on the acquisition attempt. Defaults to <see cref="Timeout.InfiniteTimeSpan"/></param>
         /// <param name="cancellationToken">Specifies a token by which the wait can be canceled</param>
-        /// <returns>An <see cref="IDistributedLockHandle"/> which can be used to release the ticket</returns>
-        IDistributedLockHandle Acquire(TimeSpan? timeout = null, CancellationToken cancellationToken = default);
+        /// <returns>A <see cref="RedisDistributedSemaphoreHandle"/> which can be used to release the ticket</returns>
+        public RedisDistributedSemaphoreHandle Acquire(TimeSpan? timeout = null, CancellationToken cancellationToken = default) =>
+            DistributedLockHelpers.Acquire(this, timeout, cancellationToken);
 
         /// <summary>
         /// Attempts to acquire a semaphore ticket asynchronously. Usage: 
@@ -61,8 +62,9 @@ namespace Medallion.Threading
         /// </summary>
         /// <param name="timeout">How long to wait before giving up on the acquisition attempt. Defaults to 0</param>
         /// <param name="cancellationToken">Specifies a token by which the wait can be canceled</param>
-        /// <returns>An <see cref="IDistributedLockHandle"/> which can be used to release the ticket or null on failure</returns>
-        ValueTask<IDistributedLockHandle?> TryAcquireAsync(TimeSpan timeout = default, CancellationToken cancellationToken = default);
+        /// <returns>A <see cref="RedisDistributedSemaphoreHandle"/> which can be used to release the ticket or null on failure</returns>
+        public ValueTask<RedisDistributedSemaphoreHandle?> TryAcquireAsync(TimeSpan timeout = default, CancellationToken cancellationToken = default) =>
+            this.As<IInternalDistributedSemaphore<RedisDistributedSemaphoreHandle>>().InternalTryAcquireAsync(timeout, cancellationToken);
 
         /// <summary>
         /// Acquires a semaphore ticket asynchronously, failing with <see cref="TimeoutException"/> if the attempt times out. Usage: 
@@ -76,7 +78,8 @@ namespace Medallion.Threading
         /// </summary>
         /// <param name="timeout">How long to wait before giving up on the acquisition attempt. Defaults to <see cref="Timeout.InfiniteTimeSpan"/></param>
         /// <param name="cancellationToken">Specifies a token by which the wait can be canceled</param>
-        /// <returns>An <see cref="IDistributedLockHandle"/> which can be used to release the ticket</returns>
-        ValueTask<IDistributedLockHandle> AcquireAsync(TimeSpan? timeout = null, CancellationToken cancellationToken = default);
+        /// <returns>A <see cref="RedisDistributedSemaphoreHandle"/> which can be used to release the ticket</returns>
+        public ValueTask<RedisDistributedSemaphoreHandle> AcquireAsync(TimeSpan? timeout = null, CancellationToken cancellationToken = default) =>
+            DistributedLockHelpers.AcquireAsync(this, timeout, cancellationToken);
     }
 }

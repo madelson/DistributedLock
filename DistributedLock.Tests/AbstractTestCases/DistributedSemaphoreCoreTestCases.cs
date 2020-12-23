@@ -19,6 +19,7 @@ namespace Medallion.Threading.Tests
         [TearDown] public void TearDown() => this._semaphoreProvider.Dispose();
 
         [Test]
+        [NonParallelizable] // timing-sensitive
         public void TestConcurrencyHandling()
         {
             const int MaxCount = 3;

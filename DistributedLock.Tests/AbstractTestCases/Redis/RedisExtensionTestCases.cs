@@ -23,14 +23,14 @@ namespace Medallion.Threading.Tests.Redis
         [NonParallelizable] // timing-sensitive
         public async Task TestCanExtendLock()
         {
-            this._provider.Strategy.SetOptions(o => o.Expiry(TimeSpan.FromSeconds(0.3)).BusyWaitSleepTime(TimeSpan.FromMilliseconds(1), TimeSpan.FromMilliseconds(5)));
+            this._provider.Strategy.SetOptions(o => o.Expiry(TimeSpan.FromSeconds(1)).BusyWaitSleepTime(TimeSpan.FromMilliseconds(1), TimeSpan.FromMilliseconds(5)));
             var @lock = this._provider.CreateLock("lock");
 
             await using var handle = await @lock.AcquireAsync();
 
             var secondHandleTask = @lock.AcquireAsync().AsTask();
             _ = secondHandleTask.ContinueWith(t => t.Result.Dispose()); // ensure cleanup
-            Assert.IsFalse(await secondHandleTask.WaitAsync(TimeSpan.FromSeconds(.5)));
+            Assert.IsFalse(await secondHandleTask.WaitAsync(TimeSpan.FromSeconds(1.5)));
 
             await handle.DisposeAsync();
 

@@ -26,8 +26,8 @@ namespace Medallion.Threading.Tests.Redis
         public void TestValidatesConstructorParameters()
         {
             var database = new Mock<IDatabase>(MockBehavior.Strict).Object;
-            Assert.Throws<ArgumentNullException>(() => new RedisDistributedReaderWriterLock(default, database));
-            Assert.Throws<ArgumentNullException>(() => new RedisDistributedReaderWriterLock(default, new[] { database }));
+            Assert.Throws<ArgumentNullException>(() => new RedisDistributedReaderWriterLock(default!, database));
+            Assert.Throws<ArgumentNullException>(() => new RedisDistributedReaderWriterLock(default!, new[] { database }));
             Assert.Throws<ArgumentNullException>(() => new RedisDistributedReaderWriterLock("key", default(IDatabase)!));
             Assert.Throws<ArgumentNullException>(() => new RedisDistributedReaderWriterLock("key", default(IEnumerable<IDatabase>)!));
             Assert.Throws<ArgumentNullException>(() => new RedisDistributedReaderWriterLock("key", new[] { database, null! }));

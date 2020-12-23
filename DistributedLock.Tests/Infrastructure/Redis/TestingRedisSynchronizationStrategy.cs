@@ -33,7 +33,6 @@ namespace Medallion.Threading.Tests.Redis
                 options.Expiry(TimeSpan.FromSeconds(.2))
                     // the reader writer lock requires that the busy wait sleep time is shorter
                     // than the expiry, so adjust for that
-                    // todo should this be more automatic?
                     .BusyWaitSleepTime(TimeSpan.FromSeconds(.01), TimeSpan.FromSeconds(.1));    
             }
 
