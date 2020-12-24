@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading.Internal
 {
+    // TODO rename this (SyncViaAsync?) since it really isn't the sync over async antipattern
     /// <summary>
     /// Helps re-use code across sync and async pathways, leveraging the fact that async code will run synchronously
     /// unless it actually encounters an async operation. Downstream code should use the <see cref="IsSynchronous"/>

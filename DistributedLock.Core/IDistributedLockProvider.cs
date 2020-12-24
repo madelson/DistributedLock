@@ -15,6 +15,7 @@
         /// </summary>
         IDistributedLock CreateLock(string name, bool exactName = false);
 
+        // TODO probably get rid of all GetSafeName APIs; they're not interesting if you can get the lock name from the lock and exactName is off by default
         /// <summary>
         /// Given an arbitrary <paramref name="name"/>, determines whether <paramref name="name"/> can be safely
         /// used as-is by the underlying provider (in other words, if it is safe to call <see cref="CreateLock(string, bool)"/>

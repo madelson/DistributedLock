@@ -3,7 +3,6 @@ using Medallion.Threading.Internal;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -74,7 +73,7 @@ namespace Medallion.Threading.Tests
                     Assert.IsNull(nestedHandle, this.GetType().Name);
                 }
 
-                await using var nestedHandle2 = lock2.TryAcquireAsync().Result;
+                await using var nestedHandle2 = lock2.TryAcquireAsync().AsTask().Result;
                 Assert.IsNotNull(nestedHandle2, this.GetType().Name);
             }
 
@@ -178,7 +177,10 @@ namespace Medallion.Threading.Tests
                     await using (await @lock.AcquireAsync())
                     {
                         // increment going in
-                        Interlocked.Increment(ref counter);
+                        if (Interlocked.Increment(ref counter) == 2)
+                        {
+                            Assert.Fail("Concurrent lock acquisitions");
+                        }
 
                         // hang out for a bit to ensure concurrency
                         await Task.Delay(TimeSpan.FromMilliseconds(10));

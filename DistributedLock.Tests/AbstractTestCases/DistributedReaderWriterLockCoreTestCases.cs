@@ -14,12 +14,12 @@ namespace Medallion.Threading.Tests
         [TearDown] public void TearDown() => this._lockProvider.Dispose();
 
         [Test]
-        public void TestMultipleReadersSingleWriter()
+        public async Task TestMultipleReadersSingleWriter()
         {
             IDistributedReaderWriterLock Lock() =>
                 this._lockProvider.CreateReaderWriterLock(nameof(TestMultipleReadersSingleWriter));
 
-            using var readHandle1 = Lock().TryAcquireReadLockAsync().AsTask().Result;
+            using var readHandle1 = await Lock().TryAcquireReadLockAsync();
             Assert.IsNotNull(readHandle1, this.GetType().ToString());
             using var readHandle2 = Lock().TryAcquireReadLock();
             Assert.IsNotNull(readHandle2, this.GetType().ToString());
@@ -44,6 +44,27 @@ namespace Medallion.Threading.Tests
 
             using var writeHandle4 = Lock().TryAcquireWriteLock();
             Assert.IsNotNull(writeHandle4);
+        }
+
+        [Test]
+        public async Task TestWriterTrumpsReader()
+        {
+            IDistributedReaderWriterLock Lock() =>
+                this._lockProvider.CreateReaderWriterLock(nameof(this.TestWriterTrumpsReader));
+
+            await using var readerHandle = await Lock().AcquireReadLockAsync();
+
+            var writerHandleTask = Lock().AcquireWriteLockAsync().AsTask();
+            Assert.IsFalse(await writerHandleTask.WaitAsync(TimeSpan.FromSeconds(0.2)));
+
+            // trying to take a read lock here fails because there is a writer waiting
+            await using var readerHandle2 = await Lock().TryAcquireReadLockAsync();
+            Assert.IsNull(readerHandle2);
+
+            await readerHandle.DisposeAsync();
+
+            Assert.IsTrue(await writerHandleTask.WaitAsync(TimeSpan.FromSeconds(5)));
+            await writerHandleTask.Result.DisposeAsync();
         }
 
         [Test]

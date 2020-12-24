@@ -23,7 +23,7 @@ namespace Medallion.Threading.Azure
         private static readonly string CreatedMetadataKey = $"__DistributedLock";
 
         private readonly BlobClientWrapper _blobClient;
-        private readonly (TimeoutValue duration, TimeoutValue renewalCadence, TimeSpan minBusyWaitSleepTime, TimeSpan maxBusyWaitSleepTime) _options;
+        private readonly (TimeoutValue duration, TimeoutValue renewalCadence, TimeoutValue minBusyWaitSleepTime, TimeoutValue maxBusyWaitSleepTime) _options;
 
         /// <summary>
         /// Constructs a lock that will lease the provided <paramref name="blobClient"/>
@@ -159,47 +159,39 @@ namespace Medallion.Threading.Azure
             return new AzureBlobLeaseDistributedLockHandle(internalHandle);
         }
 
-        internal sealed class InternalHandle : IDistributedLockHandle
+        internal sealed class InternalHandle : IDistributedLockHandle, LeaseMonitor.ILeaseHandle
         {
-            private readonly CancellationTokenSource _renewalCancellationSource = new CancellationTokenSource();
             private readonly BlobLeaseClientWrapper _leaseClient;
             private readonly bool _ownsBlob;
             private readonly AzureBlobLeaseDistributedLock _lock;
-            private readonly Task _renewalTask;
+            private readonly LeaseMonitor _leaseMonitor;
             
             public InternalHandle(BlobLeaseClientWrapper leaseClient, bool ownsBlob, AzureBlobLeaseDistributedLock @lock)
             {
                 this._leaseClient = leaseClient;
                 this._ownsBlob = ownsBlob;
                 this._lock = @lock;
-                var handleLostSource = new CancellationTokenSource();
-                this.HandleLostToken = handleLostSource.Token;
-                this._renewalTask = StartRenewalOrHandleCheckTask(new WeakReference<InternalHandle>(this), handleLostSource, this._renewalCancellationSource.Token);
-
-                // static function to make sure we don't capture this
-                static Task StartRenewalOrHandleCheckTask(WeakReference<InternalHandle> weakThis, CancellationTokenSource handleLostSource, CancellationToken cancellationToken) =>
-                    Task.Run(() => RenewalOrHandleCheckLoop(weakThis, handleLostSource, cancellationToken));
+                this._leaseMonitor = new LeaseMonitor(this);
             }
 
-            public CancellationToken HandleLostToken { get; }
+            public CancellationToken HandleLostToken => this._leaseMonitor.HandleLostToken;
 
             private bool RenewalEnabled => !this._lock._options.renewalCadence.IsInfinite;
 
             public string LeaseId => this._leaseClient.LeaseId;
 
+            TimeoutValue LeaseMonitor.ILeaseHandle.LeaseDuration => this._lock._options.duration;
+
+            TimeoutValue LeaseMonitor.ILeaseHandle.MonitoringCadence => this.RenewalEnabled ? this._lock._options.renewalCadence : this._lock._options.duration;
+
             public void Dispose() => SyncOverAsync.Run(@this => @this.DisposeAsync(), this);
 
             public async ValueTask DisposeAsync()
             {
-                if (this._renewalCancellationSource.IsCancellationRequested)
-                {
-                    return; // already disposed
-                }
+                // note that we're not trying to be idempotent here since we'll be wrapped
+                // by AzureBlobLeaseDistributedLockHandle which provides idempotence
 
-                this._renewalCancellationSource.Cancel();
-                if (SyncOverAsync.IsSynchronous) { this._renewalTask.GetAwaiter().GetResult(); }
-                else { await this._renewalTask.ConfigureAwait(false); }
-                this._renewalCancellationSource.Dispose();
+                await this._leaseMonitor.DisposeAsync().ConfigureAwait(false);
 
                 // if we own the blob, release by just deleting it
                 if (this._ownsBlob)
@@ -212,84 +204,20 @@ namespace Medallion.Threading.Azure
                 }
             }
 
-            private static async Task RenewalOrHandleCheckLoop(
-                WeakReference<InternalHandle> weakThis,
-                CancellationTokenSource handleLostSource,
-                CancellationToken cancellationToken)
+            async Task<LeaseMonitor.LeaseState> LeaseMonitor.ILeaseHandle.RenewOrValidateLeaseAsync(CancellationToken cancellationToken)
             {
-                if (!TryGetCadence(weakThis, out var cadence)) 
-                {
-                    handleLostSource.Dispose();
-                    return;
-                }
-
-                while (true)
-                {
-                    // avoid throwing since this will be canceled very commonly and since this task is awaited on dispose
-                    await Task.Delay(cadence.InMilliseconds, cancellationToken).TryAwait();
-                    if (cancellationToken.IsCancellationRequested)
-                    {
-                        handleLostSource.Dispose();
-                        return;
-                    }
-
-                    var renewOrCheckStatus = await TryRenewOrCheckHandleAsync(weakThis, cancellationToken).ConfigureAwait(false);
-                    if (renewOrCheckStatus != RenewOrCheckStatus.Continue)
-                    {
-                        if (renewOrCheckStatus == RenewOrCheckStatus.HandleLost)
-                        {
-                            // offload cancel to a background thread to avoid hangs or errors
-                            var ignored = Task.Run(() =>
-                            {
-                                try { handleLostSource.Cancel(); }
-                                finally { handleLostSource.Dispose(); }
-                            });
-                        }
-                        else
-                        {
-                            handleLostSource.Dispose();
-                        }
-                        return;
-                    }
-                }
-
-                // separate function to avoid taking a strong reference
-                static bool TryGetCadence(WeakReference<InternalHandle> weakThis, out TimeoutValue renewalCadence)
-                {
-                    if (weakThis.TryGetTarget(out var @this))
-                    {
-                        renewalCadence = @this.RenewalEnabled ? @this._lock._options.renewalCadence : @this._lock._options.duration;
-                        return true;
-                    }
-
-                    renewalCadence = default;
-                    return false;
-                }
-            }
-
-            private static async ValueTask<RenewOrCheckStatus> TryRenewOrCheckHandleAsync(
-                WeakReference<InternalHandle> weakThis,
-                CancellationToken cancellationToken)
-            {
-                if (!weakThis.TryGetTarget(out var @this)) { return RenewOrCheckStatus.HandleGarbageCollected; }
-
-                var task = @this.RenewalEnabled
-                    ? @this._leaseClient.RenewAsync(cancellationToken).AsTask()
+                var task = this.RenewalEnabled
+                    ? this._leaseClient.RenewAsync(cancellationToken).AsTask()
                     // if we're not renewing, then just touch the blob using the lease to see if someone else has renewed it
-                    : @this._lock._blobClient.GetMetadataAsync(@this._leaseClient.LeaseId, cancellationToken).AsTask();
+                    : this._lock._blobClient.GetMetadataAsync(this._leaseClient.LeaseId, cancellationToken).AsTask();
 
                 await task.TryAwait();
-                return task.Status == TaskStatus.RanToCompletion ? RenewOrCheckStatus.Continue
-                    : cancellationToken.IsCancellationRequested ? RenewOrCheckStatus.Canceled
-                    : RenewOrCheckStatus.HandleLost;
-            }
-
-            private enum RenewOrCheckStatus
-            {
-                Continue,
-                Canceled,
-                HandleLost,
-                HandleGarbageCollected,
+                cancellationToken.ThrowIfCancellationRequested(); // if the cancellation caused failure, don't confuse that with losing the handle
+                return task.Status == TaskStatus.RanToCompletion
+                    ? this.RenewalEnabled
+                        ? LeaseMonitor.LeaseState.Renewed
+                        : LeaseMonitor.LeaseState.Held
+                    : LeaseMonitor.LeaseState.Lost;
             }
         }
     }

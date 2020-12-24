@@ -174,9 +174,9 @@ namespace Medallion.Threading.SqlServer
         {
             command.AddParameter(SemaphoreNameParameter, semaphoreName);
             command.AddParameter(MaxCountParameter, this._maxCount);
-            if (timeout.HasValue)
+            if (timeout.TryGetValue(out var timeoutValue))
             {
-                command.AddParameter(TimeoutMillisParameter, timeout.Value.InMilliseconds);
+                command.AddParameter(TimeoutMillisParameter, timeoutValue.InMilliseconds);
             }
 
             command.AddParameter(ResultCodeParameter, type: DbType.Int32, direction: ParameterDirection.Output);
@@ -367,8 +367,8 @@ namespace Medallion.Threading.SqlServer
                 {(
                     // if this is the end of the query, we have to set an exit code. If we are going to retry we indicate the special code that will trigger that and otherwise we indicate
                     // timeout. If this is not the end of the query, we just release the preamble lock and keep going
-                    willRetryInSeparateQueryAfterPreamble.HasValue
-                        ? $@"SET @{ResultCodeParameter} = {(willRetryInSeparateQueryAfterPreamble.Value ? FinishedPreambleWithoutAcquiringCode : SqlApplicationLock.TimeoutExitCode)}"
+                    willRetryInSeparateQueryAfterPreamble.TryGetValue(out var willRetryInSeparateQueryAfterPreambleValue)
+                        ? $@"SET @{ResultCodeParameter} = {(willRetryInSeparateQueryAfterPreambleValue ? FinishedPreambleWithoutAcquiringCode : SqlApplicationLock.TimeoutExitCode)}"
                         : $"EXEC sys.sp_releaseapplock @{PreambleLockNameVariable}, @{LockScopeVariable}"
                 )}";
         }

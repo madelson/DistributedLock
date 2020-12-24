@@ -7,6 +7,12 @@ using Medallion.Threading.Azure;
 using Azure.Storage.Blobs;
 using Medallion.Threading.FileSystem;
 using System.IO;
+using Medallion.Threading.Redis;
+using StackExchange.Redis;
+using System.Linq;
+using Medallion.Threading;
+using System.Drawing.Text;
+using System.Collections.Generic;
 #if NET471
 using System.Data.SqlClient;
 #elif NETCOREAPP3_1
@@ -61,6 +67,40 @@ namespace DistributedLockTaker
                 case nameof(FileDistributedLock):
                     handle = new FileDistributedLock(new FileInfo(name)).Acquire();
                     break;
+                case nameof(RedisDistributedLock) + "1":
+                    handle = AcquireRedisLock(name, serverCount: 1);
+                    break;
+                case nameof(RedisDistributedLock) + "3":
+                    handle = AcquireRedisLock(name, serverCount: 3);
+                    break;
+                case nameof(RedisDistributedLock) + "2x1":
+                    handle = AcquireRedisLock(name, serverCount: 2); // we know the last will fail; don't bother (we also don't know its port)
+                    break;
+                case "Write" + nameof(RedisDistributedReaderWriterLock) + "1":
+                    handle = AcquireRedisWriteLock(name, serverCount: 1);
+                    break;
+                case "Write" + nameof(RedisDistributedReaderWriterLock) + "3":
+                    handle = AcquireRedisWriteLock(name, serverCount: 3);
+                    break;
+                case "Write" + nameof(RedisDistributedReaderWriterLock) + "2x1":
+                    handle = AcquireRedisWriteLock(name, serverCount: 2); // we know the last will fail; don't bother (we also don't know its port)
+                    break;
+                case string _ when type.StartsWith(nameof(RedisDistributedSemaphore)):
+                    {
+                        var maxCount = type.EndsWith("1AsMutex") ? 1
+                            : type.EndsWith("5AsMutex") ? 5
+                            : throw new ArgumentException(type);
+                        var serverCount = int.Parse(type.Substring(nameof(RedisDistributedSemaphore).Length, 1));
+                        handle = new RedisDistributedSemaphore(
+                            name, 
+                            maxCount, 
+                            GetRedisDatabases(serverCount),
+                            // in order to see abandonment work in a reasonable timeframe, use very short expiry
+                            options => options.Expiry(TimeSpan.FromSeconds(1))
+                                .BusyWaitSleepTime(TimeSpan.FromSeconds(.1), TimeSpan.FromSeconds(.3))
+                        ).Acquire();
+                        break;
+                    }
                 default:
                     Console.Error.WriteLine($"type: {type}");
                     return 123;
@@ -76,5 +116,18 @@ namespace DistributedLockTaker
 
             return 0;
         }
+
+        private static IDistributedLockHandle AcquireRedisLock(string name, int serverCount) => 
+            new RedisDistributedLock(name, GetRedisDatabases(serverCount), RedisOptions).Acquire();
+
+        private static IDistributedLockHandle AcquireRedisWriteLock(string name, int serverCount) =>
+            new RedisDistributedReaderWriterLock(name, GetRedisDatabases(serverCount), RedisOptions).AcquireWriteLock();
+
+        private static IEnumerable<IDatabase> GetRedisDatabases(int serverCount) => RedisPorts.DefaultPorts.Take(serverCount)
+            .Select(port => ConnectionMultiplexer.Connect($"localhost:{port}").GetDatabase());
+
+        private static void RedisOptions(RedisDistributedLockOptionsBuilder options) => 
+            options.Expiry(TimeSpan.FromSeconds(.5)) // short expiry for abandonment testing
+                .BusyWaitSleepTime(TimeSpan.FromSeconds(.1), TimeSpan.FromSeconds(.3)); 
     }
 }

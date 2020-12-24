@@ -1,4 +1,5 @@
 ﻿using Medallion.Threading.Azure;
+using Medallion.Threading.Internal;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
@@ -53,6 +54,13 @@ namespace Medallion.Threading.Tests.Azure
 
             Assert.DoesNotThrow(() => builder.BusyWaitSleepTime(TimeSpan.Zero, TimeSpan.Zero));
             Assert.DoesNotThrow(() => builder.BusyWaitSleepTime(TimeSpan.FromMinutes(3), TimeSpan.FromMinutes(4)));
+        }
+
+        [Test]
+        public void TestDisablesAutoRenewalIfDurationIsInfinite()
+        {
+            var options = AzureBlobLeaseOptionsBuilder.GetOptions(b => b.Duration(Timeout.InfiniteTimeSpan));
+            Assert.IsTrue(options.renewalCadence.IsInfinite);
         }
     }
 }

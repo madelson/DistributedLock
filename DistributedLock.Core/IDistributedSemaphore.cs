@@ -12,6 +12,8 @@ namespace Medallion.Threading
     /// </summary>
     public interface IDistributedSemaphore
     {
+        // TODO maxcount?
+
         /// <summary>
         /// A name that uniquely identifies the semaphore
         /// </summary>

@@ -16,7 +16,7 @@ namespace Medallion.Threading.FileSystem
         // These are not configurable currently because in the future we may want to change the implementation of FileDistributedLock
         // to leverage native methods which may allow for actual blocking. The values here reflect the idea that we expect file locks
         // to be used in cases where contention is rare
-        private static readonly TimeSpan MinBusyWaitSleepTime = TimeSpan.FromMilliseconds(50),
+        private static readonly TimeoutValue MinBusyWaitSleepTime = TimeSpan.FromMilliseconds(50),
             MaxBusyWaitSleepTime = TimeSpan.FromSeconds(1);
 
         private string? _cachedDirectory;

@@ -17,6 +17,6 @@ namespace Medallion.Threading.Tests
         /// test and framework name, thus avoiding potential collisions between test cases
         /// </summary>
         public static string GetUniqueSafeName(this ITestingNameProvider provider, string baseName = "") =>
-            provider.GetSafeName($"{baseName}_{TestContext.CurrentContext.Test.FullName}_{TargetFramework.Current}");
+            provider.GetSafeName($"{baseName}_{TestHelper.UniqueName}");
     }
 }

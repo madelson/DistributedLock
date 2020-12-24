@@ -91,7 +91,7 @@ namespace Medallion.Threading.Azure
             return this;
         }
 
-        internal static (TimeoutValue duration, TimeoutValue renewalCadence, TimeSpan minBusyWaitSleepTime, TimeSpan maxBusyWaitSleepTime) GetOptions(Action<AzureBlobLeaseOptionsBuilder>? optionsBuilder)
+        internal static (TimeoutValue duration, TimeoutValue renewalCadence, TimeoutValue minBusyWaitSleepTime, TimeoutValue maxBusyWaitSleepTime) GetOptions(Action<AzureBlobLeaseOptionsBuilder>? optionsBuilder)
         {
             AzureBlobLeaseOptionsBuilder? options;
             if (optionsBuilder != null)
@@ -120,9 +120,9 @@ namespace Medallion.Threading.Azure
             var durationToUse = options?._duration ?? DefaultLeaseDuration;
             return (
                 duration: durationToUse,
-                renewalCadence: options?._renewalCadence ?? TimeSpan.FromMilliseconds(durationToUse.InMilliseconds / 3.0),
-                minBusyWaitSleepTime: options?._minBusyWaitSleepTime?.TimeSpan ?? TimeSpan.FromMilliseconds(250),
-                maxBusyWaitSleepTime: options?._maxBusyWaitSleepTime?.TimeSpan ?? TimeSpan.FromSeconds(1)
+                renewalCadence: options?._renewalCadence ?? (durationToUse.IsInfinite ? Timeout.InfiniteTimeSpan : TimeSpan.FromMilliseconds(durationToUse.InMilliseconds / 3.0)),
+                minBusyWaitSleepTime: options?._minBusyWaitSleepTime ?? TimeSpan.FromMilliseconds(250),
+                maxBusyWaitSleepTime: options?._maxBusyWaitSleepTime ?? TimeSpan.FromSeconds(1)
             );
         }
     }

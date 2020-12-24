@@ -36,6 +36,27 @@ namespace Medallion.Threading.Internal
         public static ValueTask AsValueTask(this Task task) => new ValueTask(task);
         public static ValueTask<T> AsValueTask<T>(this T value) => new ValueTask<T>(value);
 
+        public static Task<TResult> SafeCreateTask<TState, TResult>(Func<TState, Task<TResult>> taskFactory, TState state) =>
+            InternalSafeCreateTask<TState, Task<TResult>, TResult>(taskFactory, state);
+
+        public static Task SafeCreateTask<TState>(Func<TState, Task> taskFactory, TState state) =>
+            InternalSafeCreateTask<TState, Task, bool>(taskFactory, state);
+
+        private static TTask InternalSafeCreateTask<TState, TTask, TResult>(Func<TState, TTask> taskFactory, TState state)
+            where TTask : Task
+        {
+            try { return taskFactory(state); }
+            catch (OperationCanceledException)
+            {
+                // don't use Task.FromCanceled here because oce.CancellationToken is not guaranteed to 
+                // have IsCancellationRequested which FromCanceled requires
+                var canceledTaskBuilder = new TaskCompletionSource<TResult>();
+                canceledTaskBuilder.SetCanceled();
+                return (TTask)canceledTaskBuilder.Task.As<object>();
+            }
+            catch (Exception ex) { return (TTask)Task.FromException<TResult>(ex).As<object>(); }
+        }
+
         // todo rethink message here; should this return "handle" or something more generic since it might be an internal type?
         public static ObjectDisposedException ObjectDisposed<T>(this T _) where T : IAsyncDisposable =>
             throw new ObjectDisposedException(typeof(T).ToString());
@@ -73,6 +94,13 @@ namespace Medallion.Threading.Internal
 
             public void OnCompleted(Action continuation) => this._taskAwaiter.OnCompleted(continuation);
             public void UnsafeOnCompleted(Action continuation) => this._taskAwaiter.UnsafeOnCompleted(continuation);
+        }
+
+        public static bool TryGetValue<T>(this T? nullable, out T value)
+            where T : struct
+        {
+            value = nullable.GetValueOrDefault();
+            return nullable.HasValue;
         }
     }
 

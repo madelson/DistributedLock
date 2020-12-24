@@ -8,7 +8,7 @@ using System.Runtime.CompilerServices;
 using System.IO;
 using System.Text.RegularExpressions;
 
-namespace Medallion.Threading.Tests.Tests
+namespace Medallion.Threading.Tests
 {
     [Category("CI")]
     public class ApiTest
@@ -67,12 +67,15 @@ namespace Medallion.Threading.Tests.Tests
         }
 
         private static IEnumerable<Type> GetPublicTypes(Assembly assembly) => assembly.GetTypes()
-                .Where(t => t.IsPublic || t.IsNestedPublic)
+                .Where(IsInPublicApi)
 #if DEBUG
                 .Where(t => !(t.Namespace!.Contains(".Internal") && assembly.GetName().Name == "DistributedLock.Core"))
 #endif
             ;
 
         private static string CurrentFilePath([CallerFilePath] string filePath = "") => filePath;
+
+        private static bool IsInPublicApi(Type type) => type.IsPublic
+            || ((type.IsNestedPublic || type.IsNestedFamily || type.IsNestedFamORAssem) && IsInPublicApi(type.DeclaringType!));
     }
 }
