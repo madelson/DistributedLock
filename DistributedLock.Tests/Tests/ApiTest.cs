@@ -66,6 +66,19 @@ namespace Medallion.Threading.Tests
             }
         }
 
+        [Test]
+        public void TestLibraryFilesDoNotWriteToConsole()
+        {
+            var projectDirectory = Path.GetDirectoryName(Path.GetDirectoryName(CurrentFilePath()));
+            var solutionDirectory = Path.GetDirectoryName(projectDirectory!);
+            var libraryCsFiles = Directory.GetFiles(solutionDirectory, "*.cs", SearchOption.AllDirectories)
+                .Where(f => new[] { ".Tests", "CodeGen", "DistributedLockTaker" }.All(s => f.IndexOf(s, StringComparison.OrdinalIgnoreCase) < 0));
+            Assert.IsEmpty(
+                libraryCsFiles.Where(f => File.ReadAllText(f).Contains("Console."))
+                    .Select(Path.GetFileName)
+            );
+        }
+
         private static IEnumerable<Type> GetPublicTypes(Assembly assembly) => assembly.GetTypes()
                 .Where(IsInPublicApi)
 #if DEBUG
