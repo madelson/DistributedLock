@@ -33,12 +33,18 @@ namespace Medallion.Threading.Redis
         public RedisDistributedLock(RedisKey key, IEnumerable<IDatabase> databases, Action<RedisDistributedLockOptionsBuilder>? options = null)
         {
             if (key == default(RedisKey)) { throw new ArgumentNullException(nameof(key)); }
-            this._databases = databases?.ToArray() ?? throw new ArgumentNullException(nameof(databases));
-            if (this._databases.Count == 0) { throw new ArgumentException("may not be empty", nameof(databases)); }
-            if (this._databases.Contains(null!)) { throw new ArgumentNullException(nameof(databases), "may not contain null"); }
+            this._databases = ValidateDatabases(databases);
 
             this.Key = key;
             this._options = RedisDistributedLockOptionsBuilder.GetOptions(options);
+        }
+
+        internal static IReadOnlyList<IDatabase> ValidateDatabases(IEnumerable<IDatabase> databases)
+        {
+            var databasesArray = databases?.ToArray() ?? throw new ArgumentNullException(nameof(databases));
+            if (databasesArray.Length == 0) { throw new ArgumentException("may not be empty", nameof(databases)); }
+            if (databasesArray.Contains(null!)) { throw new ArgumentNullException(nameof(databases), "may not contain null"); }
+            return databasesArray;
         }
 
         /// <summary>

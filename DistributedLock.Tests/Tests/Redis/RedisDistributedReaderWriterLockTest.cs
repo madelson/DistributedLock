@@ -57,14 +57,15 @@ namespace Medallion.Threading.Tests.Redis
         }
 
         [Test]
+        [NonParallelizable] // timing-sensitive
         public async Task TestReadLockAbandonment()
         {
             var @lock = new RedisDistributedReaderWriterLock(
                 TestHelper.UniqueName,
                 RedisServer.GetDefaultServer(0).Multiplexer.GetDatabase(),
-                o => o.Expiry(TimeSpan.FromSeconds(0.3))
+                o => o.Expiry(TimeSpan.FromSeconds(1))
                     .ExtensionCadence(TimeSpan.FromSeconds(0.1))
-                    .BusyWaitSleepTime(TimeSpan.FromMilliseconds(1), TimeSpan.FromMilliseconds(5))
+                    .BusyWaitSleepTime(TimeSpan.FromMilliseconds(10), TimeSpan.FromMilliseconds(50))
             );
 
             await AcquireReadLockAsync();

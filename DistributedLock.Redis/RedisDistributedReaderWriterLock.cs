@@ -33,9 +33,7 @@ namespace Medallion.Threading.Redis
         public RedisDistributedReaderWriterLock(string name, IEnumerable<IDatabase> databases, Action<RedisDistributedLockOptionsBuilder>? options = null)
         {
             if (name == null) { throw new ArgumentNullException(nameof(name)); }
-            this._databases = databases?.ToArray() ?? throw new ArgumentNullException(nameof(databases));
-            if (this._databases.Count == 0) { throw new ArgumentException("may not be empty", nameof(databases)); }
-            if (this._databases.Contains(null!)) { throw new ArgumentNullException(nameof(databases), "may not contain null"); }
+            this._databases = RedisDistributedLock.ValidateDatabases(databases);
 
             this.ReaderKey = name + ".readers";
             this.WriterKey = name + ".writer";

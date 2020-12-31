@@ -52,7 +52,7 @@ namespace Medallion.Threading.Postgres
         string IDistributedLock.Name => this.Key.ToString();
 
         /// <summary>
-        /// Equivalent to <see cref="IDistributedLockProvider.GetSafeLockName(string)"/>
+        /// TODO probably remove this API
         /// </summary>
         public static PostgresAdvisoryLockKey GetSafeName(string name) => new PostgresAdvisoryLockKey(name, allowHashing: true);
 

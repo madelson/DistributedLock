@@ -49,6 +49,31 @@ namespace Medallion.Threading.Tests
         }
 
         [TestCaseSource(nameof(DistributedLockAssemblies))]
+        public void TestProviderApisAreAvailable(AssemblyName assemblyName)
+        {
+            var providerTypesToProvidedTypes = typeof(IDistributedLockProvider).Assembly
+                .GetTypes()
+                .Where(t => t.IsInterface && t.IsPublic && t.Name.EndsWith("Provider"))
+                .ToDictionary(t => t, t => t.GetMethods().Single(m => m.Name.StartsWith("Create")).ReturnType);
+
+            var types = GetPublicTypes(Assembly.Load(assemblyName));
+
+            foreach (var kvp in providerTypesToProvidedTypes)
+            {
+                var providers = types.Where(t => !t.IsInterface && kvp.Key.IsAssignableFrom(t)).ToArray();
+                var provided = types.Where(t => !t.IsInterface && kvp.Value.IsAssignableFrom(t)).ToArray();
+                CollectionAssert.AreEquivalent(
+                    provided, 
+                    providers.Select(t => t.GetMethods().Single(m => m.Name.StartsWith("Create") && kvp.Value.IsAssignableFrom(m.ReturnType)).ReturnType));
+
+                foreach (var provider in providers)
+                {
+                    Assert.That(provider.Name, Does.EndWith("DistributedSynchronizationProvider"));
+                }
+            }
+        }
+
+        [TestCaseSource(nameof(DistributedLockAssemblies))]
         public void TestLibrariesUseConfigureAwaitFalse(AssemblyName assemblyName)
         {
             var projectDirectory = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(CurrentFilePath())!, "..", "..", assemblyName.Name!));

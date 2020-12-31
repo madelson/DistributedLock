@@ -39,7 +39,7 @@ namespace Medallion.Threading.WaitHandles
         public string Name { get; }
 
         /// <summary>
-        /// Equivalent to <see cref="IDistributedLockProvider.GetSafeLockName(string)"/>
+        /// TODO probably remove this API
         /// </summary>
         public static string GetSafeName(string name) => DistributedWaitHandleHelpers.GetSafeName(name);
 

@@ -35,9 +35,7 @@ namespace Medallion.Threading.Redis
         {
             if (key == default(RedisKey)) { throw new ArgumentNullException(nameof(key)); }
             if (maxCount < 1) { throw new ArgumentOutOfRangeException(nameof(maxCount), maxCount, "must be positive"); }
-            this._databases = databases?.ToArray() ?? throw new ArgumentNullException(nameof(databases));
-            if (this._databases.Count == 0) { throw new ArgumentException("may not be empty", nameof(databases)); }
-            if (this._databases.Contains(null!)) { throw new ArgumentNullException(nameof(databases), "may not contain null"); }
+            this._databases = RedisDistributedLock.ValidateDatabases(databases);
 
             this.Key = key;
             this._maxCount = maxCount;
