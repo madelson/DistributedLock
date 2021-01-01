@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Medallion.Threading.Tests.Tests.WaitHandles
+namespace Medallion.Threading.Tests.WaitHandles
 {
     [Category("CIWindows")]
     public class WaitHandleDistributedSemaphoreTest
