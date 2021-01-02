@@ -51,4 +51,10 @@
     </PackageReference>
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All"/>
   </ItemGroup>
+
+  <!-- Copy package to publish folder for release -->
+  <Target Name="CopyPackageToPublishDirectory" AfterTargets="Pack" Condition="'$(Configuration)' == 'Release'">
+    <Copy SourceFiles="$(OutputPath)\$(PackageId).$(PackageVersion).nupkg"
+          DestinationFiles="..\publish\$(PackageId).$(PackageVersion).nupkg" />
+  </Target>
 </Project>
