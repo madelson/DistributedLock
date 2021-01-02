@@ -42,16 +42,13 @@
 
   <ItemGroup>
     <PackageReference Include="Azure.Storage.Blobs" Version="12.4.1" />
-    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All"/>
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\DistributedLock.Core\DistributedLock.Core.csproj" />
   </ItemGroup>
 
-  <!-- Copy package to publish folder for release -->
-  <Target Name="CopyPackageToPublishDirectory" AfterTargets="Pack" Condition="'$(Configuration)' == 'Release'">
-    <Copy SourceFiles="$(OutputPath)\$(PackageId).$(PackageVersion).nupkg"
-          DestinationFiles="..\publish\$(PackageId).$(PackageVersion).nupkg" />
-  </Target>
+  <Import Project="..\CopyPackageToPublishDirectory.targets" />
+  <Import Project="..\FixDistributedLockCoreDependencyVersion.targets" />
 </Project>

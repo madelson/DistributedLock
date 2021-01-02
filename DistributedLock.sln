@@ -23,7 +23,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DistributedLock.Azure", "Di
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DistributedLock.FileSystem", "DistributedLock.FileSystem\DistributedLock.FileSystem.csproj", "{6B0DBD7E-3A43-4FED-82BA-9927360E1D92}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DistributedLock.Redis", "DistributedLock.Redis\DistributedLock.Redis.csproj", "{8ADAA171-8373-432E-8D2B-3DA73E35EB76}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DistributedLock.Redis", "DistributedLock.Redis\DistributedLock.Redis.csproj", "{8ADAA171-8373-432E-8D2B-3DA73E35EB76}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{D14FE348-E866-4784-8345-DD15FB697E4E}"
+	ProjectSection(SolutionItems) = preProject
+		CopyPackageToPublishDirectory.targets = CopyPackageToPublishDirectory.targets
+		FixDistributedLockCoreDependencyVersion.targets = FixDistributedLockCoreDependencyVersion.targets
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
