@@ -2,6 +2,7 @@
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -163,6 +164,36 @@ namespace Medallion.Threading.Tests.Postgres
             await Task.Delay(10);
 
             Assert.ThrowsAsync<NullReferenceException>(() => getPidCommand.PrepareAsync());
+        }
+
+        // See https://github.com/npgsql/npgsql/issues/3442. Until that's resolved, connection monitoring
+        // is broken in 5.x
+        [Test]
+        public async Task TestExecutingQueryOnKilledConnectionFiresStateChanged()
+        {
+            using var stateChangedEvent = new ManualResetEventSlim(initialState: false);
+
+            using var connection = new NpgsqlConnection(TestingPostgresDb.ConnectionString);
+            await connection.OpenAsync();
+            connection.StateChange += (o, e) => stateChangedEvent.Set();
+
+            using var getPidCommand = connection.CreateCommand();
+            getPidCommand.CommandText = "SELECT pg_backend_pid()";
+            var pid = (int)(await getPidCommand.ExecuteScalarAsync());
+
+            Assert.AreEqual(ConnectionState.Open, connection.State);
+
+            // kill the connection from the back end
+            using var killingConnection = new NpgsqlConnection(TestingPostgresDb.ConnectionString);
+            await killingConnection.OpenAsync();
+            using var killCommand = killingConnection.CreateCommand();
+            killCommand.CommandText = $"SELECT pg_terminate_backend({pid})";
+            await killCommand.ExecuteNonQueryAsync();
+
+            Assert.ThrowsAsync<PostgresException>(() => getPidCommand.ExecuteScalarAsync());
+            Assert.AreNotEqual(ConnectionState.Open, connection.State);
+
+            Assert.IsTrue(stateChangedEvent.Wait(TimeSpan.FromSeconds(5))); // assertion passes in 4.1.4, fails in 5.0.1.1
         }
     }
 }
