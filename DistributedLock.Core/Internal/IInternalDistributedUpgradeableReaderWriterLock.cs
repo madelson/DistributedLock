@@ -10,7 +10,7 @@ namespace Medallion.Threading.Internal
     internal
 #endif
     interface IInternalDistributedUpgradeableReaderWriterLock<THandle, TUpgradeableHandle> : IDistributedUpgradeableReaderWriterLock, IInternalDistributedReaderWriterLock<THandle>
-        where THandle : class, IDistributedLockHandle
+        where THandle : class, IDistributedSynchronizationHandle
         where TUpgradeableHandle : class, IDistributedLockUpgradeableHandle
     {
         new TUpgradeableHandle? TryAcquireUpgradeableReadLock(TimeSpan timeout = default, CancellationToken cancellationToken = default);

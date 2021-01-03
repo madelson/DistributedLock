@@ -8,9 +8,9 @@ using System.Threading.Tasks;
 namespace Medallion.Threading.WaitHandles
 {
     /// <summary>
-    /// Implements <see cref="IDistributedLockHandle"/>
+    /// Implements <see cref="IDistributedSynchronizationHandle"/>
     /// </summary>
-    public sealed class WaitHandleDistributedSemaphoreHandle : IDistributedLockHandle
+    public sealed class WaitHandleDistributedSemaphoreHandle : IDistributedSynchronizationHandle
     {
         private readonly SemaphoreReleaser _semaphoreReleaser;
         private IDisposable? _finalizerRegistration;
@@ -24,7 +24,7 @@ namespace Medallion.Threading.WaitHandles
         }
 
         /// <summary>
-        /// Implements <see cref="IDistributedLockHandle.HandleLostToken"/>
+        /// Implements <see cref="IDistributedSynchronizationHandle.HandleLostToken"/>
         /// </summary>
         public CancellationToken HandleLostToken =>
             Volatile.Read(ref this._finalizerRegistration) != null ? CancellationToken.None : throw this.ObjectDisposed();

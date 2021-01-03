@@ -5,19 +5,19 @@ using System.Threading.Tasks;
 namespace Medallion.Threading.SqlServer
 {
     /// <summary>
-    /// Implements <see cref="IDistributedLockHandle"/>
+    /// Implements <see cref="IDistributedSynchronizationHandle"/>
     /// </summary>
-    public sealed class SqlDistributedSemaphoreHandle : IDistributedLockHandle
+    public sealed class SqlDistributedSemaphoreHandle : IDistributedSynchronizationHandle
     {
-        private IDistributedLockHandle? _innerHandle;
+        private IDistributedSynchronizationHandle? _innerHandle;
 
-        internal SqlDistributedSemaphoreHandle(IDistributedLockHandle innerHandle)
+        internal SqlDistributedSemaphoreHandle(IDistributedSynchronizationHandle innerHandle)
         {
             this._innerHandle = innerHandle;
         }
 
         /// <summary>
-        /// Implements <see cref="IDistributedLockHandle.HandleLostToken"/>
+        /// Implements <see cref="IDistributedSynchronizationHandle.HandleLostToken"/>
         /// </summary>
         public CancellationToken HandleLostToken => this._innerHandle?.HandleLostToken ?? throw this.ObjectDisposed();
 

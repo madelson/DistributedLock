@@ -7,15 +7,15 @@ using System.Threading.Tasks;
 namespace Medallion.Threading.SqlServer
 {
     /// <summary>
-    /// Implements <see cref="IDistributedLockHandle"/>
+    /// Implements <see cref="IDistributedSynchronizationHandle"/>
     /// </summary>
-    public abstract class SqlDistributedReaderWriterLockHandle : IDistributedLockHandle
+    public abstract class SqlDistributedReaderWriterLockHandle : IDistributedSynchronizationHandle
     {
         // forbid external inheritors
         internal SqlDistributedReaderWriterLockHandle() { }
 
         /// <summary>
-        /// Implements <see cref="IDistributedLockHandle.HandleLostToken"/>
+        /// Implements <see cref="IDistributedSynchronizationHandle.HandleLostToken"/>
         /// </summary>
         public abstract CancellationToken HandleLostToken { get; }
 
@@ -33,9 +33,9 @@ namespace Medallion.Threading.SqlServer
 
     internal sealed class SqlDistributedReaderWriterLockNonUpgradeableHandle : SqlDistributedReaderWriterLockHandle
     {
-        private IDistributedLockHandle? _innerHandle;
+        private IDistributedSynchronizationHandle? _innerHandle;
 
-        internal SqlDistributedReaderWriterLockNonUpgradeableHandle(IDistributedLockHandle? handle)
+        internal SqlDistributedReaderWriterLockNonUpgradeableHandle(IDistributedSynchronizationHandle? handle)
         {
             this._innerHandle = handle;
         }
@@ -50,15 +50,15 @@ namespace Medallion.Threading.SqlServer
     /// </summary>
     public sealed class SqlDistributedReaderWriterLockUpgradeableHandle : SqlDistributedReaderWriterLockHandle, IInternalDistributedLockUpgradeableHandle
     {
-        private RefBox<(IDistributedLockHandle innerHandle, IDbDistributedLock @lock, IDistributedLockHandle? upgradedHandle)>? _box;
+        private RefBox<(IDistributedSynchronizationHandle innerHandle, IDbDistributedLock @lock, IDistributedSynchronizationHandle? upgradedHandle)>? _box;
 
-        internal SqlDistributedReaderWriterLockUpgradeableHandle(IDistributedLockHandle innerHandle, IDbDistributedLock @lock)
+        internal SqlDistributedReaderWriterLockUpgradeableHandle(IDistributedSynchronizationHandle innerHandle, IDbDistributedLock @lock)
         {
-            this._box = RefBox.Create((innerHandle, @lock, default(IDistributedLockHandle?)));
+            this._box = RefBox.Create((innerHandle, @lock, default(IDistributedSynchronizationHandle?)));
         }
 
         /// <summary>
-        /// Implements <see cref="IDistributedLockHandle.HandleLostToken"/>
+        /// Implements <see cref="IDistributedSynchronizationHandle.HandleLostToken"/>
         /// </summary>
         public override CancellationToken HandleLostToken => (this._box ?? throw this.ObjectDisposed()).Value.innerHandle.HandleLostToken;
 

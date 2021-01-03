@@ -9,19 +9,19 @@ namespace Medallion.Threading.Postgres
 {
     // todo this whole file could be auto-generated
     /// <summary>
-    /// Implements <see cref="IDistributedLockHandle"/>
+    /// Implements <see cref="IDistributedSynchronizationHandle"/>
     /// </summary>
-    public sealed class PostgresDistributedLockHandle : IDistributedLockHandle
+    public sealed class PostgresDistributedLockHandle : IDistributedSynchronizationHandle
     {
-        private IDistributedLockHandle? _innerHandle;
+        private IDistributedSynchronizationHandle? _innerHandle;
 
-        internal PostgresDistributedLockHandle(IDistributedLockHandle innerHandle)
+        internal PostgresDistributedLockHandle(IDistributedSynchronizationHandle innerHandle)
         {
             this._innerHandle = innerHandle;
         }
 
         /// <summary>
-        /// Implements <see cref="IDistributedLockHandle.HandleLostToken"/>
+        /// Implements <see cref="IDistributedSynchronizationHandle.HandleLostToken"/>
         /// </summary>
         public CancellationToken HandleLostToken => this._innerHandle?.HandleLostToken ?? throw this.ObjectDisposed();
 

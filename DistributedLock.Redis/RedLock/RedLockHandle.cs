@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading.Redis.RedLock
 {
-    internal sealed class RedLockHandle : IDistributedLockHandle, LeaseMonitor.ILeaseHandle
+    internal sealed class RedLockHandle : IDistributedSynchronizationHandle, LeaseMonitor.ILeaseHandle
     {
         private readonly IRedLockExtensibleSynchronizationPrimitive _primitive;
         private Dictionary<IDatabase, Task<bool>>? _tryAcquireTasks;
@@ -31,7 +31,7 @@ namespace Medallion.Threading.Redis.RedLock
         }
 
         /// <summary>
-        /// Implements <see cref="IDistributedLockHandle.HandleLostToken"/>
+        /// Implements <see cref="IDistributedSynchronizationHandle.HandleLostToken"/>
         /// </summary>
         public CancellationToken HandleLostToken => this._monitor.HandleLostToken;
 

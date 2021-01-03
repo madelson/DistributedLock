@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 namespace Medallion.Threading.WaitHandles
 {
     /// <summary>
-    /// Implements <see cref="IDistributedLockHandle"/>
+    /// Implements <see cref="IDistributedSynchronizationHandle"/>
     /// </summary>
-    public sealed class EventWaitHandleDistributedLockHandle : IDistributedLockHandle
+    public sealed class EventWaitHandleDistributedLockHandle : IDistributedSynchronizationHandle
     {
         private EventWaitHandle? _event;
 
@@ -17,7 +17,7 @@ namespace Medallion.Threading.WaitHandles
             this._event = @event;
         }
 
-        CancellationToken IDistributedLockHandle.HandleLostToken => 
+        CancellationToken IDistributedSynchronizationHandle.HandleLostToken => 
             Volatile.Read(ref this._event) != null ? CancellationToken.None : throw this.ObjectDisposed();
 
         /// <summary>

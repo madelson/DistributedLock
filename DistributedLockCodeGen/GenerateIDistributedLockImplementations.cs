@@ -41,7 +41,7 @@ namespace DistributedLockCodeGen
                 var @interface = $"IDistributed{name}";
                 foreach (var method in new[] { "TryAcquire", "Acquire", "TryAcquireAsync", "AcquireAsync" })
                 {
-                    AppendExplicitInterfaceMethod(explicitImplementations, @interface, method, "IDistributedLockHandle");
+                    AppendExplicitInterfaceMethod(explicitImplementations, @interface, method, "IDistributedSynchronizationHandle");
                 }
 
                 var @namespace = Regex.Match(lockCode, @"\nnamespace (?<namespace>\S+)").Groups["namespace"].Value;
@@ -132,7 +132,7 @@ namespace {@namespace}
                         explicitImplementations,
                         $"IDistributed{upgradeableText}ReaderWriterLock",
                         methodName, 
-                        $"IDistributedLock{upgradeableText}Handle"
+                        $"IDistributed{(methodLockType == LockType.Upgrade ? "LockUpgradeable" : "Synchronization")}Handle"
                     );
 
                     var simplifiedMethodName = methodLockType == LockType.Upgrade ? methodName : methodName.Replace("ReadLock", "").Replace("WriteLock", "");

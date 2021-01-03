@@ -8,19 +8,19 @@ using System.Threading.Tasks;
 namespace Medallion.Threading.Postgres
 {
     /// <summary>
-    /// Implements <see cref="IDistributedLockHandle"/>
+    /// Implements <see cref="IDistributedSynchronizationHandle"/>
     /// </summary>
-    public sealed class PostgresDistributedReaderWriterLockHandle : IDistributedLockHandle
+    public sealed class PostgresDistributedReaderWriterLockHandle : IDistributedSynchronizationHandle
     {
-        private IDistributedLockHandle? _innerHandle;
+        private IDistributedSynchronizationHandle? _innerHandle;
 
-        internal PostgresDistributedReaderWriterLockHandle(IDistributedLockHandle innerHandle)
+        internal PostgresDistributedReaderWriterLockHandle(IDistributedSynchronizationHandle innerHandle)
         {
             this._innerHandle = innerHandle;
         }
 
         /// <summary>
-        /// Implements <see cref="IDistributedLockHandle.HandleLostToken"/>
+        /// Implements <see cref="IDistributedSynchronizationHandle.HandleLostToken"/>
         /// </summary>
         public CancellationToken HandleLostToken => this._innerHandle?.HandleLostToken ?? throw this.ObjectDisposed();
 

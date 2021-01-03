@@ -56,24 +56,24 @@ namespace Medallion.Threading.Tests
 
             string IDistributedLock.Name => this._readerWriterLock.Name;
 
-            IDistributedLockHandle IDistributedLock.Acquire(TimeSpan? timeout, CancellationToken cancellationToken) =>
+            IDistributedSynchronizationHandle IDistributedLock.Acquire(TimeSpan? timeout, CancellationToken cancellationToken) =>
                this.ShouldUseUpgrade(out var upgradeable)
                     ? upgradeable.AcquireUpgradeableReadLock(timeout, cancellationToken)
                     : this._readerWriterLock.AcquireWriteLock(timeout, cancellationToken);
 
-            ValueTask<IDistributedLockHandle> IDistributedLock.AcquireAsync(TimeSpan? timeout, CancellationToken cancellationToken) =>
+            ValueTask<IDistributedSynchronizationHandle> IDistributedLock.AcquireAsync(TimeSpan? timeout, CancellationToken cancellationToken) =>
                 this.ShouldUseUpgrade(out var upgradeable)
-                    ? upgradeable.AcquireUpgradeableReadLockAsync(timeout, cancellationToken).Convert(To<IDistributedLockHandle>.ValueTask)
+                    ? upgradeable.AcquireUpgradeableReadLockAsync(timeout, cancellationToken).Convert(To<IDistributedSynchronizationHandle>.ValueTask)
                     : this._readerWriterLock.AcquireWriteLockAsync(timeout, cancellationToken);
 
-            IDistributedLockHandle? IDistributedLock.TryAcquire(TimeSpan timeout, CancellationToken cancellationToken) =>
+            IDistributedSynchronizationHandle? IDistributedLock.TryAcquire(TimeSpan timeout, CancellationToken cancellationToken) =>
                 this.ShouldUseUpgrade(out var upgradeable)
                     ? upgradeable.TryAcquireUpgradeableReadLock(timeout, cancellationToken)
                     : this._readerWriterLock.TryAcquireWriteLock(timeout, cancellationToken);
 
-            ValueTask<IDistributedLockHandle?> IDistributedLock.TryAcquireAsync(TimeSpan timeout, CancellationToken cancellationToken) =>
+            ValueTask<IDistributedSynchronizationHandle?> IDistributedLock.TryAcquireAsync(TimeSpan timeout, CancellationToken cancellationToken) =>
                 this.ShouldUseUpgrade(out var upgradeable)
-                    ? upgradeable.TryAcquireUpgradeableReadLockAsync(timeout, cancellationToken).Convert(To<IDistributedLockHandle?>.ValueTask)
+                    ? upgradeable.TryAcquireUpgradeableReadLockAsync(timeout, cancellationToken).Convert(To<IDistributedSynchronizationHandle?>.ValueTask)
                     : this._readerWriterLock.TryAcquireWriteLockAsync(timeout, cancellationToken);
 
             private bool ShouldUseUpgrade(out IDistributedUpgradeableReaderWriterLock upgradeable)

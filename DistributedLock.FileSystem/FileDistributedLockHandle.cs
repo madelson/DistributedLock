@@ -9,9 +9,9 @@ using System.Threading.Tasks;
 namespace Medallion.Threading.FileSystem
 {
     /// <summary>
-    /// Implements <see cref="IDistributedLockHandle"/>
+    /// Implements <see cref="IDistributedSynchronizationHandle"/>
     /// </summary>
-    public sealed class FileDistributedLockHandle : IDistributedLockHandle
+    public sealed class FileDistributedLockHandle : IDistributedSynchronizationHandle
     {
         private FileStream? _fileStream;
 
@@ -20,7 +20,7 @@ namespace Medallion.Threading.FileSystem
             this._fileStream = fileStream;
         }
 
-        CancellationToken IDistributedLockHandle.HandleLostToken => 
+        CancellationToken IDistributedSynchronizationHandle.HandleLostToken => 
             Volatile.Read(ref this._fileStream) != null ? CancellationToken.None : throw this.ObjectDisposed();
 
         /// <summary>

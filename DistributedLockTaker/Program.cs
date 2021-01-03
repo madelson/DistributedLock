@@ -117,10 +117,10 @@ namespace DistributedLockTaker
             return 0;
         }
 
-        private static IDistributedLockHandle AcquireRedisLock(string name, int serverCount) => 
+        private static IDistributedSynchronizationHandle AcquireRedisLock(string name, int serverCount) => 
             new RedisDistributedLock(name, GetRedisDatabases(serverCount), RedisOptions).Acquire();
 
-        private static IDistributedLockHandle AcquireRedisWriteLock(string name, int serverCount) =>
+        private static IDistributedSynchronizationHandle AcquireRedisWriteLock(string name, int serverCount) =>
             new RedisDistributedReaderWriterLock(name, GetRedisDatabases(serverCount), RedisOptions).AcquireWriteLock();
 
         private static IEnumerable<IDatabase> GetRedisDatabases(int serverCount) => RedisPorts.DefaultPorts.Take(serverCount)

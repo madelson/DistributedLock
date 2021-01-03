@@ -36,11 +36,11 @@ namespace Medallion.Threading.Internal.Data
             );
         }
 
-        public ValueTask<IDistributedLockHandle?> TryAcquireAsync<TLockCookie>(
+        public ValueTask<IDistributedSynchronizationHandle?> TryAcquireAsync<TLockCookie>(
             TimeoutValue timeout, 
             IDbSynchronizationStrategy<TLockCookie> strategy, 
             CancellationToken cancellationToken, 
-            IDistributedLockHandle? contextHandle)
+            IDistributedSynchronizationHandle? contextHandle)
             where TLockCookie : class
         {
             // cannot multiplex for updates, since we cannot predict whether or not there will be a request to elevate

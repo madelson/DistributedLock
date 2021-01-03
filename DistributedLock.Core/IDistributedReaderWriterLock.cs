@@ -26,8 +26,8 @@ namespace Medallion.Threading
         /// </summary>
         /// <param name="timeout">How long to wait before giving up on the acquisition attempt. Defaults to 0</param>
         /// <param name="cancellationToken">Specifies a token by which the wait can be canceled</param>
-        /// <returns>An <see cref="IDistributedLockHandle"/> which can be used to release the lock or null on failure</returns>
-        IDistributedLockHandle? TryAcquireReadLock(TimeSpan timeout = default, CancellationToken cancellationToken = default);
+        /// <returns>An <see cref="IDistributedSynchronizationHandle"/> which can be used to release the lock or null on failure</returns>
+        IDistributedSynchronizationHandle? TryAcquireReadLock(TimeSpan timeout = default, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Acquires a READ lock synchronously, failing with <see cref="TimeoutException"/> if the attempt times out. Multiple readers are allowed. Not compatible with a WRITE lock. Usage: 
@@ -41,8 +41,8 @@ namespace Medallion.Threading
         /// </summary>
         /// <param name="timeout">How long to wait before giving up on the acquisition attempt. Defaults to <see cref="Timeout.InfiniteTimeSpan"/></param>
         /// <param name="cancellationToken">Specifies a token by which the wait can be canceled</param>
-        /// <returns>An <see cref="IDistributedLockHandle"/> which can be used to release the lock</returns>
-        IDistributedLockHandle AcquireReadLock(TimeSpan? timeout = null, CancellationToken cancellationToken = default);
+        /// <returns>An <see cref="IDistributedSynchronizationHandle"/> which can be used to release the lock</returns>
+        IDistributedSynchronizationHandle AcquireReadLock(TimeSpan? timeout = null, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Attempts to acquire a READ lock asynchronously. Multiple readers are allowed. Not compatible with a WRITE lock. Usage: 
@@ -56,8 +56,8 @@ namespace Medallion.Threading
         /// </summary>
         /// <param name="timeout">How long to wait before giving up on the acquisition attempt. Defaults to 0</param>
         /// <param name="cancellationToken">Specifies a token by which the wait can be canceled</param>
-        /// <returns>An <see cref="IDistributedLockHandle"/> which can be used to release the lock or null on failure</returns>
-        ValueTask<IDistributedLockHandle?> TryAcquireReadLockAsync(TimeSpan timeout = default, CancellationToken cancellationToken = default);
+        /// <returns>An <see cref="IDistributedSynchronizationHandle"/> which can be used to release the lock or null on failure</returns>
+        ValueTask<IDistributedSynchronizationHandle?> TryAcquireReadLockAsync(TimeSpan timeout = default, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Acquires a READ lock asynchronously, failing with <see cref="TimeoutException"/> if the attempt times out. Multiple readers are allowed. Not compatible with a WRITE lock. Usage: 
@@ -71,8 +71,8 @@ namespace Medallion.Threading
         /// </summary>
         /// <param name="timeout">How long to wait before giving up on the acquisition attempt. Defaults to <see cref="Timeout.InfiniteTimeSpan"/></param>
         /// <param name="cancellationToken">Specifies a token by which the wait can be canceled</param>
-        /// <returns>An <see cref="IDistributedLockHandle"/> which can be used to release the lock</returns>
-        ValueTask<IDistributedLockHandle> AcquireReadLockAsync(TimeSpan? timeout = null, CancellationToken cancellationToken = default);
+        /// <returns>An <see cref="IDistributedSynchronizationHandle"/> which can be used to release the lock</returns>
+        ValueTask<IDistributedSynchronizationHandle> AcquireReadLockAsync(TimeSpan? timeout = null, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Attempts to acquire a WRITE lock synchronously. Not compatible with another WRITE lock or an UPGRADE lock. Usage: 
@@ -86,8 +86,8 @@ namespace Medallion.Threading
         /// </summary>
         /// <param name="timeout">How long to wait before giving up on the acquisition attempt. Defaults to 0</param>
         /// <param name="cancellationToken">Specifies a token by which the wait can be canceled</param>
-        /// <returns>An <see cref="IDistributedLockHandle"/> which can be used to release the lock or null on failure</returns>
-        IDistributedLockHandle? TryAcquireWriteLock(TimeSpan timeout = default, CancellationToken cancellationToken = default);
+        /// <returns>An <see cref="IDistributedSynchronizationHandle"/> which can be used to release the lock or null on failure</returns>
+        IDistributedSynchronizationHandle? TryAcquireWriteLock(TimeSpan timeout = default, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Acquires a WRITE lock synchronously, failing with <see cref="TimeoutException"/> if the attempt times out. Not compatible with another WRITE lock or an UPGRADE lock. Usage: 
@@ -101,8 +101,8 @@ namespace Medallion.Threading
         /// </summary>
         /// <param name="timeout">How long to wait before giving up on the acquisition attempt. Defaults to <see cref="Timeout.InfiniteTimeSpan"/></param>
         /// <param name="cancellationToken">Specifies a token by which the wait can be canceled</param>
-        /// <returns>An <see cref="IDistributedLockHandle"/> which can be used to release the lock</returns>
-        IDistributedLockHandle AcquireWriteLock(TimeSpan? timeout = null, CancellationToken cancellationToken = default);
+        /// <returns>An <see cref="IDistributedSynchronizationHandle"/> which can be used to release the lock</returns>
+        IDistributedSynchronizationHandle AcquireWriteLock(TimeSpan? timeout = null, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Attempts to acquire a WRITE lock asynchronously. Not compatible with another WRITE lock or an UPGRADE lock. Usage: 
@@ -116,8 +116,8 @@ namespace Medallion.Threading
         /// </summary>
         /// <param name="timeout">How long to wait before giving up on the acquisition attempt. Defaults to 0</param>
         /// <param name="cancellationToken">Specifies a token by which the wait can be canceled</param>
-        /// <returns>An <see cref="IDistributedLockHandle"/> which can be used to release the lock or null on failure</returns>
-        ValueTask<IDistributedLockHandle?> TryAcquireWriteLockAsync(TimeSpan timeout = default, CancellationToken cancellationToken = default);
+        /// <returns>An <see cref="IDistributedSynchronizationHandle"/> which can be used to release the lock or null on failure</returns>
+        ValueTask<IDistributedSynchronizationHandle?> TryAcquireWriteLockAsync(TimeSpan timeout = default, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Acquires a WRITE lock asynchronously, failing with <see cref="TimeoutException"/> if the attempt times out. Not compatible with another WRITE lock or an UPGRADE lock. Usage: 
@@ -131,7 +131,7 @@ namespace Medallion.Threading
         /// </summary>
         /// <param name="timeout">How long to wait before giving up on the acquisition attempt. Defaults to <see cref="Timeout.InfiniteTimeSpan"/></param>
         /// <param name="cancellationToken">Specifies a token by which the wait can be canceled</param>
-        /// <returns>An <see cref="IDistributedLockHandle"/> which can be used to release the lock</returns>
-        ValueTask<IDistributedLockHandle> AcquireWriteLockAsync(TimeSpan? timeout = null, CancellationToken cancellationToken = default);
+        /// <returns>An <see cref="IDistributedSynchronizationHandle"/> which can be used to release the lock</returns>
+        ValueTask<IDistributedSynchronizationHandle> AcquireWriteLockAsync(TimeSpan? timeout = null, CancellationToken cancellationToken = default);
     }
 }

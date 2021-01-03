@@ -368,7 +368,7 @@ namespace Medallion.Threading.Tests.FileSystem
         private static void AssertCanUseName(string name, DirectoryInfo? directory = null)
         {
             var @lock = new FileDistributedLock(directory ?? LockFileDirectoryInfo, name);
-            IDistributedLockHandle? handle = null;
+            IDistributedSynchronizationHandle? handle = null;
             Assert.DoesNotThrow(() => handle = @lock.TryAcquire(), name);
             Assert.IsNotNull(handle, name);
             handle!.Dispose();

@@ -40,7 +40,7 @@ namespace Medallion.Threading.Internal.Data
 
         internal Func<string, DatabaseConnection> ConnectionFactory { get; }
 
-        public async ValueTask<IDistributedLockHandle?> TryAcquireAsync<TLockCookie>(
+        public async ValueTask<IDistributedSynchronizationHandle?> TryAcquireAsync<TLockCookie>(
             string connectionString,
             string name,
             TimeoutValue timeout,

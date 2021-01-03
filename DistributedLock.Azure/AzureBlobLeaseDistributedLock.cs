@@ -159,7 +159,7 @@ namespace Medallion.Threading.Azure
             return new AzureBlobLeaseDistributedLockHandle(internalHandle);
         }
 
-        internal sealed class InternalHandle : IDistributedLockHandle, LeaseMonitor.ILeaseHandle
+        internal sealed class InternalHandle : IDistributedSynchronizationHandle, LeaseMonitor.ILeaseHandle
         {
             private readonly BlobLeaseClientWrapper _leaseClient;
             private readonly bool _ownsBlob;

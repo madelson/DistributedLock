@@ -8,9 +8,9 @@ using System.Threading.Tasks;
 namespace Medallion.Threading.Azure
 {
     /// <summary>
-    /// Implements <see cref="IDistributedLockHandle"/>
+    /// Implements <see cref="IDistributedSynchronizationHandle"/>
     /// </summary>
-    public sealed class AzureBlobLeaseDistributedLockHandle : IDistributedLockHandle
+    public sealed class AzureBlobLeaseDistributedLockHandle : IDistributedSynchronizationHandle
     {
         private AzureBlobLeaseDistributedLock.InternalHandle? _internalHandle;
         private IDisposable? _finalizerRegistration;
@@ -26,7 +26,7 @@ namespace Medallion.Threading.Azure
         }
 
         /// <summary>
-        /// Implements <see cref="IDistributedLockHandle.HandleLostToken"/>
+        /// Implements <see cref="IDistributedSynchronizationHandle.HandleLostToken"/>
         /// </summary>
         public CancellationToken HandleLostToken => (this._internalHandle ?? throw this.ObjectDisposed()).HandleLostToken;
 

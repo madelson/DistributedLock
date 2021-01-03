@@ -40,18 +40,18 @@ namespace Medallion.Threading.Internal.Data
             this._keepaliveCadence = keepaliveCadence;
         }
 
-        public async ValueTask<IDistributedLockHandle?> TryAcquireAsync<TLockCookie>(
+        public async ValueTask<IDistributedSynchronizationHandle?> TryAcquireAsync<TLockCookie>(
             TimeoutValue timeout, 
             IDbSynchronizationStrategy<TLockCookie> strategy, 
             CancellationToken cancellationToken, 
-            IDistributedLockHandle? contextHandle)
+            IDistributedSynchronizationHandle? contextHandle)
             where TLockCookie : class
         {
             // todo revisit how this works with managed finalization. We want to avoid the case where the upgraded handle and the original handle get
             // finalized in the wrong order. Perhaps it would be simpler to make upgradestrategy its own different interface, and then make the idblock return
             // a handle type that might be able to self-upgrade if it has the right internal strategy
 
-            IDistributedLockHandle? result = null;
+            IDistributedSynchronizationHandle? result = null;
             IAsyncDisposable? connectionResource = null;
             try
             {
@@ -107,7 +107,7 @@ namespace Medallion.Threading.Internal.Data
             return result;
         }
 
-        private DatabaseConnection GetContextHandleConnection<TLockCookie>(IDistributedLockHandle contextHandle)
+        private DatabaseConnection GetContextHandleConnection<TLockCookie>(IDistributedSynchronizationHandle contextHandle)
             where TLockCookie : class
         {
             var connection = ((Handle<TLockCookie>)contextHandle).Connection;
@@ -115,7 +115,7 @@ namespace Medallion.Threading.Internal.Data
             return connection;
         }
 
-        private sealed class Handle<TLockCookie> : IDistributedLockHandle
+        private sealed class Handle<TLockCookie> : IDistributedSynchronizationHandle
             where TLockCookie : class
         {
             private InnerHandle? _innerHandle;

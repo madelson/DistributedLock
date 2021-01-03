@@ -38,7 +38,7 @@ namespace Medallion.Threading.Internal
         }
 
         // todo revisit API
-        public static async ValueTask<THandle?> Wrap<THandle>(this ValueTask<IDistributedLockHandle?> handleTask, Func<IDistributedLockHandle, THandle> factory)
+        public static async ValueTask<THandle?> Wrap<THandle>(this ValueTask<IDistributedSynchronizationHandle?> handleTask, Func<IDistributedSynchronizationHandle, THandle> factory)
             where THandle : class
         {
             var handle = await handleTask.ConfigureAwait(false);
@@ -46,18 +46,18 @@ namespace Medallion.Threading.Internal
         }
 
         // todo consider removing this if we don't use it enough
-        internal static IDistributedLockHandle WithManagedFinalizer(this IDistributedLockHandle handle)
+        internal static IDistributedSynchronizationHandle WithManagedFinalizer(this IDistributedSynchronizationHandle handle)
         {
             Invariant.Require(!(handle is ManagedFinalizationDistributedLockHandle));
             return new ManagedFinalizationDistributedLockHandle(handle);
         }
 
-        private sealed class ManagedFinalizationDistributedLockHandle : IDistributedLockHandle
+        private sealed class ManagedFinalizationDistributedLockHandle : IDistributedSynchronizationHandle
         {
-            private readonly IDistributedLockHandle _innerHandle;
+            private readonly IDistributedSynchronizationHandle _innerHandle;
             private readonly IDisposable _finalizerRegistration;
 
-            public ManagedFinalizationDistributedLockHandle(IDistributedLockHandle innerHandle)
+            public ManagedFinalizationDistributedLockHandle(IDistributedSynchronizationHandle innerHandle)
             {
                 this._innerHandle = innerHandle;
                 this._finalizerRegistration = ManagedFinalizerQueue.Instance.Register(this, innerHandle);
@@ -76,18 +76,18 @@ namespace Medallion.Threading.Internal
 
         #region ---- IInternalDistributedLock implementations ----
         public static ValueTask<THandle> AcquireAsync<THandle>(IInternalDistributedLock<THandle> @lock, TimeSpan? timeout, CancellationToken cancellationToken)
-            where THandle : class, IDistributedLockHandle =>
+            where THandle : class, IDistributedSynchronizationHandle =>
             @lock.InternalTryAcquireAsync(timeout, cancellationToken).ThrowTimeoutIfNull();
 
         public static THandle Acquire<THandle>(IInternalDistributedLock<THandle> @lock, TimeSpan? timeout, CancellationToken cancellationToken)
-            where THandle : class, IDistributedLockHandle =>
+            where THandle : class, IDistributedSynchronizationHandle =>
             SyncOverAsync.Run(
                 state => AcquireAsync(state.@lock, state.timeout, state.cancellationToken),
                 (@lock, timeout, cancellationToken)
             );
 
         public static THandle? TryAcquire<THandle>(IInternalDistributedLock<THandle> @lock, TimeSpan timeout, CancellationToken cancellationToken)
-            where THandle : class, IDistributedLockHandle =>
+            where THandle : class, IDistributedSynchronizationHandle =>
             SyncOverAsync.Run(
                 state => state.@lock.InternalTryAcquireAsync(state.timeout, state.cancellationToken),
                 (@lock, timeout, cancellationToken)
@@ -96,18 +96,18 @@ namespace Medallion.Threading.Internal
 
         #region ---- IInternalDistributedReaderWriterLock implementations ----
         public static ValueTask<THandle> AcquireAsync<THandle>(IInternalDistributedReaderWriterLock<THandle> @lock, TimeSpan? timeout, CancellationToken cancellationToken, bool isWrite)
-            where THandle : class, IDistributedLockHandle =>
+            where THandle : class, IDistributedSynchronizationHandle =>
             @lock.InternalTryAcquireAsync(timeout, cancellationToken, isWrite).ThrowTimeoutIfNull();
 
         public static THandle Acquire<THandle>(IInternalDistributedReaderWriterLock<THandle> @lock, TimeSpan? timeout, CancellationToken cancellationToken, bool isWrite)
-            where THandle : class, IDistributedLockHandle =>
+            where THandle : class, IDistributedSynchronizationHandle =>
             SyncOverAsync.Run(
                 state => AcquireAsync(state.@lock, state.timeout, state.cancellationToken, state.isWrite),
                 (@lock, timeout, cancellationToken, isWrite)
             );
 
         public static THandle? TryAcquire<THandle>(IInternalDistributedReaderWriterLock<THandle> @lock, TimeSpan timeout, CancellationToken cancellationToken, bool isWrite)
-            where THandle : class, IDistributedLockHandle =>
+            where THandle : class, IDistributedSynchronizationHandle =>
             SyncOverAsync.Run(
                 state => state.@lock.InternalTryAcquireAsync(state.timeout, state.cancellationToken, state.isWrite),
                 (@lock, timeout, cancellationToken, isWrite)
@@ -116,12 +116,12 @@ namespace Medallion.Threading.Internal
 
         #region ---- IInternalDistributedUpgradeableReaderWriterLock implementations ----
         public static ValueTask<TUpgradeableHandle> AcquireUpgradeableReadLockAsync<THandle, TUpgradeableHandle>(IInternalDistributedUpgradeableReaderWriterLock<THandle, TUpgradeableHandle> @lock, TimeSpan? timeout, CancellationToken cancellationToken)
-            where THandle : class, IDistributedLockHandle
+            where THandle : class, IDistributedSynchronizationHandle
             where TUpgradeableHandle : class, IDistributedLockUpgradeableHandle =>
             @lock.InternalTryAcquireUpgradeableReadLockAsync(timeout, cancellationToken).ThrowTimeoutIfNull();
 
         public static TUpgradeableHandle AcquireUpgradeableReadLock<THandle, TUpgradeableHandle>(IInternalDistributedUpgradeableReaderWriterLock<THandle, TUpgradeableHandle> @lock, TimeSpan? timeout, CancellationToken cancellationToken)
-            where THandle : class, IDistributedLockHandle
+            where THandle : class, IDistributedSynchronizationHandle
             where TUpgradeableHandle : class, IDistributedLockUpgradeableHandle =>
             SyncOverAsync.Run(
                 state => AcquireUpgradeableReadLockAsync(state.@lock, state.timeout, state.cancellationToken),
@@ -129,7 +129,7 @@ namespace Medallion.Threading.Internal
             );
 
         public static TUpgradeableHandle? TryAcquireUpgradeableReadLock<THandle, TUpgradeableHandle>(IInternalDistributedUpgradeableReaderWriterLock<THandle, TUpgradeableHandle> @lock, TimeSpan timeout, CancellationToken cancellationToken)
-            where THandle : class, IDistributedLockHandle
+            where THandle : class, IDistributedSynchronizationHandle
             where TUpgradeableHandle : class, IDistributedLockUpgradeableHandle =>
             SyncOverAsync.Run(
                 state => state.@lock.InternalTryAcquireUpgradeableReadLockAsync(state.timeout, state.cancellationToken),
@@ -139,18 +139,18 @@ namespace Medallion.Threading.Internal
 
         #region ---- IInternalDistributedSemaphore implementations ----
         public static ValueTask<THandle> AcquireAsync<THandle>(IInternalDistributedSemaphore<THandle> @lock, TimeSpan? timeout, CancellationToken cancellationToken)
-            where THandle : class, IDistributedLockHandle =>
+            where THandle : class, IDistributedSynchronizationHandle =>
             @lock.InternalTryAcquireAsync(timeout, cancellationToken).ThrowTimeoutIfNull(@object: "semaphore");
 
         public static THandle Acquire<THandle>(IInternalDistributedSemaphore<THandle> @lock, TimeSpan? timeout, CancellationToken cancellationToken)
-            where THandle : class, IDistributedLockHandle =>
+            where THandle : class, IDistributedSynchronizationHandle =>
             SyncOverAsync.Run(
                 state => AcquireAsync(state.@lock, state.timeout, state.cancellationToken),
                 (@lock, timeout, cancellationToken)
             );
 
         public static THandle? TryAcquire<THandle>(IInternalDistributedSemaphore<THandle> @lock, TimeSpan timeout, CancellationToken cancellationToken)
-            where THandle : class, IDistributedLockHandle =>
+            where THandle : class, IDistributedSynchronizationHandle =>
             SyncOverAsync.Run(
                 state => state.@lock.InternalTryAcquireAsync(state.timeout, state.cancellationToken),
                 (@lock, timeout, cancellationToken)

@@ -5,9 +5,9 @@ using System.Threading.Tasks;
 namespace Medallion.Threading
 {
     /// <summary>
-    /// A <see cref="IDistributedLockHandle"/> that can be upgraded to a write lock
+    /// A <see cref="IDistributedSynchronizationHandle"/> that can be upgraded to a write lock
     /// </summary>
-    public interface IDistributedLockUpgradeableHandle : IDistributedLockHandle
+    public interface IDistributedLockUpgradeableHandle : IDistributedSynchronizationHandle
     {
         /// <summary>
         /// Attempts to upgrade a WRITE lock synchronously. Not compatible with another WRITE lock or a UPGRADE lock

@@ -9,14 +9,14 @@ namespace Medallion.Threading.Redis
     {
         // AUTO-GENERATED
 
-        IDistributedLockHandle? IDistributedSemaphore.TryAcquire(TimeSpan timeout, CancellationToken cancellationToken) =>
+        IDistributedSynchronizationHandle? IDistributedSemaphore.TryAcquire(TimeSpan timeout, CancellationToken cancellationToken) =>
             this.TryAcquire(timeout, cancellationToken);
-        IDistributedLockHandle IDistributedSemaphore.Acquire(TimeSpan? timeout, CancellationToken cancellationToken) =>
+        IDistributedSynchronizationHandle IDistributedSemaphore.Acquire(TimeSpan? timeout, CancellationToken cancellationToken) =>
             this.Acquire(timeout, cancellationToken);
-        ValueTask<IDistributedLockHandle?> IDistributedSemaphore.TryAcquireAsync(TimeSpan timeout, CancellationToken cancellationToken) =>
-            this.TryAcquireAsync(timeout, cancellationToken).Convert(To<IDistributedLockHandle?>.ValueTask);
-        ValueTask<IDistributedLockHandle> IDistributedSemaphore.AcquireAsync(TimeSpan? timeout, CancellationToken cancellationToken) =>
-            this.AcquireAsync(timeout, cancellationToken).Convert(To<IDistributedLockHandle>.ValueTask);
+        ValueTask<IDistributedSynchronizationHandle?> IDistributedSemaphore.TryAcquireAsync(TimeSpan timeout, CancellationToken cancellationToken) =>
+            this.TryAcquireAsync(timeout, cancellationToken).Convert(To<IDistributedSynchronizationHandle?>.ValueTask);
+        ValueTask<IDistributedSynchronizationHandle> IDistributedSemaphore.AcquireAsync(TimeSpan? timeout, CancellationToken cancellationToken) =>
+            this.AcquireAsync(timeout, cancellationToken).Convert(To<IDistributedSynchronizationHandle>.ValueTask);
 
         /// <summary>
         /// Attempts to acquire a semaphore ticket synchronously. Usage: 

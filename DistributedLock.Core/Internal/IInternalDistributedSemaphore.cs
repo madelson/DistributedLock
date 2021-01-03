@@ -12,7 +12,7 @@ namespace Medallion.Threading.Internal
     internal
 #endif
         interface IInternalDistributedSemaphore<THandle> : IDistributedSemaphore
-        where THandle : class, IDistributedLockHandle
+        where THandle : class, IDistributedSynchronizationHandle
     {
         new THandle? TryAcquire(TimeSpan timeout = default, CancellationToken cancellationToken = default);
         new THandle Acquire(TimeSpan? timeout = null, CancellationToken cancellationToken = default);

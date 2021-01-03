@@ -10,7 +10,7 @@ namespace Medallion.Threading.Internal
     internal
 #endif
     interface IInternalDistributedLock<THandle> : IDistributedLock
-        where THandle : class, IDistributedLockHandle
+        where THandle : class, IDistributedSynchronizationHandle
     {
         new THandle? TryAcquire(TimeSpan timeout = default, CancellationToken cancellationToken = default);
         new THandle Acquire(TimeSpan? timeout = null, CancellationToken cancellationToken = default);

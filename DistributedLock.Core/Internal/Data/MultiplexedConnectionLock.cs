@@ -173,7 +173,7 @@ namespace Medallion.Threading.Internal.Data
 
         public readonly struct Result
         {
-            public Result(IDistributedLockHandle handle)
+            public Result(IDistributedSynchronizationHandle handle)
             {
                 this.Handle = handle;
                 this.Retry = MultiplexedConnectionLockRetry.NoRetry;
@@ -187,12 +187,12 @@ namespace Medallion.Threading.Internal.Data
                 this.CanSafelyDispose = canSafelyDispose;
             }
 
-            public IDistributedLockHandle? Handle { get; }
+            public IDistributedSynchronizationHandle? Handle { get; }
             public MultiplexedConnectionLockRetry Retry { get; }
             public bool CanSafelyDispose { get; }
         }
 
-        private sealed class Handle<TLockCookie> : IDistributedLockHandle
+        private sealed class Handle<TLockCookie> : IDistributedSynchronizationHandle
             where TLockCookie : class
         {
             private readonly string _name;

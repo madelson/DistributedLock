@@ -11,7 +11,7 @@ namespace Medallion.Threading.Internal.Data
     /// Implements keepalive for a <see cref="DatabaseConnection"/> which is important for certain providers
     /// such as SQL Azure.
     /// 
-    /// Also supports more active monitoring for the purposes of implementing <see cref="IDistributedLockHandle.HandleLostToken"/>
+    /// Also supports more active monitoring for the purposes of implementing <see cref="IDistributedSynchronizationHandle.HandleLostToken"/>
     /// </summary>
     internal sealed class ConnectionMonitor : IAsyncDisposable
     {

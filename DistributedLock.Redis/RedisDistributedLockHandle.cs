@@ -10,9 +10,9 @@ using System.Threading.Tasks;
 namespace Medallion.Threading.Redis
 {
     /// <summary>
-    /// Implements <see cref="IDistributedLockHandle"/> for <see cref="RedisDistributedLock"/>
+    /// Implements <see cref="IDistributedSynchronizationHandle"/> for <see cref="RedisDistributedLock"/>
     /// </summary>
-    public sealed class RedisDistributedLockHandle : IDistributedLockHandle
+    public sealed class RedisDistributedLockHandle : IDistributedSynchronizationHandle
     {
         private RedLockHandle? _innerHandle;
 
@@ -22,7 +22,7 @@ namespace Medallion.Threading.Redis
         }
 
         /// <summary>
-        /// Implements <see cref="IDistributedLockHandle.HandleLostToken"/>
+        /// Implements <see cref="IDistributedSynchronizationHandle.HandleLostToken"/>
         /// </summary>
         public CancellationToken HandleLostToken => Volatile.Read(ref this._innerHandle)?.HandleLostToken ?? throw this.ObjectDisposed();
 

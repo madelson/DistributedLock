@@ -3,13 +3,12 @@ using System.Threading;
 
 namespace Medallion.Threading
 {
-    // todo IDistributedSynchronizationHandle?
-
     /// <summary>
     /// A handle to a distributed lock or other synchronization primitive. To unlock/release,
-    /// simply dispose the handle
+    /// simply dispose the handle.
     /// </summary>
-    public interface IDistributedLockHandle : IDisposable, IAsyncDisposable
+    public interface IDistributedSynchronizationHandle
+        : IDisposable, IAsyncDisposable
     {
         /// <summary>
         /// Gets a <see cref="CancellationToken"/> instance which may be used to 
@@ -25,7 +24,6 @@ namespace Medallion.Threading
         /// For lock types that do support this, accessing this property may incur additional
         /// costs, such as polling to detect connectivity loss.
         /// </summary>
-        // TODO revisit naming
         CancellationToken HandleLostToken { get; }
     }
 }

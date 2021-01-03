@@ -55,7 +55,7 @@ namespace Medallion.Threading.Tests
 
             var readHandle = Lock().AcquireReadLock();
 
-            Task<IDistributedLockHandle> readTask;
+            Task<IDistributedSynchronizationHandle> readTask;
             using (var upgradeableHandle = Lock().AcquireUpgradeableReadLockAsync().AsTask().Result)
             {
                 upgradeableHandle.TryUpgradeToWriteLock().ShouldEqual(false); // read lock still held

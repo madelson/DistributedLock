@@ -19,7 +19,7 @@ namespace Medallion.Threading.Internal.Data
         // from an upgradeable read lock to a write lock. This allows the implementation to use the same connection
         // for the nested lock
 
-        ValueTask<IDistributedLockHandle?> TryAcquireAsync<TLockCookie>(TimeoutValue timeout, IDbSynchronizationStrategy<TLockCookie> strategy, CancellationToken cancellationToken, IDistributedLockHandle? contextHandle)
+        ValueTask<IDistributedSynchronizationHandle?> TryAcquireAsync<TLockCookie>(TimeoutValue timeout, IDbSynchronizationStrategy<TLockCookie> strategy, CancellationToken cancellationToken, IDistributedSynchronizationHandle? contextHandle)
             where TLockCookie : class;
     }
 }
