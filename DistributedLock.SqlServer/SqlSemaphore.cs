@@ -11,12 +11,12 @@ namespace Medallion.Threading.SqlServer
 {
     internal sealed class SqlSemaphore : IDbSynchronizationStrategy<SqlSemaphore.Cookie>
     {
-        private readonly int _maxCount;
-
         public SqlSemaphore(int maxCount)
         {
-            this._maxCount = maxCount;
+            this.MaxCount = maxCount;
         }
+
+        public int MaxCount { get; }
 
         #region ---- Execution ----
         public async ValueTask<Cookie?> TryAcquireAsync(DatabaseConnection connection, string resourceName, TimeoutValue timeout, CancellationToken cancellationToken)
@@ -173,7 +173,7 @@ namespace Medallion.Threading.SqlServer
         private void AddCommonParameters(DatabaseCommand command, string semaphoreName, TimeoutValue? timeout = null, string? markerTableName = null, string? ticketLockName = null)
         {
             command.AddParameter(SemaphoreNameParameter, semaphoreName);
-            command.AddParameter(MaxCountParameter, this._maxCount);
+            command.AddParameter(MaxCountParameter, this.MaxCount);
             if (timeout.TryGetValue(out var timeoutValue))
             {
                 command.AddParameter(TimeoutMillisParameter, timeoutValue.InMilliseconds);

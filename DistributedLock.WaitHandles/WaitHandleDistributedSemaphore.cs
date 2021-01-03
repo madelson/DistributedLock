@@ -14,7 +14,6 @@ namespace Medallion.Threading.WaitHandles
     /// </summary>
     public sealed partial class WaitHandleDistributedSemaphore : IInternalDistributedSemaphore<WaitHandleDistributedSemaphoreHandle>
     {
-        private readonly int _maxCount;
         private readonly TimeoutValue _abandonmentCheckCadence;
 
         /// <summary>
@@ -30,10 +29,11 @@ namespace Medallion.Threading.WaitHandles
             if (maxCount < 1) { throw new ArgumentOutOfRangeException(nameof(maxCount), maxCount, "must be positive"); }
 
             this.Name = DistributedWaitHandleHelpers.ValidateAndFinalizeName(name, exactName);
-            this._maxCount = maxCount;
+            this.MaxCount = maxCount;
             this._abandonmentCheckCadence = DistributedWaitHandleHelpers.ValidateAndFinalizeAbandonmentCheckCadence(abandonmentCheckCadence);
         }
 
+        // todo static APIs
         /// <summary>
         /// The maximum length allowed for semaphore names
         /// </summary>
@@ -46,9 +46,14 @@ namespace Medallion.Threading.WaitHandles
         public static string GetSafeName(string name) => DistributedWaitHandleHelpers.GetSafeName(name);
 
         /// <summary>
-        /// The semaphore name
+        /// Implements <see cref="IDistributedSemaphore.Name"/>
         /// </summary>
         public string Name { get; }
+
+        /// <summary>
+        /// Implements <see cref="IDistributedSemaphore.MaxCount"/>
+        /// </summary>
+        public int MaxCount { get; }
 
         async ValueTask<WaitHandleDistributedSemaphoreHandle?> IInternalDistributedSemaphore<WaitHandleDistributedSemaphoreHandle>.InternalTryAcquireAsync(TimeoutValue timeout, CancellationToken cancellationToken)
         {
@@ -71,7 +76,7 @@ namespace Medallion.Threading.WaitHandles
                     SemaphoreRights.FullControl,
                     AccessControlType.Allow
                 ));
-                var semaphore = new Semaphore(initialCount: this._maxCount, maximumCount: this._maxCount, name: this.Name, createdNew: out var createdNew);
+                var semaphore = new Semaphore(initialCount: this.MaxCount, maximumCount: this.MaxCount, name: this.Name, createdNew: out var createdNew);
                 if (createdNew) { semaphore.SetAccessControl(security); }
                 return semaphore;
             },

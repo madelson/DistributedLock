@@ -19,6 +19,13 @@ namespace Medallion.Threading.Tests
         [TearDown] public void TearDown() => this._semaphoreProvider.Dispose();
 
         [Test]
+        public void TestMaxCount()
+        {
+            this._semaphoreProvider.CreateSemaphore(string.Empty, 5).MaxCount.ShouldEqual(5);
+            this._semaphoreProvider.CreateSemaphore(string.Empty, 23).MaxCount.ShouldEqual(23);
+        }
+
+        [Test]
         [NonParallelizable] // timing-sensitive
         public void TestConcurrencyHandling()
         {

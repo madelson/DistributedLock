@@ -16,7 +16,6 @@ namespace Medallion.Threading.Redis
     /// </summary>
     public sealed partial class RedisDistributedSemaphore : IInternalDistributedSemaphore<RedisDistributedSemaphoreHandle>
     {
-        private readonly int _maxCount;
         private readonly IReadOnlyList<IDatabase> _databases;
         private readonly RedisDistributedLockOptions _options;
 
@@ -38,16 +37,21 @@ namespace Medallion.Threading.Redis
             this._databases = RedisDistributedLock.ValidateDatabases(databases);
 
             this.Key = key;
-            this._maxCount = maxCount;
+            this.MaxCount = maxCount;
             this._options = RedisDistributedLockOptionsBuilder.GetOptions(options);
         }
         
         internal RedisKey Key { get; }
 
         /// <summary>
-        /// Implements <see cref="IDistributedLock.Name"/>
+        /// Implements <see cref="IDistributedSemaphore.Name"/>
         /// </summary>
         public string Name => this.Key.ToString();
+
+        /// <summary>
+        /// Implements <see cref="IDistributedSemaphore.MaxCount"/>
+        /// </summary>
+        public int MaxCount { get; }
 
         ValueTask<RedisDistributedSemaphoreHandle?> IInternalDistributedSemaphore<RedisDistributedSemaphoreHandle>.InternalTryAcquireAsync(TimeoutValue timeout, CancellationToken cancellationToken) =>
             BusyWaitHelper.WaitAsync(
@@ -61,7 +65,7 @@ namespace Medallion.Threading.Redis
 
         private async ValueTask<RedisDistributedSemaphoreHandle?> TryAcquireAsync(CancellationToken cancellationToken)
         {
-            var primitive = new RedisSemaphorePrimitive(this.Key, this._maxCount, this._options.RedLockTimeouts);
+            var primitive = new RedisSemaphorePrimitive(this.Key, this.MaxCount, this._options.RedLockTimeouts);
             var tryAcquireTasks = await new RedLockAcquire(primitive, this._databases, cancellationToken).TryAcquireAsync().ConfigureAwait(false);
             return tryAcquireTasks != null
                 ? new RedisDistributedSemaphoreHandle(new RedLockHandle(primitive, tryAcquireTasks, extensionCadence: this._options.ExtensionCadence, expiry: this._options.RedLockTimeouts.Expiry))

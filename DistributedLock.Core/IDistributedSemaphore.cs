@@ -12,12 +12,16 @@ namespace Medallion.Threading
     /// </summary>
     public interface IDistributedSemaphore
     {
-        // TODO maxcount?
-
         /// <summary>
         /// A name that uniquely identifies the semaphore
         /// </summary>
         string Name { get; }
+
+        /// <summary>
+        /// The maximum number of "tickets" available for the semaphore (ie the number of processes which can acquire
+        /// the semaphore concurrently).
+        /// </summary>
+        int MaxCount { get; }
 
         /// <summary>
         /// Attempts to acquire a semaphore ticket synchronously. Usage: 

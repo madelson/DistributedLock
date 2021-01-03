@@ -58,9 +58,14 @@ namespace Medallion.Threading.SqlServer
         #endregion
 
         /// <summary>
-        /// Implements <see cref="IDistributedLock.Name"/>
+        /// Implements <see cref="IDistributedSemaphore.Name"/>
         /// </summary>
         public string Name { get; }
+
+        /// <summary>
+        /// Implements <see cref="IDistributedSemaphore.MaxCount"/>
+        /// </summary>
+        public int MaxCount => this._strategy.MaxCount;
 
         async ValueTask<SqlDistributedSemaphoreHandle?> IInternalDistributedSemaphore<SqlDistributedSemaphoreHandle>.InternalTryAcquireAsync(TimeoutValue timeout, CancellationToken cancellationToken)
         {
