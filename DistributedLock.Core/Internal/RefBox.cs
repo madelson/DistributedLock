@@ -1,8 +1,11 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 
 namespace Medallion.Threading.Internal
 {
-    // todo use in more places or get rid of
+    /// <summary>
+    /// Wraps a value tuple to be a read/write reference
+    /// </summary>
 #if DEBUG
     public
 #else
@@ -20,6 +23,9 @@ namespace Medallion.Threading.Internal
         public ref readonly T Value => ref this._value;
     }
 
+    /// <summary>
+    /// Simplifies storing state in certain <see cref="IDisposable"/>s.
+    /// </summary>
 #if DEBUG
     public
 #else
@@ -29,6 +35,10 @@ namespace Medallion.Threading.Internal
     {
         public static RefBox<T> Create<T>(T value) where T : struct => new RefBox<T>(value);
 
+        /// <summary>
+        /// Thread-safely checks if <paramref name="boxRef"/> is non-null and if so sets it to null and outputs
+        /// the value as <paramref name="value"/>.
+        /// </summary>
         public static bool TryConsume<T>(ref RefBox<T>? boxRef, out T value)
             where T : struct
         {
