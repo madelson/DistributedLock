@@ -61,7 +61,7 @@ namespace Medallion.Threading.Internal.Data
                 var lockCookie = await strategy.TryAcquireAsync(this._connection, name, opportunistic ? TimeSpan.Zero : timeout, cancellationToken).ConfigureAwait(false);
                 if (lockCookie != null)
                 {
-                    var handle = new Handle<TLockCookie>(this, strategy, name, lockCookie).WithManagedFinalizer();
+                    var handle = new ManagedFinalizationDistributedLockHandle(new Handle<TLockCookie>(this, strategy, name, lockCookie));
                     this._heldLocksToKeepaliveCadences.Add(name, keepaliveCadence);
                     if (!keepaliveCadence.IsInfinite) { this.SetKeepaliveCadenceNoLock(); }
                     return new Result(handle);
@@ -244,6 +244,28 @@ namespace Medallion.Threading.Internal.Data
             }
 
             void IDisposable.Dispose() => SyncOverAsync.Run(@this => @this.DisposeAsync(), this);
+        }
+
+        private sealed class ManagedFinalizationDistributedLockHandle : IDistributedSynchronizationHandle
+        {
+            private readonly IDistributedSynchronizationHandle _innerHandle;
+            private readonly IDisposable _finalizerRegistration;
+
+            public ManagedFinalizationDistributedLockHandle(IDistributedSynchronizationHandle innerHandle)
+            {
+                this._innerHandle = innerHandle;
+                this._finalizerRegistration = ManagedFinalizerQueue.Instance.Register(this, innerHandle);
+            }
+
+            public CancellationToken HandleLostToken => this._innerHandle.HandleLostToken;
+
+            public void Dispose() => SyncOverAsync.Run(@this => @this.DisposeAsync(), this);
+
+            public ValueTask DisposeAsync()
+            {
+                this._finalizerRegistration.Dispose();
+                return this._innerHandle.DisposeAsync();
+            }
         }
     }
 

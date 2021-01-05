@@ -172,7 +172,6 @@ namespace Medallion.Threading.Internal.Data
             return pruningCost > 64 && this._storeCountSinceLastPrune >= pruningCost;
         }
 
-        // todo test
         private async ValueTask PrunePoolsNoLockAsync()
         {
             this._storeCountSinceLastPrune = 0; // reset

@@ -6,8 +6,6 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading.Internal
 {
-    // todo revisit whether these should be copied or generated files vs internal APIs
-
 #if DEBUG
     public
 #else
@@ -37,41 +35,11 @@ namespace Medallion.Threading.Internal
             return prefix + hash;
         }
 
-        // todo revisit API
         public static async ValueTask<THandle?> Wrap<THandle>(this ValueTask<IDistributedSynchronizationHandle?> handleTask, Func<IDistributedSynchronizationHandle, THandle> factory)
             where THandle : class
         {
             var handle = await handleTask.ConfigureAwait(false);
             return handle != null ? factory(handle) : null;
-        }
-
-        // todo consider removing this if we don't use it enough
-        internal static IDistributedSynchronizationHandle WithManagedFinalizer(this IDistributedSynchronizationHandle handle)
-        {
-            Invariant.Require(!(handle is ManagedFinalizationDistributedLockHandle));
-            return new ManagedFinalizationDistributedLockHandle(handle);
-        }
-
-        private sealed class ManagedFinalizationDistributedLockHandle : IDistributedSynchronizationHandle
-        {
-            private readonly IDistributedSynchronizationHandle _innerHandle;
-            private readonly IDisposable _finalizerRegistration;
-
-            public ManagedFinalizationDistributedLockHandle(IDistributedSynchronizationHandle innerHandle)
-            {
-                this._innerHandle = innerHandle;
-                this._finalizerRegistration = ManagedFinalizerQueue.Instance.Register(this, innerHandle);
-            }
-
-            public CancellationToken HandleLostToken => this._innerHandle.HandleLostToken;
-
-            public void Dispose() => SyncOverAsync.Run(@this => @this.DisposeAsync(), this);
-
-            public ValueTask DisposeAsync()
-            {
-                this._finalizerRegistration.Dispose();
-                return this._innerHandle.DisposeAsync();
-            }
         }
 
         #region ---- IInternalDistributedLock implementations ----

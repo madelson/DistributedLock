@@ -5,8 +5,6 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading.Internal.Data
 {
-    // todo logic in this class is pretty complex. Could we factor some of the branches out into a connectionpolicy object or similar?
-
     /// <summary>
     /// Implements <see cref="IDbDistributedLock"/> by giving each lock acquisition a dedicated <see cref="IDbConnection"/>
     /// or <see cref="IDbTransaction"/>
@@ -47,10 +45,6 @@ namespace Medallion.Threading.Internal.Data
             IDistributedSynchronizationHandle? contextHandle)
             where TLockCookie : class
         {
-            // todo revisit how this works with managed finalization. We want to avoid the case where the upgraded handle and the original handle get
-            // finalized in the wrong order. Perhaps it would be simpler to make upgradestrategy its own different interface, and then make the idblock return
-            // a handle type that might be able to self-upgrade if it has the right internal strategy
-
             IDistributedSynchronizationHandle? result = null;
             IAsyncDisposable? connectionResource = null;
             try

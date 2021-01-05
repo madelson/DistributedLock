@@ -8,7 +8,6 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading.Internal
 {
-    // todo incorporate into azure
     /// <summary>
     /// Utility for monitoring/renewing a fixed length "lease" lock
     /// </summary>

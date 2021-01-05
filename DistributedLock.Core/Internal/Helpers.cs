@@ -57,7 +57,6 @@ namespace Medallion.Threading.Internal
             catch (Exception ex) { return (TTask)Task.FromException<TResult>(ex).As<object>(); }
         }
 
-        // todo rethink message here; should this return "handle" or something more generic since it might be an internal type?
         public static ObjectDisposedException ObjectDisposed<T>(this T _) where T : IAsyncDisposable =>
             throw new ObjectDisposedException(typeof(T).ToString());
 
