@@ -79,7 +79,7 @@ namespace Medallion.Threading.Internal.Data
             bool disallowAsyncCancellation,
             bool isConnectionMonitoringQuery)
         {
-            if (!SyncOverAsync.IsSynchronous && this._command is DbCommand dbCommand)
+            if (!SyncViaAsync.IsSynchronous && this._command is DbCommand dbCommand)
             {
                 if (!cancellationToken.CanBeCanceled)
                 {
@@ -183,7 +183,7 @@ namespace Medallion.Threading.Internal.Data
             if (this._connection.ShouldPrepareCommands)
             {
 #if NETSTANDARD2_1
-                if (!SyncOverAsync.IsSynchronous && this._command is DbCommand dbCommand)
+                if (!SyncViaAsync.IsSynchronous && this._command is DbCommand dbCommand)
                 {
                     // todo does canceling prepareasync doom pg transaction?
                     return dbCommand.PrepareAsync(cancellationToken).AsValueTask();

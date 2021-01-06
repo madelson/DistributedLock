@@ -68,10 +68,9 @@ namespace Medallion.Threading.Tests.Data
 
             this._lockProvider.Strategy.KeepaliveCadence = TimeSpan.FromSeconds(.05);
             var @lock = this._lockProvider.CreateLock(nameof(TestKeepaliveProtectsFromIdleSessionKiller));
-
-            using var idleSessionKiller = new IdleSessionKiller(this._lockProvider.Strategy.Db, applicationName, idleTimeout: TimeSpan.FromSeconds(.5));
                 
             var handle = @lock.Acquire();
+            using var idleSessionKiller = new IdleSessionKiller(this._lockProvider.Strategy.Db, applicationName, idleTimeout: TimeSpan.FromSeconds(.5));
             Thread.Sleep(TimeSpan.FromSeconds(2));
             Assert.DoesNotThrow(() => handle.Dispose());
         }

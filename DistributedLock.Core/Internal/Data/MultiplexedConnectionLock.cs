@@ -243,7 +243,7 @@ namespace Medallion.Threading.Internal.Data
                 return default;
             }
 
-            void IDisposable.Dispose() => SyncOverAsync.Run(@this => @this.DisposeAsync(), this);
+            void IDisposable.Dispose() => this.DisposeSyncViaAsync();
         }
 
         private sealed class ManagedFinalizationDistributedLockHandle : IDistributedSynchronizationHandle
@@ -259,7 +259,7 @@ namespace Medallion.Threading.Internal.Data
 
             public CancellationToken HandleLostToken => this._innerHandle.HandleLostToken;
 
-            public void Dispose() => SyncOverAsync.Run(@this => @this.DisposeAsync(), this);
+            public void Dispose() => this.DisposeSyncViaAsync();
 
             public ValueTask DisposeAsync()
             {

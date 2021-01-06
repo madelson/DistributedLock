@@ -10,7 +10,7 @@ namespace Medallion.Threading.Internal.Data
 {
     /// <summary>
     /// Abstraction over <see cref="IDbConnection"/> that abstracts away the varying async support
-    /// across platforms, smooths over cancellation behavior, and integrates with <see cref="SyncOverAsync"/>
+    /// across platforms, smooths over cancellation behavior, and integrates with <see cref="SyncViaAsync"/>
     /// </summary>
 #if DEBUG
     public
@@ -67,7 +67,7 @@ namespace Medallion.Threading.Internal.Data
 
             this._transaction =
 #if NETSTANDARD2_1
-             !SyncOverAsync.IsSynchronous && this.InnerConnection is DbConnection dbConnection
+             !SyncViaAsync.IsSynchronous && this.InnerConnection is DbConnection dbConnection
                 ? await dbConnection.BeginTransactionAsync().ConfigureAwait(false)
                 : 
 #elif NETSTANDARD2_0 || NET461
@@ -79,7 +79,7 @@ namespace Medallion.Threading.Internal.Data
 
         public async ValueTask OpenAsync(CancellationToken cancellationToken)
         {
-            if ((cancellationToken.CanBeCanceled || !SyncOverAsync.IsSynchronous)
+            if ((cancellationToken.CanBeCanceled || !SyncViaAsync.IsSynchronous)
                 && this.InnerConnection is DbConnection dbConnection)
             {
                 await dbConnection.OpenAsync(cancellationToken).ConfigureAwait(false);
@@ -112,7 +112,7 @@ namespace Medallion.Threading.Internal.Data
                     finally
                     {
 #if NETSTANDARD2_1
-                if (!SyncOverAsync.IsSynchronous && this.InnerConnection is DbConnection dbConnection)
+                if (!SyncViaAsync.IsSynchronous && this.InnerConnection is DbConnection dbConnection)
                 {
                     await (isDispose ? dbConnection.DisposeAsync() : dbConnection.CloseAsync().AsValueTask()).ConfigureAwait(false);
                 }
@@ -150,7 +150,7 @@ namespace Medallion.Threading.Internal.Data
                 : await this.ConnectionMonitor.AcquireConnectionLockAsync(CancellationToken.None).ConfigureAwait(false);
 
 #if NETSTANDARD2_1
-            if (!SyncOverAsync.IsSynchronous && transaction is DbTransaction dbTransaction)
+            if (!SyncViaAsync.IsSynchronous && transaction is DbTransaction dbTransaction)
             {
                 await dbTransaction.DisposeAsync().ConfigureAwait(false);
                 return;

@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 namespace Medallion.Threading.Azure
 {
     /// <summary>
-    /// Adds <see cref="SyncOverAsync"/> support to <see cref="BlobBaseClient"/>
+    /// Adds <see cref="SyncViaAsync"/> support to <see cref="BlobBaseClient"/>
     /// </summary>
     internal class BlobClientWrapper
     {
@@ -30,7 +30,7 @@ namespace Medallion.Threading.Azure
         public async ValueTask<IDictionary<string, string>> GetMetadataAsync(string leaseId, CancellationToken cancellationToken)
         {
             var conditions = new BlobRequestConditions { LeaseId = leaseId };
-            var properties = SyncOverAsync.IsSynchronous
+            var properties = SyncViaAsync.IsSynchronous
                 ? this._blobClient.GetProperties(conditions, cancellationToken)
                 : await this._blobClient.GetPropertiesAsync(conditions, cancellationToken).ConfigureAwait(false);
             return properties.Value.Metadata;
@@ -41,28 +41,28 @@ namespace Medallion.Threading.Azure
             switch (this._blobClient)
             {
                 case BlobClient blobClient:
-                    if (SyncOverAsync.IsSynchronous)
+                    if (SyncViaAsync.IsSynchronous)
                     {
                         blobClient.Upload(Stream.Null, metadata: metadata, cancellationToken: cancellationToken);
                         return default;
                     }
                     return new ValueTask(blobClient.UploadAsync(Stream.Null, metadata: metadata, cancellationToken: cancellationToken));
                 case BlockBlobClient blockBlobClient:
-                    if (SyncOverAsync.IsSynchronous)
+                    if (SyncViaAsync.IsSynchronous)
                     {
                         blockBlobClient.Upload(Stream.Null, metadata: metadata, cancellationToken: cancellationToken);
                         return default;
                     }
                     return new ValueTask(blockBlobClient.UploadAsync(Stream.Null, metadata: metadata, cancellationToken: cancellationToken));
                 case PageBlobClient pageBlobClient:
-                    if (SyncOverAsync.IsSynchronous)
+                    if (SyncViaAsync.IsSynchronous)
                     {
                         pageBlobClient.CreateIfNotExists(size: 0, metadata: metadata, cancellationToken: cancellationToken);
                         return default;
                     }
                     return new ValueTask(pageBlobClient.CreateIfNotExistsAsync(size: 0, metadata: metadata, cancellationToken: cancellationToken));
                 case AppendBlobClient appendBlobClient:
-                    if (SyncOverAsync.IsSynchronous)
+                    if (SyncViaAsync.IsSynchronous)
                     {
                         appendBlobClient.CreateIfNotExists(metadata: metadata, cancellationToken: cancellationToken);
                         return default;
@@ -81,7 +81,7 @@ namespace Medallion.Threading.Azure
         public ValueTask DeleteIfExistsAsync(string? leaseId = null)
         {
             var conditions = leaseId != null ? new BlobRequestConditions { LeaseId = leaseId } : null;
-            if (SyncOverAsync.IsSynchronous)
+            if (SyncViaAsync.IsSynchronous)
             {
                 this._blobClient.DeleteIfExists(conditions: conditions);
                 return default;

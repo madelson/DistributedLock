@@ -6,13 +6,13 @@ using System.Threading.Tasks;
 namespace Medallion.Threading.Tests.Core
 {
     [Category("CI")]
-    public class SyncOverAsyncTest
+    public class SyncViaAsyncTest
     {
         [Test]
         public void TestSyncOverAsyncVoid()
         {
             var currentThread = Thread.CurrentThread;
-            SyncOverAsync.Run<(int a, int b, Thread startingThread, bool expectAsync)>(
+            SyncViaAsync.Run<(int a, int b, Thread startingThread, bool expectAsync)>(
                 async state => await AddAsync(state.a, state.b, state.startingThread, state.expectAsync),
                 (1, 2, currentThread, false)
             );
@@ -22,7 +22,7 @@ namespace Medallion.Threading.Tests.Core
         public void TestSyncOverAsyncWithResult()
         {
             var currentThread = Thread.CurrentThread;
-            var result = SyncOverAsync.Run(
+            var result = SyncViaAsync.Run(
                 async ((int a, int b, Thread startingThread, bool expectAsync) state) => await AddAsync(state.a, state.b, state.startingThread, state.expectAsync),
                 (1, 2, currentThread, false)
             );
@@ -38,7 +38,7 @@ namespace Medallion.Threading.Tests.Core
 
         private async ValueTask<int> AddHelperAsync(int a, bool expectAsync)
         {
-            Assert.AreNotEqual(expectAsync, SyncOverAsync.IsSynchronous);
+            Assert.AreNotEqual(expectAsync, SyncViaAsync.IsSynchronous);
 
             if (expectAsync) { await Task.Delay(1); }
             else { Thread.Sleep(1); }

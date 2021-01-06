@@ -38,7 +38,7 @@ namespace Medallion.Threading.Redis.RedLock
         /// <summary>
         /// Releases the lock
         /// </summary>
-        public void Dispose() => SyncOverAsync.Run(@this => @this.DisposeAsync(), this);
+        public void Dispose() => this.DisposeSyncViaAsync();
 
         /// <summary>
         /// Releases the lock asynchronously

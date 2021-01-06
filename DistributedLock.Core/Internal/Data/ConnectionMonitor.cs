@@ -260,7 +260,7 @@ namespace Medallion.Threading.Internal.Data
 
             if (task != null)
             {
-                if (SyncOverAsync.IsSynchronous) { task.GetAwaiter().GetResult(); }
+                if (SyncViaAsync.IsSynchronous) { task.GetAwaiter().GetResult(); }
                 else { await task.ConfigureAwait(false); }
             }
         }

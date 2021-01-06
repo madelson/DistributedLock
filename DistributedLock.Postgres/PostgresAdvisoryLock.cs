@@ -99,7 +99,7 @@ namespace Medallion.Threading.Postgres
                     // todo revisit this behavior. Probably should throw deadlock to be consistent with Semaphore. See also SqlApplicationLock
                     if (timeout.IsZero) { return null; }
                     if (timeout.IsInfinite) { throw new InvalidOperationException("Attempted to acquire a lock that is already held on the same connection"); }
-                    await SyncOverAsync.Delay(timeout, cancellationToken).ConfigureAwait(false);
+                    await SyncViaAsync.Delay(timeout, cancellationToken).ConfigureAwait(false);
                     return null;
                 default:
                     throw new InvalidOperationException($"Unexpected return code {acquireCommandResult}");

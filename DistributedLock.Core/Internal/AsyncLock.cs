@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace Medallion.Threading.Internal
 {
     /// <summary>
-    /// An async-based, <see cref="SyncOverAsync"/>-friendly mutex based on <see cref="SemaphoreSlim"/>. We don't expose a 
+    /// An async-based, <see cref="SyncViaAsync"/>-friendly mutex based on <see cref="SemaphoreSlim"/>. We don't expose a 
     /// <see cref="IDisposable.Dispose"/> method because <see cref="SemaphoreSlim"/> does not require disposal unless its
     /// <see cref="SemaphoreSlim.AvailableWaitHandle"/> is accessed
     /// </summary>
@@ -31,7 +31,7 @@ namespace Medallion.Threading.Internal
 
         public async ValueTask<IDisposable?> TryAcquireAsync(TimeoutValue timeout, CancellationToken cancellationToken)
         {
-            var acquired = SyncOverAsync.IsSynchronous
+            var acquired = SyncViaAsync.IsSynchronous
                 ? this._semaphore.Wait(timeout.InMilliseconds, cancellationToken)
                 : await this._semaphore.WaitAsync(timeout.InMilliseconds, cancellationToken).ConfigureAwait(false);
             return acquired ? new Handle(this._semaphore) : null;

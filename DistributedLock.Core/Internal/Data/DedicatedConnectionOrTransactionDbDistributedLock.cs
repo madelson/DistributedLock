@@ -133,7 +133,7 @@ namespace Medallion.Threading.Internal.Data
 
             public DatabaseConnection? Connection => Volatile.Read(ref this._innerHandle)?.Connection;
 
-            public void Dispose() => SyncOverAsync.Run(@this => @this.DisposeAsync(), this);
+            public void Dispose() => this.DisposeSyncViaAsync();
 
             public ValueTask DisposeAsync()
             {

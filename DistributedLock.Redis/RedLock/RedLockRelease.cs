@@ -32,7 +32,7 @@ namespace Medallion.Threading.Redis.RedLock
 
         public async ValueTask ReleaseAsync()
         {
-            var isSynchronous = SyncOverAsync.IsSynchronous;
+            var isSynchronous = SyncViaAsync.IsSynchronous;
             var unreleasedTryAcquireOrRenewTasks = this._tryAcquireOrRenewTasks.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
 
             List<Exception>? releaseExceptions = null;

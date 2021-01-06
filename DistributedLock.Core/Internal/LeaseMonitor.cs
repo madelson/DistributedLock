@@ -35,7 +35,7 @@ namespace Medallion.Threading.Internal
 
         public CancellationToken HandleLostToken => this._handleLostSource.Token;
 
-        public void Dispose() => SyncOverAsync.Run(@this => @this.DisposeAsync(), this);
+        public void Dispose() => this.DisposeSyncViaAsync();
 
         public async ValueTask DisposeAsync()
         {
@@ -46,7 +46,7 @@ namespace Medallion.Threading.Internal
                     this._disposalSource.Cancel();
                 }
 
-                if (SyncOverAsync.IsSynchronous) { this._monitoringTask.GetAwaiter().GetResult(); }
+                if (SyncViaAsync.IsSynchronous) { this._monitoringTask.GetAwaiter().GetResult(); }
                 else { await this._monitoringTask.ConfigureAwait(false); }
             }
             finally

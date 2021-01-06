@@ -9,7 +9,7 @@ namespace Medallion.Threading.WaitHandles
     {
         public static async ValueTask<bool> WaitOneAsync(this WaitHandle waitHandle, TimeoutValue timeout, CancellationToken cancellationToken)
         {
-            return SyncOverAsync.IsSynchronous
+            return SyncViaAsync.IsSynchronous
                 ? waitHandle.InternalWaitOne(timeout, cancellationToken)
                 : await waitHandle.InternalWaitOneAsync(timeout, cancellationToken).ConfigureAwait(false);
         }

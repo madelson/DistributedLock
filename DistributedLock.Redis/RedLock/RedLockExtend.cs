@@ -36,7 +36,7 @@ namespace Medallion.Threading.Redis.RedLock
 
         public async Task<bool?> TryExtendAsync()
         {
-            Invariant.Require(!SyncOverAsync.IsSynchronous, "should only be called from a background renewal thread which is async");
+            Invariant.Require(!SyncViaAsync.IsSynchronous, "should only be called from a background renewal thread which is async");
 
             var incompleteTasks = new HashSet<Task>();
             foreach (var kvp in this._tryAcquireOrRenewTasks.ToArray())

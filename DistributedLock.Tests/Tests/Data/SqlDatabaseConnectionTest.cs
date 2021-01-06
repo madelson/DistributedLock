@@ -39,7 +39,7 @@ namespace Medallion.Threading.Tests.Data
             }
             else
             {
-                Assert.Catch<OperationCanceledException>(() => SyncOverAsync.Run(_ => command.ExecuteNonQueryAsync(cancellationTokenSource.Token), 0));
+                Assert.Catch<OperationCanceledException>(() => SyncViaAsync.Run(_ => command.ExecuteNonQueryAsync(cancellationTokenSource.Token), 0));
             }
         }
 
@@ -61,7 +61,7 @@ namespace Medallion.Threading.Tests.Data
             var task = Task.Run(async () =>
             {
                 if (isAsync) { await command.ExecuteNonQueryAsync(cancellationTokenSource.Token, disallowAsyncCancellation: true); }
-                else { SyncOverAsync.Run(_ => command.ExecuteNonQueryAsync(cancellationTokenSource.Token), 0); }
+                else { SyncViaAsync.Run(_ => command.ExecuteNonQueryAsync(cancellationTokenSource.Token), 0); }
             });
             Assert.IsFalse(task.Wait(TimeSpan.FromSeconds(.1)));
 

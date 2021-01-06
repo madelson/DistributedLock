@@ -184,7 +184,7 @@ namespace Medallion.Threading.Azure
 
             TimeoutValue LeaseMonitor.ILeaseHandle.MonitoringCadence => this.RenewalEnabled ? this._lock._options.renewalCadence : this._lock._options.duration;
 
-            public void Dispose() => SyncOverAsync.Run(@this => @this.DisposeAsync(), this);
+            public void Dispose() => this.DisposeSyncViaAsync();
 
             public async ValueTask DisposeAsync()
             {

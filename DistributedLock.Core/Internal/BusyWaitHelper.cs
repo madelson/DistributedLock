@@ -41,7 +41,7 @@ namespace Medallion.Threading.Internal
                 var sleepTime = minSleepTime.TimeSpan + TimeSpan.FromMilliseconds(random.NextDouble() * sleepRangeMillis);
                 try
                 {
-                    await SyncOverAsync.Delay(sleepTime, mergedCancellationToken).ConfigureAwait(false);
+                    await SyncViaAsync.Delay(sleepTime, mergedCancellationToken).ConfigureAwait(false);
                 }
                 catch (OperationCanceledException) when (IsTimedOut())
                 {

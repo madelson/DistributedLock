@@ -51,7 +51,7 @@ namespace Medallion.Threading.Tests.Azure
             }
             else
             {
-                SyncOverAsync.Run(_ => TestAsync(), default(object));
+                SyncViaAsync.Run(_ => TestAsync(), default(object));
             }
 
             async ValueTask TestAsync()

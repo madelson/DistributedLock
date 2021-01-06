@@ -19,11 +19,10 @@ namespace Medallion.Threading.SqlServer
         /// </summary>
         public abstract CancellationToken HandleLostToken { get; }
 
-        // todo should we have a common DisposeSyncOverAsync() extension for this?
         /// <summary>
         /// Releases the lock
         /// </summary>
-        public void Dispose() => SyncOverAsync.Run(@this => @this.DisposeAsync(), this);
+        public void Dispose() => this.DisposeSyncViaAsync();
 
         /// <summary>
         /// Releases the lock asynchronously

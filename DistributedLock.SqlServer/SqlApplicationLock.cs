@@ -197,7 +197,7 @@ namespace Medallion.Threading.SqlServer
 
             async ValueTask<bool> WaitThenReturnFalseAsync()
             {
-                await SyncOverAsync.Delay(timeout, cancellationToken).ConfigureAwait(false);
+                await SyncViaAsync.Delay(timeout, cancellationToken).ConfigureAwait(false);
                 return false;
             }
         }

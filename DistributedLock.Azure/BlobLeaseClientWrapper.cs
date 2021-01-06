@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 namespace Medallion.Threading.Azure
 {
     /// <summary>
-    /// Adds <see cref="SyncOverAsync"/> support to <see cref="BlobLeaseClient"/>
+    /// Adds <see cref="SyncViaAsync"/> support to <see cref="BlobLeaseClient"/>
     /// </summary>
     internal sealed class BlobLeaseClientWrapper
     {
@@ -24,7 +24,7 @@ namespace Medallion.Threading.Azure
 
         public ValueTask AcquireAsync(TimeoutValue duration, CancellationToken cancellationToken)
         {
-            if (SyncOverAsync.IsSynchronous)
+            if (SyncViaAsync.IsSynchronous)
             {
                 this._blobLeaseClient.Acquire(duration.TimeSpan, cancellationToken: cancellationToken);
                 return default;
@@ -34,7 +34,7 @@ namespace Medallion.Threading.Azure
 
         public ValueTask RenewAsync(CancellationToken cancellationToken)
         {
-            if (SyncOverAsync.IsSynchronous)
+            if (SyncViaAsync.IsSynchronous)
             {
                 this._blobLeaseClient.Renew(cancellationToken: cancellationToken);
                 return default;
@@ -44,7 +44,7 @@ namespace Medallion.Threading.Azure
 
         public ValueTask ReleaseAsync()
         {
-            if (SyncOverAsync.IsSynchronous)
+            if (SyncViaAsync.IsSynchronous)
             {
                 this._blobLeaseClient.Release();
                 return default;

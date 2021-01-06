@@ -40,7 +40,7 @@ namespace Medallion.Threading.Redis.RedLock
         {
             this._cancellationToken.ThrowIfCancellationRequested();
 
-            var isSynchronous = SyncOverAsync.IsSynchronous;
+            var isSynchronous = SyncViaAsync.IsSynchronous;
             if (isSynchronous && this._databases.Count == 1)
             {
                 return this.TrySingleFullySynchronousAcquire();
