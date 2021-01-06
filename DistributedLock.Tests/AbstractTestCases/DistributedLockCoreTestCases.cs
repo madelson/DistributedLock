@@ -113,9 +113,12 @@ namespace Medallion.Threading.Tests
         [NonParallelizable, Retry(tryCount: 3)] // timing-sensitive
         public void TestTimeouts()
         {
-            var @lock = this._lockProvider.CreateLock(nameof(TestTimeouts));
+            // use a randomized name in case we end up retrying
+            var lockName = Guid.NewGuid().ToString();
+
+            var @lock = this._lockProvider.CreateLock(lockName);
             // acquire with a different lock instance to avoid reentrancy mattering
-            using (this._lockProvider.CreateLock(nameof(TestTimeouts)).Acquire())
+            using (this._lockProvider.CreateLock(lockName).Acquire())
             {
                 var timeout = TimeSpan.FromSeconds(.1);
                 var waitTime = TimeSpan.FromSeconds(.4);

@@ -67,7 +67,7 @@ namespace Medallion.Threading.Tests.Data
             var applicationName = this._lockProvider.Strategy.SetUniqueApplicationName();
 
             this._lockProvider.Strategy.KeepaliveCadence = TimeSpan.FromSeconds(.05);
-            var @lock = this._lockProvider.CreateLock(nameof(TestKeepaliveProtectsFromIdleSessionKiller));
+            var @lock = this._lockProvider.CreateLock(Guid.NewGuid().ToString()); // use unique name due to retry
                 
             var handle = @lock.Acquire();
             using var idleSessionKiller = new IdleSessionKiller(this._lockProvider.Strategy.Db, applicationName, idleTimeout: TimeSpan.FromSeconds(.5));
