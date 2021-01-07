@@ -24,8 +24,9 @@ namespace Medallion.Threading.Tests.Data
 
         public string SetUniqueApplicationName(string baseName = "")
         {
+            // note: due to retries, we incorporate a GUID here to ensure that we have a fresh connection pool
             var applicationName = DistributedLockHelpers.ToSafeName(
-                $"{(baseName.Length > 0 ? baseName + "_" : string.Empty)}{TestContext.CurrentContext.Test.FullName}_{TargetFramework.Current}",
+                $"{(baseName.Length > 0 ? baseName + "_" : string.Empty)}{TestContext.CurrentContext.Test.FullName}_{TargetFramework.Current}_{Guid.NewGuid()}",
                 maxNameLength: this.Db.MaxApplicationNameLength, 
                 s => s
             );

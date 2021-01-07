@@ -120,8 +120,8 @@ namespace Medallion.Threading.Tests
             // acquire with a different lock instance to avoid reentrancy mattering
             using (this._lockProvider.CreateLock(lockName).Acquire())
             {
-                var timeout = TimeSpan.FromSeconds(.1);
-                var waitTime = TimeSpan.FromSeconds(.4);
+                var timeout = TimeSpan.FromSeconds(.2);
+                var waitTime = TimeSpan.FromSeconds(.5);
 
                 var syncAcquireTask = Task.Run(() => @lock.Acquire(timeout));
                 syncAcquireTask.ContinueWith(_ => { }).Wait(waitTime).ShouldEqual(true, "sync acquire");
