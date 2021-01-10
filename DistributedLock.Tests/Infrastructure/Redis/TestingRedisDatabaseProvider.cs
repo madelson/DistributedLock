@@ -1,10 +1,12 @@
 ﻿using Medallion.Threading.Tests.Redis;
+using NUnit.Framework;
 using StackExchange.Redis;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Medallion.Threading.Tests.Redis
 {
@@ -42,10 +44,11 @@ namespace Medallion.Threading.Tests.Redis
 
         static TestingRedis2x1DatabaseProvider()
         {
-            var server = new RedisServer();
+            var server = new RedisServer(allowAdmin: true);
             DeadDatabase = server.Multiplexer.GetDatabase();
             using var process = Process.GetProcessById(server.ProcessId);
-            process.Kill();
+            server.Multiplexer.GetServer($"localhost:{server.Port}").Shutdown(ShutdownMode.Never);
+            Assert.IsTrue(process.WaitForExit(5000));
         }
 
         public TestingRedis2x1DatabaseProvider()

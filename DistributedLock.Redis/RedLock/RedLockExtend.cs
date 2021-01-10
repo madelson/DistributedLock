@@ -74,7 +74,7 @@ namespace Medallion.Threading.Redis.RedLock
                     await completed.ConfigureAwait(false); // propagate cancellation
                     return null; // inconclusive
                 }
-                
+
                 if (completed.Status == TaskStatus.RanToCompletion && ((Task<bool>)completed).Result)
                 {
                     ++successCount;
@@ -88,6 +88,8 @@ namespace Medallion.Threading.Redis.RedLock
                     ++failCount;
                     if (failCount >= threshold) { return false; }
                 }
+
+                incompleteTasks.Remove(completed);
             }
         }
     }

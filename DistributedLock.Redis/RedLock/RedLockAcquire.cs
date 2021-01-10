@@ -134,26 +134,26 @@ namespace Medallion.Threading.Redis.RedLock
                         if (failCount >= threshold) { return false; }
                     }
                 }
-
-                // faulted or canceled
-
-                // if we get too many faults, the lock is not possible to acquire, so we should throw
-                ++faultCount;
-                if (faultCount >= threshold)
+                else // faulted or canceled
                 {
-                    var faultingTasks = tryAcquireTasks.Values.Where(t => t.IsCanceled || t.IsFaulted)
-                        .ToArray();
-                    if (faultingTasks.Length == 1)
+                    // if we get too many faults, the lock is not possible to acquire, so we should throw
+                    ++faultCount;
+                    if (faultCount >= threshold)
                     {
-                        await faultingTasks[0].ConfigureAwait(false); // propagate the error
-                    }
-                    
-                    throw new AggregateException(faultingTasks.Select(t => t.Exception ?? new TaskCanceledException(t).As<Exception>()))
-                        .Flatten();
-                }
+                        var faultingTasks = tryAcquireTasks.Values.Where(t => t.IsCanceled || t.IsFaulted)
+                            .ToArray();
+                        if (faultingTasks.Length == 1)
+                        {
+                            await faultingTasks[0].ConfigureAwait(false); // propagate the error
+                        }
 
-                ++failCount;
-                if (failCount >= threshold) { return false; }
+                        throw new AggregateException(faultingTasks.Select(t => t.Exception ?? new TaskCanceledException(t).As<Exception>()))
+                            .Flatten();
+                    }
+
+                    ++failCount;
+                    if (failCount >= threshold) { return false; }
+                }
 
                 incompleteTasks.Remove(completed);
             }

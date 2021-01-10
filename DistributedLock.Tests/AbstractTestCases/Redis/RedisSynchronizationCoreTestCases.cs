@@ -123,6 +123,8 @@ namespace Medallion.Threading.Tests.Redis
             Assert.IsNotNull(handle);
         }
 
+        // todo test even number of dbs with 2 failing
+
         private static Mock<IDatabase> CreateDatabaseMock()
         {
             var mock = new Mock<IDatabase>(MockBehavior.Strict);

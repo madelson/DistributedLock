@@ -11,6 +11,9 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading.Redis
 {
+    // TODO this does not work with multi-database because being in a majority of semaphores does not mean that < max count
+    // users are in the semaphore (e. g. with 3 dbs and 2 tickets, we can have 3 users acquiring AB, BC, and AC. Each database
+    // sees 2 tickets taken!). Let's change this back to the "official" fair semaphore implementation 
     /// <summary>
     /// Implements a <see cref="IDistributedSemaphore"/> using Redis. Can leverage multiple servers via the RedLock algorithm.
     /// </summary>
@@ -70,6 +73,24 @@ namespace Medallion.Threading.Redis
             return tryAcquireTasks != null
                 ? new RedisDistributedSemaphoreHandle(new RedLockHandle(primitive, tryAcquireTasks, extensionCadence: this._options.ExtensionCadence, expiry: this._options.RedLockTimeouts.Expiry))
                 : null;
+            //if (result != null)
+            //{
+            //    var sb = new StringBuilder($"ACQUIRED {primitive._lockId}: ");
+            //    foreach (var kvp in tryAcquireTasks!)
+            //    {
+            //        if (kvp.Value.IsCompleted && kvp.Value.Status != TaskStatus.RanToCompletion)
+            //        {
+            //            sb.Append('X');
+            //        }
+            //        if (kvp.Value.Status == TaskStatus.RanToCompletion)
+            //        {
+            //            sb.Append(kvp.Value.Result ? '1' : '0');
+            //        }
+            //        else { sb.Append('?'); }
+            //    }
+            //    Console.WriteLine(sb);
+            //}
+            //return result;
         }
     }
 }

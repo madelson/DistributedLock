@@ -34,7 +34,7 @@ namespace Medallion.Threading.Redis.RedLock
         {
             var isSynchronous = SyncViaAsync.IsSynchronous;
             var unreleasedTryAcquireOrRenewTasks = this._tryAcquireOrRenewTasks.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
-
+            
             List<Exception>? releaseExceptions = null;
             var successCount = 0;
             var faultCount = 0;
@@ -45,9 +45,10 @@ namespace Medallion.Threading.Redis.RedLock
                 while (true)
                 {
                     var releaseableDatabases = unreleasedTryAcquireOrRenewTasks.Where(kvp => kvp.Value.IsCompleted)
-                        // work through non-faulted tasks first, starting with the failed ones since no action is required to release those
+                        // work through non-faulted tasks first
                         .OrderByDescending(kvp => kvp.Value.Status == TaskStatus.RanToCompletion)
-                        .ThenBy(kvp => kvp.Value.Result)
+                        // then start with failed since no action is required to release those
+                        .ThenBy(kvp => kvp.Value.Status == TaskStatus.RanToCompletion && kvp.Value.Result)
                         .Select(kvp => kvp.Key)
                         .ToArray();
                     foreach (var db in releaseableDatabases)

@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading.Redis
 {
-    // todo consider rename to RedLockOptionsBuilder
+    // todo consider rename to RedLockOptionsBuilder (except maybe semaphore won't be redlock...)
     /// <summary>
     /// Options for configuring a redis-based lock
     /// </summary>
