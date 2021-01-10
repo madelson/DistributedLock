@@ -49,12 +49,11 @@ namespace Medallion.Threading.Tests.Redis
         public override string GetCrossProcessLockType(ReaderWriterLockType type) => $"{type}{nameof(RedisDistributedReaderWriterLock)}{this.Strategy.DatabaseProvider.CrossProcessLockTypeSuffix}";
     }
 
-    public sealed class TestingRedisDistributedSemaphoreProvider<TDatabaseProvider> : TestingSemaphoreProvider<TestingRedisSynchronizationStrategy<TDatabaseProvider>>
-        where TDatabaseProvider : TestingRedisDatabaseProvider, new()
+    public sealed class TestingRedisDistributedSemaphoreProvider : TestingSemaphoreProvider<TestingRedisSynchronizationStrategy<TestingRedisSingleDatabaseProvider>>
     {
         public override IDistributedSemaphore CreateSemaphoreWithExactName(string name, int maxCount)
         {
-            var semaphore = new RedisDistributedSemaphore(name, maxCount, this.Strategy.DatabaseProvider.Databases, this.Strategy.Options);
+            var semaphore = new RedisDistributedSemaphore(name, maxCount, this.Strategy.DatabaseProvider.Databases.Single(), this.Strategy.Options);
             this.Strategy.RegisterKillHandleAction(
                 () => this.Strategy.DatabaseProvider.Databases.Take((this.Strategy.DatabaseProvider.Databases.Count / 2) + 1)
                     .ToList()
@@ -63,8 +62,6 @@ namespace Medallion.Threading.Tests.Redis
             return semaphore;
         }
 
-        public override string GetSafeName(string name) => new RedisDistributedSemaphore(name, 1, this.Strategy.DatabaseProvider.Databases).Name;
-
-        public override string GetCrossProcessLockType() => $"{nameof(RedisDistributedSemaphore)}{this.Strategy.DatabaseProvider.CrossProcessLockTypeSuffix}";
+        public override string GetSafeName(string name) => new RedisDistributedSemaphore(name, 1, this.Strategy.DatabaseProvider.Databases.Single()).Name;
     }
 }

@@ -27,15 +27,9 @@ namespace Medallion.Threading.Tests.Redis
         {
             var database = new Mock<IDatabase>(MockBehavior.Strict).Object;
             Assert.Throws<ArgumentNullException>(() => new RedisDistributedSemaphore(default!, 2, database));
-            Assert.Throws<ArgumentNullException>(() => new RedisDistributedSemaphore(default!, 2, new[] { database }));
             Assert.Throws<ArgumentOutOfRangeException>(() => new RedisDistributedSemaphore("key", 0, database));
-            Assert.Throws<ArgumentOutOfRangeException>(() => new RedisDistributedSemaphore("key", 0, new[] { database }));
             Assert.Throws<ArgumentOutOfRangeException>(() => new RedisDistributedSemaphore("key", -1, database));
-            Assert.Throws<ArgumentOutOfRangeException>(() => new RedisDistributedSemaphore("key", -1, new[] { database }));
             Assert.Throws<ArgumentNullException>(() => new RedisDistributedSemaphore("key", 2, default(IDatabase)!));
-            Assert.Throws<ArgumentNullException>(() => new RedisDistributedSemaphore("key", 2, default(IEnumerable<IDatabase>)!));
-            Assert.Throws<ArgumentNullException>(() => new RedisDistributedSemaphore("key", 2, new[] { database, null! }));
-            Assert.Throws<ArgumentException>(() => new RedisDistributedSemaphore("key", 2, Enumerable.Empty<IDatabase>()));
         }
     }
 }

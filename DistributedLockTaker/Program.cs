@@ -90,11 +90,10 @@ namespace DistributedLockTaker
                         var maxCount = type.EndsWith("1AsMutex") ? 1
                             : type.EndsWith("5AsMutex") ? 5
                             : throw new ArgumentException(type);
-                        var serverCount = int.Parse(type.Substring(nameof(RedisDistributedSemaphore).Length, 1));
                         handle = new RedisDistributedSemaphore(
                             name, 
                             maxCount, 
-                            GetRedisDatabases(serverCount),
+                            GetRedisDatabases(serverCount: 1).Single(),
                             // in order to see abandonment work in a reasonable timeframe, use very short expiry
                             options => options.Expiry(TimeSpan.FromSeconds(1))
                                 .BusyWaitSleepTime(TimeSpan.FromSeconds(.1), TimeSpan.FromSeconds(.3))

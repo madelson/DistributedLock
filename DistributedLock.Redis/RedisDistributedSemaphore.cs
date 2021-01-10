@@ -11,14 +11,16 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading.Redis
 {
-    // TODO this does not work with multi-database because being in a majority of semaphores does not mean that < max count
-    // users are in the semaphore (e. g. with 3 dbs and 2 tickets, we can have 3 users acquiring AB, BC, and AC. Each database
-    // sees 2 tickets taken!). Let's change this back to the "official" fair semaphore implementation 
     /// <summary>
-    /// Implements a <see cref="IDistributedSemaphore"/> using Redis. Can leverage multiple servers via the RedLock algorithm.
+    /// Implements a <see cref="IDistributedSemaphore"/> using Redis.
     /// </summary>
     public sealed partial class RedisDistributedSemaphore : IInternalDistributedSemaphore<RedisDistributedSemaphoreHandle>
     {
+        /// <summary>
+        /// Note: while we store this as a list to simplify the interactions with the RedLock components, in fact the semaphore
+        /// algorithm only works with a single database. With multiple databases, we risk violating our <see cref="MaxCount"/>.
+        /// For example, with 3 dbs and 2 tickets, we can have 3 users acquiring AB, BC, and AC. Each database sees 2 tickets taken!
+        /// </summary>
         private readonly IReadOnlyList<IDatabase> _databases;
         private readonly RedisDistributedLockOptions _options;
 
@@ -26,24 +28,16 @@ namespace Medallion.Threading.Redis
         /// Constructs a semaphore named <paramref name="key"/> using the provided <paramref name="maxCount"/>, <paramref name="database"/>, and <paramref name="options"/>.
         /// </summary>
         public RedisDistributedSemaphore(RedisKey key, int maxCount, IDatabase database, Action<RedisDistributedLockOptionsBuilder>? options = null)
-            : this(key, maxCount, new[] { database ?? throw new ArgumentNullException(nameof(database)) }, options)
-        {
-        }
-
-        /// <summary>
-        /// Constructs a semaphore named <paramref name="key"/> using the provided <paramref name="maxCount"/>, <paramref name="databases"/>, and <paramref name="options"/>.
-        /// </summary>
-        public RedisDistributedSemaphore(RedisKey key, int maxCount, IEnumerable<IDatabase> databases, Action<RedisDistributedLockOptionsBuilder>? options = null)
         {
             if (key == default(RedisKey)) { throw new ArgumentNullException(nameof(key)); }
             if (maxCount < 1) { throw new ArgumentOutOfRangeException(nameof(maxCount), maxCount, "must be positive"); }
-            this._databases = RedisDistributedLock.ValidateDatabases(databases);
+            this._databases = new[] { database ?? throw new ArgumentNullException(nameof(database)) };
 
             this.Key = key;
             this.MaxCount = maxCount;
             this._options = RedisDistributedLockOptionsBuilder.GetOptions(options);
         }
-        
+
         internal RedisKey Key { get; }
 
         /// <summary>

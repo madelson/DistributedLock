@@ -29,6 +29,9 @@ namespace Medallion.Threading.Redis
         /// <summary>
         /// Constructs a <see cref="RedisDistributedSynchronizationProvider"/> that connects to the provided <paramref name="databases"/>
         /// and uses the provided <paramref name="options"/>.
+        /// 
+        /// Note that if multiple <see cref="IDatabase"/>s are provided, <see cref="CreateSemaphore(RedisKey, int)"/> will use only the first
+        /// <see cref="IDatabase"/>.
         /// </summary>
         public RedisDistributedSynchronizationProvider(IEnumerable<IDatabase> databases, Action<RedisDistributedLockOptionsBuilder>? options = null)
         {
@@ -55,7 +58,7 @@ namespace Medallion.Threading.Redis
         /// <summary>
         /// Creates a <see cref="RedisDistributedSemaphore"/> using the provided <paramref name="key"/> and <paramref name="maxCount"/>.
         /// </summary>
-        public RedisDistributedSemaphore CreateSemaphore(RedisKey key, int maxCount) => new RedisDistributedSemaphore(key, maxCount, this._databases, this._options);
+        public RedisDistributedSemaphore CreateSemaphore(RedisKey key, int maxCount) => new RedisDistributedSemaphore(key, maxCount, this._databases[0], this._options);
 
         IDistributedSemaphore IDistributedSemaphoreProvider.CreateSemaphore(string name, int maxCount) =>
             this.CreateSemaphore(name, maxCount);
