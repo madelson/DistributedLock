@@ -62,7 +62,7 @@ namespace Medallion.Threading.Redis.RedLock
             using var timeout = new TimeoutTask(this._primitive.AcquireTimeout, this._cancellationToken);
             incompleteTasks.Add(timeout.Task);
 
-            var threshold = (this._tryAcquireOrRenewTasks.Count / 2) + 1;
+            var databaseCount = this._tryAcquireOrRenewTasks.Count;
             var successCount = 0;
             var failCount = 0;
             while (true)
@@ -78,7 +78,7 @@ namespace Medallion.Threading.Redis.RedLock
                 if (completed.Status == TaskStatus.RanToCompletion && ((Task<bool>)completed).Result)
                 {
                     ++successCount;
-                    if (successCount >= threshold) { return true; } 
+                    if (RedLockHelper.HasSufficientSuccesses(successCount, databaseCount)) { return true; } 
                 }
                 else
                 {
@@ -86,7 +86,7 @@ namespace Medallion.Threading.Redis.RedLock
                     // this is just called by the extend loop. While in theory a fault could indicate some kind of post-success
                     // failure, most likely it means the db is unreachable and so it is safest to consider it a failure
                     ++failCount;
-                    if (failCount >= threshold) { return false; }
+                    if (RedLockHelper.HasTooManyFailuresOrFaults(failCount, databaseCount)) { return false; }
                 }
 
                 incompleteTasks.Remove(completed);

@@ -1,4 +1,5 @@
-﻿using StackExchange.Redis;
+﻿using Medallion.Threading.Internal;
+using StackExchange.Redis;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -16,6 +17,28 @@ namespace Medallion.Threading.Redis.RedLock
         {
             using var currentProcess = Process.GetCurrentProcess();
             LockIdPrefix = $"{Environment.MachineName}_{currentProcess.Id}_";
+        }
+
+        public static bool HasSufficientSuccesses(int successCount, int databaseCount)
+        {
+            // a majority is required
+            var threshold = (databaseCount / 2) + 1;
+            // While in theory this should return true if we have more than enough, we never expect this to be
+            // called except with just enough or not enough due to how we've implemented our approaches.
+            Invariant.Require(successCount <= threshold);
+            return successCount >= threshold;
+        }
+
+        public static bool HasTooManyFailuresOrFaults(int failureOrFaultCount, int databaseCount)
+        {
+            // For an odd number of databases, we need a majority to make success impossible. For an
+            // even number, however, getting to 50% failures/faults is sufficient to rule out getting
+            // a majority of successes.
+            var threshold = (databaseCount / 2) + (databaseCount % 2);
+            // While in theory this should return true if we have more than enough, we never expect this to be
+            // called except with just enough or not enough due to how we've implemented our approaches.
+            Invariant.Require(failureOrFaultCount <= threshold);
+            return failureOrFaultCount >= threshold;
         }
 
         public static RedisValue CreateLockId() => LockIdPrefix + Guid.NewGuid().ToString("n");

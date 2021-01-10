@@ -109,7 +109,6 @@ namespace Medallion.Threading.Redis.RedLock
             var successCount = 0;
             var failCount = 0;
             var faultCount = 0;
-            var threshold = (this._databases.Count / 2) + 1;
             while (true)
             {
                 var completed = await Task.WhenAny(incompleteTasks).ConfigureAwait(false);
@@ -126,19 +125,19 @@ namespace Medallion.Threading.Redis.RedLock
                     if (result)
                     {
                         ++successCount;
-                        if (successCount >= threshold) { return true; }
+                        if (RedLockHelper.HasSufficientSuccesses(successCount, this._databases.Count)) { return true; }
                     }
                     else
                     {
                         ++failCount;
-                        if (failCount >= threshold) { return false; }
+                        if (RedLockHelper.HasTooManyFailuresOrFaults(failCount, this._databases.Count)) { return false; }
                     }
                 }
                 else // faulted or canceled
                 {
                     // if we get too many faults, the lock is not possible to acquire, so we should throw
                     ++faultCount;
-                    if (faultCount >= threshold)
+                    if (RedLockHelper.HasTooManyFailuresOrFaults(faultCount, this._databases.Count))
                     {
                         var faultingTasks = tryAcquireTasks.Values.Where(t => t.IsCanceled || t.IsFaulted)
                             .ToArray();
@@ -152,10 +151,11 @@ namespace Medallion.Threading.Redis.RedLock
                     }
 
                     ++failCount;
-                    if (failCount >= threshold) { return false; }
+                    if (RedLockHelper.HasTooManyFailuresOrFaults(failCount, this._databases.Count)) { return false; }
                 }
 
                 incompleteTasks.Remove(completed);
+                Invariant.Require(incompleteTasks.Count > 1, "should be more than just timeout left");
             }
         }
 

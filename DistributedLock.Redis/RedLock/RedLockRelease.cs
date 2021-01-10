@@ -38,7 +38,7 @@ namespace Medallion.Threading.Redis.RedLock
             List<Exception>? releaseExceptions = null;
             var successCount = 0;
             var faultCount = 0;
-            var threshold = (unreleasedTryAcquireOrRenewTasks.Count / 2) + 1;
+            var databaseCount = unreleasedTryAcquireOrRenewTasks.Count;
 
             try
             {
@@ -73,14 +73,14 @@ namespace Medallion.Threading.Redis.RedLock
                             {
                                 (releaseExceptions ??= new List<Exception>()).Add(ex);
                                 ++faultCount;
-                                if (faultCount >= threshold)
+                                if (RedLockHelper.HasTooManyFailuresOrFaults(faultCount, databaseCount))
                                 {
                                     throw new AggregateException(releaseExceptions!).Flatten();
                                 }
                             }
                         }
 
-                        if (successCount >= threshold)
+                        if (RedLockHelper.HasSufficientSuccesses(successCount, databaseCount))
                         {
                             return;
                         }

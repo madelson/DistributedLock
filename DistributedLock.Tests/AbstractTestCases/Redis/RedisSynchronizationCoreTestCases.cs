@@ -83,6 +83,19 @@ namespace Medallion.Threading.Tests.Redis
         }
 
         [Test]
+        public void TestHalfFaultingDatabasesCauseAcquireToThrow()
+        {
+            CheckProviderCompatibility();
+
+            var databases = Enumerable.Range(0, 2).Select(_ => CreateDatabaseMock()).ToArray();
+            MockDatabase(databases[0], () => throw new TimeZoneNotFoundException());
+            this._provider.Strategy.DatabaseProvider.Databases = databases.Select(d => d.Object).ToArray();
+
+            var @lock = this._provider.CreateLock("lock");
+            Assert.Throws<TimeZoneNotFoundException>(() => @lock.Acquire(TimeSpan.FromSeconds(10)));
+        }
+
+        [Test]
         [NonParallelizable, Retry(tryCount: 3)] // timing-sensitive
         public async Task TestAcquireFailsIfItTakesTooLong([Values] bool synchronous)
         {
@@ -123,8 +136,6 @@ namespace Medallion.Threading.Tests.Redis
             Assert.IsNotNull(handle);
         }
 
-        // todo test even number of dbs with 2 failing
-
         private static Mock<IDatabase> CreateDatabaseMock()
         {
             var mock = new Mock<IDatabase>(MockBehavior.Strict);
@@ -148,6 +159,7 @@ namespace Medallion.Threading.Tests.Redis
                 .Returns(() => Task.Run(() => (bool)RedisResult.Create(returns())));
         }
 
+        // todo may be able to remove this if semaphore doesn't use multiple dbs
         private static void CheckProviderCompatibility()
         {
             // The semaphore5 provider is not compatible with this test class because it will attempt to acquire locks upon creation

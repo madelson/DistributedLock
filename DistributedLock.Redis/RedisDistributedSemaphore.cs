@@ -73,24 +73,6 @@ namespace Medallion.Threading.Redis
             return tryAcquireTasks != null
                 ? new RedisDistributedSemaphoreHandle(new RedLockHandle(primitive, tryAcquireTasks, extensionCadence: this._options.ExtensionCadence, expiry: this._options.RedLockTimeouts.Expiry))
                 : null;
-            //if (result != null)
-            //{
-            //    var sb = new StringBuilder($"ACQUIRED {primitive._lockId}: ");
-            //    foreach (var kvp in tryAcquireTasks!)
-            //    {
-            //        if (kvp.Value.IsCompleted && kvp.Value.Status != TaskStatus.RanToCompletion)
-            //        {
-            //            sb.Append('X');
-            //        }
-            //        if (kvp.Value.Status == TaskStatus.RanToCompletion)
-            //        {
-            //            sb.Append(kvp.Value.Result ? '1' : '0');
-            //        }
-            //        else { sb.Append('?'); }
-            //    }
-            //    Console.WriteLine(sb);
-            //}
-            //return result;
         }
     }
 }
