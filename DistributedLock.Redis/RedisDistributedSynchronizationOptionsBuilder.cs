@@ -9,11 +9,10 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading.Redis
 {
-    // todo consider rename to RedLockOptionsBuilder (except maybe semaphore won't be redlock...)
     /// <summary>
-    /// Options for configuring a redis-based lock
+    /// Options for configuring a redis-based distributed synchronization algorithm
     /// </summary>
-    public sealed class RedisDistributedLockOptionsBuilder
+    public sealed class RedisDistributedSynchronizationOptionsBuilder
     {
         internal static readonly TimeoutValue DefaultExpiry = TimeSpan.FromSeconds(30);
         /// <summary>
@@ -28,7 +27,7 @@ namespace Medallion.Threading.Redis
             _minBusyWaitSleepTime, 
             _maxBusyWaitSleepTime; 
         
-        internal RedisDistributedLockOptionsBuilder() { }
+        internal RedisDistributedSynchronizationOptionsBuilder() { }
 
         /// <summary>
         /// Specifies how long the lock will last, absent auto-extension. Because auto-extension exists,
@@ -39,7 +38,7 @@ namespace Medallion.Threading.Redis
         /// 
         /// Defaults to 30s.
         /// </summary>
-        public RedisDistributedLockOptionsBuilder Expiry(TimeSpan expiry)
+        public RedisDistributedSynchronizationOptionsBuilder Expiry(TimeSpan expiry)
         {
             var expiryTimeoutValue = new TimeoutValue(expiry, nameof(expiry));
             if (expiryTimeoutValue.IsInfinite || expiryTimeoutValue.CompareTo(MinimumExpiry) < 0)
@@ -57,7 +56,7 @@ namespace Medallion.Threading.Redis
         /// 
         /// Defaults to 1/3 of the specified <see cref="MinValidityTime(TimeSpan)"/>.
         /// </summary>
-        public RedisDistributedLockOptionsBuilder ExtensionCadence(TimeSpan extensionCadence)
+        public RedisDistributedSynchronizationOptionsBuilder ExtensionCadence(TimeSpan extensionCadence)
         {
             this._extensionCadence = new TimeoutValue(extensionCadence, nameof(extensionCadence));
             return this;
@@ -71,7 +70,7 @@ namespace Medallion.Threading.Redis
         /// 
         /// Defaults to 90% of the specified lock expiry.
         /// </summary>
-        public RedisDistributedLockOptionsBuilder MinValidityTime(TimeSpan minValidityTime)
+        public RedisDistributedSynchronizationOptionsBuilder MinValidityTime(TimeSpan minValidityTime)
         {
             var minValidityTimeoutValue = new TimeoutValue(minValidityTime, nameof(minValidityTime));
             if (minValidityTimeoutValue.IsZero)
@@ -94,7 +93,7 @@ namespace Medallion.Threading.Redis
         /// 
         /// The default is [10ms, 800ms]
         /// </summary>
-        public RedisDistributedLockOptionsBuilder BusyWaitSleepTime(TimeSpan min, TimeSpan max)
+        public RedisDistributedSynchronizationOptionsBuilder BusyWaitSleepTime(TimeSpan min, TimeSpan max)
         {
             var minTimeoutValue = new TimeoutValue(min, nameof(min));
             var maxTimeoutValue = new TimeoutValue(max, nameof(max));
@@ -110,12 +109,12 @@ namespace Medallion.Threading.Redis
             return this;
         }
 
-        internal static RedisDistributedLockOptions GetOptions(Action<RedisDistributedLockOptionsBuilder>? optionsBuilder)
+        internal static RedisDistributedLockOptions GetOptions(Action<RedisDistributedSynchronizationOptionsBuilder>? optionsBuilder)
         {
-            RedisDistributedLockOptionsBuilder? options;
+            RedisDistributedSynchronizationOptionsBuilder? options;
             if (optionsBuilder != null)
             {
-                options = new RedisDistributedLockOptionsBuilder();
+                options = new RedisDistributedSynchronizationOptionsBuilder();
                 optionsBuilder(options);
             }
             else

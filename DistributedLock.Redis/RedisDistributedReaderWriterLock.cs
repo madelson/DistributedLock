@@ -22,7 +22,7 @@ namespace Medallion.Threading.Redis
         /// <summary>
         /// Constructs a lock named <paramref name="name"/> using the provided <paramref name="database"/> and <paramref name="options"/>.
         /// </summary>
-        public RedisDistributedReaderWriterLock(string name, IDatabase database, Action<RedisDistributedLockOptionsBuilder>? options = null)
+        public RedisDistributedReaderWriterLock(string name, IDatabase database, Action<RedisDistributedSynchronizationOptionsBuilder>? options = null)
             : this(name, new[] { database ?? throw new ArgumentNullException(nameof(database)) }, options)
         {
         }
@@ -30,7 +30,7 @@ namespace Medallion.Threading.Redis
         /// <summary>
         /// Constructs a lock named <paramref name="name"/> using the provided <paramref name="databases"/> and <paramref name="options"/>.
         /// </summary>
-        public RedisDistributedReaderWriterLock(string name, IEnumerable<IDatabase> databases, Action<RedisDistributedLockOptionsBuilder>? options = null)
+        public RedisDistributedReaderWriterLock(string name, IEnumerable<IDatabase> databases, Action<RedisDistributedSynchronizationOptionsBuilder>? options = null)
         {
             if (name == null) { throw new ArgumentNullException(nameof(name)); }
             this._databases = RedisDistributedLock.ValidateDatabases(databases);
@@ -38,13 +38,13 @@ namespace Medallion.Threading.Redis
             this.ReaderKey = name + ".readers";
             this.WriterKey = name + ".writer";
             this.Name = name;
-            this._options = RedisDistributedLockOptionsBuilder.GetOptions(options);
+            this._options = RedisDistributedSynchronizationOptionsBuilder.GetOptions(options);
 
             // We insist on this rule to ensure that when we take the writer waiting lock it won't expire between attempts 
             // to upgrade it to the write lock. This avoids the need to extend the writer waiting lock
             if (this._options.RedLockTimeouts.MinValidityTime.CompareTo(this._options.MaxBusyWaitSleepTime) <= 0)
             {
-                throw new ArgumentException($"{nameof(RedisDistributedLockOptionsBuilder.BusyWaitSleepTime)} must be <= {nameof(RedisDistributedLockOptionsBuilder.MinValidityTime)}", nameof(options));
+                throw new ArgumentException($"{nameof(RedisDistributedSynchronizationOptionsBuilder.BusyWaitSleepTime)} must be <= {nameof(RedisDistributedSynchronizationOptionsBuilder.MinValidityTime)}", nameof(options));
             }
         }
 

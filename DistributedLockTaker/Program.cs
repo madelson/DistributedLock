@@ -125,7 +125,7 @@ namespace DistributedLockTaker
         private static IEnumerable<IDatabase> GetRedisDatabases(int serverCount) => RedisPorts.DefaultPorts.Take(serverCount)
             .Select(port => ConnectionMultiplexer.Connect($"localhost:{port}").GetDatabase());
 
-        private static void RedisOptions(RedisDistributedLockOptionsBuilder options) => 
+        private static void RedisOptions(RedisDistributedSynchronizationOptionsBuilder options) => 
             options.Expiry(TimeSpan.FromSeconds(.5)) // short expiry for abandonment testing
                 .BusyWaitSleepTime(TimeSpan.FromSeconds(.1), TimeSpan.FromSeconds(.3)); 
     }

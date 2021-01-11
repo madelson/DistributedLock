@@ -27,7 +27,7 @@ namespace Medallion.Threading.Redis
         /// <summary>
         /// Constructs a semaphore named <paramref name="key"/> using the provided <paramref name="maxCount"/>, <paramref name="database"/>, and <paramref name="options"/>.
         /// </summary>
-        public RedisDistributedSemaphore(RedisKey key, int maxCount, IDatabase database, Action<RedisDistributedLockOptionsBuilder>? options = null)
+        public RedisDistributedSemaphore(RedisKey key, int maxCount, IDatabase database, Action<RedisDistributedSynchronizationOptionsBuilder>? options = null)
         {
             if (key == default(RedisKey)) { throw new ArgumentNullException(nameof(key)); }
             if (maxCount < 1) { throw new ArgumentOutOfRangeException(nameof(maxCount), maxCount, "must be positive"); }
@@ -35,7 +35,7 @@ namespace Medallion.Threading.Redis
 
             this.Key = key;
             this.MaxCount = maxCount;
-            this._options = RedisDistributedLockOptionsBuilder.GetOptions(options);
+            this._options = RedisDistributedSynchronizationOptionsBuilder.GetOptions(options);
         }
 
         internal RedisKey Key { get; }

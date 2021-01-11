@@ -22,7 +22,7 @@ namespace Medallion.Threading.Redis
         /// <summary>
         /// Constructs a lock named <paramref name="key"/> using the provided <paramref name="database"/> and <paramref name="options"/>.
         /// </summary>
-        public RedisDistributedLock(RedisKey key, IDatabase database, Action<RedisDistributedLockOptionsBuilder>? options = null)
+        public RedisDistributedLock(RedisKey key, IDatabase database, Action<RedisDistributedSynchronizationOptionsBuilder>? options = null)
             : this(key, new[] { database ?? throw new ArgumentNullException(nameof(database)) }, options)
         {
         }
@@ -30,13 +30,13 @@ namespace Medallion.Threading.Redis
         /// <summary>
         /// Constructs a lock named <paramref name="key"/> using the provided <paramref name="databases"/> and <paramref name="options"/>.
         /// </summary>
-        public RedisDistributedLock(RedisKey key, IEnumerable<IDatabase> databases, Action<RedisDistributedLockOptionsBuilder>? options = null)
+        public RedisDistributedLock(RedisKey key, IEnumerable<IDatabase> databases, Action<RedisDistributedSynchronizationOptionsBuilder>? options = null)
         {
             if (key == default(RedisKey)) { throw new ArgumentNullException(nameof(key)); }
             this._databases = ValidateDatabases(databases);
 
             this.Key = key;
-            this._options = RedisDistributedLockOptionsBuilder.GetOptions(options);
+            this._options = RedisDistributedSynchronizationOptionsBuilder.GetOptions(options);
         }
 
         internal static IReadOnlyList<IDatabase> ValidateDatabases(IEnumerable<IDatabase> databases)

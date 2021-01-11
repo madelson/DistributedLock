@@ -55,7 +55,7 @@ namespace Medallion.Threading.Tests.Redis
 
             this._provider.Strategy.DatabaseProvider.Databases = databases.Select(d => d.Object).ToArray();
             // use a high min validity time so that TryAcquireAsync() can return very quickly despite the hang
-            this._provider.Strategy.SetOptions(o => o.MinValidityTime(RedisDistributedLockOptionsBuilder.DefaultExpiry.TimeSpan - TimeSpan.FromSeconds(.2)));
+            this._provider.Strategy.SetOptions(o => o.MinValidityTime(RedisDistributedSynchronizationOptionsBuilder.DefaultExpiry.TimeSpan - TimeSpan.FromSeconds(.2)));
             var @lock = this._provider.CreateLock("lock");
 
             Assert.IsNull(await @lock.TryAcquireAsync());
@@ -95,7 +95,7 @@ namespace Medallion.Threading.Tests.Redis
             MockDatabase(database, () => { Thread.Sleep(50); return true; });
 
             this._provider.Strategy.DatabaseProvider.Databases = new[] { database.Object };
-            this._provider.Strategy.SetOptions(o => o.MinValidityTime(RedisDistributedLockOptionsBuilder.DefaultExpiry.TimeSpan - TimeSpan.FromMilliseconds(10)));
+            this._provider.Strategy.SetOptions(o => o.MinValidityTime(RedisDistributedSynchronizationOptionsBuilder.DefaultExpiry.TimeSpan - TimeSpan.FromMilliseconds(10)));
             var @lock = this._provider.CreateLock("lock");
 
             // single sync acquire has different timeout logic, so we test it separately

@@ -15,13 +15,13 @@ namespace Medallion.Threading.Redis
     public sealed class RedisDistributedSynchronizationProvider : IDistributedLockProvider, IDistributedReaderWriterLockProvider, IDistributedSemaphoreProvider
     {
         private readonly IReadOnlyList<IDatabase> _databases;
-        private readonly Action<RedisDistributedLockOptionsBuilder>? _options;
+        private readonly Action<RedisDistributedSynchronizationOptionsBuilder>? _options;
 
         /// <summary>
         /// Constructs a <see cref="RedisDistributedSynchronizationProvider"/> that connects to the provided <paramref name="database"/>
         /// and uses the provided <paramref name="options"/>.
         /// </summary>
-        public RedisDistributedSynchronizationProvider(IDatabase database, Action<RedisDistributedLockOptionsBuilder>? options = null)
+        public RedisDistributedSynchronizationProvider(IDatabase database, Action<RedisDistributedSynchronizationOptionsBuilder>? options = null)
             : this(new[] { database ?? throw new ArgumentNullException(nameof(database)) }, options)
         {
         }
@@ -33,7 +33,7 @@ namespace Medallion.Threading.Redis
         /// Note that if multiple <see cref="IDatabase"/>s are provided, <see cref="CreateSemaphore(RedisKey, int)"/> will use only the first
         /// <see cref="IDatabase"/>.
         /// </summary>
-        public RedisDistributedSynchronizationProvider(IEnumerable<IDatabase> databases, Action<RedisDistributedLockOptionsBuilder>? options = null)
+        public RedisDistributedSynchronizationProvider(IEnumerable<IDatabase> databases, Action<RedisDistributedSynchronizationOptionsBuilder>? options = null)
         {
             this._databases = RedisDistributedLock.ValidateDatabases(databases);
             this._options = options;

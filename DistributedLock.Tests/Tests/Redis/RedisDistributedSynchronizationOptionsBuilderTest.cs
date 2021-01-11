@@ -14,8 +14,8 @@ namespace Medallion.Threading.Tests.Redis
         {
             Assert.Throws<ArgumentOutOfRangeException>(() => GetOptions(o => o.Expiry(TimeSpan.FromSeconds(-2))));
             Assert.Throws<ArgumentOutOfRangeException>(() => GetOptions(o => o.Expiry(Timeout.InfiniteTimeSpan)));
-            Assert.Throws<ArgumentOutOfRangeException>(() => GetOptions(o => o.Expiry(RedisDistributedLockOptionsBuilder.MinimumExpiry.TimeSpan - TimeSpan.FromTicks(1))));
-            Assert.DoesNotThrow(() => GetOptions(o => o.Expiry(RedisDistributedLockOptionsBuilder.MinimumExpiry.TimeSpan)));
+            Assert.Throws<ArgumentOutOfRangeException>(() => GetOptions(o => o.Expiry(RedisDistributedSynchronizationOptionsBuilder.MinimumExpiry.TimeSpan - TimeSpan.FromTicks(1))));
+            Assert.DoesNotThrow(() => GetOptions(o => o.Expiry(RedisDistributedSynchronizationOptionsBuilder.MinimumExpiry.TimeSpan)));
         }
 
         [Test]
@@ -24,9 +24,9 @@ namespace Medallion.Threading.Tests.Redis
             Assert.Throws<ArgumentOutOfRangeException>(() => GetOptions(o => o.MinValidityTime(TimeSpan.FromSeconds(-2))));
             Assert.Throws<ArgumentOutOfRangeException>(() => GetOptions(o => o.MinValidityTime(TimeSpan.Zero)));
             Assert.Throws<ArgumentOutOfRangeException>(() => GetOptions(o => o.MinValidityTime(Timeout.InfiniteTimeSpan)));
-            Assert.Throws<ArgumentOutOfRangeException>(() => GetOptions(o => o.MinValidityTime(RedisDistributedLockOptionsBuilder.DefaultExpiry.TimeSpan)));
+            Assert.Throws<ArgumentOutOfRangeException>(() => GetOptions(o => o.MinValidityTime(RedisDistributedSynchronizationOptionsBuilder.DefaultExpiry.TimeSpan)));
             Assert.DoesNotThrow(() => GetOptions(
-                o => o.MinValidityTime(RedisDistributedLockOptionsBuilder.DefaultExpiry.TimeSpan).Expiry(RedisDistributedLockOptionsBuilder.DefaultExpiry.TimeSpan + TimeSpan.FromMilliseconds(1))
+                o => o.MinValidityTime(RedisDistributedSynchronizationOptionsBuilder.DefaultExpiry.TimeSpan).Expiry(RedisDistributedSynchronizationOptionsBuilder.DefaultExpiry.TimeSpan + TimeSpan.FromMilliseconds(1))
             ));
         }
 
@@ -57,15 +57,15 @@ namespace Medallion.Threading.Tests.Redis
         [Test]
         public void TestDefaults()
         {
-            var defaultOptions = RedisDistributedLockOptionsBuilder.GetOptions(null);
-            defaultOptions.RedLockTimeouts.Expiry.ShouldEqual(RedisDistributedLockOptionsBuilder.DefaultExpiry);
+            var defaultOptions = RedisDistributedSynchronizationOptionsBuilder.GetOptions(null);
+            defaultOptions.RedLockTimeouts.Expiry.ShouldEqual(RedisDistributedSynchronizationOptionsBuilder.DefaultExpiry);
             defaultOptions.RedLockTimeouts.MinValidityTime.ShouldEqual(TimeSpan.FromSeconds(27));
             defaultOptions.ExtensionCadence.ShouldEqual(TimeSpan.FromSeconds(9));
             defaultOptions.MinBusyWaitSleepTime.ShouldEqual(TimeSpan.FromMilliseconds(10));
             defaultOptions.MaxBusyWaitSleepTime.ShouldEqual(TimeSpan.FromMilliseconds(800));
         }
 
-        private static void GetOptions(Action<RedisDistributedLockOptionsBuilder> options) =>
-            RedisDistributedLockOptionsBuilder.GetOptions(options);
+        private static void GetOptions(Action<RedisDistributedSynchronizationOptionsBuilder> options) =>
+            RedisDistributedSynchronizationOptionsBuilder.GetOptions(options);
     }
 }

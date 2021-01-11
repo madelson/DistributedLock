@@ -13,16 +13,16 @@ namespace Medallion.Threading.Tests.Redis
     {
         private bool _preparedForHandleLost, _preparedForHandleAbandonment;
         private Action? _killHandleAction;
-        private Action<RedisDistributedLockOptionsBuilder>? _options;
+        private Action<RedisDistributedSynchronizationOptionsBuilder>? _options;
 
         public TDatabaseProvider DatabaseProvider { get; } = new TDatabaseProvider();
 
-        public void SetOptions(Action<RedisDistributedLockOptionsBuilder>? options)
+        public void SetOptions(Action<RedisDistributedSynchronizationOptionsBuilder>? options)
         {
             this._options = options;
         }
 
-        public void Options(RedisDistributedLockOptionsBuilder options)
+        public void Options(RedisDistributedSynchronizationOptionsBuilder options)
         {
             if (this._preparedForHandleLost)
             {
