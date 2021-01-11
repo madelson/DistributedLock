@@ -45,7 +45,6 @@ namespace Medallion.Threading.FileSystem
             this.Name = FileNameValidationHelper.GetLockFileName(lockFileDirectory, name);
         }
 
-        // todo revisit API
         /// <summary>
         /// Implements <see cref="IDistributedLock.Name"/>
         /// </summary>

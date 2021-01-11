@@ -69,6 +69,7 @@ namespace Medallion.Threading.Tests.Redis
             );
 
             await AcquireReadLockAsync();
+            await Task.Delay(20); // seems to help ensure that the GC works
             GC.Collect();
             GC.WaitForPendingFinalizers();
 

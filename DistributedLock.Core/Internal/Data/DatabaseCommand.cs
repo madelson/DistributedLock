@@ -185,7 +185,6 @@ namespace Medallion.Threading.Internal.Data
 #if NETSTANDARD2_1
                 if (!SyncViaAsync.IsSynchronous && this._command is DbCommand dbCommand)
                 {
-                    // todo does canceling prepareasync doom pg transaction?
                     return dbCommand.PrepareAsync(cancellationToken).AsValueTask();
                 }
 #elif !NETSTANDARD2_0 && !NET461

@@ -9,8 +9,6 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading.Postgres
 {
-    // todo integrate into all appropriate abstract test cases (will want a new provider concept to abstract away pool clearing, credentials, DbProviderFactory, etc)
-
     /// <summary>
     /// Implements a distributed lock using Postgres advisory locks
     /// (see https://www.postgresql.org/docs/12/functions-admin.html#FUNCTIONS-ADVISORY-LOCKS)
@@ -19,7 +17,6 @@ namespace Medallion.Threading.Postgres
     {
         private readonly IDbDistributedLock _internalLock;
 
-        // todo revisit API
         /// <summary>
         /// Constructs a lock with the given <paramref name="key"/> (effectively the lock name), <paramref name="connectionString"/>,
         /// and <paramref name="options"/>
@@ -43,9 +40,8 @@ namespace Medallion.Threading.Postgres
             this._internalLock = internalLock;
         }
 
-        // todo consider API with name
         /// <summary>
-        /// The lock name
+        /// The <see cref="PostgresAdvisoryLockKey"/> that uniquely identifies the lock on the database
         /// </summary>
         public PostgresAdvisoryLockKey Key { get; }
 

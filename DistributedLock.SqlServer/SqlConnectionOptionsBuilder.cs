@@ -72,8 +72,6 @@ namespace Medallion.Threading.SqlServer
             return this;
         }
 
-        // todo access token? access token factory?
-
         internal static (TimeoutValue keepaliveCadence, bool useTransaction, bool useMultiplexing) GetOptions(Action<SqlConnectionOptionsBuilder>? optionsBuilder)
         {
             SqlConnectionOptionsBuilder? options;

@@ -7,9 +7,8 @@ using System.Data.Common;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Medallion.Threading.Tests.Data
+namespace Medallion.Threading.Tests.SqlServer
 {
-    // todo should this be extended to cover all DatabaseConnections? if not it should move out of Data
     public class SqlDatabaseConnectionTest
     {
         [Test, Combinatorial]

@@ -55,6 +55,15 @@ namespace Medallion.Threading.Tests.Data
             tasks.Count(t => t.Status == TaskStatus.RanToCompletion).ShouldEqual(1);
         }
 
+        [Test]
+        public async Task TestReAcquireLockOnSameConnection()
+        {
+            var @lock = this._lockProvider.CreateLock("lock");
+            await using var handle = await @lock.AcquireAsync();
+            Assert.ThrowsAsync<DeadlockException>(() => @lock.AcquireAsync().AsTask());
+            Assert.ThrowsAsync<TimeoutException>(() => @lock.AcquireAsync(TimeSpan.FromSeconds(.01)).AsTask());
+        }
+
         /// <summary>
         /// Currently, we leverage <see cref="DbConnection.StateChange"/> to track handle loss. This test
         /// validates that the handler is properly removed when the lock handle is disposed

@@ -22,8 +22,7 @@ namespace Medallion.Threading.Tests.Data
         /// Similar to <see cref="DistributedLockCoreTestCases{TLockProvider, TStrategy}.TestLockAbandonment"/> but demonstrates 
         /// the time-based cleanup loop rather than forcing a cleanup
         /// </summary>
-        [Test]
-        // todo if we parallelize we need to make sure this test blocks anyone else from calling MFQ.FinalizeAsync() since that defeats the point
+        [Test, NonParallelizable] // timing sensitive
         public void TestLockAbandonmentWithTimeBasedCleanupRun()
         {
             var lock1 = this._lockProvider.CreateLock(nameof(this.TestLockAbandonmentWithTimeBasedCleanupRun));

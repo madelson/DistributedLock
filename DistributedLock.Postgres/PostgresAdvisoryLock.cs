@@ -96,9 +96,8 @@ namespace Medallion.Threading.Postgres
                 case 0: return null;
                 case 1: return Cookie;
                 case AlreadyHeldReturnCode:
-                    // todo revisit this behavior. Probably should throw deadlock to be consistent with Semaphore. See also SqlApplicationLock
                     if (timeout.IsZero) { return null; }
-                    if (timeout.IsInfinite) { throw new InvalidOperationException("Attempted to acquire a lock that is already held on the same connection"); }
+                    if (timeout.IsInfinite) { throw new DeadlockException("Attempted to acquire a lock that is already held on the same connection"); }
                     await SyncViaAsync.Delay(timeout, cancellationToken).ConfigureAwait(false);
                     return null;
                 default:

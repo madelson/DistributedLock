@@ -101,7 +101,6 @@ namespace Medallion.Threading.SqlServer
         {
             var box = this._box ?? throw this.ObjectDisposed();
             var contents = box.Value;
-            // todo ensure test for this
             if (contents.upgradedHandle != null) { throw new InvalidOperationException("the lock has already been upgraded"); }
             return TryPerformUpgradeAsync();
 

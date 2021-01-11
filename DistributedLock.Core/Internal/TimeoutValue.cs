@@ -3,7 +3,6 @@ using System.Threading;
 
 namespace Medallion.Threading.Internal
 {
-    // todo test
     /// <summary>
     /// A type which can only store a valid timeout value
     /// </summary>

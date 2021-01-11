@@ -182,16 +182,16 @@ namespace Medallion.Threading.SqlServer
                 case -999: // parameter / unknown
                     throw new ArgumentException(GetErrorMessage(exitCode, "parameter validation or other error"));
 
-                case InvalidUpgradeExitCode: // todo add test that hits this case (requires releasing on the connection or acquiring write before upgrade)
+                case InvalidUpgradeExitCode: 
+                    // should never happen unless something goes wrong (e. g. user manually releases the lock on an externally-owned connection)
                     throw new InvalidOperationException("Cannot upgrade to an exclusive lock because the update lock is not held");
                 case AlreadyHeldExitCode:
                     return timeout.IsZero ? false
-                        : timeout.IsInfinite ? throw new InvalidOperationException("Attempted to acquire a lock that is already held on the same connection")
+                        : timeout.IsInfinite ? throw new DeadlockException("Attempted to acquire a lock that is already held on the same connection")
                         : await WaitThenReturnFalseAsync().ConfigureAwait(false);
 
                 default:
-                    if (exitCode <= 0)
-                        throw new InvalidOperationException(GetErrorMessage(exitCode, "unknown"));
+                    if (exitCode <= 0) { throw new InvalidOperationException(GetErrorMessage(exitCode, "unknown")); }
                     return true; // unknown success code
             }
 

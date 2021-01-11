@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading.Postgres
 {
-    // todo this whole file could be auto-generated
     /// <summary>
     /// Implements <see cref="IDistributedSynchronizationHandle"/>
     /// </summary>

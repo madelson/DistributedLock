@@ -17,7 +17,6 @@ namespace Medallion.Threading.Postgres
     {
         private readonly IDbDistributedLock _internalLock;
 
-        // todo revisit API
         /// <summary>
         /// Constructs a lock with the given <paramref name="key"/> (effectively the lock name), <paramref name="connectionString"/>,
         /// and <paramref name="options"/>
@@ -41,16 +40,15 @@ namespace Medallion.Threading.Postgres
             this._internalLock = internalLock;
         }
 
-        // todo consider API with name
         /// <summary>
-        /// Equivalent to <see cref="IDistributedReaderWriterLock.Name"/>
+        /// The <see cref="PostgresAdvisoryLockKey"/> that uniquely identifies the lock on the database
         /// </summary>
         public PostgresAdvisoryLockKey Key { get; }
 
         string IDistributedReaderWriterLock.Name => this.Key.ToString();
 
         /// <summary>
-        /// Equivalent to TODO
+        /// Equivalent to TODO remove
         /// </summary>
         public static PostgresAdvisoryLockKey GetSafeName(string name) => PostgresDistributedLock.GetSafeName(name);
 

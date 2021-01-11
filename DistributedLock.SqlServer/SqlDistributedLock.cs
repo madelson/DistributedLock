@@ -15,8 +15,6 @@ namespace Medallion.Threading.SqlServer
     {
         private readonly IDbDistributedLock _internalLock;
 
-        // todo connection factory API (to allow for access tokens)?
-
         /// <summary>
         /// Constructs a new lock using the provided <paramref name="name"/>. 
         /// 
@@ -76,7 +74,6 @@ namespace Medallion.Threading.SqlServer
         /// </summary>
         public static int MaxNameLength => 255;
 
-        // todo should this be the safe name or the user-provided name? Should we even expose this?
         /// <summary>
         /// Implements <see cref="IDistributedLock.Name"/>
         /// </summary>

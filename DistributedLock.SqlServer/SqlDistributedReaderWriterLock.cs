@@ -7,8 +7,6 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading.SqlServer
 {
-    // todo rename assembly to .SqlServer
-
     /// <summary>
     /// Implements reader-writer lock semantics using a SQL server application lock
     /// (see https://msdn.microsoft.com/en-us/library/ms189823.aspx).
