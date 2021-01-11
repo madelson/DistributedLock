@@ -7,7 +7,7 @@ using System.Threading;
 
 namespace Medallion.Threading.Tests.Redis
 {
-    public class RedisDistributedLockOptionsBuilderTest
+    public class RedisDistributedSynchronizationOptionsBuilderTest
     {
         [Test]
         public void TestValidatesExpiry()

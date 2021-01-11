@@ -104,6 +104,18 @@ namespace Medallion.Threading.Tests
             );
         }
 
+        [TestCaseSource(nameof(DistributedLockAssemblies))]
+        public void TestLegacyGetSafeNameApisAreRemoved(AssemblyName assemblyName)
+        {
+            var assembly = Assembly.Load(assemblyName);
+            var publicTypes = GetPublicTypes(assembly);
+            foreach (var publicType in publicTypes)
+            {
+                Assert.IsNull(publicType.GetMethod("GetSafeName", BindingFlags.Public | BindingFlags.Static));
+                Assert.IsNull(publicType.GetProperty("MaxNameLength", BindingFlags.Public | BindingFlags.Static));
+            }
+        }
+
         private static IEnumerable<Type> GetPublicTypes(Assembly assembly) => assembly.GetTypes()
                 .Where(IsInPublicApi)
 #if DEBUG

@@ -10,7 +10,7 @@ namespace Medallion.Threading.Tests.WaitHandles
     {
         public override IDistributedLock CreateLockWithExactName(string name) => new EventWaitHandleDistributedLock(name, exactName: true);
 
-        public override string GetSafeName(string name) => EventWaitHandleDistributedLock.GetSafeName(name);
+        public override string GetSafeName(string name) => DistributedWaitHandleHelpers.GetSafeName(name);
     }
 
     [SupportsContinuousIntegration(WindowsOnly = true)]
@@ -18,6 +18,6 @@ namespace Medallion.Threading.Tests.WaitHandles
     {
         public override IDistributedSemaphore CreateSemaphoreWithExactName(string name, int maxCount) => new WaitHandleDistributedSemaphore(name, maxCount, exactName: true);
 
-        public override string GetSafeName(string name) => WaitHandleDistributedSemaphore.GetSafeName(name);
+        public override string GetSafeName(string name) => DistributedWaitHandleHelpers.GetSafeName(name);
     }
 }

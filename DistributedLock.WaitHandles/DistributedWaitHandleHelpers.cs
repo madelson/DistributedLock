@@ -13,7 +13,7 @@ namespace Medallion.Threading.WaitHandles
         private static readonly TimeoutValue DefaultAbandonmentCheckCadence = TimeSpan.FromSeconds(2);
 
         // 260 based on LINQPad experimentation
-        public static int MaxNameLength => 260;
+        public const int MaxNameLength = 260;
 
         public static string GetSafeName(string name)
         {

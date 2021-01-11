@@ -22,7 +22,7 @@ namespace Medallion.Threading.WaitHandles
         /// <paramref name="abandonmentCheckCadence"/> specifies how frequently we refresh our <see cref="Semaphore"/> object in case it is abandoned by
         /// its original owner. The default is 2s.
         /// 
-        /// Unless <paramref name="exactName"/> is specified, <see cref="GetSafeName(string)"/> will be called on the provided <paramref name="name"/>.
+        /// Unless <paramref name="exactName"/> is specified, <paramref name="name"/> will be escaped/hashed to ensure name validity.
         /// </summary>
         public WaitHandleDistributedSemaphore(string name, int maxCount, TimeSpan? abandonmentCheckCadence = null, bool exactName = false)
         {
@@ -32,18 +32,6 @@ namespace Medallion.Threading.WaitHandles
             this.MaxCount = maxCount;
             this._abandonmentCheckCadence = DistributedWaitHandleHelpers.ValidateAndFinalizeAbandonmentCheckCadence(abandonmentCheckCadence);
         }
-
-        // todo static APIs
-        /// <summary>
-        /// The maximum length allowed for semaphore names
-        /// </summary>
-        public static int MaxNameLength => DistributedWaitHandleHelpers.MaxNameLength;
-
-        /// <summary>
-        /// Returns either the provided <paramref name="name"/> or a transformed version of <paramref name="name"/> which
-        /// is safe to use with the "exactName" constructor parameter.
-        /// </summary>
-        public static string GetSafeName(string name) => DistributedWaitHandleHelpers.GetSafeName(name);
 
         /// <summary>
         /// Implements <see cref="IDistributedSemaphore.Name"/>

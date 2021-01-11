@@ -47,11 +47,6 @@ namespace Medallion.Threading.Postgres
 
         string IDistributedLock.Name => this.Key.ToString();
 
-        /// <summary>
-        /// TODO probably remove this API
-        /// </summary>
-        public static PostgresAdvisoryLockKey GetSafeName(string name) => new PostgresAdvisoryLockKey(name, allowHashing: true);
-
         ValueTask<PostgresDistributedLockHandle?> IInternalDistributedLock<PostgresDistributedLockHandle>.InternalTryAcquireAsync(TimeoutValue timeout, CancellationToken cancellationToken) =>
             this._internalLock.TryAcquireAsync(timeout, PostgresAdvisoryLock.ExclusiveLock, cancellationToken, contextHandle: null).Wrap(h => new PostgresDistributedLockHandle(h));
 

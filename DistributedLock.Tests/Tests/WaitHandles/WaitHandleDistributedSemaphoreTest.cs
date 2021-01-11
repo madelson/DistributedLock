@@ -37,10 +37,8 @@ namespace Medallion.Threading.Tests.WaitHandles
         [Test]
         public void TestMaxLengthNames()
         {
-            WaitHandleDistributedSemaphore.MaxNameLength.ShouldEqual(DistributedWaitHandleHelpers.MaxNameLength);
-
             var maxLengthName = DistributedWaitHandleHelpers.GlobalPrefix
-                + new string('a', WaitHandleDistributedSemaphore.MaxNameLength - DistributedWaitHandleHelpers.GlobalPrefix.Length);
+                + new string('a', DistributedWaitHandleHelpers.MaxNameLength - DistributedWaitHandleHelpers.GlobalPrefix.Length);
             this.TestWorkingName(maxLengthName, NameStyle.Exact);
             this.TestBadName(maxLengthName + "a", NameStyle.Exact);
         }
@@ -69,20 +67,20 @@ namespace Medallion.Threading.Tests.WaitHandles
             (DistributedWaitHandleHelpers.MaxNameLength - DistributedWaitHandleHelpers.GlobalPrefix.Length)
                 .ShouldEqual(MaxNameLengthWithoutGlobalPrefix);
 
-            WaitHandleDistributedSemaphore.GetSafeName("").ShouldEqual(@"Global\EMPTYz4PhNX7vuL3xVChQ1m2AB9Yg5AULVxXcg/SpIdNs6c5H0NE8XYXysP+DGNKHfuwvY7kxvUdBeoGlODJ6+SfaPg==");
-            WaitHandleDistributedSemaphore.GetSafeName("abc").ShouldEqual(@"Global\abc");
-            WaitHandleDistributedSemaphore.GetSafeName("\\").ShouldEqual(@"Global\_CgzRFsLFf7El/ZraEx9sqWRYeplYohSBSmI9sYIe1c4y2u7ECFoU4x2QCjV7HiVJMZsuDMLIz7r8akpKr+viAw==");
-            WaitHandleDistributedSemaphore.GetSafeName(new string('a', MaxNameLengthWithoutGlobalPrefix))
+            new WaitHandleDistributedSemaphore("", 1).Name.ShouldEqual(@"Global\EMPTYz4PhNX7vuL3xVChQ1m2AB9Yg5AULVxXcg/SpIdNs6c5H0NE8XYXysP+DGNKHfuwvY7kxvUdBeoGlODJ6+SfaPg==");
+            new WaitHandleDistributedSemaphore("abc", 1).Name.ShouldEqual(@"Global\abc");
+            new WaitHandleDistributedSemaphore("\\", 1).Name.ShouldEqual(@"Global\_CgzRFsLFf7El/ZraEx9sqWRYeplYohSBSmI9sYIe1c4y2u7ECFoU4x2QCjV7HiVJMZsuDMLIz7r8akpKr+viAw==");
+            new WaitHandleDistributedSemaphore(new string('a', MaxNameLengthWithoutGlobalPrefix), 1).Name
                 .ShouldEqual(@"Global\" + new string('a', MaxNameLengthWithoutGlobalPrefix));
-            WaitHandleDistributedSemaphore.GetSafeName(new string('\\', MaxNameLengthWithoutGlobalPrefix))
+            new WaitHandleDistributedSemaphore(new string('\\', MaxNameLengthWithoutGlobalPrefix), 1).Name
                 .ShouldEqual(@"Global\_____________________________________________________________________________________________________________________________________________________________________Y7DJXlpJeJjeX5XAOWV+ka/3ONBj5dHhKWcSH4pd5AC9YHFm+l1gBArGpBSBn3WcX00ArcDtKw7g24kJaHLifQ==");
-            WaitHandleDistributedSemaphore.GetSafeName(new string('x', MaxNameLengthWithoutGlobalPrefix + 1))
+            new WaitHandleDistributedSemaphore(new string('x', MaxNameLengthWithoutGlobalPrefix + 1), 1).Name
                 .ShouldEqual(@"Global\xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxsrCnXZ1XHiT//dOSBfAU0iC4Gtnlr0dQACBUK8Ev2OdRYJ9jcvbiqVCv/rjyPemTW9AvOonkdr0B2bG04gmeYA==");
         }
 
         private static WaitHandleDistributedSemaphore CreateAsLock(string name, NameStyle nameStyle) =>
             new WaitHandleDistributedSemaphore(
-                (nameStyle == NameStyle.AddPrefix ? DistributedWaitHandleHelpers.GlobalPrefix + name : name),
+                nameStyle == NameStyle.AddPrefix ? DistributedWaitHandleHelpers.GlobalPrefix + name : name,
                 maxCount: 1,
                 abandonmentCheckCadence: TimeSpan.FromSeconds(.3),
                 exactName: nameStyle != NameStyle.Safe

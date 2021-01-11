@@ -47,11 +47,6 @@ namespace Medallion.Threading.Postgres
 
         string IDistributedReaderWriterLock.Name => this.Key.ToString();
 
-        /// <summary>
-        /// Equivalent to TODO remove
-        /// </summary>
-        public static PostgresAdvisoryLockKey GetSafeName(string name) => PostgresDistributedLock.GetSafeName(name);
-
         ValueTask<PostgresDistributedReaderWriterLockHandle?> IInternalDistributedReaderWriterLock<PostgresDistributedReaderWriterLockHandle>.InternalTryAcquireAsync(
             TimeoutValue timeout,
             CancellationToken cancellationToken,

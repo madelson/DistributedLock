@@ -20,7 +20,7 @@ namespace Medallion.Threading.WaitHandles
         /// <paramref name="abandonmentCheckCadence"/> specifies how frequently we refresh our <see cref="EventWaitHandle"/> object in case it is abandoned by
         /// its original owner. The default is 2s.
         /// 
-        /// Unless <paramref name="exactName"/> is specified, <see cref="GetSafeName(string)"/> will be called on the provided <paramref name="name"/>.
+        /// Unless <paramref name="exactName"/> is specified, <paramref name="name"/> will be escaped/hashed to ensure name validity.
         /// </summary>
         public EventWaitHandleDistributedLock(string name, TimeSpan? abandonmentCheckCadence = null, bool exactName = false)
         {
@@ -29,19 +29,9 @@ namespace Medallion.Threading.WaitHandles
         }
 
         /// <summary>
-        /// The maximum allowed length for lock names
-        /// </summary>
-        public static int MaxNameLength => DistributedWaitHandleHelpers.MaxNameLength;
-
-        /// <summary>
         /// Implements <see cref="IDistributedLock.Name"/>
         /// </summary>
         public string Name { get; }
-
-        /// <summary>
-        /// TODO probably remove this API
-        /// </summary>
-        public static string GetSafeName(string name) => DistributedWaitHandleHelpers.GetSafeName(name);
 
         async ValueTask<EventWaitHandleDistributedLockHandle?> IInternalDistributedLock<EventWaitHandleDistributedLockHandle>.InternalTryAcquireAsync(
             TimeoutValue timeout,
