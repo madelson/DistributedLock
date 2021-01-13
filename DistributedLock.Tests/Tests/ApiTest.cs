@@ -105,6 +105,20 @@ namespace Medallion.Threading.Tests
         }
 
         [TestCaseSource(nameof(DistributedLockAssemblies))]
+        public void TestInternalNamedMembersAreInternal(AssemblyName assemblyName)
+        {
+            var assembly = Assembly.Load(assemblyName);
+            var publicTypes = GetPublicTypes(assembly);
+            foreach (var publicType in publicTypes)
+            {
+                Assert.IsEmpty(
+                    publicType.GetMembers(BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance)
+                        .Where(m => m.Name.Contains("Internal"))
+                );
+            }
+        }
+
+        [TestCaseSource(nameof(DistributedLockAssemblies))]
         public void TestLegacyGetSafeNameApisAreRemoved(AssemblyName assemblyName)
         {
             var assembly = Assembly.Load(assemblyName);
