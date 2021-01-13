@@ -144,7 +144,7 @@ namespace Medallion.Threading.Tests
                 Assert.IsTrue(canceledEvent.Wait(TimeSpan.FromSeconds(10)));
             }
 
-            // todo revisit
+            // when the handle is lost, Dispose() may throw
             try { await handle.DisposeAsync(); }
             catch { }
         }

@@ -306,7 +306,7 @@ namespace Medallion.Threading.Tests
                 Assert.IsTrue(handle.HandleLostToken.IsCancellationRequested);
             }
 
-            // todo revisit behavior here and in similar cases; do we want to fail hard on Dispose if the handle is lost?
+            // when the handle is lost, Dispose() may throw
             try { await handle.DisposeAsync(); }
             catch { }
 
@@ -335,8 +335,8 @@ namespace Medallion.Threading.Tests
             using var canceledEvent = new ManualResetEventSlim(initialState: false);
             handle.HandleLostToken.Register(canceledEvent.Set);
             Assert.IsTrue(canceledEvent.Wait(TimeSpan.FromSeconds(5)));
-            
-            // todo revisit
+
+            // when the handle is lost, Dispose() may throw
             try { handle.Dispose(); }
             catch { }
         }
