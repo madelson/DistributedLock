@@ -16,7 +16,8 @@ namespace Medallion.Threading.Postgres
         private readonly KeyEncoding _keyEncoding;
 
         /// <summary>
-        /// Constructs a key from a single 64-bit value
+        /// Constructs a key from a single 64-bit value. This is a separate key space 
+        /// than <see cref="PostgresAdvisoryLockKey(int, int)"/>.
         /// </summary>
         public PostgresAdvisoryLockKey(long key)
         {
@@ -25,7 +26,8 @@ namespace Medallion.Threading.Postgres
         }
 
         /// <summary>
-        /// Constructs a key from a pair of 32-bit values
+        /// Constructs a key from a pair of 32-bit values. This is a separate key space 
+        /// than <see cref="PostgresAdvisoryLockKey(long)"/>.
         /// </summary>
         public PostgresAdvisoryLockKey(int key1, int key2)
         {
@@ -33,7 +35,6 @@ namespace Medallion.Threading.Postgres
             this._keyEncoding = KeyEncoding.Int32Pair;
         }
 
-        // todo should allow hashing be default (exact name)?
         /// <summary>
         /// Constructs a key based on a string <paramref name="name"/>.
         /// 
@@ -65,7 +66,7 @@ namespace Medallion.Threading.Postgres
             else
             {
                 throw new FormatException($"Name '{name}' could not be encoded as a {nameof(PostgresAdvisoryLockKey)}. Please specify {nameof(allowHashing)} or use one of the following formats:"
-                    + $" or (1) a 0-{MaxAsciiLength} character string using only non-0 ASCII characters"
+                    + $" or (1) a 0-{MaxAsciiLength} character string using only ASCII characters"
                     + $", (2) a {HashStringLength} character hex string, such as the result of Int64.MaxValue.ToString(\"x{HashStringLength}\")"
                     + $", or (3) a 2-part, {SeparatedHashStringLength} character string of the form XXXXXXXX{HashStringSeparator}XXXXXXXX, where the X's are {HashPartLength} hex strings"
                     + $" such as the result of Int32.MaxValue.ToString(\"x{HashPartLength}\")."

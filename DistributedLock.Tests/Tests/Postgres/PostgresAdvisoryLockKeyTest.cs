@@ -87,6 +87,9 @@ namespace Medallion.Threading.Tests.Postgres
             AssertEquality(new PostgresAdvisoryLockKey("ASCII"), new PostgresAdvisoryLockKey("ASCII"));
             AssertInequality(new PostgresAdvisoryLockKey("ASCII"), new PostgresAdvisoryLockKey("ASCIi"));
 
+            AssertInequality(new PostgresAdvisoryLockKey(string.Empty), new PostgresAdvisoryLockKey("\0"));
+            AssertInequality(new PostgresAdvisoryLockKey("\0"), new PostgresAdvisoryLockKey("a"));
+
             AssertEquality(new PostgresAdvisoryLockKey("some very long name", allowHashing: true), new PostgresAdvisoryLockKey("some very long name", allowHashing: true));
             AssertInequality(new PostgresAdvisoryLockKey("some very long name", allowHashing: true), new PostgresAdvisoryLockKey("same very long name", allowHashing: true));
 
