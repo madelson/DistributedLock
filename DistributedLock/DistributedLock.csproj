@@ -13,10 +13,7 @@
     <Version>2.0.0</Version>
     <AssemblyVersion>2.0.0.0</AssemblyVersion>
     <Authors>Michael Adelson</Authors>
-    <Description>
-      Provides easy-to-use mutexes, reader-writer locks, and semaphores that can synchronize across processes and machines. This is an umbrella 
-      package that brings in the entire family of DistributedLock.* packages (e. g. DistributedLock.SqlServer) as references. Those packages can also
-      be installed individually.
+    <Description>Provides easy-to-use mutexes, reader-writer locks, and semaphores that can synchronize across processes and machines. This is an umbrella package that brings in the entire family of DistributedLock.* packages (e. g. DistributedLock.SqlServer) as references. Those packages can also be installed individually.
     </Description>
     <Copyright>Copyright © 2017 Michael Adelson</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
