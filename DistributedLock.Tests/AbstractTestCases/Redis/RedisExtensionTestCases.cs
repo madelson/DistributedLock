@@ -20,11 +20,11 @@ namespace Medallion.Threading.Tests.Redis
         public void TearDown() => this._provider.Dispose();
 
         [Test]
-        [NonParallelizable] // timing-sensitive
+        [NonParallelizable, Retry(tryCount: 3)] // timing-sensitive
         public async Task TestCanExtendLock()
         {
             this._provider.Strategy.SetOptions(o => o.Expiry(TimeSpan.FromSeconds(1)).BusyWaitSleepTime(TimeSpan.FromMilliseconds(50), TimeSpan.FromMilliseconds(50)));
-            var @lock = this._provider.CreateLock("lock");
+            var @lock = this._provider.CreateLock(Guid.NewGuid().ToString());
 
             await using var handle = await @lock.AcquireAsync();
 

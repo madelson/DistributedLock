@@ -27,9 +27,9 @@ namespace Medallion.Threading.Tests.Data
             var applicationName = this._lockProvider.Strategy.SetUniqueApplicationName();
 
             this._lockProvider.Strategy.KeepaliveCadence = TimeSpan.FromSeconds(.1);
-            var @lock = this._lockProvider.CreateUpgradeableReaderWriterLock(nameof(TestKeepaliveProtectsFromIdleSessionKillerAfterFailedUpgrade));
+            var @lock = this._lockProvider.CreateUpgradeableReaderWriterLock(Guid.NewGuid().ToString());
 
-            using var idleSessionKiller = new IdleSessionKiller(this._lockProvider.Strategy.Db, applicationName, idleTimeout: TimeSpan.FromSeconds(.25));
+            using var idleSessionKiller = new IdleSessionKiller(this._lockProvider.Strategy.Db, applicationName, idleTimeout: TimeSpan.FromSeconds(.3));
 
             using (@lock.AcquireReadLock())
             {
