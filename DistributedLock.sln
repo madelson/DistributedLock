@@ -1,13 +1,35 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.26403.0
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29613.14
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DistributedLock", "DistributedLock\DistributedLock.csproj", "{C1F56B68-C2EE-48E5-A99B-B40D397AE34F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DistributedLock.Tests", "DistributedLock.Tests\DistributedLock.Tests.csproj", "{DDAD6899-3EF5-49BC-A41D-D46F50751457}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DistributedLock.Tests", "DistributedLock.Tests\DistributedLock.Tests.csproj", "{DDAD6899-3EF5-49BC-A41D-D46F50751457}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DistributedLockTaker", "DistributedLockTaker\DistributedLockTaker.csproj", "{6219CF2C-A3F8-4453-BE20-79EFC32987D9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DistributedLockTaker", "DistributedLockTaker\DistributedLockTaker.csproj", "{6219CF2C-A3F8-4453-BE20-79EFC32987D9}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DistributedLock.Postgres", "DistributedLock.Postgres\DistributedLock.Postgres.csproj", "{2646CB8F-FB5E-4712-8B1B-C1F991228A14}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DistributedLock.Core", "DistributedLock.Core\DistributedLock.Core.csproj", "{AC520183-960F-401F-9990-835916291335}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DistributedLock.WaitHandles", "DistributedLock.WaitHandles\DistributedLock.WaitHandles.csproj", "{6D2323D2-5784-4165-9EF6-2D812615BE30}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DistributedLockCodeGen", "DistributedLockCodeGen\DistributedLockCodeGen.csproj", "{FD0A6F2C-277A-492F-85FE-26A3FBD0383B}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DistributedLock.SqlServer", "DistributedLock.SqlServer\DistributedLock.SqlServer.csproj", "{A7C39A34-B8FA-48B0-87C4-65FE2A8BD62B}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DistributedLock.Azure", "DistributedLock.Azure\DistributedLock.Azure.csproj", "{1C5E80A9-343A-44AA-A40E-00EAFE485D36}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DistributedLock.FileSystem", "DistributedLock.FileSystem\DistributedLock.FileSystem.csproj", "{6B0DBD7E-3A43-4FED-82BA-9927360E1D92}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DistributedLock.Redis", "DistributedLock.Redis\DistributedLock.Redis.csproj", "{8ADAA171-8373-432E-8D2B-3DA73E35EB76}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{D14FE348-E866-4784-8345-DD15FB697E4E}"
+	ProjectSection(SolutionItems) = preProject
+		CopyPackageToPublishDirectory.targets = CopyPackageToPublishDirectory.targets
+		FixDistributedLockCoreDependencyVersion.targets = FixDistributedLockCoreDependencyVersion.targets
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -27,12 +49,43 @@ Global
 		{6219CF2C-A3F8-4453-BE20-79EFC32987D9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6219CF2C-A3F8-4453-BE20-79EFC32987D9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6219CF2C-A3F8-4453-BE20-79EFC32987D9}.Release|Any CPU.Build.0 = Release|Any CPU
-		{DE234924-70AD-4675-9BFD-D08017126CA1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{DE234924-70AD-4675-9BFD-D08017126CA1}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{DE234924-70AD-4675-9BFD-D08017126CA1}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{DE234924-70AD-4675-9BFD-D08017126CA1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2646CB8F-FB5E-4712-8B1B-C1F991228A14}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2646CB8F-FB5E-4712-8B1B-C1F991228A14}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2646CB8F-FB5E-4712-8B1B-C1F991228A14}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2646CB8F-FB5E-4712-8B1B-C1F991228A14}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AC520183-960F-401F-9990-835916291335}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AC520183-960F-401F-9990-835916291335}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AC520183-960F-401F-9990-835916291335}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AC520183-960F-401F-9990-835916291335}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6D2323D2-5784-4165-9EF6-2D812615BE30}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6D2323D2-5784-4165-9EF6-2D812615BE30}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6D2323D2-5784-4165-9EF6-2D812615BE30}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6D2323D2-5784-4165-9EF6-2D812615BE30}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FD0A6F2C-277A-492F-85FE-26A3FBD0383B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FD0A6F2C-277A-492F-85FE-26A3FBD0383B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FD0A6F2C-277A-492F-85FE-26A3FBD0383B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FD0A6F2C-277A-492F-85FE-26A3FBD0383B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A7C39A34-B8FA-48B0-87C4-65FE2A8BD62B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A7C39A34-B8FA-48B0-87C4-65FE2A8BD62B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A7C39A34-B8FA-48B0-87C4-65FE2A8BD62B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A7C39A34-B8FA-48B0-87C4-65FE2A8BD62B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1C5E80A9-343A-44AA-A40E-00EAFE485D36}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1C5E80A9-343A-44AA-A40E-00EAFE485D36}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1C5E80A9-343A-44AA-A40E-00EAFE485D36}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1C5E80A9-343A-44AA-A40E-00EAFE485D36}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6B0DBD7E-3A43-4FED-82BA-9927360E1D92}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6B0DBD7E-3A43-4FED-82BA-9927360E1D92}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6B0DBD7E-3A43-4FED-82BA-9927360E1D92}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6B0DBD7E-3A43-4FED-82BA-9927360E1D92}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8ADAA171-8373-432E-8D2B-3DA73E35EB76}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8ADAA171-8373-432E-8D2B-3DA73E35EB76}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8ADAA171-8373-432E-8D2B-3DA73E35EB76}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8ADAA171-8373-432E-8D2B-3DA73E35EB76}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {A57197BF-F870-4DEC-AE23-EB1C5041DBED}
 	EndGlobalSection
 EndGlobal

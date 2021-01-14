@@ -1,0 +1,21 @@
+<Project>
+  <!--
+    By default, generating packages on build will leave us with >= references between distributed lock projects. However, since we are using SemVer we'd like to be more
+    restrictive. Since we are referencing DistributedLock.Core internals, we're not going to have the typical [current, next major) range but will instead do
+    [current, next minor) and only break internal APIs in new minor versions.
+    
+    Workaround based on https://github.com/NuGet/Home/issues/5556#issuecomment-585482714
+  -->
+  <Target Name="_ExactProjectReferencesVersion" AfterTargets="_GetProjectReferenceVersions">
+    <ItemGroup>
+      <!-- Addition from https://docs.microsoft.com/en-us/previous-versions/visualstudio/visual-studio-2015/msbuild/property-functions?view=vs-2015&redirectedfrom=MSDN#BKMK_PropertyFunctions -->
+      <_ProjectReferencesWithExactVersions Include="@(_ProjectReferencesWithVersions)">
+        <ProjectVersion>[%(_ProjectReferencesWithVersions.ProjectVersion), $([MSBuild]::Add($([System.Text.RegularExpressions.Regex]::Match('%(_ProjectReferencesWithVersions.ProjectVersion)', '^\d+\.\d+').Value), '0.1')))</ProjectVersion>
+      </_ProjectReferencesWithExactVersions>
+    </ItemGroup>
+    <ItemGroup>
+      <_ProjectReferencesWithVersions Remove="@(_ProjectReferencesWithVersions)" />
+      <_ProjectReferencesWithVersions Include="@(_ProjectReferencesWithExactVersions)" />
+    </ItemGroup>
+  </Target>
+</Project>

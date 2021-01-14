@@ -7,6 +7,9 @@
     <LangVersion>Latest</LangVersion>
     <Nullable>enable</Nullable>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
+    <NoWarn>1591</NoWarn>
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>..\DistributedLock.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)'=='Debug'">
@@ -15,12 +18,16 @@
 
   <PropertyGroup Condition="'$(Configuration)'=='Release'">
     <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
-    <TreatSpecificWarningsAsErrors />
+    <TreatSpecificWarningsAsErrors />  
     <Optimize>True</Optimize>
     <DefineConstants>TRACE</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\DistributedLock\DistributedLock.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\DistributedLock.Tests\Infrastructure\Shared\*.cs" />
   </ItemGroup>
 </Project>
