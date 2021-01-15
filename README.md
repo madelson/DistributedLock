@@ -14,12 +14,12 @@ using (await myDistributedLock.AcquireAsync())
 
 DistributedLock contains implementations based on various technologies; you can install implementation packages individually or just install the [DistributedLock NuGet package](https://www.nuget.org/packages/DistributedLock) [![NuGet Status](http://img.shields.io/nuget/v/DistributedLock.svg?style=flat)](https://www.nuget.org/packages/DistributedLock/), an "umbrella" package which includes all implementations as dependencies.
 
-- **[DistributedLock.SqlServer](docs/DistributedLock.SqlServer.md)**: uses Microsoft SQL Server
-- **[DistributedLock.Postgres](docs/DistributedLock.Postgres.md)**: uses Postgresql
-- **[DistributedLock.Redis](docs/DistributedLock.Redis.md)**: uses Redis
-- **[DistributedLock.Azure](docs/DistributedLock.Azure.md)**: uses Azure blobs
-- **[DistributedLock.FileSystem](docs/DistributedLock.FileSystem.md)**: uses lock files
-- **[DistributedLock.WaitHandles](docs/DistributedLock.WaitHandles.md)**: uses operating system global `WaitHandle`s (Windows only)
+- **[DistributedLock.SqlServer](docs/DistributedLock.SqlServer.md)** [![NuGet Status](http://img.shields.io/nuget/v/DistributedLock.SqlServer.svg?style=flat)](https://www.nuget.org/packages/DistributedLock.SqlServer/): uses Microsoft SQL Server
+- **[DistributedLock.Postgres](docs/DistributedLock.Postgres.md)** [![NuGet Status](http://img.shields.io/nuget/v/DistributedLock.Postgres.svg?style=flat)](https://www.nuget.org/packages/DistributedLock.Postgres/): uses Postgresql
+- **[DistributedLock.Redis](docs/DistributedLock.Redis.md)** [![NuGet Status](http://img.shields.io/nuget/v/DistributedLock.Redis.svg?style=flat)](https://www.nuget.org/packages/DistributedLock.Redis/): uses Redis
+- **[DistributedLock.Azure](docs/DistributedLock.Azure.md)** [![NuGet Status](http://img.shields.io/nuget/v/DistributedLock.Azure.svg?style=flat)](https://www.nuget.org/packages/DistributedLock.Azure/): uses Azure blobs
+- **[DistributedLock.FileSystem](docs/DistributedLock.FileSystem.md)** [![NuGet Status](http://img.shields.io/nuget/v/DistributedLock.FileSystem.svg?style=flat)](https://www.nuget.org/packages/DistributedLock.FileSystem/): uses lock files
+- **[DistributedLock.WaitHandles](docs/DistributedLock.WaitHandles.md)** [![NuGet Status](http://img.shields.io/nuget/v/DistributedLock.WaitHandles.svg?style=flat)](https://www.nuget.org/packages/DistributedLock.WaitHandles/): uses operating system global `WaitHandle`s (Windows only)
 
 ## Synchronization primitives
 
