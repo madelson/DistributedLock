@@ -1,202 +1,155 @@
 # DistributedLock
 
-DistributedLock is a lightweight .NET library that makes it easy to set up and use system-wide or fully-distributed locks.
+DistributedLock is a .NET library that provides robust and easy-to-use distributed mutexes, reader-writer locks, and semaphores based on a variety of underlying technologies.
 
-DistributedLock is available for download as a [NuGet package](https://www.nuget.org/packages/DistributedLock). [![NuGet Status](http://img.shields.io/nuget/v/DistributedLock.svg?style=flat)](https://www.nuget.org/packages/DistributedLock/)
-
-[Release notes](#release-notes)
-
-## Features
-
-- [System-wide locks](#system-wide-locks)
-- [Fully-distributed locks](#fully-distributed-locks)
-- [Semaphores](#semaphores)
-- [Reader-writer locks](#reader-writer-locks)
-- [Safe naming](#naming-locks)
-- [Try Semantics](#trylock)
-- [Async](#async)
-- [Timeouts](#timeouts)
-- [Cancellation](#cancellation)
-- [Connection management](#connection-management)
-
-## System-wide locks
-
-System-wide locks are great for synchronizing between processes or .NET application domains:
-
+With DistributedLock, synchronizing access to a region of code across multiple applications/machines is as simple as:
 ```C#
-var myLock = new SystemDistributedLock("SystemLock");
-
-using (myLock.Acquire())
+using (await myDistributedLock.AcquireAsync())
 {
-	// this block of code is protected by the lock!
+	// I hold the lock here
 }
 ```
 
-## Fully-distributed locks
+## Implementations
 
-DistributedLock allows you to easily leverage MSFT SQLServer's <a href="https://msdn.microsoft.com/en-us/library/ms189823.aspx">application lock</a> functionality to provide synchronization between machines in a distributed environment. To use this functionality, you'll need a SQLServer connection string:
+DistributedLock contains implementations based on various technologies; you can install implementation packages individually or just install the [DistributedLock NuGet package](https://www.nuget.org/packages/DistributedLock) [![NuGet Status](http://img.shields.io/nuget/v/DistributedLock.svg?style=flat)](https://www.nuget.org/packages/DistributedLock/), an "umbrella" package which includes all implementations as dependencies.
+
+- [DistributedLock.SqlServer](DistributedLock.SqlServer.md): uses Microsoft SQL Server
+- [DistributedLock.Postgres](DistributedLock.Postgres.md): uses Postgresql
+- [DistributedLock.Redis](DistributedLock.Redis.md): uses Redis
+- [DistributedLock.Azure](DistributedLock.Azure.md): uses Azure blobs
+- [DistributedLock.FileSystem](DistributedLock.FileSystem.md): uses the file system
+- [DistributedLock.WaitHandles](DistributedLock.WaitHandles.md): uses operating system global `WaitHandle`s (Windows only)
+
+## Synchronization primitives
+
+- Locks: provide exclusive access to a region of code
+- [Reader-writer locks](Reader-writer locks.md): a lock with multiple levels of access. The lock can be held concurrently either by any number of readers or by a single writer.
+- [Semaphores](Semaphores.md): similar to a lock, but can be held by up to N users concurrently instead of just one.
+
+While all implementations support locks, the other primitives are only supported by some implementations. See the [implementation-specific documentation pages](docs) for details.
+
+## Basic usage
+
+### Names
+
+Because distributed locks (and other distributed synchronization primitives) are not isolated to a single process, their identity is based on their name which is provided through the constructor. Different underlying technologies have different restrictions on name format; however, DistributedLock largely allows you to ignore these by escaping/hashing names that would otherwise be invalid.
+
+### Acquire
+
+All synchronization primitives support the same basic access pattern. The `Acquire` method returns a "handle" object that represents holding the lock. When the handle is disposed, the lock is released:
 
 ```C#
-var connectionString = ConfigurationManager.ConnectionStrings["MyDatabase"].ConnectionString;
-var myLock = new SqlDistributedLock("SqlLock", connectionString);
-
-using (myLock.Acquire())
+var myDistributedLock = new SqlDistributedLock(name, connectionString); // e. g. if we are using SQL Server
+using (myDistributedLock.Acquire())
 {
-	// this block of code is protected by the lock!
-}
+	// we hold the lock here
+} // implicit Dispose() call from using block releases it here
 ```
 
-As of version 1.1.0, `SqlDistributedLock`s can now be scoped to existing `IDbTransaction` and/or `IDbConnection` objects as an alternative to passing a connection string directly (in which case the lock manages its own connection).
+### TryAcquire
 
-## Semaphores
-
-DistributedLock contains an implementation of a distributed [semaphore](https://en.wikipedia.org/wiki/Semaphore_(programming)) with an API similar to the framework's non-distributed [SemaphoreSlim](https://msdn.microsoft.com/en-us/library/system.threading.semaphoreslim(v=vs.110).aspx) class. Since the implementation is based on [SQLServer application locks](https://msdn.microsoft.com/en-us/library/ms189823.aspx), this can be used to synchronize across different machines.
-
-The semaphore acts like a lock that can be acquired by a fixed number of processes/threads simultaneously instead of a single process/thread. This capability is frequently used to "throttle" access to some resource such as a database or email server, generally with the goal of preventing it from becoming overloaded. In such cases, a classic mutex lock is inappropriate because we *do* want to allow concurrent access and simply want to cap the level of concurrency. For example:
+While `Acquire` will block until the lock is available, there is also a `TryAcquire` variant which returns `null` if the lock could not be acquired (due to being held elsewhere):
 
 ```C#
-var semaphore = new SqlDistributedSemaphore("ComputeDatabase", 5, connectionString);
-using (semaphore.Acquire())
-{
-	// only 5 callers can be inside this block concurrently
-	UseComputeDatabase();
-}
-```
-
-## Reader-writer locks
-
-DistributedLock contains an implementation of a distributed [reader-writer lock](https://en.wikipedia.org/wiki/Readers%E2%80%93writer_lock) with an API similar to the framework's non-distributed [ReaderWriterLockSlim](https://msdn.microsoft.com/en-us/library/system.threading.readerwriterlockslim(v=vs.110).aspx) class. Since the implementation is based on [SQLServer application locks](https://msdn.microsoft.com/en-us/library/ms189823.aspx), this can be used to synchronize across different machines.
-
-The reader-writer lock allows for *multiple readers or one writer.* Furthermore, at most one reader can be in *upgradeable read mode*, which allows for upgrading from read mode to write mode without relinquishing the read lock. Here's an example showing how a reader-writer lock could synchronize access to a distributed cache:
-
-```C#
-class DistributedCache
-{
-	private readonly SqlDistributedReaderWriterLock cacheLock = 
-		new SqlDistributedReaderWriterLock("DistributedCache", connectionString);
-		
-	public string Get(string key)
-	{
-		using (this.cacheLock.AcquireReadLock())
-		{
-			return /* read from cache */
-		}
-	}
-	
-	public void Add(string key, string value)
-	{
-		using (this.cacheLock.AcquireWriteLock())
-		{
-			/* write to cache */
-		}
-	}
-	
-	public void AddOrUpdate(string key, string value)
-	{
-		using (var upgradeableHandle = this.cache.AcquireUpgradeableReadLock())
-		{
-			if (/* read from cache */) { return; }
-			
-			upgradeableHandle.UpgradeToWriteLock();
-			
-			/* write to cache */
-		}
-	}
-}
-``` 
-
-## Naming locks
-
-For all types of locks, the name of the lock defines its identity within its scope. While in general most names will work, the names are ultimately constrained by the underlying technologies used for locking. If you don't want to worry (particularly if when generating names dynamically), you can use the GetSafeLockName method each lock type to convert an arbitrary string into a consistent valid lock name:
-
-```C#
-string baseName = // arbitrary logic
-var lockName = SqlDistributedLock.GetSafeLockName(baseName);
-var myLock = new SqlDistributedLock(lockName);
-```
-
-## Other features
-
-### TryLock
-
-All locks support a "try" mechanism so that you can attempt to claim the lock without committing to it:
-
-```C#
-using (var handle = myLock.TryAcquire())
+using (var handle = myDistributedLock.TryAcquire())
 {
 	if (handle != null)
 	{
-		// I have the lock!
+		// we acquired the lock :-)
 	}
 	else
 	{
-		// someone else has it!
+		// someone else has it :-(
 	}
 }
 ```
 
-### Async
+### async support
 
-All locks support async acquisition so that you don't need to consume threads waiting for locks to become available:
-
-```C#
-using (await myLock.AcquireAsync())
-{
-	// this block of code is protected by the lock!
-	
-	// locks can be used to protect async code
-	await webClient.DownloadStringAsync(...);
-}
-```
-
-Note that because of this locks do not have <a href="https://msdn.microsoft.com/en-us/library/ms228964%28v=vs.110%29.aspx">thread affinity</a> unlike the Monitor and Mutex .NET synchronization classes and are not re-entrant. 
+`async` versions of both of these methods are also supported. These are preferred when you are writing async code since they will not consume a thread while waiting for the lock. If you are using C#8 or higher, you can also dispose of handles asynchronously:
 
 ### Timeouts
 
-All lock methods support specifying timeouts after which point TryAcquire calls will return null and Acquire calls will throw a TimeoutException:
-
 ```C#
-// wait up to 5 seconds to acquire the lock
-using (var handle = myLock.TryAcquire(TimeSpan.FromSeconds(5)))
-{
-	if (handle != null)
-	{
-		// I have the lock!
-	}
-	else
-	{
-		// timed out waiting for someone else to give it up
-	}
-}
+await using (await myDistributedLock.AcquireAsync()) { ... }
 ```
+
+Additionally, all of these methods support an optional `timeout` parameter. `timeout` determines how long `Acquire` will wait before failing with a `TimeoutException` and how long `TryAcquire` will wait before returning null. The default `timeout` for `Acquire` is `Timeout.InfiniteTimeSpan` while for `TryAcquire` the default `timeout` is `TimeSpan.Zero`.
 
 ### Cancellation
 
-All lock methods support passing a <a href="https://msdn.microsoft.com/en-us/library/dd997289%28v=vs.110%29.aspx">CancellationToken</a> which, if triggered, will break out of the wait:
+Finally, the methods take an optional `CancellationToken` parameter, which allows for the acquire operation to be interrupted via cancellation. Note that this won't cancel the hold on the lock once the acquire succeeds.
 
-```
-// acquire the lock, unless someone cancels us
-CancellationToken token = ...
-using (myLock.Acquire(cancellationToken: token))
+## Providers
+
+For applications that use [dependency injection](https://en.wikipedia.org/wiki/Dependency_injection), DistributedLock's provider make it easy to separate out the specification of a lock's (or other primitive's) name from its other settings (such as a database connection string). For example in an ASP.NET Core app you might do:
+
+```C#
+// in your Startup.cs:
+services.AddSingleton(_ => new PostgresDistributedSynchronizationProvider(myConnectionString));
+services.AddTransient<SomeService>();
+
+// in SomeService.cs
+public class SomeService
 {
-	// this block of code is protected by the lock!
+	private readonly PostgresDistributedSynchronizationProvider _synchronizationProvider;
+
+	public SomeService(PostgresDistributedSynchronizationProvider synchronizationProvider)
+	{
+		this._synchronizationProvider = synchronizationProvider;
+	}
+	
+	public void InitializeUserAccount(int id)
+	{
+		// use the provider to construct a lock
+		var @lock = this._synchronizationProvider.CreateLock($"UserAccount{id}");
+		using (@lock.Acquire())
+		{
+			// do stuff
+		}
+		
+		// ALTERNATIVELY, for common use-cases extension methods allow this to be done with a single call
+		using (this._synchronizationProvider.AcquireLock($"UserAccount{id}"))
+		{
+			// do stuff
+		}
+	}
 }
 ```
 
-### Connection management
+## Other topics
 
-When using SQL-based locks, DistributedLock exposes several options for managing the underlying connection/transaction that scopes the lock:
-- Explicit: you can pass in the IDbConnection/IDbTransaction instance that provides lock scope. This is useful when you don't have access to a connection string or
-when you want the locking to be tied closely to other SQL operations being performed.
-- Connection: the lock internally manages a `SqlConnection` instance. The lock is released by calling [sp_releaseapplock](https://msdn.microsoft.com/en-us/library/ms178602.aspx) after which the connection is disposed. This is the default mode.
-- Transaction: the lock internally manages a `SqlTransaction` instance. The lock is released by disposing the transaction.
-- Connection Multiplexing: the library internally manages a pool of `SqlConnection` instances, each of which may be used to hold multiple locks
-simultaneously. This is particularly helpful for high-load scenarios since it can drastically reduce load on the underlying connection pool.
-- Azure: similar to the "Connection" strategy, but also automatically issues periodic background queries on the underlying connection to keep it from looking idle to the Azure connection governor. See [#5](https://github.com/madelson/DistributedLock/issues/5) for more details.
+- [Interfaces](Other topics.md#interfaces)
+- [Detecting handle loss](Other topics.md#detecting-handle-loss)
+- [Handle abandonment](Other topics.md#handle-abandonment)
+- [Migrating from 1.x to 2.x](Other topics.md#migrating-from-1.x-to-2.x)
 
-Most of the time, you'll want to use the default connection strategy. See more details about the various strategies [here](https://github.com/madelson/DistributedLock/blob/master/DistributedLock/Sql/SqlDistributedLockConnectionStrategy.cs).
+## Contributing
+
+Contributions are welcome! If you are interested in contributing towards a new or existing issue, please let me know via comments on the issue so that I can help you get started and avoid wasted effort on your part.
 
 ## Release notes
+- 2.0.0
+	- Revamped package structure so that DistributedLock is now an umbrella package and each implementation technology has its own package (BREAKING CHANGE)
+	- Added Postgresql-based locking (#56, DistributedLock.Postgres 1.0.0)
+	- Added Redis-based locking (#24, DistributedLock.Redis 1.0.0)
+	- Added Azure blob-based locking (#42, DistributedLock.Azure 1.0.0)
+	- Added file-based locking (#28, DistributedLock.FileSystem 1.0.0)
+	- Added provider classes for improved IOC integration (#13)
+	- Added strong naming to assemblies. Thanks @pedropaulovc for contributing! (#47, BREAKING CHANGE)
+	- Made lock handles implement `IAsyncDisposable` in addition to `IDisposable` #20, BREAKING CHANGE)
+	- Exposed implementation-agnostic interfaces (e. g. `IDistributedLock`) for all synchronization primitives (#10)
+	- Added `HandleLostToken` API for tracking if a lock's underlying connection dies (#6, BREAKING CHANGE)
+	- Added SourceLink support (#57)
+	- Removed `GetSafeName` API in favor of safe naming by default (BREAKING CHANGE)
+	- Renamed "SystemDistributedLock" to "EventWaitHandleDistributedLock" (DistributedLock.WaitHandles 1.0.0)
+	- Stopped supporting net45 (BREAKING CHANGE)
+	- Removed `DbConnection` and `DbTransaction` constructors form `SqlDistributedLock`, leaving the constructors that take `IDbConnection`/`IDbTransaction` (#35, BREAKING CHANGE)
+	- Changed methods returning `Task<IDisposable>` to instead return `ValueTask`, making it so that `using (@lock.AcquireAsync()) { ... } without an `await` no longer compiles (#34, BREAKING CHANGE)
+	- Changed `UpgradeableLockHandle.UpgradeToWriteLock` to return `void` (#33, BREAKING CHANGE)
+	- Switched to Microsoft.Data.SqlClient by default for all target frameworks (BREAKING CHANGE)
+	- Changed all locking implementations to be non-reentrant (BREAKING CHANGE)	
 - 1.5.0
 	- Added cross-platform support via Microsoft.Data.SqlClient ([#25](https://github.com/madelson/DistributedLock/issues/25)). This feature is available for .NET Standard >= 2.0. Thanks to [@alesebi91](https://github.com/alesebi91) for helping with the implementation and testing!
 	- Added C#8 nullable annotations ([#31](https://github.com/madelson/DistributedLock/issues/31))
