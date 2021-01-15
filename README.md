@@ -15,17 +15,17 @@ using (await myDistributedLock.AcquireAsync())
 DistributedLock contains implementations based on various technologies; you can install implementation packages individually or just install the [DistributedLock NuGet package](https://www.nuget.org/packages/DistributedLock) [![NuGet Status](http://img.shields.io/nuget/v/DistributedLock.svg?style=flat)](https://www.nuget.org/packages/DistributedLock/), an "umbrella" package which includes all implementations as dependencies.
 
 - **[DistributedLock.SqlServer](docs/DistributedLock.SqlServer.md)**: uses Microsoft SQL Server
-- [DistributedLock.Postgres](DistributedLock.Postgres.md): uses Postgresql
-- [DistributedLock.Redis](DistributedLock.Redis.md): uses Redis
-- [DistributedLock.Azure](DistributedLock.Azure.md): uses Azure blobs
-- [DistributedLock.FileSystem](DistributedLock.FileSystem.md): uses lock files
-- [DistributedLock.WaitHandles](DistributedLock.WaitHandles.md): uses operating system global `WaitHandle`s (Windows only)
+- **[DistributedLock.Postgres](docs/DistributedLock.Postgres.md)**: uses Postgresql
+- **[DistributedLock.Redis](docs/DistributedLock.Redis.md)**: uses Redis
+- **[DistributedLock.Azure](docs/DistributedLock.Azure.md)**: uses Azure blobs
+- **[DistributedLock.FileSystem](docs/DistributedLock.FileSystem.md)**: uses lock files
+- **[DistributedLock.WaitHandles](docs/DistributedLock.WaitHandles.md)**: uses operating system global `WaitHandle`s (Windows only)
 
 ## Synchronization primitives
 
 - Locks: provide exclusive access to a region of code
 - [Reader-writer locks](docs/Reader-writer+locks.md): a lock with multiple levels of access. The lock can be held concurrently either by any number of readers or by a single writer.
-- [Semaphores](Semaphores.md): similar to a lock, but can be held by up to N users concurrently instead of just one.
+- [Semaphores](docs/Semaphores.md): similar to a lock, but can be held by up to N users concurrently instead of just one.
 
 While all implementations support locks, the other primitives are only supported by some implementations. See the [implementation-specific documentation pages](docs) for details.
 
@@ -120,10 +120,10 @@ public class SomeService
 
 ## Other topics
 
-- [Interfaces](Other+topics.md#interfaces)
-- [Detecting handle loss](Other+topics.md#detecting-handle-loss)
-- [Handle abandonment](Other+topics.md#handle-abandonment)
-- [Migrating from 1.x to 2.x](Other+topics.md#migrating-from-1.x-to-2.x)
+- [Interfaces](docs/Other+topics.md#interfaces)
+- [Detecting handle loss](docs/Other+topics.md#detecting-handle-loss)
+- [Handle abandonment](docs/Other+topics.md#handle-abandonment)
+- [Migrating from 1.x to 2.x](docs/Other+topics.md#migrating-from-1x-to-2x)
 
 ## Contributing
 
