@@ -56,7 +56,7 @@ It may seem tempting to use an upgradeable read lock instead of both a read lock
 
 In some cases, though, it is useful to be able to block writers for a time without blocking readers. Consider the following example of a checkout system where we want to protect modification of the shopping cart data model with a lock:
 
-```
+```C#
 class ShoppingCartService
 {
     public ShoppingCartDetails GetDetails(Guid cartId)
