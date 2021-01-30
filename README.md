@@ -120,10 +120,10 @@ public class SomeService
 
 ## Other topics
 
-- [Interfaces](docs/Other+topics.md#interfaces)
-- [Detecting handle loss](docs/Other+topics.md#detecting-handle-loss)
-- [Handle abandonment](docs/Other+topics.md#handle-abandonment)
-- [Safety of distributed locking](docs/Other+topics.md#safety-of-distributed-locking)
+- [Interfaces](docs/Other%20topics.md#interfaces)
+- [Detecting handle loss](docs/Other%20topics.md#detecting-handle-loss)
+- [Handle abandonment](docs/Other%20topics.md#handle-abandonment)
+- [Safety of distributed locking](docs/Other%20topics.md#safety-of-distributed-locking)
 
 ## Contributing
 
