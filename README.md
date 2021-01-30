@@ -123,14 +123,14 @@ public class SomeService
 - [Interfaces](docs/Other+topics.md#interfaces)
 - [Detecting handle loss](docs/Other+topics.md#detecting-handle-loss)
 - [Handle abandonment](docs/Other+topics.md#handle-abandonment)
-- [Migrating from 1.x to 2.x](docs/Other+topics.md#migrating-from-1x-to-2x)
+- [Safety of distributed locking](docs/Other+topics.md#safety-of-distributed-locking)
 
 ## Contributing
 
 Contributions are welcome! If you are interested in contributing towards a new or existing issue, please let me know via comments on the issue so that I can help you get started and avoid wasted effort on your part.
 
 ## Release notes
-- 2.0.0
+- 2.0.0 (see [Migrating from 1.x to 2.x](docs/Other+topics.md#migrating-from-1x-to-2x))
 	- Revamped package structure so that DistributedLock is now an umbrella package and each implementation technology has its own package (BREAKING CHANGE)
 	- Added Postgresql-based locking (#56, DistributedLock.Postgres 1.0.0)
 	- Added Redis-based locking (#24, DistributedLock.Redis 1.0.0)
