@@ -24,7 +24,7 @@ DistributedLock contains implementations based on various technologies; you can 
 ## Synchronization primitives
 
 - Locks: provide exclusive access to a region of code
-- [Reader-writer locks](docs/Reader-writer+locks.md): a lock with multiple levels of access. The lock can be held concurrently either by any number of readers or by a single writer.
+- [Reader-writer locks](docs/Reader-writer%20locks.md): a lock with multiple levels of access. The lock can be held concurrently either by any number of readers or by a single writer.
 - [Semaphores](docs/Semaphores.md): similar to a lock, but can be held by up to N users concurrently instead of just one.
 
 While all implementations support locks, the other primitives are only supported by some implementations. See the [implementation-specific documentation pages](docs) for details.
