@@ -13,3 +13,5 @@ using (semaphore.Acquire())
     UseComputeDatabase();
 }
 ```
+
+Whenever a distributed semaphore is created, you must specify the max count value as well as the name. Specifying the same name with different max count values on different instances of a semaphore has undefined and unpredictable results, so make sure to use the same max count value for each instance of a particular semaphore.
