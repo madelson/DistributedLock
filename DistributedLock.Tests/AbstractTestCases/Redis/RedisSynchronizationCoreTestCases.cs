@@ -3,6 +3,8 @@ using Medallion.Threading.Tests.Redis;
 using Moq;
 using NUnit.Framework;
 using StackExchange.Redis;
+using StackExchange.Redis.KeyspaceIsolation;
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -124,6 +126,27 @@ namespace Medallion.Threading.Tests.Redis
             Assert.IsNotNull(handle);
         }
 
+        [Test]
+        public void TestAcquireWithLockPrefix()
+        {
+            this._provider.Strategy.DatabaseProvider.Databases = new[] { CreateDatabase(keyPrefix: "P") };
+            var lock1 = this._provider.CreateLock("N");
+
+            this._provider.Strategy.DatabaseProvider.Databases = new[] { CreateDatabase() };
+            var lock2 = this._provider.CreateLock("N");
+            var lock3 = this._provider.CreateLock("PN");
+
+            Assert.NotNull(lock1.TryAcquire());
+            Assert.NotNull(lock2.TryAcquire());
+            Assert.Null(lock3.TryAcquire());
+
+            IDatabase CreateDatabase(string? keyPrefix = null)
+            {
+                var database = RedisServer.GetDefaultServer(0).Multiplexer.GetDatabase();
+                return keyPrefix is null ? database : database.WithKeyPrefix(keyPrefix);
+            }
+        }
+
         private static Mock<IDatabase> CreateDatabaseMock()
         {
             var mock = new Mock<IDatabase>(MockBehavior.Strict);
@@ -140,6 +163,10 @@ namespace Medallion.Threading.Tests.Redis
             mockDatabase.Setup(d => d.ScriptEvaluate(It.IsAny<string>(), It.IsAny<RedisKey[]>(), It.IsAny<RedisValue[]>(), It.IsAny<CommandFlags>()))
                 .Returns(() => RedisResult.Create(returns()));
             mockDatabase.Setup(d => d.ScriptEvaluateAsync(It.IsAny<string>(), It.IsAny<RedisKey[]>(), It.IsAny<RedisValue[]>(), It.IsAny<CommandFlags>()))
+                .Returns(() => Task.Run(() => RedisResult.Create(returns())));
+            mockDatabase.Setup(d => d.ScriptEvaluate(It.IsAny<LuaScript>(), It.IsAny<object>(), It.IsAny<CommandFlags>()))
+                .Returns(() => RedisResult.Create(returns()));
+            mockDatabase.Setup(d => d.ScriptEvaluateAsync(It.IsAny<LuaScript>(), It.IsAny<object>(), It.IsAny<CommandFlags>()))
                 .Returns(() => Task.Run(() => RedisResult.Create(returns())));
             mockDatabase.Setup(d => d.SortedSetRemove(It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<CommandFlags>()))
                 .Returns(() => (bool)RedisResult.Create(returns()));

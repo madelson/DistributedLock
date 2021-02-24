@@ -22,6 +22,15 @@ namespace Medallion.Threading.Tests.Redis
             this._options = options;
         }
 
+        public override string? GetLockPrefix()
+        {
+            return DatabaseProvider switch
+            {
+                ITestingRedisWithKeyPrefixDatabaseProvider p => p.KeyPrefix,
+                _ => base.GetLockPrefix(),
+            };
+        }
+
         public void Options(RedisDistributedSynchronizationOptionsBuilder options)
         {
             if (this._preparedForHandleLost)

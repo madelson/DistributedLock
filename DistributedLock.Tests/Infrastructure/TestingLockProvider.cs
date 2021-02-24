@@ -19,6 +19,8 @@ namespace Medallion.Threading.Tests
         public virtual string GetCrossProcessLockType() => this.CreateLock(string.Empty).GetType().Name;
         public virtual void Dispose() => this.Strategy.Dispose();
 
+        public string? GetLockPrefix() => Strategy.GetLockPrefix();
+
         /// <summary>
         /// Returns a lock whose name is based on <see cref="TestingNameProviderExtensions.GetUniqueSafeName(ITestingNameProvider, string)"/>
         /// </summary>

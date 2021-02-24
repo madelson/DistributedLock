@@ -21,5 +21,6 @@ namespace Medallion.Threading.Tests
         public virtual IDisposable? PrepareForHandleLost() => null;
         public virtual void PrepareForHighContention() { }
         public virtual void Dispose() { }
+        public virtual string? GetLockPrefix() => null;
     }
 }
