@@ -76,6 +76,9 @@ namespace DistributedLockTaker
                 case nameof(RedisDistributedLock) + "2x1":
                     handle = AcquireRedisLock(name, serverCount: 2); // we know the last will fail; don't bother (we also don't know its port)
                     break;
+                case nameof(RedisDistributedLock) + "1WithPrefix":
+                    handle = AcquireRedisLock("distributed_locks:" + name, serverCount: 1);
+                    break;
                 case "Write" + nameof(RedisDistributedReaderWriterLock) + "1":
                     handle = AcquireRedisWriteLock(name, serverCount: 1);
                     break;
@@ -84,6 +87,9 @@ namespace DistributedLockTaker
                     break;
                 case "Write" + nameof(RedisDistributedReaderWriterLock) + "2x1":
                     handle = AcquireRedisWriteLock(name, serverCount: 2); // we know the last will fail; don't bother (we also don't know its port)
+                    break;
+                case "Write" + nameof(RedisDistributedReaderWriterLock) + "1WithPrefix":
+                    handle = AcquireRedisWriteLock("distributed_locks:" + name, serverCount: 1);
                     break;
                 case string _ when type.StartsWith(nameof(RedisDistributedSemaphore)):
                     {

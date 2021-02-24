@@ -24,20 +24,10 @@ namespace Medallion.Threading.Tests.Redis
         {
         }
 
-        protected TestingRedisDatabaseProvider(int count, string keyPrefix)
-            : this(Enumerable.Range(0, count).Select(i => RedisServer.GetDefaultServer(i).Multiplexer.GetDatabase().WithKeyPrefix(keyPrefix)))
-        {
-        }
-
         // publicly settable so that callers can alter the dbs in use
         public IReadOnlyList<IDatabase> Databases { get; set; }
 
         public virtual string CrossProcessLockTypeSuffix => this.Databases.Count.ToString();
-    }
-
-    public interface ITestingRedisWithKeyPrefixDatabaseProvider
-    {
-        string KeyPrefix { get; }
     }
 
     public sealed class TestingRedisSingleDatabaseProvider : TestingRedisDatabaseProvider
@@ -45,12 +35,12 @@ namespace Medallion.Threading.Tests.Redis
         public TestingRedisSingleDatabaseProvider() : base(count: 1) { }
     }
 
-    public sealed class TestingRedisWithKeyPrefixSingleDatabaseProvider : TestingRedisDatabaseProvider, ITestingRedisWithKeyPrefixDatabaseProvider
+    public sealed class TestingRedisWithKeyPrefixSingleDatabaseProvider : TestingRedisDatabaseProvider
     {
-        const string Prefix = "distributed_locks:";
+        public TestingRedisWithKeyPrefixSingleDatabaseProvider()
+            : base(new[] { RedisServer.GetDefaultServer(0).Multiplexer.GetDatabase().WithKeyPrefix("distributed_locks:") }) { }
 
-        public TestingRedisWithKeyPrefixSingleDatabaseProvider() : base(count: 1, keyPrefix: Prefix) { }
-        public string KeyPrefix => Prefix;
+        public override string CrossProcessLockTypeSuffix => "1WithPrefix";
     }
 
     public sealed class TestingRedis3DatabaseProvider : TestingRedisDatabaseProvider

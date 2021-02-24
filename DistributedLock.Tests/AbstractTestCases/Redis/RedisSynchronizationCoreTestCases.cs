@@ -130,15 +130,18 @@ namespace Medallion.Threading.Tests.Redis
         public void TestAcquireWithLockPrefix()
         {
             this._provider.Strategy.DatabaseProvider.Databases = new[] { CreateDatabase(keyPrefix: "P") };
-            var lock1 = this._provider.CreateLock("N");
+            var implicitPrefixLock = this._provider.CreateLock("N");
 
             this._provider.Strategy.DatabaseProvider.Databases = new[] { CreateDatabase() };
-            var lock2 = this._provider.CreateLock("N");
-            var lock3 = this._provider.CreateLock("PN");
+            var noPrefixLock = this._provider.CreateLock("N");
+            var explicitPrefixLock = this._provider.CreateLock("PN");
 
-            Assert.NotNull(lock1.TryAcquire());
-            Assert.NotNull(lock2.TryAcquire());
-            Assert.Null(lock3.TryAcquire());
+            using var implicitPrefixHandle = implicitPrefixLock.TryAcquire();
+            Assert.IsNotNull(implicitPrefixHandle);
+            using var noPrefixHandle = noPrefixLock.TryAcquire();
+            Assert.IsNotNull(noPrefixHandle);
+            using var explicitPrefixHandle = explicitPrefixLock.TryAcquire();
+            Assert.IsNull(explicitPrefixHandle);
 
             IDatabase CreateDatabase(string? keyPrefix = null)
             {

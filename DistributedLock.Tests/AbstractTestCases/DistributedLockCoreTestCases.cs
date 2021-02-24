@@ -443,7 +443,7 @@ namespace Medallion.Threading.Tests
             }
         }
 
-        private Command RunLockTaker(TLockProvider engine, string lockType, string lockName)
+        private Command RunLockTaker(TLockProvider engine, params string[] args)
         {
             const string Configuration =
 #if DEBUG
@@ -453,8 +453,6 @@ namespace Medallion.Threading.Tests
 #endif
             var exeExtension = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? ".exe" : string.Empty;
             var exePath = Path.Combine(TestContext.CurrentContext.TestDirectory, "..", "..", "..", "..", "DistributedLockTaker", "bin", Configuration, TargetFramework.Current, "DistributedLockTaker" + exeExtension);
-
-            var args = new object[] { lockType, $"{engine.GetLockPrefix()}{lockName}" };
 
             var command = Command.Run(exePath, args, o => o.WorkingDirectory(TestContext.CurrentContext.TestDirectory).ThrowOnError(true))
                 .RedirectStandardErrorTo(Console.Error);
