@@ -130,6 +130,21 @@ namespace Medallion.Threading.Tests
             }
         }
 
+        [TestCaseSource(nameof(DistributedLockAssemblies))]
+        public void TestAssemblyVersioning(AssemblyName assemblyName)
+        {
+            var assembly = Assembly.Load(assemblyName);
+            Assert.IsNotNull(assembly.GetName().GetPublicKeyToken(), "Should be signed");
+
+            // scheme based on https://codingforsmarties.wordpress.com/2016/01/21/how-to-version-assemblies-destined-for-nuget/
+            var version = assembly.GetName().Version;
+            version!.Minor.ShouldEqual(0);
+            version.Revision.ShouldEqual(0);
+            version.Build.ShouldEqual(0);
+            var informationalVersion = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>();
+            Assert.That(informationalVersion?.InformationalVersion, Does.StartWith($"{version.Major}."));
+        }
+
         private static IEnumerable<Type> GetPublicTypes(Assembly assembly) => assembly.GetTypes()
                 .Where(IsInPublicApi)
 #if DEBUG

@@ -32,6 +32,8 @@ Some Redis synchronization primitives take in a `string name` as their name and 
 
 Because of how Redis locks work, the acquire operation cannot truly block. If waiting to acquire a lock or other primitive that is not available, the implementation will periodically sleep and retry until the lease can be taken or the acquire timeout elapses. Because of this, these classes are maximally efficient when using `TryAcquire` semantics with a timeout of zero.
 
+As of 1.0.1, Redis-based primitives support the use of `IDatabase.WithKeyPrefix(keyPrefix)` for key space isolation. In such cases all underlying keys will implicitly include the key prefix. Therefore, two locks with the same name targeting the same underlying Redis instance but with different prefixes will not see each other.
+
 ## Options
 
 In addition to specifying the name/key and database(s), some additional tuning options are available.
