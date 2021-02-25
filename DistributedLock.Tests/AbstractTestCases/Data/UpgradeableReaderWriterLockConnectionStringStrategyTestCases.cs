@@ -29,7 +29,7 @@ namespace Medallion.Threading.Tests.Data
             this._lockProvider.Strategy.KeepaliveCadence = TimeSpan.FromSeconds(.1);
             var @lock = this._lockProvider.CreateUpgradeableReaderWriterLock(Guid.NewGuid().ToString());
 
-            using var idleSessionKiller = new IdleSessionKiller(this._lockProvider.Strategy.Db, applicationName, idleTimeout: TimeSpan.FromSeconds(.3));
+            using var idleSessionKiller = new IdleSessionKiller(this._lockProvider.Strategy.Db, applicationName, idleTimeout: TimeSpan.FromSeconds(.5));
 
             using (@lock.AcquireReadLock())
             {

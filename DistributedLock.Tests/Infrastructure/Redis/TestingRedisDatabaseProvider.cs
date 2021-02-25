@@ -1,6 +1,8 @@
 ﻿using Medallion.Threading.Tests.Redis;
 using NUnit.Framework;
 using StackExchange.Redis;
+using StackExchange.Redis.KeyspaceIsolation;
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -31,6 +33,14 @@ namespace Medallion.Threading.Tests.Redis
     public sealed class TestingRedisSingleDatabaseProvider : TestingRedisDatabaseProvider
     {
         public TestingRedisSingleDatabaseProvider() : base(count: 1) { }
+    }
+
+    public sealed class TestingRedisWithKeyPrefixSingleDatabaseProvider : TestingRedisDatabaseProvider
+    {
+        public TestingRedisWithKeyPrefixSingleDatabaseProvider()
+            : base(new[] { RedisServer.GetDefaultServer(0).Multiplexer.GetDatabase().WithKeyPrefix("distributed_locks:") }) { }
+
+        public override string CrossProcessLockTypeSuffix => "1WithPrefix";
     }
 
     public sealed class TestingRedis3DatabaseProvider : TestingRedisDatabaseProvider
