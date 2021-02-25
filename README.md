@@ -131,9 +131,8 @@ Contributions are welcome! If you are interested in contributing towards a new o
 
 ## Release notes
 - 2.0.1
-	- Fixed Redis lock behavior when using a database with `WithKeyPrefix` (#66, DistributedLock.Redis 1.0.1). Thanks @skomis-mm
-skomis-mm for contributing!
-- 2.0.0 (see [Migrating from 1.x to 2.x](docs/Other+topics.md#migrating-from-1x-to-2x))
+	- Fixed Redis lock behavior when using a database with `WithKeyPrefix` (#66, DistributedLock.Redis 1.0.1). Thanks @skomis-mm for contributing!
+- 2.0.0 (see also [Migrating from 1.x to 2.x](docs/Migrating%20from%201.x%20to%202.x.md#migrating-from-1x-to-2x))
 	- Revamped package structure so that DistributedLock is now an umbrella package and each implementation technology has its own package (BREAKING CHANGE)
 	- Added Postgresql-based locking (#56, DistributedLock.Postgres 1.0.0)
 	- Added Redis-based locking (#24, DistributedLock.Redis 1.0.0)
