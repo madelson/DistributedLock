@@ -15,7 +15,7 @@ namespace DistributedLockCodeGen
         public void GenerateForIDistributedLockAndSemaphore([Values("Lock", "Semaphore")] string name)
         {
             var files = CodeGenHelpers.EnumerateSolutionFiles()
-                .Where(f => f.IndexOf($"Distributed{name}.Core", StringComparison.OrdinalIgnoreCase) < 0)
+                .Where(f => !f.Contains($"Distributed{name}.Core", StringComparison.OrdinalIgnoreCase))
                 .Where(f => f.EndsWith($"Distributed{name}.cs", StringComparison.OrdinalIgnoreCase) && Path.GetFileName(f)[0] != 'I');
             
             var errors = new List<string>();
@@ -36,12 +36,20 @@ namespace DistributedLockCodeGen
 
                 var lockType = Path.GetFileNameWithoutExtension(file);
                 var handleType = lockType + "Handle";
+                // zookeeper is inherently asynchronous (watch-based), so any synchronous APIs it has are just sync-over-async
+                var includeSynchronousApis = !file.Contains("ZooKeeper", StringComparison.OrdinalIgnoreCase);
 
                 var explicitImplementations = new StringBuilder();
                 var @interface = $"IDistributed{name}";
                 foreach (var method in new[] { "TryAcquire", "Acquire", "TryAcquireAsync", "AcquireAsync" })
                 {
-                    AppendExplicitInterfaceMethod(explicitImplementations, @interface, method, "IDistributedSynchronizationHandle");
+                    AppendExplicitInterfaceMethod(
+                        explicitImplementations, 
+                        @interface, 
+                        method, 
+                        "IDistributedSynchronizationHandle",
+                        @as: includeSynchronousApis ? null : $"IInternalDistributed{name}<{handleType}>"
+                    );
                 }
 
                 var @namespace = Regex.Match(lockCode, @"\nnamespace (?<namespace>\S+)").Groups["namespace"].Value;
@@ -58,10 +66,10 @@ namespace {@namespace}
         // AUTO-GENERATED
 
 {explicitImplementations}
-        public {handleType}? TryAcquire(TimeSpan timeout = default, CancellationToken cancellationToken = default) =>
+        {IfSyncApis("public ")}{handleType}? {(includeSynchronousApis ? "" : $"IInternalDistributed{name}<{handleType}>.")}TryAcquire(TimeSpan timeout{IfSyncApis(" = default")}, CancellationToken cancellationToken{IfSyncApis(" = default")}) =>
             DistributedLockHelpers.TryAcquire(this, timeout, cancellationToken);
 
-        public {handleType} Acquire(TimeSpan? timeout = null, CancellationToken cancellationToken = default) =>
+        {IfSyncApis("public ")}{handleType} {(includeSynchronousApis ? "" : $"IInternalDistributed{name}<{handleType}>.")}Acquire(TimeSpan? timeout{IfSyncApis(" = null")}, CancellationToken cancellationToken{IfSyncApis(" = default")}) =>
             DistributedLockHelpers.Acquire(this, timeout, cancellationToken);
 
         public ValueTask<{handleType}?> TryAcquireAsync(TimeSpan timeout = default, CancellationToken cancellationToken = default) =>
@@ -79,6 +87,8 @@ namespace {@namespace}
                     File.WriteAllText(outputPath, code);
                     errors.Add($"updated {file}");
                 }
+
+                string IfSyncApis(string value) => includeSynchronousApis ? value : string.Empty;
             }
 
             Assert.IsEmpty(errors);
@@ -182,7 +192,7 @@ namespace {@namespace}
             Assert.IsEmpty(errors);
         }
 
-        private static void AppendExplicitInterfaceMethod(StringBuilder code, string @interface, string method, string returnType)
+        private static void AppendExplicitInterfaceMethod(StringBuilder code, string @interface, string method, string returnType, string? @as = null)
         {
             var isAsync = method.EndsWith("Async");
             var isTry = method.StartsWith("Try");
@@ -192,7 +202,7 @@ namespace {@namespace}
                 .Append(isAsync ? $"ValueTask<{returnTypeToUse}>" : returnTypeToUse)
                 .AppendLine($" {@interface}.{method}(TimeSpan{(isTry ? string.Empty : "?")} timeout, CancellationToken cancellationToken) =>")
                 .Append(' ', 12)
-                .Append($"this.{method}(timeout, cancellationToken)")
+                .Append($"this{(@as != null ? $".As<{@as}>()" : "")}.{method}(timeout, cancellationToken)")
                 .Append(isAsync ? $".Convert(To<{returnTypeToUse}>.ValueTask)" : string.Empty)
                 .AppendLine(";");
         }

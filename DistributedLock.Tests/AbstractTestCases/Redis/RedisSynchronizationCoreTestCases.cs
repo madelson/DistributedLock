@@ -142,7 +142,7 @@ namespace Medallion.Threading.Tests.Redis
             using var explicitPrefixHandle = explicitPrefixLock.TryAcquire();
             Assert.IsNull(explicitPrefixHandle);
 
-            IDatabase CreateDatabase(string? keyPrefix = null)
+            static IDatabase CreateDatabase(string? keyPrefix = null)
             {
                 var database = RedisServer.GetDefaultServer(0).Multiplexer.GetDatabase();
                 return keyPrefix is null ? database : database.WithKeyPrefix(keyPrefix);

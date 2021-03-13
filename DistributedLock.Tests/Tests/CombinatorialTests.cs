@@ -209,3 +209,8 @@ namespace Medallion.Threading.Tests.WaitHandles
     [Category("CIWindows")] public class Core_Semaphore5AsMutex_WaitHandleSemaphore_WaitHandleSynchronizationStrategy_WaitHandleSynchronizationStrategyTest : DistributedLockCoreTestCases<TestingSemaphore5AsMutexProvider<TestingWaitHandleDistributedSemaphoreProvider, TestingWaitHandleSynchronizationStrategy>, TestingWaitHandleSynchronizationStrategy> { }
     [Category("CIWindows")] public class SemaphoreCore_WaitHandleSemaphore_WaitHandleSynchronizationStrategyTest : DistributedSemaphoreCoreTestCases<TestingWaitHandleDistributedSemaphoreProvider, TestingWaitHandleSynchronizationStrategy> { }
 }
+
+namespace Medallion.Threading.Tests.ZooKeeper
+{
+    public class Core_ZooKeeper_ZooKeeperSynchronizationStrategyTest : DistributedLockCoreTestCases<TestingZooKeeperDistributedLockProvider, TestingZooKeeperSynchronizationStrategy> { }
+}

@@ -13,6 +13,7 @@ using System.Linq;
 using Medallion.Threading;
 using System.Drawing.Text;
 using System.Collections.Generic;
+using Medallion.Threading.ZooKeeper;
 #if NET471
 using System.Data.SqlClient;
 #elif NETCOREAPP3_1
@@ -106,6 +107,9 @@ namespace DistributedLockTaker
                         ).Acquire();
                         break;
                     }
+                case nameof(ZooKeeperDistributedLock):
+                    handle = new ZooKeeperDistributedLock(name.TrimStart('/'), ZooKeeperPorts.DefaultConnectionString, ZooKeeperOptions).AcquireAsync().Result;
+                    break;
                 default:
                     Console.Error.WriteLine($"type: {type}");
                     return 123;
@@ -133,6 +137,10 @@ namespace DistributedLockTaker
 
         private static void RedisOptions(RedisDistributedSynchronizationOptionsBuilder options) => 
             options.Expiry(TimeSpan.FromSeconds(.5)) // short expiry for abandonment testing
-                .BusyWaitSleepTime(TimeSpan.FromSeconds(.1), TimeSpan.FromSeconds(.3)); 
+                .BusyWaitSleepTime(TimeSpan.FromSeconds(.1), TimeSpan.FromSeconds(.3));
+
+        private static void ZooKeeperOptions(ZooKeeperDistributedSynchronizationOptionsBuilder options) =>
+            // use a very short session timeout to support abandonment
+            options.SessionTimeout(TimeSpan.FromSeconds(.1));
     }
 }

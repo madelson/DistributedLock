@@ -1,6 +1,7 @@
 ﻿using Medallion.Threading.Internal;
 using Medallion.Threading.Redis;
 using NUnit.Framework;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -38,6 +39,35 @@ namespace Medallion.Threading.Tests
 
             await task;
             return true;
+        }
+
+        /// <summary>
+        /// Waits up to <paramref name="timeout"/> for <paramref name="predicate"/> to return true. Checks <paramref name="predicate"/> every
+        /// <paramref name="checkCadence"/>.
+        /// </summary>
+        public static async Task<bool> WaitForAsync(Func<ValueTask<bool>> predicate, TimeoutValue timeout, TimeoutValue? checkCadence = null)
+        {
+            using var cancellationSource = new CancellationTokenSource();
+            var waitForPredicateTask = WaitForPredicateAsync();
+
+            if (!await waitForPredicateTask.WaitAsync(timeout))
+            {
+                cancellationSource.Cancel();
+                await waitForPredicateTask;
+                return false;
+            }
+
+            return true;
+
+            async Task WaitForPredicateAsync()
+            {
+                var cancellationToken = cancellationSource.Token;
+                while (!cancellationToken.IsCancellationRequested)
+                {
+                    if (await predicate()) { return; }
+                    await Task.Delay(checkCadence?.TimeSpan ?? TimeSpan.FromMilliseconds(5));
+                }
+            }
         }
     }
 }
