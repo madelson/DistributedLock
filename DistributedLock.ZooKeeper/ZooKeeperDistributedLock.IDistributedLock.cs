@@ -14,9 +14,9 @@ namespace Medallion.Threading.ZooKeeper
         IDistributedSynchronizationHandle IDistributedLock.Acquire(TimeSpan? timeout, CancellationToken cancellationToken) =>
             this.As<IInternalDistributedLock<ZooKeeperDistributedLockHandle>>().Acquire(timeout, cancellationToken);
         ValueTask<IDistributedSynchronizationHandle?> IDistributedLock.TryAcquireAsync(TimeSpan timeout, CancellationToken cancellationToken) =>
-            this.As<IInternalDistributedLock<ZooKeeperDistributedLockHandle>>().TryAcquireAsync(timeout, cancellationToken).Convert(To<IDistributedSynchronizationHandle?>.ValueTask);
+            this.TryAcquireAsync(timeout, cancellationToken).Convert(To<IDistributedSynchronizationHandle?>.ValueTask);
         ValueTask<IDistributedSynchronizationHandle> IDistributedLock.AcquireAsync(TimeSpan? timeout, CancellationToken cancellationToken) =>
-            this.As<IInternalDistributedLock<ZooKeeperDistributedLockHandle>>().AcquireAsync(timeout, cancellationToken).Convert(To<IDistributedSynchronizationHandle>.ValueTask);
+            this.AcquireAsync(timeout, cancellationToken).Convert(To<IDistributedSynchronizationHandle>.ValueTask);
 
         ZooKeeperDistributedLockHandle? IInternalDistributedLock<ZooKeeperDistributedLockHandle>.TryAcquire(TimeSpan timeout, CancellationToken cancellationToken) =>
             DistributedLockHelpers.TryAcquire(this, timeout, cancellationToken);

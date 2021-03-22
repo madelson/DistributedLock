@@ -39,9 +39,8 @@ namespace Medallion.Threading.ZooKeeper
                     {
                         while (true)
                         {
-                            var result = await this._connection.WaitForNotExistsOrChanged(
+                            var result = await this._connection.WaitForNotExistsOrChangedAsync(
                                 this._nodePath.ToString(), 
-                                cancellationToken: CancellationToken.None, // ConnectionLostToken already accounted for by method 
                                 timeoutToken: disposalSource.Token
                             ).ConfigureAwait(false);
                             switch (result)
@@ -69,14 +68,9 @@ namespace Medallion.Threading.ZooKeeper
 
         public void Dispose() => this.DisposeSyncViaAsync();
 
-        public ValueTask DisposeAsync()
-        {
-            var disposalTask = this.InternalDisposeAsync();
-            if (!SyncViaAsync.IsSynchronous) { return disposalTask.AsValueTask(); }
+        public ValueTask DisposeAsync() =>
             // we're forced to use sync-over-async here because ZooKeeperNetEx doesn't have synchronous APIs
-            disposalTask.GetAwaiter().GetResult();
-            return default;
-        }
+            this.InternalDisposeAsync().AwaitSyncOverAsync();
 
         private async Task InternalDisposeAsync()
         {

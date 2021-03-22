@@ -17,24 +17,18 @@ namespace Medallion.Threading.ZooKeeper
         /// </summary>
         public static readonly ACL PublicAcl = new ACL(0x1f, new Id("world", "anyone"));
 
+        // todo revisit whether it is worth having this method
         /// <summary>
         /// Returns true when <paramref name="path"/> does not exist. 
         /// Returns null when we receive a watch event indicating that <paramref name="path"/> has changed. 
         /// Returns false if the <paramref name="timeoutToken"/> fires.
         /// </summary>
-        public static async Task<bool?> WaitForNotExistsOrChanged(
+        public static async Task<bool?> WaitForNotExistsOrChangedAsync(
             this ZooKeeperConnection connection,
             string path,
-            CancellationToken cancellationToken,
             CancellationToken timeoutToken)
         {
-            cancellationToken.ThrowIfCancellationRequested();
-            
             using var watcher = new TaskWatcher<bool?>((_, s) => s.TrySetResult(null));
-            using var cancellationTokenRegistration = cancellationToken.Register(
-                state => ((TaskWatcher<bool?>)state).TaskCompletionSource.TrySetCanceled(),
-                state: watcher
-            );
             using var timeoutRegistration = timeoutToken.Register(
                 state => ((TaskWatcher<bool?>)state).TaskCompletionSource.TrySetResult(false),
                 state: watcher
@@ -146,6 +140,27 @@ namespace Medallion.Threading.ZooKeeper
                 {
                     // swallow errors, since there's a good chance this cleanup fails the same way that the creation did
                 }
+            }
+        }
+
+        private sealed class WaitCompletionSourceWatcher : Watcher
+        {
+            private readonly TaskCompletionSource<bool> _waitCompletionSource;
+
+            public WaitCompletionSourceWatcher(TaskCompletionSource<bool> waitCompletionSource)
+            {
+                this._waitCompletionSource = waitCompletionSource;
+            }
+
+            public override Task process(WatchedEvent @event)
+            {
+                // only care about connected state events; the ConnectionLostToken takes care of the other states for us
+                if (@event.getState() == Event.KeeperState.SyncConnected)
+                {
+                    this._waitCompletionSource.TrySetResult(true);
+                }
+
+                return Task.CompletedTask;
             }
         }
 

@@ -9,9 +9,20 @@ namespace Medallion.Threading.Tests.ZooKeeper
     {
         public override IDistributedLock CreateLockWithExactName(string name)
         {
-            var @lock = new ZooKeeperDistributedLock(name.TrimStart(ZooKeeperPath.Separator), ZooKeeperPorts.DefaultConnectionString);
-            @lock.Path.ToString().ShouldEqual(name); // sanity check
-            this.Strategy.TrackPath(@lock.Path.ToString());
+            var @lock = new ZooKeeperDistributedLock(new ZooKeeperPath(name), ZooKeeperPorts.DefaultConnectionString, this.Strategy.AssumeNodeExists, this.Strategy.Options);
+            this.Strategy.TrackPath(name);
+            return @lock;
+        }
+
+        public override string GetSafeName(string name) => new ZooKeeperDistributedLock(name, ZooKeeperPorts.DefaultConnectionString).Path.ToString();
+    }
+
+    public sealed class TestingZooKeeperDistributedReaderWriterLockProvider : TestingReaderWriterLockProvider<TestingZooKeeperSynchronizationStrategy>
+    {
+        public override IDistributedReaderWriterLock CreateReaderWriterLockWithExactName(string name)
+        {
+            var @lock = new ZooKeeperDistributedReaderWriterLock(new ZooKeeperPath(name), ZooKeeperPorts.DefaultConnectionString, this.Strategy.AssumeNodeExists, this.Strategy.Options);
+            this.Strategy.TrackPath(name);
             return @lock;
         }
 

@@ -71,7 +71,7 @@ namespace Medallion.Threading.ZooKeeper
         /// </summary>
         public static bool operator !=(ZooKeeperPath @this, ZooKeeperPath that) => !(@this == that);
 
-        internal ZooKeeperPath CreateChildNodeWithSafeName(string name)
+        internal ZooKeeperPath GetChildNodePathWithSafeName(string name)
         {
             if (name == null) { throw new ArgumentNullException(nameof(name)); }
 

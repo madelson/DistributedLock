@@ -54,16 +54,16 @@ namespace Medallion.Threading.Tests.ZooKeeper
         [TestCase("/", "zookeeper", ExpectedResult = "/zookeeper_yX0zkYBzsEZ1VDADNUx54LUSt9VL9M9lOPoez38tnk4FrBtllVz+ksFllir7N2yla_wy22pIOnbpcfRkcVXBag==")]
         [TestCase("/", "zooKeeper", ExpectedResult = "/zooKeeper")]
         [TestCase("/a", "zookeeper", ExpectedResult = "/a/zookeeper")]
-        public string TestCreateChildNodeWithSafeName(string path, string name)
+        public string TestGetChildNodePathWithSafeName(string path, string name)
         {
-            var result = new ZooKeeperPath(path).CreateChildNodeWithSafeName(name);
+            var result = new ZooKeeperPath(path).GetChildNodePathWithSafeName(name);
             Assert.DoesNotThrow(() => new ZooKeeperPath(result.ToString()), "should pass path validation");
             return result.ToString();
         }
 
         [Test]
-        public void TestCreateChildNodeWithSafeNameHandlesControlCharacters() =>
-            this.TestCreateChildNodeWithSafeName("/", "\u0000\u007f\uf8ff\uffff").ShouldEqual("/____7A++E8vPxbYKJmhCX1bUTCwjqJqW1POHfCeBk62R9hqB0Fd_uTUBIpv9mssG7K68FHZ_7wJ70UNRKsVH8CrngA==");
+        public void TestGetChildNodePathWithSafeNameHandlesControlCharacters() =>
+            this.TestGetChildNodePathWithSafeName("/", "\u0000\u007f\uf8ff\uffff").ShouldEqual("/____7A++E8vPxbYKJmhCX1bUTCwjqJqW1POHfCeBk62R9hqB0Fd_uTUBIpv9mssG7K68FHZ_7wJ70UNRKsVH8CrngA==");
 
         [Test]
         public void TestEquality()

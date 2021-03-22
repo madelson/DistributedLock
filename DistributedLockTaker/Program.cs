@@ -110,6 +110,9 @@ namespace DistributedLockTaker
                 case nameof(ZooKeeperDistributedLock):
                     handle = new ZooKeeperDistributedLock(name.TrimStart('/'), ZooKeeperPorts.DefaultConnectionString, ZooKeeperOptions).AcquireAsync().Result;
                     break;
+                case "Write" + nameof(ZooKeeperDistributedReaderWriterLock):
+                    handle = new ZooKeeperDistributedReaderWriterLock(name.TrimStart('/'), ZooKeeperPorts.DefaultConnectionString, ZooKeeperOptions).AcquireWriteLockAsync().Result;
+                    break;
                 default:
                     Console.Error.WriteLine($"type: {type}");
                     return 123;

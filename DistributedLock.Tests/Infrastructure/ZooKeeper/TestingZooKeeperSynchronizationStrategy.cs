@@ -10,6 +10,10 @@ namespace Medallion.Threading.Tests.ZooKeeper
     {
         private List<string>? _trackedPaths;
 
+        public bool AssumeNodeExists { get; set; }
+
+        public Action<ZooKeeperDistributedSynchronizationOptionsBuilder>? Options { get; set; }
+
         public void TrackPath(string path) => this._trackedPaths?.Add(path);
 
         public override IDisposable? PrepareForHandleLost()

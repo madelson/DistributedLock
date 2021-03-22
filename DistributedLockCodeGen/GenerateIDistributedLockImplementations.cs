@@ -36,8 +36,7 @@ namespace DistributedLockCodeGen
 
                 var lockType = Path.GetFileNameWithoutExtension(file);
                 var handleType = lockType + "Handle";
-                // zookeeper is inherently asynchronous (watch-based), so any synchronous APIs it has are just sync-over-async
-                var includeSynchronousApis = !file.Contains("ZooKeeper", StringComparison.OrdinalIgnoreCase);
+                var supportsSyncApis = CodeGenHelpers.SupportsSyncApis(file);
 
                 var explicitImplementations = new StringBuilder();
                 var @interface = $"IDistributed{name}";
@@ -48,7 +47,7 @@ namespace DistributedLockCodeGen
                         @interface, 
                         method, 
                         "IDistributedSynchronizationHandle",
-                        @as: includeSynchronousApis ? null : $"IInternalDistributed{name}<{handleType}>"
+                        @as: supportsSyncApis || method.EndsWith("Async") ? null : $"IInternalDistributed{name}<{handleType}>"
                     );
                 }
 
@@ -66,10 +65,10 @@ namespace {@namespace}
         // AUTO-GENERATED
 
 {explicitImplementations}
-        {IfSyncApis("public ")}{handleType}? {(includeSynchronousApis ? "" : $"IInternalDistributed{name}<{handleType}>.")}TryAcquire(TimeSpan timeout{IfSyncApis(" = default")}, CancellationToken cancellationToken{IfSyncApis(" = default")}) =>
+        {IfSyncApis("public ")}{handleType}? {(supportsSyncApis ? "" : $"IInternalDistributed{name}<{handleType}>.")}TryAcquire(TimeSpan timeout{IfSyncApis(" = default")}, CancellationToken cancellationToken{IfSyncApis(" = default")}) =>
             DistributedLockHelpers.TryAcquire(this, timeout, cancellationToken);
 
-        {IfSyncApis("public ")}{handleType} {(includeSynchronousApis ? "" : $"IInternalDistributed{name}<{handleType}>.")}Acquire(TimeSpan? timeout{IfSyncApis(" = null")}, CancellationToken cancellationToken{IfSyncApis(" = default")}) =>
+        {IfSyncApis("public ")}{handleType} {(supportsSyncApis ? "" : $"IInternalDistributed{name}<{handleType}>.")}Acquire(TimeSpan? timeout{IfSyncApis(" = null")}, CancellationToken cancellationToken{IfSyncApis(" = default")}) =>
             DistributedLockHelpers.Acquire(this, timeout, cancellationToken);
 
         public ValueTask<{handleType}?> TryAcquireAsync(TimeSpan timeout = default, CancellationToken cancellationToken = default) =>
@@ -88,7 +87,7 @@ namespace {@namespace}
                     errors.Add($"updated {file}");
                 }
 
-                string IfSyncApis(string value) => includeSynchronousApis ? value : string.Empty;
+                string IfSyncApis(string value) => supportsSyncApis ? value : string.Empty;
             }
 
             Assert.IsEmpty(errors);
@@ -127,6 +126,7 @@ namespace {@namespace}
                 }
 
                 var lockType = Path.GetFileNameWithoutExtension(file);
+                var supportsSyncApis = CodeGenHelpers.SupportsSyncApis(file);
 
                 var explicitImplementations = new StringBuilder();
                 var publicMethods = new StringBuilder();
@@ -142,16 +142,18 @@ namespace {@namespace}
                         explicitImplementations,
                         $"IDistributed{upgradeableText}ReaderWriterLock",
                         methodName, 
-                        $"IDistributed{(methodLockType == LockType.Upgrade ? "LockUpgradeable" : "Synchronization")}Handle"
+                        $"IDistributed{(methodLockType == LockType.Upgrade ? "LockUpgradeable" : "Synchronization")}Handle",
+                        @as: supportsSyncApis || isAsync ? null : $"IInternalDistributed{upgradeableText}ReaderWriterLock<{handleType}>"
                     );
 
                     var simplifiedMethodName = methodLockType == LockType.Upgrade ? methodName : methodName.Replace("ReadLock", "").Replace("WriteLock", "");
 
                     publicMethods.AppendLine()
-                        .Append(' ', 8).Append("public ")
+                        .Append(' ', 8).Append(IfPublic("public "))
                         .Append(isAsync ? "ValueTask<" : "").Append(handleType).Append(isTry ? "?" : "").Append(isAsync ? ">" : "").Append(' ')
+                        .Append(supportsSyncApis || isAsync ? "" : $"IInternalDistributed{upgradeableText}ReaderWriterLock<{handleType}>.")
                         .Append(methodName)
-                        .Append("(").Append("TimeSpan").Append(isTry ? "" : "?").AppendLine($" timeout = {(isTry ? "default" : "null")}, CancellationToken cancellationToken = default) =>")
+                        .Append("(").Append("TimeSpan").Append(isTry ? "" : "?").AppendLine($" timeout{IfPublic($" = {(isTry ? "default" : "null")}")}, CancellationToken cancellationToken{IfPublic(" = default")}) =>")
                         .Append(' ', 12)
                         .Append(
                             isTry && isAsync
@@ -161,6 +163,8 @@ namespace {@namespace}
                         )
                         .Append(methodLockType == LockType.Read ? ", isWrite: false" : methodLockType == LockType.Write ? ", isWrite: true" : "")
                         .AppendLine(");");
+
+                    string? IfPublic(string content) => supportsSyncApis || isAsync ? content : null;
                 }
 
                 var @namespace = Regex.Match(lockCode, @"\nnamespace (?<namespace>\S+)").Groups["namespace"].Value;
