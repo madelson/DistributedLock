@@ -7,8 +7,6 @@ using System.Text;
 
 namespace Medallion.Threading.Tests.ZooKeeper
 {
-    // todo test somewhere that different primitives don't conflict
-
     public class ZooKeeperDistributedSemaphoreTest
     {
         [Test, Category("CI")]
