@@ -27,6 +27,10 @@ namespace Medallion.Threading.Tests.ZooKeeper
         [Test]
         public async Task TestDoesNotAttemptToCreateOrDeleteExistingNode()
         {
+            // This doesn't work because creating the lock attempts to acquire which will then fail initially. We could work around this by testing
+            // for a different set of conditions in the multi-ticket case, but the extra coverage doesn't seem valuable (we still have coverage of single-ticket)
+            if (IsMultiTicketSemaphoreProvider) { Assert.Pass("not supported"); }
+
             var path = new ZooKeeperPath($"/{this.GetType()}.{nameof(this.TestDoesNotAttemptToCreateOrDeleteExistingNode)} ({TargetFramework.Current})");
             using var connection = await ZooKeeperConnection.DefaultPool.ConnectAsync(
                 new ZooKeeperConnectionInfo(ZooKeeperPorts.DefaultConnectionString, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30), new EquatableReadOnlyList<ZooKeeperAuthInfo>(Array.Empty<ZooKeeperAuthInfo>())),
@@ -75,6 +79,10 @@ namespace Medallion.Threading.Tests.ZooKeeper
         [Test]
         public async Task TestCustomAclAndAuth()
         {
+            // This doesn't work because creating the lock causes the node to be created (from taking the other tickets)
+            // and releasing the lock doesn't cause the node to be deleted (due to those other tickets).
+            if (IsMultiTicketSemaphoreProvider) { Assert.Pass("not supported"); }
+
             const string Username = "username";
             const string Password = "secretPassword";
 
@@ -104,6 +112,10 @@ namespace Medallion.Threading.Tests.ZooKeeper
         [Test]
         public async Task TestInvalidAclDoesNotCorruptStore()
         {
+            // This doesn't work because creating the lock causes the node to be created (from taking the other tickets)
+            // and releasing the lock doesn't cause the node to be deleted (due to those other tickets).
+            if (IsMultiTicketSemaphoreProvider) { Assert.Pass("not supported"); }
+
             const string Username = "username";
             const string Password = "xyz";
 
@@ -202,5 +214,8 @@ namespace Medallion.Threading.Tests.ZooKeeper
                 }
             }
         }
+
+        private static bool IsMultiTicketSemaphoreProvider => 
+            typeof(TLockProvider) == typeof(TestingSemaphore5AsMutexProvider<TestingZooKeeperDistributedSemaphoreProvider, TestingZooKeeperSynchronizationStrategy>);
     }
 }

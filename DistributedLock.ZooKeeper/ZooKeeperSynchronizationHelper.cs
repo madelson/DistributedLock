@@ -20,15 +20,18 @@ namespace Medallion.Threading.ZooKeeper
     /// </summary>
     internal class ZooKeeperSynchronizationHelper
     {
+        public static readonly IReadOnlyList<byte> AcquiredMarker = Encoding.UTF8.GetBytes("ACQUIRED");
+
         private readonly ZooKeeperConnectionInfo _connectionInfo;
         private readonly IReadOnlyList<ACL> _acl;
-        private readonly bool _assumeNodeExists;
+        private readonly bool _assumeNodeExists, _setAcquiredMarker;
         
         public ZooKeeperSynchronizationHelper(
             ZooKeeperPath nodePath, 
             bool assumeNodeExists, 
             string connectionString, 
-            Action<ZooKeeperDistributedSynchronizationOptionsBuilder>? optionsBuilder)
+            Action<ZooKeeperDistributedSynchronizationOptionsBuilder>? optionsBuilder,
+            bool setAcquiredMarker = false)
         {
             this.Path = nodePath;
             this._assumeNodeExists = assumeNodeExists;
@@ -40,6 +43,7 @@ namespace Medallion.Threading.ZooKeeper
                 AuthInfo: options.AuthInfo
             );
             this._acl = options.Acl;
+            this._setAcquiredMarker = setAcquiredMarker;
         }
 
         public ZooKeeperPath Path { get; }
@@ -89,6 +93,10 @@ namespace Medallion.Threading.ZooKeeper
                     var state = new State(ephemeralNodePath, sortedChildren);
                     if (hasAcquired(state))
                     {
+                        if (this._setAcquiredMarker)
+                        {
+                            await connection.ZooKeeper.setDataAsync(ephemeralNodePath, AcquiredMarker.ToArray()).ConfigureAwait(false);
+                        }
                         acquired = true;
                         return new ZooKeeperNodeHandle(connection, ephemeralNodePath, shouldDeleteParent: !this._assumeNodeExists);
                     }

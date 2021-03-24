@@ -1,6 +1,7 @@
 ﻿using Medallion.Threading.ZooKeeper;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading;
 
@@ -44,14 +45,15 @@ namespace Medallion.Threading.Tests.ZooKeeper
                     )
                     .Result;
 
-                // delete all children of the nodes
+                // delete the newest child of the node (other children may be extra semaphore ticket holders)
                 foreach (var trackedPath in trackedPaths)
                 {
                     var childrenResult = connection.ZooKeeper.getChildrenAsync(trackedPath).Result;
-                    foreach (var child in childrenResult.Children)
-                    {
-                        connection.ZooKeeper.deleteAsync(trackedPath + ZooKeeperPath.Separator + child).Wait();
-                    }
+                    var toDelete = childrenResult.Children.Select(ch => $"{trackedPath.TrimEnd(ZooKeeperPath.Separator)}{ZooKeeperPath.Separator}{ch}")
+                        .Select(p => (Path: p, CreationTime: connection.ZooKeeper.existsAsync(p).Result?.getCtime() ?? -1))
+                        .OrderByDescending(t => t.CreationTime)
+                        .First();
+                    connection.ZooKeeper.deleteAsync(toDelete.Path).Wait();
                 }
             }
         }

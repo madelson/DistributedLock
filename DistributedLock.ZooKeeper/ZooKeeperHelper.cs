@@ -17,7 +17,7 @@ namespace Medallion.Threading.ZooKeeper
         /// </summary>
         public static readonly ACL PublicAcl = new ACL(0x1f, new Id("world", "anyone"));
 
-        // todo revisit whether it is worth having this method
+        // todo move this method and rename this class to focus on creating nodes
         /// <summary>
         /// Returns true when <paramref name="path"/> does not exist. 
         /// Returns null when we receive a watch event indicating that <paramref name="path"/> has changed. 

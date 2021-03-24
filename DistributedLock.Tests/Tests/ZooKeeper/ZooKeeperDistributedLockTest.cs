@@ -13,7 +13,6 @@ using org.apache.zookeeper.data;
 
 namespace Medallion.Threading.Tests.ZooKeeper
 {
-    // todo many of these can be in an abstract test instead
     public class ZooKeeperDistributedLockTest
     {
         [Test, Category("CI")]

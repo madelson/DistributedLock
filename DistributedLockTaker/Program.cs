@@ -108,11 +108,24 @@ namespace DistributedLockTaker
                         break;
                     }
                 case nameof(ZooKeeperDistributedLock):
-                    handle = new ZooKeeperDistributedLock(name.TrimStart('/'), ZooKeeperPorts.DefaultConnectionString, ZooKeeperOptions).AcquireAsync().Result;
+                    handle = new ZooKeeperDistributedLock(new ZooKeeperPath(name), ZooKeeperPorts.DefaultConnectionString, options: ZooKeeperOptions).AcquireAsync().Result;
                     break;
                 case "Write" + nameof(ZooKeeperDistributedReaderWriterLock):
-                    handle = new ZooKeeperDistributedReaderWriterLock(name.TrimStart('/'), ZooKeeperPorts.DefaultConnectionString, ZooKeeperOptions).AcquireWriteLockAsync().Result;
+                    handle = new ZooKeeperDistributedReaderWriterLock(new ZooKeeperPath(name), ZooKeeperPorts.DefaultConnectionString, options: ZooKeeperOptions).AcquireWriteLockAsync().Result;
                     break;
+                case string _ when type.StartsWith(nameof(ZooKeeperDistributedSemaphore)):
+                    {
+                        var maxCount = type.EndsWith("1AsMutex") ? 1
+                            : type.EndsWith("5AsMutex") ? 5
+                            : throw new ArgumentException(type);
+                        handle = new ZooKeeperDistributedSemaphore(
+                            new ZooKeeperPath(name),
+                            maxCount,
+                            ZooKeeperPorts.DefaultConnectionString,
+                            options: ZooKeeperOptions
+                        ).AcquireAsync().Result;
+                        break;
+                    }
                 default:
                     Console.Error.WriteLine($"type: {type}");
                     return 123;

@@ -54,7 +54,7 @@ namespace Medallion.Threading.ZooKeeper
         public ZooKeeperPath Path => this._synchronizationHelper.Path;
 
         /// <summary>
-        /// Implements <see cref="IDistributedLock.Name"/>. Implemented explicitly to avoid confusion with the fact
+        /// Implements <see cref="IDistributedReaderWriterLock.Name"/>. Implemented explicitly to avoid confusion with the fact
         /// that this will include the leading "/" and base directory alongside the passed-in name.
         /// </summary>
         string IDistributedReaderWriterLock.Name => this.Path.ToString();
