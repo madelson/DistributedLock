@@ -24,11 +24,13 @@ namespace Medallion.Threading.Tests.ZooKeeper
         public void TestNamePropertyIsImplementedExplicitlyInFavorOfPath()
         {
             Assert.IsEmpty(GetPublicTypes().Select(t => t.GetProperty("Name")).Where(p => p != null));
-            foreach (var lockType in GetPublicTypes().Where(t => !typeof(IDistributedSynchronizationHandle).IsAssignableFrom(t) && t.GetInterfaces().Any(i => i.Name.StartsWith("IDistributed"))))
+            foreach (var lockType in GetPublicTypes()
+                .Where(t => t.GetInterfaces().Any(i => i.GetProperty("Name") != null)))
             {
                 var pathProperty = lockType.GetProperty("Path");
                 Assert.IsNotNull(pathProperty, $"{lockType} missing Path");
                 pathProperty!.PropertyType.ShouldEqual(typeof(ZooKeeperPath));
+                Assert.IsNull(lockType.GetProperty("Name"));
             }
         }
 

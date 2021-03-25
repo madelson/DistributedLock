@@ -8,40 +8,13 @@ namespace Medallion.Threading.ZooKeeper
     using org.apache.zookeeper;
     using org.apache.zookeeper.data;
     using System.Linq;
-    using System.Threading;
-
-    internal static class ZooKeeperHelper
+    
+    internal static class ZooKeeperNodeCreator
     {
         /// <summary>
         /// See https://zookeeper.apache.org/doc/r3.5.4-beta/zookeeperProgrammers.html under "Builtin ACL Schemes"
         /// </summary>
         public static readonly ACL PublicAcl = new ACL(0x1f, new Id("world", "anyone"));
-
-        // todo move this method and rename this class to focus on creating nodes
-        /// <summary>
-        /// Returns true when <paramref name="path"/> does not exist. 
-        /// Returns null when we receive a watch event indicating that <paramref name="path"/> has changed. 
-        /// Returns false if the <paramref name="timeoutToken"/> fires.
-        /// </summary>
-        public static async Task<bool?> WaitForNotExistsOrChangedAsync(
-            this ZooKeeperConnection connection,
-            string path,
-            CancellationToken timeoutToken)
-        {
-            using var watcher = new TaskWatcher<bool?>((_, s) => s.TrySetResult(null));
-            using var timeoutRegistration = timeoutToken.Register(
-                state => ((TaskWatcher<bool?>)state).TaskCompletionSource.TrySetResult(false),
-                state: watcher
-            );
-            // this is needed because if the connection goes down and never recovers, we'll never get the session expired notification
-            using var connectionLostRegistration = connection.ConnectionLostToken.Register(
-                state => ((TaskWatcher<bool?>)state).TaskCompletionSource.TrySetException(new InvalidOperationException("Lost connection to ZooKeeper")),
-                state: watcher
-            );
-
-            var exists = await connection.ZooKeeper.existsAsync(path, watcher).ConfigureAwait(false);
-            return exists == null ? true : await watcher.TaskCompletionSource.Task.ConfigureAwait(false);
-        }
 
         public static async Task<string> CreateEphemeralSequentialNode(
             this ZooKeeperConnection connection,
@@ -140,52 +113,6 @@ namespace Medallion.Threading.ZooKeeper
                 {
                     // swallow errors, since there's a good chance this cleanup fails the same way that the creation did
                 }
-            }
-        }
-
-        private sealed class WaitCompletionSourceWatcher : Watcher
-        {
-            private readonly TaskCompletionSource<bool> _waitCompletionSource;
-
-            public WaitCompletionSourceWatcher(TaskCompletionSource<bool> waitCompletionSource)
-            {
-                this._waitCompletionSource = waitCompletionSource;
-            }
-
-            public override Task process(WatchedEvent @event)
-            {
-                // only care about connected state events; the ConnectionLostToken takes care of the other states for us
-                if (@event.getState() == Event.KeeperState.SyncConnected)
-                {
-                    this._waitCompletionSource.TrySetResult(true);
-                }
-
-                return Task.CompletedTask;
-            }
-        }
-
-        private sealed class TaskWatcher<TResult> : Watcher, IDisposable
-        {
-            private volatile Action<WatchedEvent, TaskCompletionSource<TResult>>? _watchedEventHandler;
-
-            public TaskWatcher(Action<WatchedEvent, TaskCompletionSource<TResult>> watchedEventHandler)
-            {
-                this._watchedEventHandler = watchedEventHandler;
-            }
-
-            public TaskCompletionSource<TResult> TaskCompletionSource { get; } = new TaskCompletionSource<TResult>();
-
-            public void Dispose() => this._watchedEventHandler = null;
-
-            public override Task process(WatchedEvent @event)
-            {
-                // only care about connected state events; the ConnectionLostToken takes care of the other states for us
-                if (@event.getState() == Event.KeeperState.SyncConnected)
-                {
-                    this._watchedEventHandler?.Invoke(@event, this.TaskCompletionSource);
-                }
-
-                return Task.CompletedTask;
             }
         }
     }

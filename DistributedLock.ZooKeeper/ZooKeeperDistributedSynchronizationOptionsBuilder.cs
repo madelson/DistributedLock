@@ -8,7 +8,7 @@ namespace Medallion.Threading.ZooKeeper
 {
     public sealed class ZooKeeperDistributedSynchronizationOptionsBuilder
     {
-        private static readonly IReadOnlyList<ACL> DefaultAcl = new[] { ZooKeeperHelper.PublicAcl };
+        private static readonly IReadOnlyList<ACL> DefaultAcl = new[] { ZooKeeperNodeCreator.PublicAcl };
 
         /// <summary>
         /// According to https://bowenli86.github.io/2016/09/15/distributed%20system/zookeeper/ZooKeeper-Sessions-and-Session-Management/, 

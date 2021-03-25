@@ -39,7 +39,8 @@ namespace Medallion.Threading.ZooKeeper
                     {
                         while (true)
                         {
-                            var result = await this._connection.WaitForNotExistsOrChangedAsync(
+                            var result = await WaitForNotExistsOrChangedAsync(
+                                this._connection,
                                 this._nodePath.ToString(), 
                                 timeoutToken: disposalSource.Token
                             ).ConfigureAwait(false);
@@ -105,6 +106,56 @@ namespace Medallion.Threading.ZooKeeper
                 {
                     this._connection.Dispose();
                 }
+            }
+        }
+
+        /// <summary>
+        /// Returns true when <paramref name="path"/> does not exist. 
+        /// Returns null when we receive a watch event indicating that <paramref name="path"/> has changed. 
+        /// Returns false if the <paramref name="timeoutToken"/> fires.
+        /// </summary>
+        public static async Task<bool?> WaitForNotExistsOrChangedAsync(
+            ZooKeeperConnection connection,
+            string path,
+            CancellationToken timeoutToken)
+        {
+            using var watcher = new TaskWatcher<bool?>((_, s) => s.TrySetResult(null));
+            using var timeoutRegistration = timeoutToken.Register(
+                state => ((TaskWatcher<bool?>)state).TaskCompletionSource.TrySetResult(false),
+                state: watcher
+            );
+            // this is needed because if the connection goes down and never recovers, we'll never get the session expired notification
+            using var connectionLostRegistration = connection.ConnectionLostToken.Register(
+                state => ((TaskWatcher<bool?>)state).TaskCompletionSource.TrySetException(new InvalidOperationException("Lost connection to ZooKeeper")),
+                state: watcher
+            );
+
+            var exists = await connection.ZooKeeper.existsAsync(path, watcher).ConfigureAwait(false);
+            return exists == null ? true : await watcher.TaskCompletionSource.Task.ConfigureAwait(false);
+        }
+
+        private sealed class TaskWatcher<TResult> : Watcher, IDisposable
+        {
+            private volatile Action<WatchedEvent, TaskCompletionSource<TResult>>? _watchedEventHandler;
+
+            public TaskWatcher(Action<WatchedEvent, TaskCompletionSource<TResult>> watchedEventHandler)
+            {
+                this._watchedEventHandler = watchedEventHandler;
+            }
+
+            public TaskCompletionSource<TResult> TaskCompletionSource { get; } = new TaskCompletionSource<TResult>();
+
+            public void Dispose() => this._watchedEventHandler = null;
+
+            public override Task process(WatchedEvent @event)
+            {
+                // only care about connected state events; the ConnectionLostToken takes care of the other states for us
+                if (@event.getState() == Event.KeeperState.SyncConnected)
+                {
+                    this._watchedEventHandler?.Invoke(@event, this.TaskCompletionSource);
+                }
+
+                return Task.CompletedTask;
             }
         }
 

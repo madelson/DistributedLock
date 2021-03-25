@@ -49,7 +49,7 @@ namespace Medallion.Threading.Tests.ZooKeeper
                 Does.Contain("does not exist")
             );
 
-            await connection.ZooKeeper.createAsync(path.ToString(), Array.Empty<byte>(), new List<ACL> { ZooKeeperHelper.PublicAcl }, CreateMode.PERSISTENT);
+            await connection.ZooKeeper.createAsync(path.ToString(), Array.Empty<byte>(), new List<ACL> { ZooKeeperNodeCreator.PublicAcl }, CreateMode.PERSISTENT);
             try
             {
                 await using (var handle = await @lock.TryAcquireAsync())
