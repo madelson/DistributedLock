@@ -15,39 +15,57 @@ namespace Medallion.Threading.ZooKeeper
     {
         private readonly ZooKeeperSynchronizationHelper _synchronizationHelper;
 
+        /// <summary>
+        /// Constructs a new semaphore based on the provided <paramref name="path"/>, <paramref name="connectionString"/>, and <paramref name="options"/>.
+        /// 
+        /// If <paramref name="assumePathExists"/> is specified, then the node will not be created as part of acquiring nor will it be 
+        /// deleted after releasing (defaults to false).
+        /// </summary>
         public ZooKeeperDistributedSemaphore(
             ZooKeeperPath path,
             int maxCount,
             string connectionString,
-            bool assumeNodeExists = false,
+            bool assumePathExists = false,
             Action<ZooKeeperDistributedSynchronizationOptionsBuilder>? options = null)
-            : this(path, maxCount, assumeNodeExists: assumeNodeExists, connectionString, options)
+            : this(path, maxCount, assumePathExists: assumePathExists, connectionString, options)
         {
             if (path == default) { throw new ArgumentNullException(nameof(path)); }
             if (path == ZooKeeperPath.Root) { throw new ArgumentException("Cannot be the root", nameof(path)); }
         }
 
+        /// <summary>
+        /// Constructs a new semaphore based on the provided <paramref name="name"/>, <paramref name="connectionString"/>, and <paramref name="options"/>.
+        /// 
+        /// The semaphore's path will be a parent node of the root directory '/'. If <paramref name="name"/> is not a valid node name, it will be transformed to ensure
+        /// validity.
+        /// </summary>
         public ZooKeeperDistributedSemaphore(string name, int maxCount, string connectionString, Action<ZooKeeperDistributedSynchronizationOptionsBuilder>? options = null)
             : this(ZooKeeperPath.Root, name, maxCount, connectionString, options)
         {
         }
 
+        /// <summary>
+        /// Constructs a new semaphore based on the provided <paramref name="directoryPath"/>, <paramref name="name"/>, <paramref name="connectionString"/>, and <paramref name="options"/>.
+        /// 
+        /// The semaphore's path will be a parent node of <paramref name="directoryPath"/>. If <paramref name="name"/> is not a valid node name, it will be transformed to ensure
+        /// validity.
+        /// </summary>
         public ZooKeeperDistributedSemaphore(ZooKeeperPath directoryPath, string name, int maxCount, string connectionString, Action<ZooKeeperDistributedSynchronizationOptionsBuilder>? options = null)
             : this(
                   (directoryPath == default ? throw new ArgumentNullException(nameof(directoryPath)) : directoryPath).GetChildNodePathWithSafeName(name),
                   maxCount,
-                  assumeNodeExists: false,
+                  assumePathExists: false,
                   connectionString,
                   options)
         {
         }
 
-        private ZooKeeperDistributedSemaphore(ZooKeeperPath nodePath, int maxCount, bool assumeNodeExists, string connectionString, Action<ZooKeeperDistributedSynchronizationOptionsBuilder>? optionsBuilder)
+        private ZooKeeperDistributedSemaphore(ZooKeeperPath nodePath, int maxCount, bool assumePathExists, string connectionString, Action<ZooKeeperDistributedSynchronizationOptionsBuilder>? optionsBuilder)
         {
             if (maxCount < 1) { throw new ArgumentOutOfRangeException(nameof(maxCount), maxCount, "must be positive"); }
             this.MaxCount = maxCount;
             // setAcquiredMarker is needed because we use data changes as part of our wait procedure below
-            this._synchronizationHelper = new ZooKeeperSynchronizationHelper(nodePath, assumeNodeExists, connectionString, optionsBuilder, setAcquiredMarker: true);
+            this._synchronizationHelper = new ZooKeeperSynchronizationHelper(nodePath, assumePathExists, connectionString, optionsBuilder, setAcquiredMarker: true);
         }
 
         /// <summary>
@@ -61,6 +79,9 @@ namespace Medallion.Threading.ZooKeeper
         /// </summary>
         string IDistributedSemaphore.Name => this.Path.ToString();
 
+        /// <summary>
+        /// Implements <see cref="IDistributedSemaphore.MaxCount"/>
+        /// </summary>
         public int MaxCount { get; }
 
         async ValueTask<ZooKeeperDistributedSemaphoreHandle?> IInternalDistributedSemaphore<ZooKeeperDistributedSemaphoreHandle>.InternalTryAcquireAsync(TimeoutValue timeout, CancellationToken cancellationToken)

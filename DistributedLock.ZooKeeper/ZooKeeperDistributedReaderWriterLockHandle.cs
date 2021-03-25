@@ -7,6 +7,9 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading.ZooKeeper
 {
+    /// <summary>
+    /// Implements <see cref="IDistributedSynchronizationHandle"/>
+    /// </summary>
     public sealed class ZooKeeperDistributedReaderWriterLockHandle : IDistributedSynchronizationHandle
     {
         private ZooKeeperNodeHandle? _innerHandle;
@@ -22,11 +25,17 @@ namespace Medallion.Threading.ZooKeeper
             this._finalizerRegistration = ManagedFinalizerQueue.Instance.Register(this, innerHandle);
         }
 
+        /// <summary>
+        /// Implements <see cref="IDistributedSynchronizationHandle.HandleLostToken"/>
+        /// </summary>
         public CancellationToken HandleLostToken => (Volatile.Read(ref this._innerHandle) ?? throw this.ObjectDisposed()).HandleLostToken;
 
         // explicit because this is sync-over-async
         void IDisposable.Dispose() => this.DisposeSyncViaAsync();
 
+        /// <summary>
+        /// Releases the lock
+        /// </summary>
         public ValueTask DisposeAsync()
         {
             Interlocked.Exchange(ref this._finalizerRegistration, null)?.Dispose();

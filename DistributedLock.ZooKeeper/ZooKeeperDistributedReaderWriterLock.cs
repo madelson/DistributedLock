@@ -20,33 +20,51 @@ namespace Medallion.Threading.ZooKeeper
 
         private readonly ZooKeeperSynchronizationHelper _synchronizationHelper;
 
+        /// <summary>
+        /// Constructs a new lock based on the provided <paramref name="path"/>, <paramref name="connectionString"/>, and <paramref name="options"/>.
+        /// 
+        /// If <paramref name="assumePathExists"/> is specified, then the node will not be created as part of acquiring nor will it be 
+        /// deleted after releasing (defaults to false).
+        /// </summary>
         public ZooKeeperDistributedReaderWriterLock(
             ZooKeeperPath path,
             string connectionString,
-            bool assumeNodeExists = false,
+            bool assumePathExists = false,
             Action<ZooKeeperDistributedSynchronizationOptionsBuilder>? options = null)
-            : this(path, assumeNodeExists: assumeNodeExists, connectionString, options)
+            : this(path, assumePathExists: assumePathExists, connectionString, options)
         {
             if (path == default) { throw new ArgumentNullException(nameof(path)); }
             if (path == ZooKeeperPath.Root) { throw new ArgumentException("Cannot be the root", nameof(path)); }
         }
 
+        /// <summary>
+        /// Constructs a new lock based on the provided <paramref name="name"/>, <paramref name="connectionString"/>, and <paramref name="options"/>.
+        /// 
+        /// The lock's path will be a parent node of the root directory '/'. If <paramref name="name"/> is not a valid node name, it will be transformed to ensure
+        /// validity.
+        /// </summary>
         public ZooKeeperDistributedReaderWriterLock(string name, string connectionString, Action<ZooKeeperDistributedSynchronizationOptionsBuilder>? options = null)
             : this(ZooKeeperPath.Root, name, connectionString, options)
         {
         }
 
+        /// <summary>
+        /// Constructs a new lock based on the provided <paramref name="directoryPath"/>, <paramref name="name"/>, <paramref name="connectionString"/>, and <paramref name="options"/>.
+        /// 
+        /// The lock's path will be a parent node of <paramref name="directoryPath"/>. If <paramref name="name"/> is not a valid node name, it will be transformed to ensure
+        /// validity.
+        /// </summary>
         public ZooKeeperDistributedReaderWriterLock(ZooKeeperPath directoryPath, string name, string connectionString, Action<ZooKeeperDistributedSynchronizationOptionsBuilder>? options = null)
             : this(
                   (directoryPath == default ? throw new ArgumentNullException(nameof(directoryPath)) : directoryPath).GetChildNodePathWithSafeName(name),
-                  assumeNodeExists: false,
+                  assumePathExists: false,
                   connectionString,
                   options)
         {
         }
 
-        private ZooKeeperDistributedReaderWriterLock(ZooKeeperPath nodePath, bool assumeNodeExists, string connectionString, Action<ZooKeeperDistributedSynchronizationOptionsBuilder>? optionsBuilder) =>
-            this._synchronizationHelper = new ZooKeeperSynchronizationHelper(nodePath, assumeNodeExists, connectionString, optionsBuilder);
+        private ZooKeeperDistributedReaderWriterLock(ZooKeeperPath nodePath, bool assumePathExists, string connectionString, Action<ZooKeeperDistributedSynchronizationOptionsBuilder>? optionsBuilder) =>
+            this._synchronizationHelper = new ZooKeeperSynchronizationHelper(nodePath, assumePathExists, connectionString, optionsBuilder);
 
         /// <summary>
         /// The zookeeper node path

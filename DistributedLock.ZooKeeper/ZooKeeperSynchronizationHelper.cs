@@ -24,17 +24,17 @@ namespace Medallion.Threading.ZooKeeper
 
         private readonly ZooKeeperConnectionInfo _connectionInfo;
         private readonly IReadOnlyList<ACL> _acl;
-        private readonly bool _assumeNodeExists, _setAcquiredMarker;
+        private readonly bool _assumePathExists, _setAcquiredMarker;
         
         public ZooKeeperSynchronizationHelper(
-            ZooKeeperPath nodePath, 
-            bool assumeNodeExists, 
+            ZooKeeperPath path, 
+            bool assumePathExists, 
             string connectionString, 
             Action<ZooKeeperDistributedSynchronizationOptionsBuilder>? optionsBuilder,
             bool setAcquiredMarker = false)
         {
-            this.Path = nodePath;
-            this._assumeNodeExists = assumeNodeExists;
+            this.Path = path;
+            this._assumePathExists = assumePathExists;
             var options = ZooKeeperDistributedSynchronizationOptionsBuilder.GetOptions(optionsBuilder);
             this._connectionInfo = new ZooKeeperConnectionInfo(
                 connectionString ?? throw new ArgumentNullException(nameof(connectionString)),
@@ -67,7 +67,7 @@ namespace Medallion.Threading.ZooKeeper
                 connection = await ZooKeeperConnection.DefaultPool.ConnectAsync(this._connectionInfo, cancellationToken).ConfigureAwait(false);
                 
                 // create a path that represents both our hold on the synch object and our place in line waiting for it
-                ephemeralNodePath = await connection.CreateEphemeralSequentialNode(this.Path, nodePrefix, this._acl, ensureDirectoryExists: !this._assumeNodeExists).ConfigureAwait(false);
+                ephemeralNodePath = await connection.CreateEphemeralSequentialNode(this.Path, nodePrefix, this._acl, ensureDirectoryExists: !this._assumePathExists).ConfigureAwait(false);
 
                 while (true)
                 {
@@ -98,7 +98,7 @@ namespace Medallion.Threading.ZooKeeper
                             await connection.ZooKeeper.setDataAsync(ephemeralNodePath, AcquiredMarker.ToArray()).ConfigureAwait(false);
                         }
                         acquired = true;
-                        return new ZooKeeperNodeHandle(connection, ephemeralNodePath, shouldDeleteParent: !this._assumeNodeExists);
+                        return new ZooKeeperNodeHandle(connection, ephemeralNodePath, shouldDeleteParent: !this._assumePathExists);
                     }
 
                     // wait for something to change
@@ -146,7 +146,7 @@ namespace Medallion.Threading.ZooKeeper
                     {
                         await connection.ZooKeeper.deleteAsync(ephemeralNodePath).ConfigureAwait(false);
                     }
-                    if (!this._assumeNodeExists)
+                    if (!this._assumePathExists)
                     {
                         // If the parent node should be cleaned up, try to do so. This attempt will almost certainly fail because
                         // someone else is holding the lock. However, we could have encountered a race condition where the other holder

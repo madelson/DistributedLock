@@ -6,6 +6,9 @@ using System.Text;
 
 namespace Medallion.Threading.ZooKeeper
 {
+    /// <summary>
+    /// Options for configuring ZooKeeper-based synchronization primitives
+    /// </summary>
     public sealed class ZooKeeperDistributedSynchronizationOptionsBuilder
     {
         private static readonly IReadOnlyList<ACL> DefaultAcl = new[] { ZooKeeperNodeCreator.PublicAcl };

@@ -15,9 +15,17 @@ namespace Medallion.Threading.ZooKeeper
         private readonly string _connectionString;
         private readonly Action<ZooKeeperDistributedSynchronizationOptionsBuilder>? _options;
 
+        /// <summary>
+        /// Constructs a provider which uses <paramref name="connectionString"/> and <paramref name="options"/>. Lock and semaphore nodes will be created
+        /// in the root directory '/'.
+        /// </summary>
         public ZooKeeperDistributedSynchronizationProvider(string connectionString, Action<ZooKeeperDistributedSynchronizationOptionsBuilder>? options = null)
             : this(ZooKeeperPath.Root, connectionString, options) { }
 
+        /// <summary>
+        /// Constructs a provider which uses <paramref name="connectionString"/> and <paramref name="options"/>. Lock and semaphore nodes will be created
+        /// in <paramref name="directoryPath"/>.
+        /// </summary>
         public ZooKeeperDistributedSynchronizationProvider(ZooKeeperPath directoryPath, string connectionString, Action<ZooKeeperDistributedSynchronizationOptionsBuilder>? options = null)
         {
             this._directoryPath = directoryPath != default ? directoryPath : throw new ArgumentNullException(nameof(directoryPath));
