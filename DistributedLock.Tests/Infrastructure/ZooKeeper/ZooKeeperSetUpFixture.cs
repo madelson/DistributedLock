@@ -16,7 +16,11 @@ namespace Medallion.Threading.Tests.ZooKeeper
         [OneTimeSetUp]
         public void OneTimeSetUp()
         {
-            if (IsZooKeeperRunning())
+            if (Environment.GetEnvironmentVariable("APPVEYOR") != null)
+            {
+                Console.WriteLine("Running on AppVeyor; will not attempt to launch ZooKeeper");
+            }
+            else if (IsZooKeeperRunning())
             {
                 Console.WriteLine("ZooKeeper already running");
             }

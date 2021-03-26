@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Medallion.Threading.Tests.Tests.ZooKeeper
+namespace Medallion.Threading.Tests.ZooKeeper
 {
     public class ZooKeeperDistributedSynchronizationProviderTest
     {
