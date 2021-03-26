@@ -4,7 +4,7 @@
     <!-- for test iteration speed, just use one TF for debug -->
     <TargetFrameworks Condition="'$(Configuration)' == 'Debug'">netcoreapp3.1</TargetFrameworks>
     <TargetFrameworks Condition="'$(Configuration)' != 'Debug'">net471;netcoreapp3.1</TargetFrameworks> 
-    <LangVersion>8.0</LangVersion>
+    <LangVersion>Latest</LangVersion>
     <Nullable>enable</Nullable>
     <RootNamespace>Medallion.Threading.Tests</RootNamespace>
     <SignAssembly>true</SignAssembly>

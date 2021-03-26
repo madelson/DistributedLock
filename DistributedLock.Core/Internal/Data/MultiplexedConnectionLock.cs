@@ -33,8 +33,8 @@ namespace Medallion.Threading.Internal.Data
             bool opportunistic)
             where TLockCookie : class
         {
-            using var mutextHandle = await this._mutex.TryAcquireAsync(opportunistic ? TimeSpan.Zero : Timeout.InfiniteTimeSpan, cancellationToken).ConfigureAwait(false);
-            if (mutextHandle == null)
+            using var mutexHandle = await this._mutex.TryAcquireAsync(opportunistic ? TimeSpan.Zero : Timeout.InfiniteTimeSpan, cancellationToken).ConfigureAwait(false);
+            if (mutexHandle == null)
             {
                 // mutex wasn't free, so just give up
                 Invariant.Require(opportunistic);

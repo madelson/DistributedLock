@@ -61,6 +61,14 @@ $@"namespace {g.Key}
             static string? NormalizeWhitespace(string? code) => code?.Trim().Replace("\r\n", "\n");
         }
         
+        [Test]
+        public void TestTestNamespaces()
+        {
+            // these can be auto-added by VS but they can mess up our SetUpFixtures
+            var badNamespaceSegments = new[] { "Tests.Tests", "AbstractTestCases", "Infrastructure" };
+            Assert.IsEmpty(this.GetType().Assembly.GetTypes().Where(t => t.Namespace != null && badNamespaceSegments.Any(s => t.Namespace.Contains(s))));
+        }
+
         private static (string declaration, string @namespace) GetTestClassDeclaration(Type testClassType)
         {
             static string GetTestClassName(Type type)

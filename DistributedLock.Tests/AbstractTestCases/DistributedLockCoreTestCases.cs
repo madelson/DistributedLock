@@ -431,6 +431,8 @@ namespace Medallion.Threading.Tests
                 command.StandardInput.WriteLine("abandon");
                 command.StandardInput.Flush();
             }
+            // make sure it actually exits
+            Assert.IsTrue(command.Task.ContinueWith(_ => { }).Wait(TimeSpan.FromSeconds(5)), "lock taker should exit");
 
             if (this._lockProvider.SupportsCrossProcessAbandonment)
             {

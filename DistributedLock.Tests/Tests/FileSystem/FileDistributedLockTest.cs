@@ -315,7 +315,6 @@ namespace Medallion.Threading.Tests.FileSystem
             // meant to be consistent length across platforms
             var consistentDirectory = Path.Combine(LockFileDirectory, new string('b', 100)).Substring(0, 100);
             var @lock = new FileDistributedLock(new DirectoryInfo(consistentDirectory), name);
-            Console.WriteLine(@lock.Name);
             Assert.That(@lock.Name, Does.StartWith(consistentDirectory + Path.DirectorySeparatorChar));
             return @lock.Name.Substring(consistentDirectory.Length + 1);
         }
@@ -346,10 +345,11 @@ namespace Medallion.Threading.Tests.FileSystem
                 }
             }
 
-            for (var i = 0; i < charCounts.Length; ++i)
-            {
-                Console.WriteLine($"{(char.IsLetterOrDigit((char)i) ? ((char)i).ToString() : i.ToString())}: {charCounts[i]}");
-            }
+            // for debugging
+            //for (var i = 0; i < charCounts.Length; ++i)
+            //{
+            //    Console.WriteLine($"{(char.IsLetterOrDigit((char)i) ? ((char)i).ToString() : i.ToString())}: {charCounts[i]}");
+            //}
 
             var expectedCount = (Iterations * FileNameValidationHelper.HashLengthInChars) / 32;
             for (var @char = default(char); @char < charCounts.Length; ++@char)

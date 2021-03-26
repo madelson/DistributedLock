@@ -46,8 +46,7 @@ namespace Medallion.Threading.Internal
                     this._disposalSource.Cancel();
                 }
 
-                if (SyncViaAsync.IsSynchronous) { this._monitoringTask.GetAwaiter().GetResult(); }
-                else { await this._monitoringTask.ConfigureAwait(false); }
+                await this._monitoringTask.AwaitSyncOverAsync().ConfigureAwait(false);
             }
             finally
             {

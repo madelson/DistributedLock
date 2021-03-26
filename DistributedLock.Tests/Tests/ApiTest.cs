@@ -74,6 +74,23 @@ namespace Medallion.Threading.Tests
         }
 
         [TestCaseSource(nameof(DistributedLockAssemblies))]
+        public void TestPublicHandleTypesDoNotHaveVisibleConstructors(AssemblyName assemblyName)
+        {
+            var publicHandleTypes = GetPublicTypes(Assembly.Load(assemblyName))
+                .Where(t => typeof(IDistributedSynchronizationHandle).IsAssignableFrom(t))
+                .ToArray();
+            Assert.IsNotEmpty(publicHandleTypes); // sanity check
+
+            foreach (var publicHandleType in publicHandleTypes)
+            {
+                Assert.IsEmpty(
+                    publicHandleType.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+                        .Where(c => c.IsPublic || c.IsFamily || c.IsFamilyOrAssembly)
+                );
+            }
+        }
+
+        [TestCaseSource(nameof(DistributedLockAssemblies))]
         public void TestLibrariesUseConfigureAwaitFalse(AssemblyName assemblyName)
         {
             var projectDirectory = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(CurrentFilePath())!, "..", "..", assemblyName.Name!));

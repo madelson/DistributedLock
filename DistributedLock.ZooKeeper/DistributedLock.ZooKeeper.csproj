@@ -1,8 +1,8 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;netstandard2.1;net461</TargetFrameworks>
-    <RootNamespace>Medallion.Threading</RootNamespace>
+    <RootNamespace>Medallion.Threading.ZooKeeper</RootNamespace>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
     <WarningLevel>4</WarningLevel>
     <LangVersion>Latest</LangVersion>
@@ -10,14 +10,13 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <Version>2.0.1</Version>
-    <AssemblyVersion>2.0.0.0</AssemblyVersion>
+    <Version>1.0.0</Version>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <Authors>Michael Adelson</Authors>
-    <Description>Provides easy-to-use mutexes, reader-writer locks, and semaphores that can synchronize across processes and machines. This is an umbrella package that brings in the entire family of DistributedLock.* packages (e. g. DistributedLock.SqlServer) as references. Those packages can also be installed individually.
-    </Description>
-    <Copyright>Copyright © 2017 Michael Adelson</Copyright>
+    <Description>Provides a distributed locking implementation based on Apache ZooKeeper</Description>
+    <Copyright>Copyright © 2020 Michael Adelson</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageTags>distributed lock async waithandle mutex sql sqlserver postgres reader writer azure semaphore</PackageTags>
+    <PackageTags>distributed lock async zookeeper</PackageTags>
     <PackageProjectUrl>https://github.com/madelson/DistributedLock</PackageProjectUrl>
     <RepositoryUrl>https://github.com/madelson/DistributedLock</RepositoryUrl>
     <FileVersion>1.0.0.0</FileVersion>
@@ -42,18 +41,20 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\DistributedLock.Postgres\DistributedLock.Postgres.csproj" />
-    <ProjectReference Include="..\DistributedLock.SqlServer\DistributedLock.SqlServer.csproj" />
-    <ProjectReference Include="..\DistributedLock.WaitHandles\DistributedLock.WaitHandles.csproj" />
-    <ProjectReference Include="..\DistributedLock.Azure\DistributedLock.Azure.csproj" />
-    <ProjectReference Include="..\DistributedLock.FileSystem\DistributedLock.FileSystem.csproj" />
-    <ProjectReference Include="..\DistributedLock.Redis\DistributedLock.Redis.csproj" />
-    <ProjectReference Include="..\DistributedLock.ZooKeeper\DistributedLock.ZooKeeper.csproj" />
+    <PackageReference Include="ZooKeeperNetEx" Version="3.4.12.4" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All" />
+    <PackageReference Include="Nullable" Version="1.3.0">
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="IsExternalInit" Version="1.0.0">
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All"/>
+    <ProjectReference Include="..\DistributedLock.Core\DistributedLock.Core.csproj" />
   </ItemGroup>
 
   <Import Project="..\CopyPackageToPublishDirectory.targets" />
+  <Import Project="..\FixDistributedLockCoreDependencyVersion.targets" />
 </Project>
