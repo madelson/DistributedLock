@@ -18,6 +18,7 @@ DistributedLock contains implementations based on various technologies; you can 
 - **[DistributedLock.Postgres](docs/DistributedLock.Postgres.md)** [![NuGet Status](http://img.shields.io/nuget/v/DistributedLock.Postgres.svg?style=flat)](https://www.nuget.org/packages/DistributedLock.Postgres/): uses Postgresql
 - **[DistributedLock.Redis](docs/DistributedLock.Redis.md)** [![NuGet Status](http://img.shields.io/nuget/v/DistributedLock.Redis.svg?style=flat)](https://www.nuget.org/packages/DistributedLock.Redis/): uses Redis
 - **[DistributedLock.Azure](docs/DistributedLock.Azure.md)** [![NuGet Status](http://img.shields.io/nuget/v/DistributedLock.Azure.svg?style=flat)](https://www.nuget.org/packages/DistributedLock.Azure/): uses Azure blobs
+- **[DistributedLock.ZooKeeper](docs/DistributedLock.ZooKeeper.md)** [![NuGet Status](http://img.shields.io/nuget/v/DistributedLock.ZooKeeper.svg?style=flat)](https://www.nuget.org/packages/DistributedLock.ZooKeeper/): uses Apache ZooKeeper
 - **[DistributedLock.FileSystem](docs/DistributedLock.FileSystem.md)** [![NuGet Status](http://img.shields.io/nuget/v/DistributedLock.FileSystem.svg?style=flat)](https://www.nuget.org/packages/DistributedLock.FileSystem/): uses lock files
 - **[DistributedLock.WaitHandles](docs/DistributedLock.WaitHandles.md)** [![NuGet Status](http://img.shields.io/nuget/v/DistributedLock.WaitHandles.svg?style=flat)](https://www.nuget.org/packages/DistributedLock.WaitHandles/): uses operating system global `WaitHandle`s (Windows only)
 
@@ -130,6 +131,8 @@ public class SomeService
 Contributions are welcome! If you are interested in contributing towards a new or existing issue, please let me know via comments on the issue so that I can help you get started and avoid wasted effort on your part.
 
 ## Release notes
+- 2.1.0
+	- Added ZooKeeper-based implementation ([#41](https://github.com/madelson/DistributedLock/issues/41), DistributedLock.ZooKeeper 1.0.0).
 - 2.0.1
 	- Fixed Redis lock behavior when using a database with `WithKeyPrefix` (#66, DistributedLock.Redis 1.0.1). Thanks @skomis-mm for contributing!
 - 2.0.0 (see also [Migrating from 1.x to 2.x](docs/Migrating%20from%201.x%20to%202.x.md#migrating-from-1x-to-2x))
