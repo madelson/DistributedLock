@@ -4,7 +4,7 @@ DistributedLock is a .NET library that provides robust and easy-to-use distribut
 
 With DistributedLock, synchronizing access to a region of code across multiple applications/machines is as simple as:
 ```C#
-using (await myDistributedLock.AcquireAsync())
+await using (await myDistributedLock.AcquireAsync())
 {
 	// I hold the lock here
 }
