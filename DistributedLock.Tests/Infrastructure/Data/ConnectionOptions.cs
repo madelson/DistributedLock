@@ -20,13 +20,13 @@ namespace Medallion.Threading.Tests.Data
         public DbTransaction? Transaction { get; set; }
 
         public T Create<T>(
-            Func<string, (bool useMultiplexing, bool useTransaction, TimeSpan keepaliveCadence), T> fromConnectionString,
+            Func<string, (bool useMultiplexing, bool useTransaction, TimeSpan? keepaliveCadence), T> fromConnectionString,
             Func<DbConnection, T> fromConnection,
             Func<DbTransaction, T> fromTransaction)
         {
             if (this.ConnectionString != null)
             {
-                return fromConnectionString(this.ConnectionString, (this.ConnectionStringUseMultiplexing, this.ConnectionStringUseTransaction, this.ConnectionStringKeepaliveCadence ?? Timeout.InfiniteTimeSpan));
+                return fromConnectionString(this.ConnectionString, (this.ConnectionStringUseMultiplexing, this.ConnectionStringUseTransaction, this.ConnectionStringKeepaliveCadence));
             }
 
             if (this.Connection != null)
