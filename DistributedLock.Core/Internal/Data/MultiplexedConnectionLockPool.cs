@@ -51,7 +51,7 @@ namespace Medallion.Threading.Internal.Data
         {
             // opportunistic phase: see if we can use a connection that is already holding a lock
             // to acquire the current lock
-            var existingLock = await this.GetOrCreateLockAsync(connectionString).ConfigureAwait(false);
+            var existingLock = await this.GetExistingLockOrDefaultAsync(connectionString).ConfigureAwait(false);
             if (existingLock != null)
             {
                 var canSafelyDisposeExistingLock = false;
@@ -101,7 +101,7 @@ namespace Medallion.Threading.Internal.Data
                 @lock.TryAcquireAsync(name, timeout, strategy, keepaliveCadence, cancellationToken, opportunistic);
         }
 
-        private async ValueTask<MultiplexedConnectionLock?> GetOrCreateLockAsync(string connectionString)
+        private async ValueTask<MultiplexedConnectionLock?> GetExistingLockOrDefaultAsync(string connectionString)
         {
             using var _ = await this._lock.AcquireAsync(CancellationToken.None).ConfigureAwait(false);
 
