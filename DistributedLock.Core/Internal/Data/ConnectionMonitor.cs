@@ -248,8 +248,12 @@ namespace Medallion.Threading.Internal.Data
                 this.CloseOrCancelMonitoringHandleRegistrationsNoLock(isCancel: false);
 
                 task = this._monitoringWorkerTask;
-                this._monitorStateChangedTokenSource?.Cancel();
 
+                // Note: synchronous cancel here should be safe because we've already set
+                // the state to disposed above which the monitoring loop will check if it
+                // takes over the Cancel() thread.
+                this._monitorStateChangedTokenSource?.Cancel();
+                
                 // unsubscribe from state change tracking
                 if (this._stateChangedHandler != null
                     && this._weakConnection.TryGetTarget(out var connection))
@@ -304,7 +308,7 @@ namespace Medallion.Threading.Internal.Data
 
             // skip if there's nothing to do
             if (this._keepaliveCadence.IsInfinite && !this.HasRegisteredMonitoringHandlesNoLock) { return false; }
-
+            
             this._monitorStateChangedTokenSource = new CancellationTokenSource();
             // Set up the task as a continuation on the previous task to avoid concurrency in the case where the previous
             // one is spinning down. If we change states in rapid succession we could end up with multiple tasks queued up
@@ -318,9 +322,20 @@ namespace Medallion.Threading.Internal.Data
 
         private void FireStateChangedNoLock()
         {
-            this._monitorStateChangedTokenSource!.Cancel();
-            this._monitorStateChangedTokenSource.Dispose();
+            var monitorStateChangedTokenSource = this._monitorStateChangedTokenSource!;
             this._monitorStateChangedTokenSource = new CancellationTokenSource();
+            // Canceling asynchronously is important because the Cancel() thread can end up
+            // running continuations inside the monitoring loop (e. g. see
+            // https://github.com/madelson/DistributedLock/issues/85). Now that we set the new
+            // token source before canceling the old one we should avoid that particular issue, but
+            // it is still safer and easier to reason about not to have that happen. This also ensures
+            // that FireStateChangedNoLock() always returns quickly, even if the monitoring loop
+            // were to do some synchronous work on the continuation thread.
+            Task.Run(() =>
+            {
+                try { monitorStateChangedTokenSource.Cancel(); }
+                finally { monitorStateChangedTokenSource.Dispose(); }
+            });
         }
 
         private async Task MonitorWorkerLoop()
@@ -357,7 +372,7 @@ namespace Medallion.Threading.Internal.Data
             using var _ = await this._connectionLock.AcquireAsync(CancellationToken.None).ConfigureAwait(false);
 
             // 1-min increments is kind of an arbitrary choice. We want to avoid this being too short since each time
-            // we "come up to breathe" that's a waste of resource. We also want to avoid this being too long since
+            // we "come up to breathe" that's a waste of resources. We also want to avoid this being too long since
             // in case people have some kind of monitoring set up for hanging queries
             await connection.SleepAsync(
                     sleepTime: TimeSpan.FromMinutes(1),

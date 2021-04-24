@@ -43,7 +43,7 @@ namespace Medallion.Threading.Tests.Postgres
             using var command = connection.CreateCommand();
             command.CommandText = "SELECT COUNT(*)::int FROM pg_stat_activity WHERE application_name = @applicationName";
             command.Parameters.AddWithValue("applicationName", applicationName);
-            return (int)command.ExecuteScalar();
+            return (int)command.ExecuteScalar()!;
         }
 
         public IsolationLevel GetIsolationLevel(DbConnection connection)

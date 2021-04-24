@@ -89,7 +89,8 @@ namespace Medallion.Threading.Tests.Postgres
                     if (useTimeout) { command.CommandText = "SET LOCAL statement_timeout = 100; " + command.CommandText; }
                     else { cancellationTokenSource.CancelAfter(TimeSpan.FromSeconds(.5)); }
 
-                    Assert.ThrowsAsync<PostgresException>(() => command.ExecuteNonQueryAsync(cancellationTokenSource.Token));
+                    var exception = Assert.CatchAsync(() => command.ExecuteNonQueryAsync(cancellationTokenSource.Token));
+                    Assert.IsInstanceOf(useTimeout ? typeof(PostgresException) : typeof(OperationCanceledException), exception);
 
                     if (useSavePoint)
                     {
@@ -143,31 +144,7 @@ namespace Medallion.Threading.Tests.Postgres
             Assert.IsTrue(stateChangedEvent.Wait(TimeSpan.FromSeconds(5)));
         }
 
-        // replicates https://github.com/npgsql/npgsql/issues/2912
-        [Test]
-        public async Task TestPrepareThrowsNullReferenceExceptionOnTerminatedConnection()
-        {
-            using var connection = new NpgsqlConnection(TestingPostgresDb.ConnectionString);
-            await connection.OpenAsync();
-
-            using var getPidCommand = connection.CreateCommand();
-            getPidCommand.CommandText = "SELECT pg_backend_pid()";
-            var pid = (int)(await getPidCommand.ExecuteScalarAsync());
-
-            // kill the connection from the back end
-            using var killingConnection = new NpgsqlConnection(TestingPostgresDb.ConnectionString);
-            await killingConnection.OpenAsync();
-            using var killCommand = killingConnection.CreateCommand();
-            killCommand.CommandText = $"SELECT pg_terminate_backend({pid})";
-            await killCommand.ExecuteNonQueryAsync();
-
-            await Task.Delay(10);
-
-            Assert.ThrowsAsync<NullReferenceException>(() => getPidCommand.PrepareAsync());
-        }
-
-        // See https://github.com/npgsql/npgsql/issues/3442. Until that's resolved, connection monitoring
-        // is broken in 5.x
+        // Effective test for https://github.com/npgsql/npgsql/issues/3442, which broke monitoring
         [Test]
         public async Task TestExecutingQueryOnKilledConnectionFiresStateChanged()
         {
@@ -193,7 +170,7 @@ namespace Medallion.Threading.Tests.Postgres
             Assert.ThrowsAsync<PostgresException>(() => getPidCommand.ExecuteScalarAsync());
             Assert.AreNotEqual(ConnectionState.Open, connection.State);
 
-            Assert.IsTrue(stateChangedEvent.Wait(TimeSpan.FromSeconds(5))); // assertion passes in 4.1.4, fails in 5.0.1.1
+            Assert.IsTrue(stateChangedEvent.Wait(TimeSpan.FromSeconds(5)));
         }
     }
 }
