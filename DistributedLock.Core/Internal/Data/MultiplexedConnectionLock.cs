@@ -18,11 +18,19 @@ namespace Medallion.Threading.Internal.Data
         private readonly AsyncLock _mutex = AsyncLock.Create();
         private readonly Dictionary<string, TimeoutValue> _heldLocksToKeepaliveCadences = new Dictionary<string, TimeoutValue>();
         private readonly DatabaseConnection _connection;
+        /// <summary>
+        /// Tracks whether we've successfully opened the connection. We track this explicity instead of just looking at
+        /// <see cref="DatabaseConnection.CanExecuteQueries"/> because we want to make sure we close() explicitly for every
+        /// open() and also we want to make sure we do not try to re-open a broken connection.
+        /// </summary>
+        private bool _connectionOpened;
 
         public MultiplexedConnectionLock(DatabaseConnection connection)
         {
             this._connection = connection;
         }
+
+        private bool IsConnectionBrokenNoLock => this._connectionOpened && !this._connection.CanExecuteQueries;
 
         public async ValueTask<Result> TryAcquireAsync<TLockCookie>(
             string name,
@@ -43,6 +51,10 @@ namespace Medallion.Threading.Internal.Data
                 return new Result(MultiplexedConnectionLockRetry.Retry, canSafelyDispose: false);
             }
 
+            // This is technically redundant with the similar catch block below, but avoids needing to have
+            // to attempt a query on a connection that we know is broken.
+            if (opportunistic && this.IsConnectionBrokenNoLock) { return this.GetAlreadyBrokenResultNoLock(); }
+
             try
             {
                 if (this._heldLocksToKeepaliveCadences.ContainsKey(name))
@@ -53,9 +65,10 @@ namespace Medallion.Threading.Internal.Data
                     return this.GetFailureResultNoLock(isAlreadyHeld: true, opportunistic, timeout);
                 }
 
-                if (!this._connection.CanExecuteQueries)
+                if (!this._connectionOpened)
                 {
                     await this._connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+                    this._connectionOpened = true;
                 }
 
                 var lockCookie = await strategy.TryAcquireAsync(this._connection, name, opportunistic ? TimeSpan.Zero : timeout, cancellationToken).ConfigureAwait(false);
@@ -70,6 +83,11 @@ namespace Medallion.Threading.Internal.Data
                 // we failed to acquire the lock, so we should retry if we were being opportunistic and artificially
                 // shortened the timeout
                 return this.GetFailureResultNoLock(isAlreadyHeld: false, opportunistic, timeout);
+            }
+            // never punish for the connection being broken already (see https://github.com/madelson/DistributedLock/issues/83)
+            catch when (opportunistic && this.IsConnectionBrokenNoLock)
+            {
+                return this.GetAlreadyBrokenResultNoLock();
             }
             finally
             {
@@ -89,6 +107,11 @@ namespace Medallion.Threading.Internal.Data
             using var mutexHandle = await this._mutex.TryAcquireAsync(TimeSpan.Zero, CancellationToken.None).ConfigureAwait(false);
             return mutexHandle == null || this._heldLocksToKeepaliveCadences.Count != 0;
         }
+
+        private Result GetAlreadyBrokenResultNoLock() => 
+            // Retry on any already-broken connection to avoid "leaking" the killing or death of connections. We want there to be no observable
+            // results (other than perf) of multiplexing vs. not.
+            new Result(MultiplexedConnectionLockRetry.Retry, canSafelyDispose: this._heldLocksToKeepaliveCadences.Count == 0);
 
         private Result GetFailureResultNoLock(bool isAlreadyHeld, bool opportunistic, TimeoutValue timeout)
         {
@@ -151,11 +174,13 @@ namespace Medallion.Threading.Internal.Data
             }
         }
 
-        private ValueTask CloseConnectionIfNeededNoLockAsync()
+        private async ValueTask CloseConnectionIfNeededNoLockAsync()
         {
-            return this._heldLocksToKeepaliveCadences.Count == 0 && this._connection.CanExecuteQueries
-                ? this._connection.CloseAsync()
-                : default;
+            if (this._connectionOpened && this._heldLocksToKeepaliveCadences.Count == 0)
+            {
+                await this._connection.CloseAsync().ConfigureAwait(false);
+                this._connectionOpened = false;
+            }
         }
 
         private void SetKeepaliveCadenceNoLock()

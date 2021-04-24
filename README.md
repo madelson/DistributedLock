@@ -4,7 +4,7 @@ DistributedLock is a .NET library that provides robust and easy-to-use distribut
 
 With DistributedLock, synchronizing access to a region of code across multiple applications/machines is as simple as:
 ```C#
-using (await myDistributedLock.AcquireAsync())
+await using (await myDistributedLock.AcquireAsync())
 {
 	// I hold the lock here
 }
@@ -132,7 +132,11 @@ Contributions are welcome! If you are interested in contributing towards a new o
 
 ## Release notes
 - 2.1.0
-	- Added ZooKeeper-based implementation ([#41](https://github.com/madelson/DistributedLock/issues/41), DistributedLock.ZooKeeper 1.0.0).
+	- Added ZooKeeper-based implementation ([#41](https://github.com/madelson/DistributedLock/issues/41), DistributedLock.ZooKeeper 1.0.0)
+- 2.0.2
+	- Fixed bug where `HandleLostToken` would hang when accessed on a SqlServer or Postgres lock handle that used keepalive ([#85](https://github.com/madelson/DistributedLock/issues/85), DistributedLock.Core 1.0.1)
+	- Fixed bug where broken database connections could result in future lock attempts failing when using SqlServer or Postgres locks with multiplexing ([#83](https://github.com/madelson/DistributedLock/issues/83), DistributedLock.Core 1.0.1)
+	- Updated Npgsql dependency to 5.x to take advantage of various bugfixes ([#61](https://github.com/madelson/DistributedLock/issues/61), DistributedLock.Postgres 1.0.1)
 - 2.0.1
 	- Fixed Redis lock behavior when using a database with `WithKeyPrefix` (#66, DistributedLock.Redis 1.0.1). Thanks @skomis-mm for contributing!
 - 2.0.0 (see also [Migrating from 1.x to 2.x](docs/Migrating%20from%201.x%20to%202.x.md#migrating-from-1x-to-2x))

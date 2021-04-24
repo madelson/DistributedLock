@@ -20,7 +20,7 @@ await using (var handle = await @lock.TryAcquireAsync())
 
 ## Implementation notes
 
-Because they are based on files, these locks are used to coordinate between processes on the same machine (as opposed to across machines). In some csaes, it may be possible to coordinate across machines by specifying the path of a networked file. However, this should be tested because the network file system may not truly support locking.
+Because they are based on files, these locks are used to coordinate between processes on the same machine (as opposed to across machines). In some cases, it may be possible to coordinate across machines by specifying the path of a networked file. However, this should be tested because the network file system may not truly support locking.
 
 `FileDistributedLock`s can be constructed either from a base `DirectoryInfo` and a `name`, which will cause it to create a file *based on* `name` in the specified directory. If you know exactly which file you'd like to lock on, you can pass a `FileInfo` instead.
 

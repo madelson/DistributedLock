@@ -23,8 +23,11 @@ namespace Medallion.Threading.Tests.Postgres
 
         public override string GetSafeName(string name) => new PostgresAdvisoryLockKey(name, allowHashing: true).ToString();
 
-        internal static Action<PostgresConnectionOptionsBuilder> ToPostgresOptions((bool useMultiplexing, bool useTransaction, TimeSpan keepaliveCadence) options) =>
-            o => o.UseMultiplexing(options.useMultiplexing).KeepaliveCadence(options.keepaliveCadence);
+        internal static Action<PostgresConnectionOptionsBuilder> ToPostgresOptions((bool useMultiplexing, bool useTransaction, TimeSpan? keepaliveCadence) options) => o =>
+        {
+            o.UseMultiplexing(options.useMultiplexing);
+            if (options.keepaliveCadence is { } keepaliveCadence) { o.KeepaliveCadence(keepaliveCadence); }
+        };
     }
 
     public sealed class TestingPostgresDistributedReaderWriterLockProvider<TStrategy> : TestingReaderWriterLockProvider<TStrategy>

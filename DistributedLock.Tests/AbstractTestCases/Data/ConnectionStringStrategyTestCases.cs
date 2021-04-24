@@ -3,6 +3,7 @@ using NUnit.Framework;
 using System;
 using System.Diagnostics;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Medallion.Threading.Tests.Data
 {
@@ -94,6 +95,30 @@ namespace Medallion.Threading.Tests.Data
                     }
                 }
             });
+        }
+
+        // replicates issue from https://github.com/madelson/DistributedLock/issues/85
+        [Test]
+        public async Task TestAccessingHandleLostTokenWhileKeepaliveActiveDoesNotBlock()
+        {
+            this._lockProvider.Strategy.KeepaliveCadence = TimeSpan.FromMinutes(5);
+
+            var @lock = this._lockProvider.CreateLock(string.Empty);
+            var handle = await @lock.TryAcquireAsync();
+            if (handle != null)
+            {
+                var accessHandleLostTokenTask = Task.Run(() =>
+                {
+                    if (handle.HandleLostToken.CanBeCanceled)
+                    {
+                        handle.HandleLostToken.Register(() => { });
+                    }
+                });
+                Assert.IsTrue(await accessHandleLostTokenTask.WaitAsync(TimeSpan.FromSeconds(5)));
+
+                // do this only on success; on failure we're likely deadlocked and dispose will hang
+                await handle.DisposeAsync();
+            }
         }
     }
 }
