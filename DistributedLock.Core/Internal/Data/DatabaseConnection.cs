@@ -112,14 +112,14 @@ namespace Medallion.Threading.Internal.Data
                     finally
                     {
 #if NETSTANDARD2_1
-                if (!SyncViaAsync.IsSynchronous && this.InnerConnection is DbConnection dbConnection)
-                {
-                    await (isDispose ? dbConnection.DisposeAsync() : dbConnection.CloseAsync().AsValueTask()).ConfigureAwait(false);
-                }
-                else 
-                {
-                    SyncDisposeConnection();
-                }
+                        if (!SyncViaAsync.IsSynchronous && this.InnerConnection is DbConnection dbConnection)
+                        {
+                            await (isDispose ? dbConnection.DisposeAsync() : dbConnection.CloseAsync().AsValueTask()).ConfigureAwait(false);
+                        }
+                        else 
+                        {
+                            SyncDisposeConnection();
+                        }
 #elif NETSTANDARD2_0 || NET461
                         SyncDisposeConnection();
 #else

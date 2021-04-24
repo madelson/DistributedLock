@@ -89,6 +89,7 @@ namespace Medallion.Threading.Internal.Data
             try
             {
                 result = await TryAcquireAsync(@lock, opportunistic: false).ConfigureAwait(false);
+                Invariant.Require(result!.Value.Retry == MultiplexedConnectionLockRetry.NoRetry, "Acquire on fresh lock should not recommend a retry");
             }
             finally
             {

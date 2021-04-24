@@ -2,6 +2,7 @@ using Medallion.Threading.Internal;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
+using System.Data.Common;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -121,6 +122,32 @@ namespace Medallion.Threading.Tests.Data
             Assert.IsTrue(Task.Run(Test).Wait(Debugger.IsAttached ? TimeSpan.FromMinutes(10) : TimeSpan.FromSeconds(10)));
 
             string MakeLockName(int i) => $"{nameof(TestHighConcurrencyWithSmallPool)}_{i}";
+        }
+
+        [Test]
+        public async Task TestBrokenConnectionDoesNotCorruptPool()
+        {
+            // This makes sure that for the Semaphore5 lock initial 4 tickets are taken with the default
+            // application name and therefore won't be killed
+            this._lockProvider.CreateLock("1");
+            this._lockProvider.CreateLock("2");
+            var applicationName = this._lockProvider.Strategy.SetUniqueApplicationName();
+
+            var lock1 = this._lockProvider.CreateLock("1");
+            await using var handle1 = await lock1.AcquireAsync();
+
+            // kill the session
+            await this._lockProvider.Strategy.Db.KillSessionsAsync(applicationName);
+
+            var lock2 = this._lockProvider.CreateLock("2");
+            Assert.DoesNotThrowAsync(async () => await (await lock2.AcquireAsync()).DisposeAsync());
+
+            await using var handle2 = await lock2.AcquireAsync();
+            Assert.DoesNotThrow(() => lock2.TryAcquire()?.Dispose());
+
+            Assert.Catch(() => handle1.Dispose());
+
+            Assert.DoesNotThrowAsync(async () => await (await lock1.AcquireAsync()).DisposeAsync());
         }
     }
 }
