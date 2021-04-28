@@ -122,7 +122,10 @@ namespace Medallion.Threading.Postgres
 
             var commandText = new StringBuilder();
 
+            // We set the statement_timeout to 0 (inf) because we want everything to be driven by the lock_timeout.
             commandText.AppendLine("SET LOCAL statement_timeout = 0;");
+            // We set the lock timeout to our timeout, with the exception that if our timeout is zero we set it to inf because
+            // we'll be using the pg_try_advisory_lock function which doesn't block in that case.
             commandText.AppendLine($"SET LOCAL lock_timeout = {(timeout.IsZero || timeout.IsInfinite ? 0 : timeout.InMilliseconds)};");
 
             if (connection.IsExernallyOwned)
