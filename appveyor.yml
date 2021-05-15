@@ -7,10 +7,8 @@ image:
 build_script:
   - dotnet build DistributedLock.sln -c Release
   
-# only test categories that don't depend on external things
-test:
-  categories:
-    - CI
+test_script:
+  - dotnet test DistributedLock.sln -c Release --no-build --filter TestCategory=CI
 
 for: 
   - 
@@ -18,7 +16,5 @@ for:
       only: 
         - 
           image: "Visual Studio 2019"
-    test: 
-      categories: 
-        - CI
-        - CIWindows
+    test_script:
+      - dotnet test DistributedLock.sln -c Release --no-build --filter "TestCategory=CI|TestCategory=CIWindows"
