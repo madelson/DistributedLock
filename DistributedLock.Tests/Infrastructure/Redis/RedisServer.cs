@@ -15,11 +15,14 @@ namespace Medallion.Threading.Tests.Redis
         // redis default is 6379, so go one above that
         private static readonly int MinDynamicPort = RedisPorts.DefaultPorts.Max() + 1, MaxDynamicPort = MinDynamicPort + 100;
 
-        private static readonly string WslPath = Directory.GetDirectories(@"C:\Windows\WinSxS")
-            .Select(d => Path.Combine(d, "wsl.exe"))
-            .Where(File.Exists)
-            .OrderByDescending(File.GetCreationTimeUtc)
-            .First();
+        // it's important for this to be lazy because it doesn't work when running on Linux
+        private static readonly Lazy<string> WslPath = new Lazy<string>(
+            () => Directory.GetDirectories(@"C:\Windows\WinSxS")
+                .Select(d => Path.Combine(d, "wsl.exe"))
+                .Where(File.Exists)
+                .OrderByDescending(File.GetCreationTimeUtc)
+                .First()
+        );
 
         private static readonly Dictionary<int, RedisServer> ActiveServersByPort = new Dictionary<int, RedisServer>();
         private static readonly RedisServer[] DefaultServers = new RedisServer[RedisPorts.DefaultPorts.Count];
@@ -34,7 +37,7 @@ namespace Medallion.Threading.Tests.Redis
             {
                 this.Port = port ?? Enumerable.Range(MinDynamicPort, count: MaxDynamicPort - MinDynamicPort + 1)
                     .First(p => !ActiveServersByPort.ContainsKey(p));
-                this._command = Command.Run(WslPath, new object[] { "redis-server", "--port", this.Port }, options: o => o.StartInfo(si => si.RedirectStandardInput = false))
+                this._command = Command.Run(WslPath.Value, new object[] { "redis-server", "--port", this.Port }, options: o => o.StartInfo(si => si.RedirectStandardInput = false))
                     .RedirectTo(Console.Out)
                     .RedirectStandardErrorTo(Console.Error);
                 ActiveServersByPort.Add(this.Port, this);
