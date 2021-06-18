@@ -102,5 +102,27 @@ namespace Medallion.Threading.Internal
         public static void DisposeSyncViaAsync<TDisposable>(this TDisposable disposable)
             where TDisposable : IAsyncDisposable, IDisposable =>
             Run(@this => @this.DisposeAsync(), disposable);
+
+        /// <summary>
+        /// In synchronous mode, performs a blocking wait on the provided <paramref name="task"/>. In asynchronous mode,
+        /// returns the <paramref name="task"/> as a <see cref="ValueTask{TResult}"/>.
+        /// </summary>
+        public static ValueTask<TResult> AwaitSyncOverAsync<TResult>(this Task<TResult> task) =>
+            IsSynchronous ? task.GetAwaiter().GetResult().AsValueTask() : task.AsValueTask();
+
+        /// <summary>
+        /// In synchronous mode, performs a blocking wait on the provided <paramref name="task"/>. In asynchronous mode,
+        /// returns the <paramref name="task"/> as a <see cref="ValueTask"/>.
+        /// </summary>
+        public static ValueTask AwaitSyncOverAsync(this Task task)
+        {
+            if (IsSynchronous) 
+            { 
+                task.GetAwaiter().GetResult();
+                return default;
+            }
+
+            return task.AsValueTask();
+        }
     }
 }

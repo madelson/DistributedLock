@@ -59,7 +59,6 @@ namespace Medallion.Threading.Internal.Data
         // note: we could have this return an IAsyncDisposable which would allow you to close the transaction
         // without closing the connection. However, we don't currently have any use-cases for that
         public async ValueTask BeginTransactionAsync()
-#pragma warning restore CS1998
         {
             Invariant.Require(this._transaction == null);
 

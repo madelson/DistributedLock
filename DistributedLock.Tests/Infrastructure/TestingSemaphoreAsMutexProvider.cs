@@ -68,7 +68,7 @@ namespace Medallion.Threading.Tests
                 this._semaphore = semaphore;
             }
 
-            string IDistributedLock.Name => throw new NotImplementedException();
+            string IDistributedLock.Name => this._semaphore.Name;
 
             IDistributedSynchronizationHandle IDistributedLock.Acquire(TimeSpan? timeout, CancellationToken cancellationToken) =>
                 this._semaphore.Acquire(timeout, cancellationToken);

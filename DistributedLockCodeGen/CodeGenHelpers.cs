@@ -1,4 +1,5 @@
 ﻿using NUnit.Framework;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -29,5 +30,9 @@ namespace DistributedLockCodeGen
             info = default;
             return false;
         }
+
+        public static bool SupportsSyncApis(string path) =>                 
+            // zookeeper is inherently asynchronous (watch-based), so any synchronous APIs it has are just sync-over-async
+            !path.Contains("ZooKeeper", StringComparison.OrdinalIgnoreCase);
     }
 }

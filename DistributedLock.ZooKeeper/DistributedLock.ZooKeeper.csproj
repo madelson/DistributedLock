@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;netstandard2.1;net461</TargetFrameworks>
-    <RootNamespace>Medallion.Threading</RootNamespace>
+    <RootNamespace>Medallion.Threading.ZooKeeper</RootNamespace>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
     <WarningLevel>4</WarningLevel>
     <LangVersion>Latest</LangVersion>
@@ -10,13 +10,13 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <Version>1.0.2</Version>
+    <Version>1.0.0</Version>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <Authors>Michael Adelson</Authors>
-    <Description>Core interfaces and utilities that support the DistributedLock.* family of packages</Description>
+    <Description>Provides a distributed locking implementation based on Apache ZooKeeper</Description>
     <Copyright>Copyright © 2020 Michael Adelson</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageTags>distributed lock async mutex reader writer semaphore</PackageTags>
+    <PackageTags>distributed lock async zookeeper</PackageTags>
     <PackageProjectUrl>https://github.com/madelson/DistributedLock</PackageProjectUrl>
     <RepositoryUrl>https://github.com/madelson/DistributedLock</RepositoryUrl>
     <FileVersion>1.0.0.0</FileVersion>
@@ -40,17 +40,21 @@
     <DefineConstants>TRACE;DEBUG</DefineConstants>
   </PropertyGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'net461'">
-    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="5.0.0" />
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(TargetFramework)' == 'net461'">
-    <PackageReference Include="System.ValueTuple" Version="4.5.0" />
+  <ItemGroup>
+    <PackageReference Include="ZooKeeperNetEx" Version="3.4.12.4" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All" />
+    <PackageReference Include="Nullable" Version="1.3.0">
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="IsExternalInit" Version="1.0.0">
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All"/>
+    <ProjectReference Include="..\DistributedLock.Core\DistributedLock.Core.csproj" />
   </ItemGroup>
 
   <Import Project="..\CopyPackageToPublishDirectory.targets" />
+  <Import Project="..\FixDistributedLockCoreDependencyVersion.targets" />
 </Project>

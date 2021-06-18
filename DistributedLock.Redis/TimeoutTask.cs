@@ -12,7 +12,7 @@ namespace Medallion.Threading.Redis
     /// Acts as a <see cref="Task.Delay(TimeSpan, CancellationToken)"/> which is cleaned up when
     /// the <see cref="TimeoutTask"/> gets disposed
     /// </summary>
-    internal struct TimeoutTask : IDisposable
+    internal readonly struct TimeoutTask : IDisposable
     {
         private readonly CancellationTokenSource _cleanupTokenSource;
         private readonly CancellationTokenSource? _linkedTokenSource;

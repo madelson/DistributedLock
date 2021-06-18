@@ -57,9 +57,7 @@ namespace Medallion.Threading.Redis.RedLock
             var succeeded = false;
             try
             {
-                succeeded = isSynchronous
-                    ? waitForAcquireTask.GetAwaiter().GetResult()
-                    : await waitForAcquireTask.ConfigureAwait(false);
+                succeeded = await waitForAcquireTask.AwaitSyncOverAsync().ConfigureAwait(false);
             }
             finally
             {

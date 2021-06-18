@@ -18,6 +18,7 @@ DistributedLock contains implementations based on various technologies; you can 
 - **[DistributedLock.Postgres](docs/DistributedLock.Postgres.md)** [![NuGet Status](http://img.shields.io/nuget/v/DistributedLock.Postgres.svg?style=flat)](https://www.nuget.org/packages/DistributedLock.Postgres/): uses Postgresql
 - **[DistributedLock.Redis](docs/DistributedLock.Redis.md)** [![NuGet Status](http://img.shields.io/nuget/v/DistributedLock.Redis.svg?style=flat)](https://www.nuget.org/packages/DistributedLock.Redis/): uses Redis
 - **[DistributedLock.Azure](docs/DistributedLock.Azure.md)** [![NuGet Status](http://img.shields.io/nuget/v/DistributedLock.Azure.svg?style=flat)](https://www.nuget.org/packages/DistributedLock.Azure/): uses Azure blobs
+- **[DistributedLock.ZooKeeper](docs/DistributedLock.ZooKeeper.md)** [![NuGet Status](http://img.shields.io/nuget/v/DistributedLock.ZooKeeper.svg?style=flat)](https://www.nuget.org/packages/DistributedLock.ZooKeeper/): uses Apache ZooKeeper
 - **[DistributedLock.FileSystem](docs/DistributedLock.FileSystem.md)** [![NuGet Status](http://img.shields.io/nuget/v/DistributedLock.FileSystem.svg?style=flat)](https://www.nuget.org/packages/DistributedLock.FileSystem/): uses lock files
 - **[DistributedLock.WaitHandles](docs/DistributedLock.WaitHandles.md)** [![NuGet Status](http://img.shields.io/nuget/v/DistributedLock.WaitHandles.svg?style=flat)](https://www.nuget.org/packages/DistributedLock.WaitHandles/): uses operating system global `WaitHandle`s (Windows only)
 
@@ -130,30 +131,32 @@ public class SomeService
 Contributions are welcome! If you are interested in contributing towards a new or existing issue, please let me know via comments on the issue so that I can help you get started and avoid wasted effort on your part.
 
 ## Release notes
+- 2.1.0
+	- Added ZooKeeper-based implementation ([#41](https://github.com/madelson/DistributedLock/issues/41), DistributedLock.ZooKeeper 1.0.0)
 - 2.0.2
 	- Fixed bug where `HandleLostToken` would hang when accessed on a SqlServer or Postgres lock handle that used keepalive ([#85](https://github.com/madelson/DistributedLock/issues/85), DistributedLock.Core 1.0.1)
 	- Fixed bug where broken database connections could result in future lock attempts failing when using SqlServer or Postgres locks with multiplexing ([#83](https://github.com/madelson/DistributedLock/issues/83), DistributedLock.Core 1.0.1)
 	- Updated Npgsql dependency to 5.x to take advantage of various bugfixes ([#61](https://github.com/madelson/DistributedLock/issues/61), DistributedLock.Postgres 1.0.1)
 - 2.0.1
-	- Fixed Redis lock behavior when using a database with `WithKeyPrefix` (#66, DistributedLock.Redis 1.0.1). Thanks @skomis-mm for contributing!
+	- Fixed Redis lock behavior when using a database with `WithKeyPrefix` ([#66](https://github.com/madelson/DistributedLock/issues/66), DistributedLock.Redis 1.0.1). Thanks [@skomis-mm](https://github.com/skomis-mm) for contributing!
 - 2.0.0 (see also [Migrating from 1.x to 2.x](docs/Migrating%20from%201.x%20to%202.x.md#migrating-from-1x-to-2x))
 	- Revamped package structure so that DistributedLock is now an umbrella package and each implementation technology has its own package (BREAKING CHANGE)
-	- Added Postgresql-based locking (#56, DistributedLock.Postgres 1.0.0)
-	- Added Redis-based locking (#24, DistributedLock.Redis 1.0.0)
-	- Added Azure blob-based locking (#42, DistributedLock.Azure 1.0.0)
-	- Added file-based locking (#28, DistributedLock.FileSystem 1.0.0)
-	- Added provider classes for improved IOC integration (#13)
-	- Added strong naming to assemblies. Thanks @pedropaulovc for contributing! (#47, BREAKING CHANGE)
-	- Made lock handles implement `IAsyncDisposable` in addition to `IDisposable` #20, BREAKING CHANGE)
-	- Exposed implementation-agnostic interfaces (e. g. `IDistributedLock`) for all synchronization primitives (#10)
-	- Added `HandleLostToken` API for tracking if a lock's underlying connection dies (#6, BREAKING CHANGE)
-	- Added SourceLink support (#57)
+	- Added Postgresql-based locking ([#56](https://github.com/madelson/DistributedLock/issues/56), DistributedLock.Postgres 1.0.0)
+	- Added Redis-based locking ([#24](https://github.com/madelson/DistributedLock/issues/24), DistributedLock.Redis 1.0.0)
+	- Added Azure blob-based locking ([#42](https://github.com/madelson/DistributedLock/issues/42), DistributedLock.Azure 1.0.0)
+	- Added file-based locking ([#28](https://github.com/madelson/DistributedLock/issues/28), DistributedLock.FileSystem 1.0.0)
+	- Added provider classes for improved IOC integration ([#13](https://github.com/madelson/DistributedLock/issues/13))
+	- Added strong naming to assemblies. Thanks [@pedropaulovc](https://github.com/pedropaulovc) for contributing! ([#47](https://github.com/madelson/DistributedLock/issues/47), BREAKING CHANGE)
+	- Made lock handles implement `IAsyncDisposable` in addition to `IDisposable` [#20](https://github.com/madelson/DistributedLock/issues/20), BREAKING CHANGE)
+	- Exposed implementation-agnostic interfaces (e. g. `IDistributedLock`) for all synchronization primitives ([#10](https://github.com/madelson/DistributedLock/issues/10))
+	- Added `HandleLostToken` API for tracking if a lock's underlying connection dies ([#6](https://github.com/madelson/DistributedLock/issues/6), BREAKING CHANGE)
+	- Added SourceLink support ([#57](https://github.com/madelson/DistributedLock/issues/57))
 	- Removed `GetSafeName` API in favor of safe naming by default (BREAKING CHANGE)
 	- Renamed "SystemDistributedLock" to "EventWaitHandleDistributedLock" (DistributedLock.WaitHandles 1.0.0)
 	- Stopped supporting net45 (BREAKING CHANGE)
-	- Removed `DbConnection` and `DbTransaction` constructors form `SqlDistributedLock`, leaving the constructors that take `IDbConnection`/`IDbTransaction` (#35, BREAKING CHANGE)
+	- Removed `DbConnection` and `DbTransaction` constructors form `SqlDistributedLock`, leaving the constructors that take `IDbConnection`/`IDbTransaction` ([#35](https://github.com/madelson/DistributedLock/issues/35), BREAKING CHANGE)
 	- Changed methods returning `Task<IDisposable>` to instead return `ValueTask`, making it so that `using (@lock.AcquireAsync()) { ... } without an `await` no longer compiles (#34, BREAKING CHANGE)
-	- Changed `UpgradeableLockHandle.UpgradeToWriteLock` to return `void` (#33, BREAKING CHANGE)
+	- Changed `UpgradeableLockHandle.UpgradeToWriteLock` to return `void` ([#33](https://github.com/madelson/DistributedLock/issues/33), BREAKING CHANGE)
 	- Switched to Microsoft.Data.SqlClient by default for all target frameworks (BREAKING CHANGE)
 	- Changed all locking implementations to be non-reentrant (BREAKING CHANGE)	
 - 1.5.0

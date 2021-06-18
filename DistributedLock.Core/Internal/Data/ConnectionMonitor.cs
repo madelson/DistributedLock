@@ -264,8 +264,7 @@ namespace Medallion.Threading.Internal.Data
 
             if (task != null)
             {
-                if (SyncViaAsync.IsSynchronous) { task.GetAwaiter().GetResult(); }
-                else { await task.ConfigureAwait(false); }
+                await task.AwaitSyncOverAsync().ConfigureAwait(false);
             }
         }
 
