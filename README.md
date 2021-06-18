@@ -138,7 +138,7 @@ Contributions are welcome! If you are interested in contributing towards a new o
 	- Fixed bug where broken database connections could result in future lock attempts failing when using SqlServer or Postgres locks with multiplexing ([#83](https://github.com/madelson/DistributedLock/issues/83), DistributedLock.Core 1.0.1)
 	- Updated Npgsql dependency to 5.x to take advantage of various bugfixes ([#61](https://github.com/madelson/DistributedLock/issues/61), DistributedLock.Postgres 1.0.1)
 - 2.0.1
-	- Fixed Redis lock behavior when using a database with `WithKeyPrefix` ([#66](https://github.com/madelson/DistributedLock/issues/66), DistributedLock.Redis 1.0.1). Thanks @skomis-mm for contributing!
+	- Fixed Redis lock behavior when using a database with `WithKeyPrefix` ([#66](https://github.com/madelson/DistributedLock/issues/66), DistributedLock.Redis 1.0.1). Thanks [@skomis-mm](https://github.com/skomis-mm) for contributing!
 - 2.0.0 (see also [Migrating from 1.x to 2.x](docs/Migrating%20from%201.x%20to%202.x.md#migrating-from-1x-to-2x))
 	- Revamped package structure so that DistributedLock is now an umbrella package and each implementation technology has its own package (BREAKING CHANGE)
 	- Added Postgresql-based locking ([#56](https://github.com/madelson/DistributedLock/issues/56), DistributedLock.Postgres 1.0.0)
@@ -146,7 +146,7 @@ Contributions are welcome! If you are interested in contributing towards a new o
 	- Added Azure blob-based locking ([#42](https://github.com/madelson/DistributedLock/issues/42), DistributedLock.Azure 1.0.0)
 	- Added file-based locking ([#28](https://github.com/madelson/DistributedLock/issues/28), DistributedLock.FileSystem 1.0.0)
 	- Added provider classes for improved IOC integration ([#13](https://github.com/madelson/DistributedLock/issues/13))
-	- Added strong naming to assemblies. Thanks @pedropaulovc for contributing! ([#47](https://github.com/madelson/DistributedLock/issues/47), BREAKING CHANGE)
+	- Added strong naming to assemblies. Thanks [@pedropaulovc](https://github.com/pedropaulovc) for contributing! ([#47](https://github.com/madelson/DistributedLock/issues/47), BREAKING CHANGE)
 	- Made lock handles implement `IAsyncDisposable` in addition to `IDisposable` [#20](https://github.com/madelson/DistributedLock/issues/20), BREAKING CHANGE)
 	- Exposed implementation-agnostic interfaces (e. g. `IDistributedLock`) for all synchronization primitives ([#10](https://github.com/madelson/DistributedLock/issues/10))
 	- Added `HandleLostToken` API for tracking if a lock's underlying connection dies ([#6](https://github.com/madelson/DistributedLock/issues/6), BREAKING CHANGE)
