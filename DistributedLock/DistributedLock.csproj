@@ -49,6 +49,7 @@
     <ProjectReference Include="..\DistributedLock.FileSystem\DistributedLock.FileSystem.csproj" />
     <ProjectReference Include="..\DistributedLock.Redis\DistributedLock.Redis.csproj" />
     <ProjectReference Include="..\DistributedLock.ZooKeeper\DistributedLock.ZooKeeper.csproj" />
+    <ProjectReference Include="..\DistributedLock.MySql\DistributedLock.MySql.csproj" />
   </ItemGroup>
 
   <ItemGroup>

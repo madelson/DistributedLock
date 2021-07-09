@@ -31,7 +31,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{D14FE348
 		FixDistributedLockCoreDependencyVersion.targets = FixDistributedLockCoreDependencyVersion.targets
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DistributedLock.ZooKeeper", "DistributedLock.ZooKeeper\DistributedLock.ZooKeeper.csproj", "{710F287B-02FB-4F89-9BEC-BAA97250037F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DistributedLock.ZooKeeper", "DistributedLock.ZooKeeper\DistributedLock.ZooKeeper.csproj", "{710F287B-02FB-4F89-9BEC-BAA97250037F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DistributedLock.MySql", "DistributedLock.MySql\DistributedLock.MySql.csproj", "{6C13E55C-51A7-47CD-88A5-7C8564EBCB3C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -87,6 +89,10 @@ Global
 		{710F287B-02FB-4F89-9BEC-BAA97250037F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{710F287B-02FB-4F89-9BEC-BAA97250037F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{710F287B-02FB-4F89-9BEC-BAA97250037F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6C13E55C-51A7-47CD-88A5-7C8564EBCB3C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6C13E55C-51A7-47CD-88A5-7C8564EBCB3C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6C13E55C-51A7-47CD-88A5-7C8564EBCB3C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6C13E55C-51A7-47CD-88A5-7C8564EBCB3C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
