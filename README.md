@@ -88,15 +88,15 @@ For applications that use [dependency injection](https://en.wikipedia.org/wiki/D
 
 ```C#
 // in your Startup.cs:
-services.AddSingleton(_ => new PostgresDistributedSynchronizationProvider(myConnectionString));
+services.AddSingleton<IDistributedLockProvider>(_ => new PostgresDistributedSynchronizationProvider(myConnectionString));
 services.AddTransient<SomeService>();
 
 // in SomeService.cs
 public class SomeService
 {
-	private readonly PostgresDistributedSynchronizationProvider _synchronizationProvider;
+	private readonly IDistributedLockProvider _synchronizationProvider;
 
-	public SomeService(PostgresDistributedSynchronizationProvider synchronizationProvider)
+	public SomeService(IDistributedLockProvider synchronizationProvider)
 	{
 		this._synchronizationProvider = synchronizationProvider;
 	}
