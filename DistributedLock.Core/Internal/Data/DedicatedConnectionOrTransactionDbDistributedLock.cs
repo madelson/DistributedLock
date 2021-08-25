@@ -141,7 +141,7 @@ namespace Medallion.Threading.Internal.Data
 
             private sealed class InnerHandle : IAsyncDisposable
             {
-                private static readonly object DisposedSentinel = new object();
+                private static readonly object DisposedSentinel = new();
 
                 private readonly IDbSynchronizationStrategy<TLockCookie> _strategy;
                 private readonly string _name;
