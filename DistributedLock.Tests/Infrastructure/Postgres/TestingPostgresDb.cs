@@ -30,7 +30,7 @@ namespace Medallion.Threading.Tests.Postgres
         /// abort semantics and largely unnecessary for our purposes since, unlike SQLServer, a connection-scoped Postgres lock can still
         /// participate in an ongoing transaction.
         /// </summary>
-        public bool SupportsTransactionScopedSynchronization => false;
+        public TransactionSupport TransactionSupport => TransactionSupport.ImplicitParticipation;
 
         public void ClearPool(DbConnection connection) => NpgsqlConnection.ClearPool((NpgsqlConnection)connection);
 

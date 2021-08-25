@@ -19,7 +19,7 @@ namespace Medallion.Threading.Tests.Data
 
         int MaxApplicationNameLength { get; }
 
-        bool SupportsTransactionScopedSynchronization { get; }
+        TransactionSupport TransactionSupport { get; }
 
         DbConnection CreateConnection();
 
@@ -28,6 +28,24 @@ namespace Medallion.Threading.Tests.Data
         int CountActiveSessions(string applicationName);
 
         IsolationLevel GetIsolationLevel(DbConnection connection);
+    }
+
+    public enum TransactionSupport
+    {
+        /// <summary>
+        /// The lifetime of the lock is tied to the transaction
+        /// </summary>
+        TransactionScoped,
+
+        /// <summary>
+        /// Connection-scoped lifetime, but locking requests will automatically participate in a transaction if the connection has one
+        /// </summary>
+        ImplicitParticipation,
+
+        /// <summary>
+        /// Connection-scoped lifetime, but locking requests will participate in a transaction if one is explicitly provided
+        /// </summary>
+        ExplicitParticipation,
     }
 
     /// <summary>

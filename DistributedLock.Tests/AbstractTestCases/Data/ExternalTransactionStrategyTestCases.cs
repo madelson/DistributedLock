@@ -113,18 +113,31 @@ namespace Medallion.Threading.Tests.Data
 
             complete(this._lockProvider.Strategy.AmbientTransaction!);
 
-            Assert.DoesNotThrow(handle.Dispose);
-
-            // now lock can be re-acquired
-            Assert.IsFalse(nonAmbientTransactionLock.IsHeld());
-
-            if (this._lockProvider.Strategy.Db.SupportsTransactionScopedSynchronization)
+            var transactionSupport = this._lockProvider.Strategy.Db.TransactionSupport;
+            if (transactionSupport == TransactionSupport.ExplicitParticipation)
             {
-                Assert.Catch<InvalidOperationException>(() => ambientTransactionLock.Acquire());
+                // this will throw because the lock will still be trying to use the transaction and we've ended it
+                Assert.Throws<InvalidOperationException>(handle.Dispose);
             }
             else
             {
+                Assert.DoesNotThrow(handle.Dispose);
+            }
+
+            nonAmbientTransactionLock.IsHeld()
+                // explicit participation will fail to release above, so it is still held
+                .ShouldEqual(transactionSupport == TransactionSupport.ExplicitParticipation ? true : false);
+
+            if (transactionSupport == TransactionSupport.ImplicitParticipation)
+            {
+                // If we use transactions implicitly then we can keep using our lock without issue
+                // because we're just using the underlyign connection which is still good.
                 Assert.DoesNotThrow(() => ambientTransactionLock.Acquire().Dispose());
+            }
+            else
+            {
+                // Otherwise we'll fail to use a transaction that has been ended
+                Assert.Catch<InvalidOperationException>(() => ambientTransactionLock.Acquire());
             }
         }
     }

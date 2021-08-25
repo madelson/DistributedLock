@@ -252,8 +252,8 @@ namespace Medallion.Threading.Tests
             else
             {
                 // otherwise, check that the names still contain the suffixes we added
-                Assert.That(lowerName, Does.Contain(lowerBaseName));
-                Assert.That(upperName, Does.Contain(upperBaseName));
+                Assert.IsTrue(lowerName.IndexOf(lowerBaseName, StringComparison.OrdinalIgnoreCase) >= 0);
+                Assert.IsTrue(upperName.IndexOf(upperBaseName, StringComparison.OrdinalIgnoreCase) >= 0);
             }
         }
 

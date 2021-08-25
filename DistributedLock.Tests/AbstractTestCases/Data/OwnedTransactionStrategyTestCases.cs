@@ -33,6 +33,14 @@ namespace Medallion.Threading.Tests.Data
         [Test]
         public void TestIsolationLevelLeakage()
         {
+            // Needed because MySQL has RepeatableRead while SqlServer and Postgres have ReadCommitted
+            IsolationLevel defaultIsolationLevel;
+            using (var connection = this._lockProvider.Strategy.Db.CreateConnection())
+            {
+                connection.Open();
+                defaultIsolationLevel = this._lockProvider.Strategy.Db.GetIsolationLevel(connection);
+            }
+
             // Pre-generate the lock we will use. This is necessary for our Semaphore5 strategy, where the first lock created
             // takes 4 of the 5 tickets (and thus may need more connections than a single-connection pool can support). For other
             // lock types this does nothing since creating a lock might open a connection but otherwise won't run any commands
@@ -55,7 +63,7 @@ namespace Medallion.Threading.Tests.Data
             {
                 using var connection = this._lockProvider.Strategy.Db.CreateConnection();
                 connection.Open();
-                this._lockProvider.Strategy.Db.GetIsolationLevel(connection).ShouldEqual(IsolationLevel.ReadCommitted);
+                this._lockProvider.Strategy.Db.GetIsolationLevel(connection).ShouldEqual(defaultIsolationLevel);
             }
         }
     }

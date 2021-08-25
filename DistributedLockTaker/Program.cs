@@ -14,6 +14,7 @@ using Medallion.Threading;
 using System.Drawing.Text;
 using System.Collections.Generic;
 using Medallion.Threading.ZooKeeper;
+using Medallion.Threading.MySql;
 #if NET471
 using System.Data.SqlClient;
 #elif NETCOREAPP3_1
@@ -48,6 +49,12 @@ namespace DistributedLockTaker
                     break;
                 case "Write" + nameof(PostgresDistributedReaderWriterLock):
                     handle = new PostgresDistributedReaderWriterLock(new PostgresAdvisoryLockKey(name), PostgresCredentials.GetConnectionString(Environment.CurrentDirectory)).AcquireWriteLock();
+                    break;
+                case nameof(MySqlDistributedLock):
+                    handle = new MySqlDistributedLock(name, MySqlCredentials.GetConnectionString(Environment.CurrentDirectory)).Acquire();
+                    break;
+                case "MariaDB" + nameof(MySqlDistributedLock):
+                    handle = new MySqlDistributedLock(name, MariaDbCredentials.GetConnectionString(Environment.CurrentDirectory)).Acquire();
                     break;
                 case nameof(EventWaitHandleDistributedLock):
                     handle = new EventWaitHandleDistributedLock(name).Acquire();
