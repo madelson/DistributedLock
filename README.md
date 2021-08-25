@@ -16,6 +16,7 @@ DistributedLock contains implementations based on various technologies; you can 
 
 - **[DistributedLock.SqlServer](docs/DistributedLock.SqlServer.md)** [![NuGet Status](http://img.shields.io/nuget/v/DistributedLock.SqlServer.svg?style=flat)](https://www.nuget.org/packages/DistributedLock.SqlServer/): uses Microsoft SQL Server
 - **[DistributedLock.Postgres](docs/DistributedLock.Postgres.md)** [![NuGet Status](http://img.shields.io/nuget/v/DistributedLock.Postgres.svg?style=flat)](https://www.nuget.org/packages/DistributedLock.Postgres/): uses Postgresql
+- **[DistributedLock.MySql](docs/DistributedLock.MySql.md)** [![NuGet Status](http://img.shields.io/nuget/v/DistributedLock.MySql.svg?style=flat)](https://www.nuget.org/packages/DistributedLock.MySql/): uses MySQL or MariaDB
 - **[DistributedLock.Redis](docs/DistributedLock.Redis.md)** [![NuGet Status](http://img.shields.io/nuget/v/DistributedLock.Redis.svg?style=flat)](https://www.nuget.org/packages/DistributedLock.Redis/): uses Redis
 - **[DistributedLock.Azure](docs/DistributedLock.Azure.md)** [![NuGet Status](http://img.shields.io/nuget/v/DistributedLock.Azure.svg?style=flat)](https://www.nuget.org/packages/DistributedLock.Azure/): uses Azure blobs
 - **[DistributedLock.ZooKeeper](docs/DistributedLock.ZooKeeper.md)** [![NuGet Status](http://img.shields.io/nuget/v/DistributedLock.ZooKeeper.svg?style=flat)](https://www.nuget.org/packages/DistributedLock.ZooKeeper/): uses Apache ZooKeeper
@@ -131,6 +132,8 @@ public class SomeService
 Contributions are welcome! If you are interested in contributing towards a new or existing issue, please let me know via comments on the issue so that I can help you get started and avoid wasted effort on your part.
 
 ## Release notes
+- 2.2.0
+	- Added MySQL/MariaDB-based implementation ([#95](https://github.com/madelson/DistributedLock/issues/95), DistributedLock.MySql 1.0.0)
 - 2.1.0
 	- Added ZooKeeper-based implementation ([#41](https://github.com/madelson/DistributedLock/issues/41), DistributedLock.ZooKeeper 1.0.0)
 - 2.0.2
