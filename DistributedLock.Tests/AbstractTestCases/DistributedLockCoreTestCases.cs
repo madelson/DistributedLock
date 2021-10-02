@@ -182,7 +182,7 @@ namespace Medallion.Threading.Tests
                         // increment going in
                         if (Interlocked.Increment(ref counter) == 2)
                         {
-                            Assert.Fail("Concurrent lock acquisitions");
+                            Assert.Fail($"Concurrent lock acquisitions ({this.GetType()}");
                         }
 
                         // hang out for a bit to ensure concurrency
