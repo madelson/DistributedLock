@@ -60,7 +60,7 @@ namespace Medallion.Threading.Internal.Data
         // without closing the connection. However, we don't currently have any use-cases for that
         public async ValueTask BeginTransactionAsync()
         {
-            Invariant.Require(this._transaction == null);
+            Invariant.Require(!this.HasTransaction);
 
             using var _ = await this.ConnectionMonitor.AcquireConnectionLockAsync(CancellationToken.None).ConfigureAwait(false);
 

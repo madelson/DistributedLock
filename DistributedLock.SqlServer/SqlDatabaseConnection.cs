@@ -58,16 +58,16 @@ namespace Medallion.Threading.SqlServer
             return exception is InvalidOperationException;
         }
 
-        public override Task SleepAsync(TimeSpan sleepTime, CancellationToken cancellationToken, Func<DatabaseCommand, CancellationToken, ValueTask<int>> executor)
+        public override async Task SleepAsync(TimeSpan sleepTime, CancellationToken cancellationToken, Func<DatabaseCommand, CancellationToken, ValueTask<int>> executor)
         {
             Invariant.Require(sleepTime >= TimeSpan.Zero && sleepTime < TimeSpan.FromDays(1));
 
-            var command = this.CreateCommand();
+            using var command = this.CreateCommand();
             command.SetCommandText(@"WAITFOR DELAY @delay");
             command.AddParameter("delay", sleepTime.ToString(@"hh\:mm\:ss\.fff"), DbType.AnsiStringFixedLength);
             command.SetTimeout(sleepTime);
 
-            return executor(command, cancellationToken).AsTask();
+            await executor(command, cancellationToken).ConfigureAwait(false);
         }
     }
 }

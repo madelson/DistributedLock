@@ -182,7 +182,7 @@ namespace Medallion.Threading.Tests
                         // increment going in
                         if (Interlocked.Increment(ref counter) == 2)
                         {
-                            Assert.Fail("Concurrent lock acquisitions");
+                            Assert.Fail($"Concurrent lock acquisitions ({this.GetType()}");
                         }
 
                         // hang out for a bit to ensure concurrency
@@ -252,8 +252,8 @@ namespace Medallion.Threading.Tests
             else
             {
                 // otherwise, check that the names still contain the suffixes we added
-                Assert.That(lowerName, Does.Contain(lowerBaseName));
-                Assert.That(upperName, Does.Contain(upperBaseName));
+                Assert.IsTrue(lowerName.IndexOf(lowerBaseName, StringComparison.OrdinalIgnoreCase) >= 0);
+                Assert.IsTrue(upperName.IndexOf(upperBaseName, StringComparison.OrdinalIgnoreCase) >= 0);
             }
         }
 

@@ -8,7 +8,6 @@ namespace Medallion.Threading.SqlServer
 {
     internal static class SqlMultiplexedConnectionLockPool
     {
-        public static readonly MultiplexedConnectionLockPool Instance =
-            new MultiplexedConnectionLockPool(s => new SqlDatabaseConnection(s));
+        public static readonly MultiplexedConnectionLockPool Instance = new(s => new SqlDatabaseConnection(s));
     }
 }

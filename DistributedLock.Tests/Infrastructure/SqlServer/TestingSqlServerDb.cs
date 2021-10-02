@@ -25,7 +25,7 @@ namespace Medallion.Threading.Tests.SqlServer
         // https://stackoverflow.com/questions/5808332/sql-server-maximum-character-length-of-object-names/41502228
         public int MaxApplicationNameLength => 128;
 
-        public bool SupportsTransactionScopedSynchronization => true;
+        public TransactionSupport TransactionSupport => TransactionSupport.TransactionScoped;
 
         public void ClearPool(DbConnection connection) => Microsoft.Data.SqlClient.SqlConnection.ClearPool((Microsoft.Data.SqlClient.SqlConnection)connection);
 
@@ -110,7 +110,7 @@ namespace Medallion.Threading.Tests.SqlServer
 
         public int MaxApplicationNameLength => new TestingSqlServerDb().MaxApplicationNameLength;
 
-        public bool SupportsTransactionScopedSynchronization => true;
+        public TransactionSupport TransactionSupport => TransactionSupport.TransactionScoped;
 
         public void ClearPool(DbConnection connection) => System.Data.SqlClient.SqlConnection.ClearPool((System.Data.SqlClient.SqlConnection)connection);
 

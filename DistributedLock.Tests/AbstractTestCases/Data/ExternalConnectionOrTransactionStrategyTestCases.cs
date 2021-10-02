@@ -48,11 +48,16 @@ namespace Medallion.Threading.Tests.Data
 
             Task.WhenAll(tasks).ContinueWith(_ => { }).Wait(TimeSpan.FromSeconds(10)).ShouldEqual(true, this.GetType().Name);
 
-            var deadlockVictim = tasks.Single(t => t.IsFaulted);
-            Assert.IsInstanceOf<InvalidOperationException>(deadlockVictim.Exception!.GetBaseException()); // backwards compat check
-            Assert.IsInstanceOf<DeadlockException>(deadlockVictim.Exception.GetBaseException());
+            // MariaDB fails both tasks due to deadlock instead of just picking a single victim
+            Assert.GreaterOrEqual(tasks.Count(t => t.IsFaulted), 1);
+            Assert.LessOrEqual(tasks.Count(t => t.Status == TaskStatus.RanToCompletion), 1);
+            Assert.IsEmpty(tasks.Where(t => t.IsCanceled));
 
-            tasks.Count(t => t.Status == TaskStatus.RanToCompletion).ShouldEqual(1);
+            foreach (var deadlockVictim in tasks.Where(t => t.IsFaulted))
+            {
+                Assert.IsInstanceOf<InvalidOperationException>(deadlockVictim.Exception!.GetBaseException()); // backwards compat check
+                Assert.IsInstanceOf<DeadlockException>(deadlockVictim.Exception.GetBaseException());
+            }
         }
 
         [Test]

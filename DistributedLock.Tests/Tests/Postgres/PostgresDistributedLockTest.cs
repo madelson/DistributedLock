@@ -3,6 +3,7 @@ using Npgsql;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.Common;
 using System.Linq;
 using System.Text;
@@ -13,6 +14,13 @@ namespace Medallion.Threading.Tests.Postgres
 {
     public class PostgresDistributedLockTest
     {
+        [Test]
+        public void TestValidatesConstructorArguments()
+        {
+            Assert.Throws<ArgumentNullException>(() => new PostgresDistributedLock(new(0), default(string)!));
+            Assert.Throws<ArgumentNullException>(() => new PostgresDistributedLock(new(0), default(IDbConnection)!));
+        }
+
         [Test]
         public async Task TestInt64AndInt32PairKeyNamespacesAreDifferent()
         {

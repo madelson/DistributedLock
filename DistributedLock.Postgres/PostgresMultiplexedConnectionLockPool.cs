@@ -8,7 +8,6 @@ namespace Medallion.Threading.Postgres
 {
     internal static class PostgresMultiplexedConnectionLockPool
     {
-        public static readonly MultiplexedConnectionLockPool Instance =
-            new MultiplexedConnectionLockPool(s => new PostgresDatabaseConnection(s));
+        public static readonly MultiplexedConnectionLockPool Instance = new(s => new PostgresDatabaseConnection(s));
     }
 }
