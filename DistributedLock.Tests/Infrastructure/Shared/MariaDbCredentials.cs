@@ -10,7 +10,7 @@ namespace Medallion.Threading.Tests
     {
         // MARIADB SETUP NOTE
         //
-        // In order to enable application name tracking, we mus enable the performance schema. Add the following to 
+        // In order to enable application name tracking, we must enable the performance schema. Add the following to 
         // C:\Program Files\MariaDB 10.6\data\my.ini in the [mysqld] section
         //
         // ;from https://mariadb.com/kb/en/performance-schema-overview/#activating-the-performance-schema
