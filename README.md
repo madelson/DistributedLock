@@ -87,7 +87,7 @@ Finally, the methods take an optional `CancellationToken` parameter, which allow
 
 ## Providers
 
-For applications that use [dependency injection](https://en.wikipedia.org/wiki/Dependency_injection), DistributedLock's provider make it easy to separate out the specification of a lock's (or other primitive's) name from its other settings (such as a database connection string). For example in an ASP.NET Core app you might do:
+For applications that use [dependency injection](https://en.wikipedia.org/wiki/Dependency_injection), DistributedLock's providers make it easy to separate out the specification of a lock's (or other primitive's) name from its other settings (such as a database connection string). For example in an ASP.NET Core app you might do:
 
 ```C#
 // in your Startup.cs:
