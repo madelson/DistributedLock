@@ -64,7 +64,7 @@ namespace Medallion.Threading.Tests.Oracle
                 if (await tryConnectTask) { return; }
             }
 
-            async Task<bool> TryConnectAsync()
+            static async Task<bool> TryConnectAsync()
             {
                 await using var connection = new OracleConnection(OracleCredentials.GetConnectionString(TestContext.CurrentContext.TestDirectory));
                 try
@@ -77,6 +77,7 @@ namespace Medallion.Threading.Tests.Oracle
                         ex.Number == 12541 // TNS: No listener
                         || ex.Number == 12514 // TNS:listener does not currently know of service requested in connect descriptor
                         || ex.Number == 12528 // TNS: listener: all appropriate instances are blocking new connections
+                        || ex.Number == 01033 // ORACLE initialization or shutdown in progress
                     )
                 {
                     return false;

@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;netstandard2.1;net461</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;netstandard2.1;net461;net462</TargetFrameworks>
     <RootNamespace>Medallion.Threading</RootNamespace>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
     <WarningLevel>4</WarningLevel>
@@ -50,6 +50,7 @@
     <ProjectReference Include="..\DistributedLock.Redis\DistributedLock.Redis.csproj" />
     <ProjectReference Include="..\DistributedLock.ZooKeeper\DistributedLock.ZooKeeper.csproj" />
     <ProjectReference Include="..\DistributedLock.MySql\DistributedLock.MySql.csproj" />
+    <ProjectReference Include="..\DistributedLock.Oracle\DistributedLock.Oracle.csproj" Condition="'$(TargetFramework)' != 'netstandard2.0' AND '$(TargetFramework)' != 'net461'" />
   </ItemGroup>
 
   <ItemGroup>
