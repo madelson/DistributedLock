@@ -11,6 +11,8 @@ namespace Medallion.Threading.Oracle
 {
     public sealed partial class OracleDistributedLock : IInternalDistributedLock<OracleDistributedLockHandle>
     {
+        private const int MaxNameLength = 128;
+
         private readonly IDbDistributedLock _internalLock;
 
         /// <summary>
@@ -51,21 +53,16 @@ namespace Medallion.Threading.Oracle
         {
             if (name == null) { throw new ArgumentNullException(nameof(name)); }
 
-            //if (exactName)
-            //{
-            //    if (name.Length > MaxNameLength) { throw new FormatException($"{nameof(name)}: must be at most {MaxNameLength} characters"); }
-            //    if (name.Length == 0) { throw new FormatException($"{nameof(name)}: must not be empty"); }
-            //    if (name.ToLowerInvariant() != name) { throw new FormatException($"{nameof(name)}: must not container uppercase letters"); }
-            //    this.Name = name;
-            //}
-            //else
-            //{
-            //    this.Name = GetSafeName(name);
-            //}
+            if (exactName)
+            {
+                if (name.Length > MaxNameLength) { throw new FormatException($"{nameof(name)}: must be at most {MaxNameLength} characters"); }
+                this.Name = name;
+            }
+            else
+            {
+                this.Name = DistributedLockHelpers.ToSafeName(name, MaxNameLength, s => s);
+            }
 
-            // TODO exactName?
-
-            this.Name = name;
             this._internalLock = internalLockFactory(this.Name);
         }
 

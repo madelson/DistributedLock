@@ -30,9 +30,10 @@ namespace Medallion.Threading.Oracle
                     lockHandle VARCHAR2(128);
                 BEGIN
                     SYS.DBMS_LOCK.ALLOCATE_UNIQUE(:lockName, lockHandle);
-                    :returnValue = SYS.DBMS_LOCK.RELEASE(lockHandle);
+                    :returnValue := SYS.DBMS_LOCK.RELEASE(lockHandle);
                 END;"
             );
+            // note: parameters bind by position by default!
             command.AddParameter("lockName", resourceName);
             var returnValueParameter = command.AddParameter("returnValue", type: DbType.Int32, direction: ParameterDirection.Output);
             await command.ExecuteNonQueryAsync(CancellationToken.None).ConfigureAwait(false);
@@ -54,10 +55,12 @@ namespace Medallion.Threading.Oracle
                     lockHandle VARCHAR2(128);
                 BEGIN
                     SYS.DBMS_LOCK.ALLOCATE_UNIQUE(:lockName, lockHandle);
-                    :returnValue = SYS.DBMS_LOCK.REQUEST(lockHandle, SYS.DBMS_LOCK.X_MODE, :timeout, FALSE);
+                    :returnValue := SYS.DBMS_LOCK.REQUEST(lockhandle => lockHandle, lockmode => SYS.DBMS_LOCK.X_MODE, timeout => :timeout, release_on_commit => FALSE);
                 END;"
             );
+            // note: parameters bind by position by default!
             command.AddParameter("lockName", resourceName);
+            var returnValueParameter = command.AddParameter("returnValue", type: DbType.Int32, direction: ParameterDirection.Output);
             command.AddParameter(
                 "timeout",
                 timeout.IsInfinite ? MaxWaitSeconds
@@ -66,7 +69,6 @@ namespace Medallion.Threading.Oracle
                     : timeout.TimeSpan.TotalSeconds > MaxTimeoutSeconds ? throw new ArgumentOutOfRangeException($"Requested non-infinite timeout value '{timeout}' is longer than Oracle's allowed max of '{TimeSpan.FromSeconds(MaxTimeoutSeconds)}'")
                     : timeout.TimeSpan.TotalSeconds
             );
-            var returnValueParameter = command.AddParameter("returnValue", type: DbType.Int32, direction: ParameterDirection.Output);
             await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
 
             var returnValue = (int)returnValueParameter.Value;
