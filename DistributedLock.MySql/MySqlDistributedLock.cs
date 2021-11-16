@@ -164,14 +164,14 @@ namespace Medallion.Threading.MySql
             return new DedicatedConnectionOrTransactionDbDistributedLock(name, () => new MySqlDatabaseConnection(connectionString), useTransaction: false, keepaliveCadence);
         }
 
-        static IDbDistributedLock CreateInternalLock(string name, IDbConnection connection)
+        private static IDbDistributedLock CreateInternalLock(string name, IDbConnection connection)
         {
             if (connection == null) { throw new ArgumentNullException(nameof(connection)); }
 
             return new DedicatedConnectionOrTransactionDbDistributedLock(name, () => new MySqlDatabaseConnection(connection));
         }
 
-        static IDbDistributedLock CreateInternalLock(string name, IDbTransaction transaction)
+        private static IDbDistributedLock CreateInternalLock(string name, IDbTransaction transaction)
         {
             if (transaction == null) { throw new ArgumentNullException(nameof(transaction)); }
 
