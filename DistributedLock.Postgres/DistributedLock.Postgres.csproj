@@ -10,17 +10,17 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <Version>1.0.1</Version>
+    <Version>1.0.1-Smartrak</Version>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <Authors>Michael Adelson</Authors>
     <Description>Provides a distributed lock implementation based on Postgresql</Description>
     <Copyright>Copyright © 2020 Michael Adelson</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageTags>distributed lock async mutex sql postgres</PackageTags>
-    <PackageProjectUrl>https://github.com/madelson/DistributedLock</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/madelson/DistributedLock</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/Smartrak/DistributedLock</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/Smartrak/DistributedLock</RepositoryUrl>
     <FileVersion>1.0.0.0</FileVersion>
-    <PackageReleaseNotes>See https://github.com/madelson/DistributedLock#release-notes</PackageReleaseNotes>
+    <PackageReleaseNotes>See https://github.com/Smartrak/DistributedLock#release-notes</PackageReleaseNotes>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>..\DistributedLock.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
@@ -41,7 +41,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Npgsql" Version="5.0.4" />
+    <PackageReference Include="Npgsql" Version="3.2.7" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All"/>
   </ItemGroup>
   
