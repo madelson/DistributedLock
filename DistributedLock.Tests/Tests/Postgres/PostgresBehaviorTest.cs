@@ -34,7 +34,7 @@ namespace Medallion.Threading.Tests.Postgres
 #endif
 
             using var commandInTransaction = connection.CreateCommand();
-            commandInTransaction.Transaction = transaction;
+            commandInTransaction.Transaction = (NpgsqlTransaction)transaction;
             commandInTransaction.CommandText = @"SHOW statement_timeout; CREATE TABLE foo (id INT); SET LOCAL statement_timeout = 2020;";
             (await commandInTransaction.ExecuteScalarAsync()).ShouldEqual("0");
 

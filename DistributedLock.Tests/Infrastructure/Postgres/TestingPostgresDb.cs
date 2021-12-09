@@ -71,7 +71,7 @@ namespace Medallion.Threading.Tests.Postgres
                         OR (state = 'idle' AND state_change < @idleSince)
                     )";
             command.Parameters.AddWithValue("applicationName", applicationName);
-            command.Parameters.Add(new NpgsqlParameter("idleSince", idleSince ?? DBNull.Value.As<object>()) { NpgsqlDbType = NpgsqlDbType.TimestampTz });
+            command.Parameters.Add(new NpgsqlParameter("idleSince", idleSince ?? DBNull.Value.As<object>()) { NpgsqlDbType = NpgsqlDbType.TimestampTZ });
 
             await command.ExecuteNonQueryAsync();
         }
