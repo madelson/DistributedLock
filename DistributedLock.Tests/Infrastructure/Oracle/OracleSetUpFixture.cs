@@ -9,6 +9,9 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading.Tests.Oracle
 {
+    // TODO consider changing this to leverage an Oracle cloud autonomous database OR just requiring
+    // docker to be started manually; starting it automatically just doesn't seem to work that well.
+
     /// <summary>
     /// Starts and stops the oracle docker container if needed. For best performance, run "docker start oracle-distributed-lock" before running the
     /// tests so that the container will just keep running.
@@ -37,31 +40,31 @@ namespace Medallion.Threading.Tests.Oracle
         private bool _startedContainer;
 
         [OneTimeSetUp]
-        public async Task OneTimeSetUpAsync()
+        public void OneTimeSetUp()
         {
             // first, check if container has started
-            var containerLs = await Shell.Run("docker", new[] { "container", "ls" }).Task;
-            if (!containerLs.StandardOutput.Contains(ContainerName))
-            {
-                Console.WriteLine($"docker container ls:");
-                Console.WriteLine(containerLs);
+            //var containerLs = await Shell.Run("docker", new[] { "container", "ls" }).Task;
+            //if (!containerLs.StandardOutput.Contains(ContainerName))
+            //{
+            //    Console.WriteLine($"docker container ls:");
+            //    Console.WriteLine(containerLs);
 
-                Console.WriteLine("STARTING CONTAINER");
+            //    Console.WriteLine("STARTING CONTAINER");
 
-                var stopwatch = Stopwatch.StartNew();
-                await Shell.Run("docker", new[] { "start", ContainerName }).Task;
-                this._startedContainer = true;
+            //    var stopwatch = Stopwatch.StartNew();
+            //    await Shell.Run("docker", new[] { "start", ContainerName }).Task;
+            //    this._startedContainer = true;
                 
-                Console.WriteLine($"CONTAINER STARTED ({stopwatch.Elapsed.TotalSeconds}s)");
-            }
+            //    Console.WriteLine($"CONTAINER STARTED ({stopwatch.Elapsed.TotalSeconds}s)");
+            //}
 
             var timeout = Task.Delay(TimeSpan.FromMinutes(5));
             while (true)
             {
                 var tryConnectTask = TryConnectAsync();
-                var completed = await Task.WhenAny(timeout, tryConnectTask);
-                if (completed == timeout) { throw new TimeoutException("Timed out trying to connect to Oracle"); }
-                if (await tryConnectTask) { return; }
+                var completed = Task.WaitAny(tryConnectTask, timeout);
+                if (completed == 1) { throw new TimeoutException("Timed out trying to connect to Oracle"); }
+                if (tryConnectTask.GetAwaiter().GetResult()) { return; }
             }
 
             static async Task<bool> TryConnectAsync()
@@ -78,7 +81,7 @@ namespace Medallion.Threading.Tests.Oracle
                         || ex.Number == 12514 // TNS:listener does not currently know of service requested in connect descriptor
                         || ex.Number == 12528 // TNS: listener: all appropriate instances are blocking new connections
                         || ex.Number == 01033 // ORACLE initialization or shutdown in progress
-                        || ex.Message.Contains("Connection request timeout")
+                        || ex.Message.Contains("Connection request timed out")
                     )
                 {
                     return false;

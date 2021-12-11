@@ -24,14 +24,12 @@ namespace Medallion.Threading.Tests.Data
 
         public string SetUniqueApplicationName(string baseName = "")
         {
-            // note: due to retries, we incorporate a GUID here to ensure that we have a fresh connection pool
-            var applicationName = DistributedLockHelpers.ToSafeName(
+            return this.Db.ApplicationName = DistributedLockHelpers.ToSafeName(
+                // note: due to retries, we incorporate a GUID here to ensure that we have a fresh connection pool
                 $"{(baseName.Length > 0 ? baseName + "_" : string.Empty)}{TestContext.CurrentContext.Test.FullName}_{TargetFramework.Current}_{Guid.NewGuid()}",
                 maxNameLength: this.Db.MaxApplicationNameLength, 
                 s => s
             );
-            this.Db.ConnectionStringBuilder["Application Name"] = applicationName;
-            return applicationName;
         }
     }
 
@@ -46,7 +44,7 @@ namespace Medallion.Threading.Tests.Data
         {
             // if we have a uniquely-named connection, clear it's pool to avoid "leaking" connections into pools we'll never
             // use again
-            if (!Equals(this.Db.ConnectionStringBuilder["Application Name"], new TDb().ConnectionStringBuilder["Application Name"]))
+            if (!Equals(this.Db.ApplicationName, new TDb().ApplicationName))
             {
                 using var connection = this.Db.CreateConnection();
                 this.Db.ClearPool(connection);

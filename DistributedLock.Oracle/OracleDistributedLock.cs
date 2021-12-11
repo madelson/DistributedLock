@@ -56,11 +56,13 @@ namespace Medallion.Threading.Oracle
             if (exactName)
             {
                 if (name.Length > MaxNameLength) { throw new FormatException($"{nameof(name)}: must be at most {MaxNameLength} characters"); }
+                // Oracle treats NULL as the empty string. See https://stackoverflow.com/questions/13278773/null-vs-empty-string-in-oracle
+                if (name.Length == 0) { throw new FormatException($"{nameof(name)} must not be empty"); }
                 this.Name = name;
             }
             else
             {
-                this.Name = DistributedLockHelpers.ToSafeName(name, MaxNameLength, s => s);
+                this.Name = DistributedLockHelpers.ToSafeName(name, MaxNameLength, s => s.Length == 0 ? "EMPTY" : s);
             }
 
             this._internalLock = internalLockFactory(this.Name);

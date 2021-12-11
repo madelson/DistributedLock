@@ -29,7 +29,9 @@ namespace Medallion.Threading.Tests.MySql
 
         public DbConnectionStringBuilder ConnectionStringBuilder => this._connectionStringBuilder;
 
-        public int MaxPoolSize 
+        public string ApplicationName { get => this._connectionStringBuilder.ApplicationName; set => this._connectionStringBuilder.ApplicationName = value; }
+
+        public int MaxPoolSize
         { 
             get => (int)this._connectionStringBuilder.MaximumPoolSize; 
             set => this._connectionStringBuilder.MaximumPoolSize = (uint)value; 

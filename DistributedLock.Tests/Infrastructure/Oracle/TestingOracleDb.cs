@@ -1,4 +1,5 @@
 ﻿using Medallion.Threading.Internal;
+using Medallion.Threading.Oracle;
 using Medallion.Threading.Tests.Data;
 using NUnit.Framework;
 using Oracle.ManagedDataAccess.Client;
@@ -18,6 +19,8 @@ namespace Medallion.Threading.Tests.Oracle
         private readonly OracleConnectionStringBuilder _connectionStringBuilder = new OracleConnectionStringBuilder(ConnectionString);
 
         public DbConnectionStringBuilder ConnectionStringBuilder => this._connectionStringBuilder;
+
+        public string ApplicationName { get; set; } = string.Empty;
 
         public int MaxPoolSize { get => this._connectionStringBuilder.MaxPoolSize; set => this._connectionStringBuilder.MaxPoolSize = value; }
 
@@ -40,7 +43,10 @@ namespace Medallion.Threading.Tests.Oracle
             return (int)(decimal)command.ExecuteScalar()!;
         }
 
-        public DbConnection CreateConnection() => new OracleConnection(this.ConnectionStringBuilder.ConnectionString);
+        public DbConnection CreateConnection() => new OracleConnection(
+            (this.ApplicationName.Length > 0 ? $"{OracleDatabaseConnection.ApplicationNameIndicatorPrefix}{this.ApplicationName};" : string.Empty)
+                + this.ConnectionStringBuilder.ConnectionString
+        );
 
         public IsolationLevel GetIsolationLevel(DbConnection connection)
         {

@@ -20,6 +20,8 @@ namespace Medallion.Threading.Tests.SqlServer
 
         public DbConnectionStringBuilder ConnectionStringBuilder => this._connectionStringBuilder;
 
+        public string ApplicationName { get => this._connectionStringBuilder.ApplicationName; set => this._connectionStringBuilder.ApplicationName = value; }
+
         public int MaxPoolSize { get => this._connectionStringBuilder.MaxPoolSize; set => this._connectionStringBuilder.MaxPoolSize = value; }
 
         // https://stackoverflow.com/questions/5808332/sql-server-maximum-character-length-of-object-names/41502228
@@ -105,6 +107,8 @@ namespace Medallion.Threading.Tests.SqlServer
             new System.Data.SqlClient.SqlConnectionStringBuilder(TestingSqlServerDb.ConnectionString);
 
         public DbConnectionStringBuilder ConnectionStringBuilder => this._connectionStringBuilder;
+
+        public string ApplicationName { get => this._connectionStringBuilder.ApplicationName; set => this._connectionStringBuilder.ApplicationName = value; }
 
         public int MaxPoolSize { get => this._connectionStringBuilder.MaxPoolSize; set => this._connectionStringBuilder.MaxPoolSize = value; }
 

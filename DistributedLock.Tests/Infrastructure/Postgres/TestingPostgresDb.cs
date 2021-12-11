@@ -20,6 +20,12 @@ namespace Medallion.Threading.Tests.Postgres
 
         public DbConnectionStringBuilder ConnectionStringBuilder => this._connectionStringBuilder;
 
+        public string ApplicationName
+        {
+            get => this._connectionStringBuilder.ApplicationName ?? string.Empty;
+            set => this._connectionStringBuilder.ApplicationName = value == string.Empty ? null : value;
+        }
+
         public int MaxPoolSize { get => this._connectionStringBuilder.MaxPoolSize; set => this._connectionStringBuilder.MaxPoolSize = value; }
 
         // https://til.hashrocket.com/posts/8f87c65a0a-postgresqls-max-identifier-length-is-63-bytes

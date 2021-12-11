@@ -14,8 +14,10 @@ namespace Medallion.Threading.Tests.Data
     {
         DbConnectionStringBuilder ConnectionStringBuilder { get; }
 
+        string ApplicationName { get; set; }
+
         // needed since different providers have different names for this key
-        public int MaxPoolSize { get; set; }
+        int MaxPoolSize { get; set; }
 
         int MaxApplicationNameLength { get; }
 
