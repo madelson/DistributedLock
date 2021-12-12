@@ -65,13 +65,13 @@ namespace Medallion.Threading.Tests.Data
         public sealed override TestingDbConnectionOptions GetConnectionOptions() =>
             new TestingDbConnectionOptions 
             { 
-                ConnectionString = this.Db.ConnectionStringBuilder.ConnectionString, 
+                ConnectionString = this.Db.ConnectionString, 
                 ConnectionStringUseMultiplexing = this.UseMultiplexingNotTransaction == true,
                 ConnectionStringUseTransaction = this.UseMultiplexingNotTransaction == false,
                 ConnectionStringKeepaliveCadence = this.KeepaliveCadence,
             };
 
-        public sealed override IDisposable? PrepareForHandleLost() =>
+        public sealed override IDisposable? PrepareForHandleLost() => 
             new HandleLostScope(this.SetUniqueApplicationName(nameof(PrepareForHandleLost)), this.Db);
 
         private class HandleLostScope : IDisposable

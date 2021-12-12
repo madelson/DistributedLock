@@ -10,7 +10,7 @@ namespace Medallion.Threading.Tests.Oracle
     public class OracleDistributedLockTest
     {
         [Test]
-        public async Task Test()
+        public async Task BasicConnectivityTest()
         {
             var connection = new OracleConnection(OracleCredentials.GetConnectionString(TestContext.CurrentContext.TestDirectory));
             await connection.OpenAsync();

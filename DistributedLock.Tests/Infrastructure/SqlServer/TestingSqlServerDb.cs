@@ -20,6 +20,8 @@ namespace Medallion.Threading.Tests.SqlServer
 
         public DbConnectionStringBuilder ConnectionStringBuilder => this._connectionStringBuilder;
 
+        string ITestingDb.ConnectionString => this.ConnectionStringBuilder.ConnectionString;
+
         public string ApplicationName { get => this._connectionStringBuilder.ApplicationName; set => this._connectionStringBuilder.ApplicationName = value; }
 
         public int MaxPoolSize { get => this._connectionStringBuilder.MaxPoolSize; set => this._connectionStringBuilder.MaxPoolSize = value; }
@@ -109,6 +111,8 @@ namespace Medallion.Threading.Tests.SqlServer
         public DbConnectionStringBuilder ConnectionStringBuilder => this._connectionStringBuilder;
 
         public string ApplicationName { get => this._connectionStringBuilder.ApplicationName; set => this._connectionStringBuilder.ApplicationName = value; }
+
+        string ITestingDb.ConnectionString => this.ConnectionStringBuilder.ConnectionString;
 
         public int MaxPoolSize { get => this._connectionStringBuilder.MaxPoolSize; set => this._connectionStringBuilder.MaxPoolSize = value; }
 

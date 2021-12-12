@@ -8,30 +8,57 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading.Tests
 {
+    /// <summary>
+    /// For Oracle, we need both a password and a "wallet" directory.
+    /// 
+    /// See https://www.oracle.com/topics/technologies/dotnet/tech-info-autonomousdatabase.html for setup instructions.
+    /// See also https://github.com/oracle/dotnet-db-samples/issues/225
+    /// 
+    /// If the tests haven't been run for some time, it might be necessary to start the autonomous database at https://cloud.oracle.com/,
+    /// since it will stop after being idle for some time.
+    /// </summary>
     internal static class OracleCredentials
     {
-        private static string GetPassword(string baseDirectory)
-        {
-            var file = Path.GetFullPath(Path.Combine(baseDirectory, "..", "..", "..", "credentials", "oracle.txt"));
-            if (!File.Exists(file)) { throw new InvalidOperationException($"Unable to find mysql credentials file {file}"); }
-            var lines = File.ReadAllLines(file);
-            if (lines.Length != 1) { throw new FormatException($"{file} must contain exactly 1 line of text"); }
-            return lines[0];
-        }
-
         public static string GetConnectionString(string baseDirectory)
         {
-            var password = GetPassword(baseDirectory);
+            var credentialDirectory = Path.GetFullPath(Path.Combine(baseDirectory, "..", "..", "..", "credentials"));
+            ConfigureWallet(credentialDirectory);
+            var (datasource, username, password) = GetCredentials(credentialDirectory);
 
             return new OracleConnectionStringBuilder
             {
-                DataSource = "(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=localhost)(PORT=1521))(CONNECT_DATA=(SERVICE_NAME=XE)))",
-                UserID = "SYSTEM",
+                DataSource = datasource,
+                UserID = username,
                 Password = password,
                 PersistSecurityInfo = true,
                 // set a high pool size so that we don't empty the pool through things like lock abandonment tests
-                MaxPoolSize = 500,
+                //MaxPoolSize = 500,
+                MaxPoolSize = 15,
             }.ConnectionString;
+        }
+
+        private static void ConfigureWallet(string credentialDirectory)
+        {
+            var walletDirectory = Directory.GetDirectories(credentialDirectory, "Wallet_*").Single();
+            if (OracleConfiguration.TnsAdmin != walletDirectory)
+            {
+                // directory containing tnsnames.ora and sqlnet.ora
+                OracleConfiguration.TnsAdmin = walletDirectory;
+            }
+            if (OracleConfiguration.WalletLocation != walletDirectory)
+            {
+                // directory containing cwallet.sso
+                OracleConfiguration.WalletLocation = walletDirectory;
+            }
+        }
+
+        private static (string DataSource, string Username, string Password) GetCredentials(string credentialDirectory)
+        {
+            var file = Path.Combine(credentialDirectory, "oracle.txt");
+            if (!File.Exists(file)) { throw new InvalidOperationException($"Unable to find Oracle credentials file {file}"); }
+            var lines = File.ReadAllLines(file);
+            if (lines.Length != 3) { throw new FormatException($"{file} must contain exactly 2 lines of text"); }
+            return (lines[0], lines[1], lines[2]);
         }
     }
 }

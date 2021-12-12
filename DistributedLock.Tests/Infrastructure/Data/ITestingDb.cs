@@ -16,6 +16,8 @@ namespace Medallion.Threading.Tests.Data
 
         string ApplicationName { get; set; }
 
+        string ConnectionString { get; }
+
         // needed since different providers have different names for this key
         int MaxPoolSize { get; set; }
 

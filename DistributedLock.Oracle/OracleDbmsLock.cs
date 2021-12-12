@@ -78,13 +78,21 @@ namespace Medallion.Threading.Oracle
                 1 => null, // timeout
                 2 => throw new DeadlockException(GetErrorMessage("deadlock")),
                 3 => throw new InvalidOperationException(GetErrorMessage("parameter error")),
-                4 => throw new InvalidOperationException(GetErrorMessage("attempted to acquire a lock that is already held by this connection")),
+                4 => timeout.IsZero ? null
+                    : timeout.IsInfinite ? throw new DeadlockException("Attempted to acquire a lock that is already held on the same connection")
+                    : await WaitThenReturnNullAsync().ConfigureAwait(false),
                 5 => throw new InvalidOperationException(GetErrorMessage("illegal lock handle")),
                 _ => throw new InvalidOperationException(GetErrorMessage("unknown error code")),
             };
 
             string GetErrorMessage(string description) =>
                 $"SYS.DBMS_LOCK.REQUEST returned error code {returnValue} ({description})";
+
+            async ValueTask<object?> WaitThenReturnNullAsync()
+            {
+                await SyncViaAsync.Delay(timeout, cancellationToken).ConfigureAwait(false);
+                return null;
+            }
         }
     }
 }

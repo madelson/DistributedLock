@@ -22,6 +22,10 @@ namespace Medallion.Threading.Tests.Oracle
 
         public string ApplicationName { get; set; } = string.Empty;
 
+        string ITestingDb.ConnectionString =>
+            (this.ApplicationName.Length > 0 ? $"{OracleDatabaseConnection.ApplicationNameIndicatorPrefix}{this.ApplicationName};" : string.Empty)
+                + this.ConnectionStringBuilder.ConnectionString;
+
         public int MaxPoolSize { get => this._connectionStringBuilder.MaxPoolSize; set => this._connectionStringBuilder.MaxPoolSize = value; }
 
         // see https://docs.oracle.com/database/121/ARPLS/d_appinf.htm#ARPLS65237
@@ -38,19 +42,19 @@ namespace Medallion.Threading.Tests.Oracle
             using var connection = new OracleConnection(ConnectionString);
             connection.Open();
             using var command = connection.CreateCommand();
-            command.CommandText = "SELECT COUNT(*) FROM v$session WHERE status = 'ACTIVE' AND client_info = :applicationName";
+            command.CommandText = "SELECT COUNT(*) FROM v$session WHERE client_info = :applicationName AND status != 'KILLED'";
             command.Parameters.Add("applicationName", applicationName);
             return (int)(decimal)command.ExecuteScalar()!;
         }
 
-        public DbConnection CreateConnection() => new OracleConnection(
-            (this.ApplicationName.Length > 0 ? $"{OracleDatabaseConnection.ApplicationNameIndicatorPrefix}{this.ApplicationName};" : string.Empty)
-                + this.ConnectionStringBuilder.ConnectionString
-        );
+        public DbConnection CreateConnection() => OracleDatabaseConnection.CreateConnection(this.As<ITestingDb>().ConnectionString);
 
         public IsolationLevel GetIsolationLevel(DbConnection connection)
         {
-            throw new NotImplementedException();
+            // After briefly trying the various approaches mentioned on https://stackoverflow.com/questions/10711204/how-to-check-isoloation-level
+            // I could not get them to work. Given that the tests using this are checking something relatively minor and SQLServer specific, not
+            // supporting this seems fine.
+            throw new NotSupportedException();
         }
 
         public async Task KillSessionsAsync(string applicationName, DateTimeOffset? idleSince = null)
@@ -62,9 +66,8 @@ namespace Medallion.Threading.Tests.Oracle
             var idleTimeSeconds = idleSince.HasValue ? (DateTimeOffset.Now - idleSince.Value).TotalSeconds : default(double?);
             getIdleSessionsCommand.CommandText = $@"
                 SELECT sid, serial# 
-                FROM v$sesion 
-                WHERE status = 'INACTIVE'
-                    AND client_info = :applicationName
+                FROM v$session 
+                WHERE client_info = :applicationName
                     {(idleTimeSeconds.HasValue ? $"AND last_call_et >= {idleTimeSeconds}" : string.Empty)}";
             getIdleSessionsCommand.Parameters.Add("applicationName", applicationName);
             using var reader = await getIdleSessionsCommand.ExecuteReaderAsync();

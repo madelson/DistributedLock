@@ -101,6 +101,7 @@ namespace Medallion.Threading.Oracle
         {
             if (transaction == null) { throw new ArgumentNullException(nameof(transaction)); }
 
+            // todo
             throw new NotImplementedException("need to figure out transaction-scoped locks");
             //return new DedicatedConnectionOrTransactionDbDistributedLock(name, () => new OracleDatabaseConnection(transaction), useTransaction: false, keepaliveCadence: Timeout.InfiniteTimeSpan);
         }

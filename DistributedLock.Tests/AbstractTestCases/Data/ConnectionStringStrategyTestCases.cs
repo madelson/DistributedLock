@@ -37,8 +37,8 @@ namespace Medallion.Threading.Tests.Data
                 {
                     this._lockProvider.Strategy.Db.CountActiveSessions(applicationName).ShouldEqual(1, this.GetType().Name);
                 }
-                // still alive due to pooling
-                this._lockProvider.Strategy.Db.CountActiveSessions(applicationName).ShouldEqual(1, this.GetType().Name);
+                // still alive due to pooling, except in Oracle where the application name (client info) is not part of the pool key
+                Assert.LessOrEqual(this._lockProvider.Strategy.Db.CountActiveSessions(applicationName), 1, this.GetType().Name);
             }
 
             using (var connection = this._lockProvider.Strategy.Db.CreateConnection())

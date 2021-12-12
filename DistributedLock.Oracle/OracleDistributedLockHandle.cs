@@ -22,7 +22,7 @@ namespace Medallion.Threading.Oracle
         /// <summary>
         /// TODO reference issue
         /// </summary>
-        public CancellationToken HandleLostToken => CancellationToken.None;
+        public CancellationToken HandleLostToken => this._innerHandle?.HandleLostToken ?? throw this.ObjectDisposed();
 
         /// <summary>
         /// Releases the lock

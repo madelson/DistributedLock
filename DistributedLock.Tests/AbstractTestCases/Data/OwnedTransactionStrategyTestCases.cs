@@ -1,5 +1,6 @@
 using Medallion.Threading.Internal;
 using NUnit.Framework;
+using System;
 using System.Data;
 
 namespace Medallion.Threading.Tests.Data
@@ -38,7 +39,15 @@ namespace Medallion.Threading.Tests.Data
             using (var connection = this._lockProvider.Strategy.Db.CreateConnection())
             {
                 connection.Open();
-                defaultIsolationLevel = this._lockProvider.Strategy.Db.GetIsolationLevel(connection);
+                try
+                {
+                    defaultIsolationLevel = this._lockProvider.Strategy.Db.GetIsolationLevel(connection);
+                }
+                catch (NotSupportedException)
+                {
+                    Assert.Pass("Getting isolation level not supported");
+                    throw;
+                }
             }
 
             // Pre-generate the lock we will use. This is necessary for our Semaphore5 strategy, where the first lock created
