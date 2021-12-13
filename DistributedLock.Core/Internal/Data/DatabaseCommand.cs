@@ -159,7 +159,9 @@ namespace Medallion.Threading.Internal.Data
             Invariant.Require(cancellationToken.CanBeCanceled);
 
             using var _ = await this.AcquireConnectionLockIfNeeded(isConnectionMonitoringQuery).ConfigureAwait(false);
-            await this.PrepareIfNeededAsync(cancellationToken).ConfigureAwait(false);
+            // Note: for now we cannot pass cancellationToken to PrepareAsync() because this will break on Postgres which
+            // is the only db we currently support that needs Prepare currently. See https://github.com/npgsql/npgsql/issues/4209
+            await this.PrepareIfNeededAsync(CancellationToken.None).ConfigureAwait(false);
             try
             {
                 return await executeAsync(state, cancellationToken).ConfigureAwait(false);
