@@ -7,7 +7,7 @@ using System.Threading;
 namespace Medallion.Threading.Oracle
 {
     /// <summary>
-    /// Specifies options for connecting to and locking against a MySQL database
+    /// Specifies options for connecting to and locking against an Oracle database
     /// </summary>
     public sealed class OracleConnectionOptionsBuilder
     {
