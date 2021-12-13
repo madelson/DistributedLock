@@ -15,6 +15,9 @@ namespace Medallion.Threading.Oracle
     // TODO OracleDRWLTest
     // TODO audit for TODOs
 
+    /// <summary>
+    /// Implements a distributed lock for Oracle databse based on the DBMS_LOCK package
+    /// </summary>
     public sealed partial class OracleDistributedLock : IInternalDistributedLock<OracleDistributedLockHandle>
     {
         internal const int MaxNameLength = 128;
