@@ -9,6 +9,13 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading.Oracle
 {
+    // TODO provider
+    // TODO rwlock
+    // TODO version bump for oracle and for Core and for umbrella
+    // TODO any nexts for Core?
+    // TODO OracleDLTest
+    // TODO options builder test
+
     public sealed partial class OracleDistributedLock : IInternalDistributedLock<OracleDistributedLockHandle>
     {
         private const int MaxNameLength = 128;
