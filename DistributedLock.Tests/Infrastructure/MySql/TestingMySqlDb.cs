@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading.Tests.MySql
 {
-    public class TestingMySqlDb : ITestingPrimaryClientDb
+    public class TestingMySqlDb : TestingPrimaryClientDb
     {
         private readonly string _defaultConnectionString;
         private readonly MySqlConnectionStringBuilder _connectionStringBuilder;
@@ -27,27 +27,17 @@ namespace Medallion.Threading.Tests.MySql
             this._connectionStringBuilder = new MySqlConnectionStringBuilder(this._defaultConnectionString);
         }
 
-        public DbConnectionStringBuilder ConnectionStringBuilder => this._connectionStringBuilder;
+        public override DbConnectionStringBuilder ConnectionStringBuilder => this._connectionStringBuilder;
 
-        public string ApplicationName { get => this._connectionStringBuilder.ApplicationName; set => this._connectionStringBuilder.ApplicationName = value; }
+        public override int MaxPoolSize { get => (int)this._connectionStringBuilder.MaximumPoolSize; set => this._connectionStringBuilder.MaximumPoolSize = (uint)value; }
 
-        public string ConnectionString => this.ConnectionStringBuilder.ConnectionString;
+        public override int MaxApplicationNameLength => 65390; // based on empirical testing
 
-        public int MaxPoolSize
-        { 
-            get => (int)this._connectionStringBuilder.MaximumPoolSize; 
-            set => this._connectionStringBuilder.MaximumPoolSize = (uint)value; 
-        }
-
-        public int MaxApplicationNameLength => 65390; // based on empirical testing
-
-        public TransactionSupport TransactionSupport => TransactionSupport.ExplicitParticipation;
+        public override TransactionSupport TransactionSupport => TransactionSupport.ExplicitParticipation;
 
         protected virtual string IsolationLevelVariableName => "transaction_isolation";
 
-        public void ClearPool(DbConnection connection) => MySqlConnection.ClearPool((MySqlConnection)connection);
-
-        public int CountActiveSessions(string applicationName)
+        public override int CountActiveSessions(string applicationName)
         {
             using var connection = new MySqlConnection(this._defaultConnectionString);
             connection.Open();
@@ -57,9 +47,8 @@ namespace Medallion.Threading.Tests.MySql
             return (int)(long)command.ExecuteScalar()!;
         }
 
-        public DbConnection CreateConnection() => new MySqlConnection(this.ConnectionStringBuilder.ConnectionString);
-
-        public IsolationLevel GetIsolationLevel(DbConnection connection)
+        public override DbConnection CreateConnection() => new MySqlConnection(this.ConnectionStringBuilder.ConnectionString);
+        public override IsolationLevel GetIsolationLevel(DbConnection connection)
         {
             using var command = connection.CreateCommand();
             command.CommandText = "SELECT @@" + this.IsolationLevelVariableName;
@@ -67,7 +56,7 @@ namespace Medallion.Threading.Tests.MySql
             return (IsolationLevel)Enum.Parse(typeof(IsolationLevel), rawIsolationLevel.Replace("-", string.Empty), ignoreCase: true);
         }
 
-        public async Task KillSessionsAsync(string applicationName, DateTimeOffset? idleSince = null)
+        public override async Task KillSessionsAsync(string applicationName, DateTimeOffset? idleSince = null)
         {
             var minTimeSeconds = idleSince.HasValue
                 ? (int?)(DateTimeOffset.UtcNow - idleSince.Value).TotalSeconds

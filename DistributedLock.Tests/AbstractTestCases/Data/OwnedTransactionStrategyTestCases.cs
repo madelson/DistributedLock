@@ -7,7 +7,7 @@ namespace Medallion.Threading.Tests.Data
 {
     public abstract class OwnedTransactionStrategyTestCases<TLockProvider, TDb>
         where TLockProvider : TestingLockProvider<TestingOwnedTransactionSynchronizationStrategy<TDb>>, new()
-        where TDb : ITestingPrimaryClientDb, new()
+        where TDb : TestingPrimaryClientDb, new()
     {
         private TLockProvider _lockProvider = default!;
 
@@ -56,7 +56,7 @@ namespace Medallion.Threading.Tests.Data
             this._lockProvider.CreateLock(nameof(TestIsolationLevelLeakage));
 
             // use a unique pool of size 1 so we can reclaim the connection after we use it and test for leaks
-            this._lockProvider.Strategy.SetUniqueApplicationName();
+            this._lockProvider.Strategy.Db.SetUniqueApplicationName();
             this._lockProvider.Strategy.Db.MaxPoolSize = 1;
 
             AssertHasDefaultIsolationLevel();

@@ -12,34 +12,30 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading.Tests.Oracle
 {
-    public sealed class TestingOracleDb : ITestingPrimaryClientDb
+    public sealed class TestingOracleDb : TestingPrimaryClientDb
     {
-        internal static readonly string ConnectionString = OracleCredentials.GetConnectionString(TestContext.CurrentContext.TestDirectory);
+        internal static readonly string DefaultConnectionString = OracleCredentials.GetConnectionString(TestContext.CurrentContext.TestDirectory);
 
-        private readonly OracleConnectionStringBuilder _connectionStringBuilder = new OracleConnectionStringBuilder(ConnectionString);
+        private readonly OracleConnectionStringBuilder _connectionStringBuilder = new OracleConnectionStringBuilder(DefaultConnectionString);
 
-        public DbConnectionStringBuilder ConnectionStringBuilder => this._connectionStringBuilder;
+        public override DbConnectionStringBuilder ConnectionStringBuilder => this._connectionStringBuilder;
 
-        public string ApplicationName { get; set; } = string.Empty;
+        public override string ApplicationName { get; set; } = string.Empty;
 
-        string ITestingDb.ConnectionString =>
+        public override string ConnectionString =>
             (this.ApplicationName.Length > 0 ? $"{OracleDatabaseConnection.ApplicationNameIndicatorPrefix}{this.ApplicationName};" : string.Empty)
                 + this.ConnectionStringBuilder.ConnectionString;
 
-        public int MaxPoolSize { get => this._connectionStringBuilder.MaxPoolSize; set => this._connectionStringBuilder.MaxPoolSize = value; }
-
         // see https://docs.oracle.com/database/121/ARPLS/d_appinf.htm#ARPLS65237
-        public int MaxApplicationNameLength => 64;
+        public override int MaxApplicationNameLength => 64;
 
-        public TransactionSupport TransactionSupport => throw new NotImplementedException();
+        public override TransactionSupport TransactionSupport => throw new NotImplementedException();
 
-        public void ClearPool(DbConnection connection) => OracleConnection.ClearPool((OracleConnection)connection);
-
-        public int CountActiveSessions(string applicationName)
+        public override int CountActiveSessions(string applicationName)
         {
             Invariant.Require(applicationName.Length <= this.MaxApplicationNameLength);
 
-            using var connection = new OracleConnection(ConnectionString);
+            using var connection = new OracleConnection(DefaultConnectionString);
             connection.Open();
             using var command = connection.CreateCommand();
             command.CommandText = "SELECT COUNT(*) FROM v$session WHERE client_info = :applicationName AND status != 'KILLED'";
@@ -47,9 +43,9 @@ namespace Medallion.Threading.Tests.Oracle
             return (int)(decimal)command.ExecuteScalar()!;
         }
 
-        public DbConnection CreateConnection() => OracleDatabaseConnection.CreateConnection(this.As<ITestingDb>().ConnectionString);
+        public override DbConnection CreateConnection() => OracleDatabaseConnection.CreateConnection(this.As<TestingDb>().ConnectionString);
 
-        public IsolationLevel GetIsolationLevel(DbConnection connection)
+        public override IsolationLevel GetIsolationLevel(DbConnection connection)
         {
             // After briefly trying the various approaches mentioned on https://stackoverflow.com/questions/10711204/how-to-check-isoloation-level
             // I could not get them to work. Given that the tests using this are checking something relatively minor and SQLServer specific, not
@@ -57,9 +53,18 @@ namespace Medallion.Threading.Tests.Oracle
             throw new NotSupportedException();
         }
 
-        public async Task KillSessionsAsync(string applicationName, DateTimeOffset? idleSince = null)
+        public override void PrepareForHighContention(ref int maxConcurrentAcquires)
         {
-            using var connection = new OracleConnection(ConnectionString);
+            // The free Oracle Autonomous database has a fixed max session limit of 20. When concurrency approaches that, parellel
+            // execution slows down greatly because often releases become queued behind competing aquires. When concurrency surpasses
+            // that level we risk total deadlock where all active sessions are in use by acquires and as such no release can ever get
+            // through.
+            maxConcurrentAcquires = Math.Min(maxConcurrentAcquires, 15);
+        }
+
+        public override async Task KillSessionsAsync(string applicationName, DateTimeOffset? idleSince = null)
+        {
+            using var connection = new OracleConnection(DefaultConnectionString);
             await connection.OpenAsync();
 
             using var getIdleSessionsCommand = connection.CreateCommand();

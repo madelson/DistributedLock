@@ -12,7 +12,7 @@ namespace Medallion.Threading.Tests.Data
     public abstract class ExternalConnectionOrTransactionStrategyTestCases<TLockProvider, TStrategy, TDb>
         where TLockProvider : TestingLockProvider<TStrategy>, new()
         where TStrategy : TestingExternalConnectionOrTransactionSynchronizationStrategy<TDb>, new()
-        where TDb : ITestingDb, new()
+        where TDb : TestingDb, new()
     {
         private TLockProvider _lockProvider = default!;
 

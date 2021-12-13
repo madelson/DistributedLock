@@ -8,7 +8,7 @@ namespace Medallion.Threading.Tests.Data
 {
     public abstract class ExternalTransactionStrategyTestCases<TLockProvider, TDb>
         where TLockProvider : TestingLockProvider<TestingExternalTransactionSynchronizationStrategy<TDb>>, new()
-        where TDb : ITestingDb, new()
+        where TDb : TestingDb, new()
     {
         private TLockProvider _lockProvider = default!;
 

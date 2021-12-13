@@ -179,6 +179,7 @@ namespace Medallion.Threading.Tests
                 .Select(_ => this._lockProvider.CreateLock("parallel_test"))
                 .ToArray();
             var counter = 0;
+            // Task.Run() ensures true parallelism even for locks that don't support it
             var tasks = Enumerable.Range(0, taskCount).Select(i => Task.Run(async () =>
                 {
                     await using (await locks[i].AcquireAsync())

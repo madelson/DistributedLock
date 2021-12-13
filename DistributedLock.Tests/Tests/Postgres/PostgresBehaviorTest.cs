@@ -23,7 +23,7 @@ namespace Medallion.Threading.Tests.Postgres
         [Test]
         public async Task TestPostgresCommandAutomaticallyParticipatesInTransaction()
         {
-            using var connection = new NpgsqlConnection(TestingPostgresDb.ConnectionString);
+            using var connection = new NpgsqlConnection(TestingPostgresDb.DefaultConnectionString);
             await connection.OpenAsync();
 
             using var transaction =
@@ -71,7 +71,7 @@ namespace Medallion.Threading.Tests.Postgres
 
             async Task RunTransactionWithAbortAsync(bool useSavePoint)
             {
-                using var connection = new NpgsqlConnection(TestingPostgresDb.ConnectionString);
+                using var connection = new NpgsqlConnection(TestingPostgresDb.DefaultConnectionString);
                 await connection.OpenAsync();
 
                 using (connection.BeginTransaction())
@@ -107,7 +107,7 @@ namespace Medallion.Threading.Tests.Postgres
         [Test]
         public async Task TestCanDetectTransactionWithBeginTransactionException()
         {
-            using var connection = new NpgsqlConnection(TestingPostgresDb.ConnectionString);
+            using var connection = new NpgsqlConnection(TestingPostgresDb.DefaultConnectionString);
             await connection.OpenAsync();
 
             Assert.DoesNotThrow(() => connection.BeginTransaction().Dispose());
@@ -121,7 +121,7 @@ namespace Medallion.Threading.Tests.Postgres
         [Test]
         public async Task TestDoesNotDetectConnectionBreakViaState()
         {
-            using var connection = new NpgsqlConnection(TestingPostgresDb.ConnectionString);
+            using var connection = new NpgsqlConnection(TestingPostgresDb.DefaultConnectionString);
             await connection.OpenAsync();
 
             using var getPidCommand = connection.CreateCommand();
@@ -132,7 +132,7 @@ namespace Medallion.Threading.Tests.Postgres
             connection.StateChange += (_, _2) => stateChangedEvent.Set();
 
             // kill the connection from the back end
-            using var killingConnection = new NpgsqlConnection(TestingPostgresDb.ConnectionString);
+            using var killingConnection = new NpgsqlConnection(TestingPostgresDb.DefaultConnectionString);
             await killingConnection.OpenAsync();
             using var killCommand = killingConnection.CreateCommand();
             killCommand.CommandText = $"SELECT pg_terminate_backend({pid})";
@@ -150,7 +150,7 @@ namespace Medallion.Threading.Tests.Postgres
         {
             using var stateChangedEvent = new ManualResetEventSlim(initialState: false);
 
-            using var connection = new NpgsqlConnection(TestingPostgresDb.ConnectionString);
+            using var connection = new NpgsqlConnection(TestingPostgresDb.DefaultConnectionString);
             await connection.OpenAsync();
             connection.StateChange += (o, e) => stateChangedEvent.Set();
 
@@ -161,7 +161,7 @@ namespace Medallion.Threading.Tests.Postgres
             Assert.AreEqual(ConnectionState.Open, connection.State);
 
             // kill the connection from the back end
-            using var killingConnection = new NpgsqlConnection(TestingPostgresDb.ConnectionString);
+            using var killingConnection = new NpgsqlConnection(TestingPostgresDb.DefaultConnectionString);
             await killingConnection.OpenAsync();
             using var killCommand = killingConnection.CreateCommand();
             killCommand.CommandText = $"SELECT pg_terminate_backend({pid})";

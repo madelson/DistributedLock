@@ -31,8 +31,8 @@ namespace Medallion.Threading.Tests
                 UserID = username,
                 Password = password,
                 PersistSecurityInfo = true,
-                // set a high pool size so that we don't empty the pool through things like lock abandonment tests
-                //MaxPoolSize = 500,
+                // The free-tier autonomous database only allows 20 connections maximum (presumably across all clients) so this limit
+                // should help keep us below this limit. Running up against the limit throws errors on Connection.Open()
                 MaxPoolSize = 15,
             }.ConnectionString;
         }

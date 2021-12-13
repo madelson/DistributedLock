@@ -9,35 +9,27 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading.Tests.SqlServer
 {
-    public interface ITestingSqlServerDb : ITestingDb { }
+    public interface ITestingSqlServerDb { }
 
-    public sealed class TestingSqlServerDb : ITestingSqlServerDb, ITestingPrimaryClientDb
+    public sealed class TestingSqlServerDb : TestingPrimaryClientDb, ITestingSqlServerDb
     {
-        internal static readonly string ConnectionString = SqlServerCredentials.ConnectionString;
+        internal static readonly string DefaultConnectionString = SqlServerCredentials.ConnectionString;
 
         private readonly Microsoft.Data.SqlClient.SqlConnectionStringBuilder _connectionStringBuilder =
-            new Microsoft.Data.SqlClient.SqlConnectionStringBuilder(ConnectionString);
+            new Microsoft.Data.SqlClient.SqlConnectionStringBuilder(DefaultConnectionString);
 
-        public DbConnectionStringBuilder ConnectionStringBuilder => this._connectionStringBuilder;
-
-        string ITestingDb.ConnectionString => this.ConnectionStringBuilder.ConnectionString;
-
-        public string ApplicationName { get => this._connectionStringBuilder.ApplicationName; set => this._connectionStringBuilder.ApplicationName = value; }
-
-        public int MaxPoolSize { get => this._connectionStringBuilder.MaxPoolSize; set => this._connectionStringBuilder.MaxPoolSize = value; }
+        public override DbConnectionStringBuilder ConnectionStringBuilder => this._connectionStringBuilder;
 
         // https://stackoverflow.com/questions/5808332/sql-server-maximum-character-length-of-object-names/41502228
-        public int MaxApplicationNameLength => 128;
+        public override int MaxApplicationNameLength => 128;
 
-        public TransactionSupport TransactionSupport => TransactionSupport.TransactionScoped;
+        public override TransactionSupport TransactionSupport => TransactionSupport.TransactionScoped;
 
-        public void ClearPool(DbConnection connection) => Microsoft.Data.SqlClient.SqlConnection.ClearPool((Microsoft.Data.SqlClient.SqlConnection)connection);
-
-        public int CountActiveSessions(string applicationName)
+        public override int CountActiveSessions(string applicationName)
         {
             Invariant.Require(applicationName.Length <= this.MaxApplicationNameLength);
 
-            using var connection = new Microsoft.Data.SqlClient.SqlConnection(ConnectionString);
+            using var connection = new Microsoft.Data.SqlClient.SqlConnection(DefaultConnectionString);
             connection.Open();
             using var command = connection.CreateCommand();
             command.CommandText = $@"SELECT COUNT(*) FROM sys.dm_exec_sessions WHERE program_name = @applicationName";
@@ -45,7 +37,7 @@ namespace Medallion.Threading.Tests.SqlServer
             return (int)command.ExecuteScalar();
         }
 
-        public IsolationLevel GetIsolationLevel(DbConnection connection)
+        public override IsolationLevel GetIsolationLevel(DbConnection connection)
         {
             using var command = connection.CreateCommand();
             command.CommandText = @"
@@ -62,11 +54,11 @@ namespace Medallion.Threading.Tests.SqlServer
             return (IsolationLevel)Enum.Parse(typeof(IsolationLevel), (string)command.ExecuteScalar());
         }
 
-        public DbConnection CreateConnection() => new Microsoft.Data.SqlClient.SqlConnection(this.ConnectionStringBuilder.ConnectionString);
+        public override DbConnection CreateConnection() => new Microsoft.Data.SqlClient.SqlConnection(this.ConnectionStringBuilder.ConnectionString);
 
-        public async Task KillSessionsAsync(string applicationName, DateTimeOffset? idleSince)
+        public override async Task KillSessionsAsync(string applicationName, DateTimeOffset? idleSince)
         {
-            using var connection = new Microsoft.Data.SqlClient.SqlConnection(ConnectionString);
+            using var connection = new Microsoft.Data.SqlClient.SqlConnection(DefaultConnectionString);
             await connection.OpenAsync();
 
             var findIdleSessionsCommand = connection.CreateCommand();
@@ -103,29 +95,21 @@ namespace Medallion.Threading.Tests.SqlServer
         }
     }
 
-    public sealed class TestingSystemDataSqlServerDb : ITestingSqlServerDb
+    public sealed class TestingSystemDataSqlServerDb : TestingDb, ITestingSqlServerDb
     {
         private readonly System.Data.SqlClient.SqlConnectionStringBuilder _connectionStringBuilder =
-            new System.Data.SqlClient.SqlConnectionStringBuilder(TestingSqlServerDb.ConnectionString);
+            new System.Data.SqlClient.SqlConnectionStringBuilder(TestingSqlServerDb.DefaultConnectionString);
 
-        public DbConnectionStringBuilder ConnectionStringBuilder => this._connectionStringBuilder;
+        public override DbConnectionStringBuilder ConnectionStringBuilder => this._connectionStringBuilder;
 
-        public string ApplicationName { get => this._connectionStringBuilder.ApplicationName; set => this._connectionStringBuilder.ApplicationName = value; }
+        public override int MaxApplicationNameLength => new TestingSqlServerDb().MaxApplicationNameLength;
 
-        string ITestingDb.ConnectionString => this.ConnectionStringBuilder.ConnectionString;
+        public override TransactionSupport TransactionSupport => TransactionSupport.TransactionScoped;
 
-        public int MaxPoolSize { get => this._connectionStringBuilder.MaxPoolSize; set => this._connectionStringBuilder.MaxPoolSize = value; }
+        public override int CountActiveSessions(string applicationName) => new TestingSqlServerDb().CountActiveSessions(applicationName);
 
-        public int MaxApplicationNameLength => new TestingSqlServerDb().MaxApplicationNameLength;
+        public override IsolationLevel GetIsolationLevel(DbConnection connection) => new TestingSqlServerDb().GetIsolationLevel(connection);
 
-        public TransactionSupport TransactionSupport => TransactionSupport.TransactionScoped;
-
-        public void ClearPool(DbConnection connection) => System.Data.SqlClient.SqlConnection.ClearPool((System.Data.SqlClient.SqlConnection)connection);
-
-        public int CountActiveSessions(string applicationName) => new TestingSqlServerDb().CountActiveSessions(applicationName);
-
-        public IsolationLevel GetIsolationLevel(DbConnection connection) => new TestingSqlServerDb().GetIsolationLevel(connection);
-
-        public DbConnection CreateConnection() => new System.Data.SqlClient.SqlConnection(this.ConnectionStringBuilder.ConnectionString);
+        public override DbConnection CreateConnection() => new System.Data.SqlClient.SqlConnection(this.ConnectionStringBuilder.ConnectionString);
     }
 }

@@ -10,7 +10,7 @@ namespace Medallion.Threading.Tests.Data
     public abstract class ConnectionStringStrategyTestCases<TLockProvider, TStrategy, TDb>
         where TLockProvider : TestingLockProvider<TStrategy>, new()
         where TStrategy : TestingConnectionStringSynchronizationStrategy<TDb>, new()
-        where TDb : ITestingPrimaryClientDb, new()
+        where TDb : TestingPrimaryClientDb, new()
     {
         private TLockProvider _lockProvider = default!;
 
@@ -28,7 +28,7 @@ namespace Medallion.Threading.Tests.Data
             this._lockProvider.CreateLock(nameof(TestConnectionDoesNotLeak));
 
             // set a distinctive application name so that we can count how many connections are used
-            var applicationName = this._lockProvider.Strategy.SetUniqueApplicationName();
+            var applicationName = this._lockProvider.Strategy.Db.SetUniqueApplicationName();
 
             var @lock = this._lockProvider.CreateLock(nameof(TestConnectionDoesNotLeak));
             for (var i = 0; i < 30; ++i)
@@ -65,7 +65,7 @@ namespace Medallion.Threading.Tests.Data
         [NonParallelizable, Retry(5)] // timing-sensitive
         public void TestKeepaliveProtectsFromIdleSessionKiller()
         {
-            var applicationName = this._lockProvider.Strategy.SetUniqueApplicationName();
+            var applicationName = this._lockProvider.Strategy.Db.SetUniqueApplicationName();
 
             this._lockProvider.Strategy.KeepaliveCadence = TimeSpan.FromSeconds(.05);
             var @lock = this._lockProvider.CreateLock(Guid.NewGuid().ToString()); // use unique name due to retry

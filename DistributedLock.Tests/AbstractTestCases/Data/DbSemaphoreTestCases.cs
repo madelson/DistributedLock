@@ -8,7 +8,7 @@ namespace Medallion.Threading.Tests.Data
     public abstract class DbSemaphoreTestCases<TSemaphoreProvider, TStrategy, TDb>
         where TSemaphoreProvider : TestingSemaphoreProvider<TStrategy>, new()
         where TStrategy : TestingExternalConnectionOrTransactionSynchronizationStrategy<TDb>, new()
-        where TDb : ITestingDb, new()
+        where TDb : TestingDb, new()
     {
         private TSemaphoreProvider _semaphoreProvider = default!;
 

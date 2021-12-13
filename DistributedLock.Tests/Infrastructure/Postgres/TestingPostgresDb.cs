@@ -12,41 +12,29 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading.Tests.Postgres
 {
-    public sealed class TestingPostgresDb : ITestingPrimaryClientDb
+    public sealed class TestingPostgresDb : TestingPrimaryClientDb
     {
-        internal static readonly string ConnectionString = PostgresCredentials.GetConnectionString(TestContext.CurrentContext.TestDirectory);
+        internal static readonly string DefaultConnectionString = PostgresCredentials.GetConnectionString(TestContext.CurrentContext.TestDirectory);
 
-        private readonly NpgsqlConnectionStringBuilder _connectionStringBuilder = new NpgsqlConnectionStringBuilder(ConnectionString);
+        private readonly NpgsqlConnectionStringBuilder _connectionStringBuilder = new NpgsqlConnectionStringBuilder(DefaultConnectionString);
 
-        public DbConnectionStringBuilder ConnectionStringBuilder => this._connectionStringBuilder;
-
-        public string ApplicationName
-        {
-            get => this._connectionStringBuilder.ApplicationName ?? string.Empty;
-            set => this._connectionStringBuilder.ApplicationName = value == string.Empty ? null : value;
-        }
-
-        string ITestingDb.ConnectionString => this.ConnectionStringBuilder.ConnectionString;
-
-        public int MaxPoolSize { get => this._connectionStringBuilder.MaxPoolSize; set => this._connectionStringBuilder.MaxPoolSize = value; }
+        public override DbConnectionStringBuilder ConnectionStringBuilder => this._connectionStringBuilder;
 
         // https://til.hashrocket.com/posts/8f87c65a0a-postgresqls-max-identifier-length-is-63-bytes
-        public int MaxApplicationNameLength => 63;
+        public override int MaxApplicationNameLength => 63;
 
         /// <summary>
         /// Technically Postgres does support this through xact advisory lock methods, but it is very unwieldy to use due to the transaction
         /// abort semantics and largely unnecessary for our purposes since, unlike SQLServer, a connection-scoped Postgres lock can still
         /// participate in an ongoing transaction.
         /// </summary>
-        public TransactionSupport TransactionSupport => TransactionSupport.ImplicitParticipation;
+        public override TransactionSupport TransactionSupport => TransactionSupport.ImplicitParticipation;
 
-        public void ClearPool(DbConnection connection) => NpgsqlConnection.ClearPool((NpgsqlConnection)connection);
-
-        public int CountActiveSessions(string applicationName)
+        public override int CountActiveSessions(string applicationName)
         {
             Invariant.Require(applicationName.Length <= this.MaxApplicationNameLength);
 
-            using var connection = new NpgsqlConnection(ConnectionString);
+            using var connection = new NpgsqlConnection(DefaultConnectionString);
             connection.Open();
             using var command = connection.CreateCommand();
             command.CommandText = "SELECT COUNT(*)::int FROM pg_stat_activity WHERE application_name = @applicationName";
@@ -54,7 +42,7 @@ namespace Medallion.Threading.Tests.Postgres
             return (int)command.ExecuteScalar()!;
         }
 
-        public IsolationLevel GetIsolationLevel(DbConnection connection)
+        public override IsolationLevel GetIsolationLevel(DbConnection connection)
         {
             using var command = connection.CreateCommand();
             // values based on https://www.postgresql.org/docs/12/transaction-iso.html
@@ -62,11 +50,11 @@ namespace Medallion.Threading.Tests.Postgres
             return (IsolationLevel)Enum.Parse(typeof(IsolationLevel), (string)command.ExecuteScalar(), ignoreCase: true);
         }
 
-        public DbConnection CreateConnection() => new NpgsqlConnection(this.ConnectionStringBuilder.ConnectionString);
+        public override DbConnection CreateConnection() => new NpgsqlConnection(this.ConnectionStringBuilder.ConnectionString);
 
-        public async Task KillSessionsAsync(string applicationName, DateTimeOffset? idleSince)
+        public override async Task KillSessionsAsync(string applicationName, DateTimeOffset? idleSince)
         {
-            using var connection = new NpgsqlConnection(ConnectionString);
+            using var connection = new NpgsqlConnection(DefaultConnectionString);
             await connection.OpenAsync();
             using var command = connection.CreateCommand();
             // based on https://stackoverflow.com/questions/13236160/is-there-a-timeout-for-idle-postgresql-connections

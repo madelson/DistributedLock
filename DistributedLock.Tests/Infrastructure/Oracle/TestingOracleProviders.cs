@@ -18,7 +18,7 @@ namespace Medallion.Threading.Tests.Oracle
                     transaction => new OracleDistributedLock(name, transaction)
                 );
 
-        public override string GetSafeName(string name) => new OracleDistributedLock(name, TestingOracleDb.ConnectionString).Name;
+        public override string GetSafeName(string name) => new OracleDistributedLock(name, TestingOracleDb.DefaultConnectionString).Name;
 
         internal static Action<OracleConnectionOptionsBuilder> ToOracleOptions((bool useMultiplexing, bool useTransaction, TimeSpan? keepaliveCadence) options) => o =>
         {

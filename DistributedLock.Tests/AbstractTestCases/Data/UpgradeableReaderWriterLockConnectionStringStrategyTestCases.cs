@@ -10,7 +10,7 @@ namespace Medallion.Threading.Tests.Data
     public abstract class UpgradeableReaderWriterLockConnectionStringStrategyTestCases<TLockProvider, TStrategy, TDb>
         where TLockProvider : TestingUpgradeableReaderWriterLockProvider<TStrategy>, new()
         where TStrategy : TestingConnectionStringSynchronizationStrategy<TDb>, new()
-        where TDb : ITestingPrimaryClientDb, new()
+        where TDb : TestingPrimaryClientDb, new()
     {
         private TLockProvider _lockProvider = default!;
 
@@ -24,7 +24,7 @@ namespace Medallion.Threading.Tests.Data
         [NonParallelizable, Retry(tryCount: 5)] // this test is somewhat timing sensitive
         public void TestKeepaliveProtectsFromIdleSessionKillerAfterFailedUpgrade()
         {
-            var applicationName = this._lockProvider.Strategy.SetUniqueApplicationName();
+            var applicationName = this._lockProvider.Strategy.Db.SetUniqueApplicationName();
 
             this._lockProvider.Strategy.KeepaliveCadence = TimeSpan.FromSeconds(.1);
             var @lock = this._lockProvider.CreateUpgradeableReaderWriterLock(Guid.NewGuid().ToString());
