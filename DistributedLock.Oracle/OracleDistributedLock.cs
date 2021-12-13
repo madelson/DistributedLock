@@ -12,12 +12,12 @@ namespace Medallion.Threading.Oracle
     // TODO rwlock + provider
     // TODO version bump for oracle and for Core and for PG and for umbrella
     // TODO any nexts for Core?
-    // TODO OracleDLTest
     // TODO OracleDRWLTest
+    // TODO audit for TODOs
 
     public sealed partial class OracleDistributedLock : IInternalDistributedLock<OracleDistributedLockHandle>
     {
-        private const int MaxNameLength = 128;
+        internal const int MaxNameLength = 128;
 
         private readonly IDbDistributedLock _internalLock;
 
