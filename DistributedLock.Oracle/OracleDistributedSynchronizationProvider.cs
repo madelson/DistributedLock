@@ -8,7 +8,7 @@ namespace Medallion.Threading.Oracle
     /// <summary>
     /// Implements <see cref="IDistributedLockProvider"/> for <see cref="OracleDistributedLock"/>
     /// </summary>
-    public class OracleDistributedSynchronizationProvider : IDistributedLockProvider
+    public sealed class OracleDistributedSynchronizationProvider : IDistributedLockProvider
     {
         private readonly Func<string, bool, OracleDistributedLock> _lockFactory;
 
