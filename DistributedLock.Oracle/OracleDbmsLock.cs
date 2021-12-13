@@ -49,7 +49,7 @@ namespace Medallion.Threading.Oracle
         public async ValueTask<object?> TryAcquireAsync(DatabaseConnection connection, string resourceName, TimeoutValue timeout, CancellationToken cancellationToken)
         {
             using var command = connection.CreateCommand();
-            // TODO revisit mode, release_on_commit
+            // TODO revisit mode
             command.SetCommandText(@"
                 DECLARE
                     lockHandle VARCHAR2(128);

@@ -15,7 +15,7 @@ namespace Medallion.Threading.Tests.Oracle
                     // todo pass in app name here
                     (connectionString, options) => new OracleDistributedLock(name, connectionString, options: ToOracleOptions(options)),
                     connection => new OracleDistributedLock(name, connection),
-                    transaction => new OracleDistributedLock(name, transaction)
+                    transaction => new OracleDistributedLock(name, transaction.Connection)
                 );
 
         public override string GetSafeName(string name) => new OracleDistributedLock(name, TestingOracleDb.DefaultConnectionString).Name;

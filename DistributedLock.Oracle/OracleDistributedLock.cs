@@ -36,19 +36,6 @@ namespace Medallion.Threading.Oracle
         {
         }
 
-        /// <summary>
-        /// Constructs a lock with the given <paramref name="name"/> that connects using the connection from the provided <paramref name="transaction" />.
-        /// 
-        /// NOTE that the lock will not be scoped to the <paramref name="transaction"/> and must still be explicitly released before the transaction ends.
-        /// However, this constructor allows the lock to PARTICIPATE in an ongoing transaction on a connection.
-        /// 
-        /// Unless <paramref name="exactName"/> is specified, <paramref name="name"/> will be escaped/hashed to ensure name validity.
-        /// </summary>
-        public OracleDistributedLock(string name, IDbTransaction transaction, bool exactName = false)
-            : this(name, exactName, n => CreateInternalLock(n, transaction))
-        {
-        }
-
         private OracleDistributedLock(string name, bool exactName, Func<string, IDbDistributedLock> internalLockFactory)
         {
             if (name == null) { throw new ArgumentNullException(nameof(name)); }
@@ -95,15 +82,6 @@ namespace Medallion.Threading.Oracle
             if (connection == null) { throw new ArgumentNullException(nameof(connection)); }
 
             return new DedicatedConnectionOrTransactionDbDistributedLock(name, () => new OracleDatabaseConnection(connection));
-        }
-
-        static IDbDistributedLock CreateInternalLock(string name, IDbTransaction transaction)
-        {
-            if (transaction == null) { throw new ArgumentNullException(nameof(transaction)); }
-
-            // todo
-            throw new NotImplementedException("need to figure out transaction-scoped locks");
-            //return new DedicatedConnectionOrTransactionDbDistributedLock(name, () => new OracleDatabaseConnection(transaction), useTransaction: false, keepaliveCadence: Timeout.InfiniteTimeSpan);
         }
     }
 }

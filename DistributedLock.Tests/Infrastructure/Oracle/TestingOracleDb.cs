@@ -29,7 +29,7 @@ namespace Medallion.Threading.Tests.Oracle
         // see https://docs.oracle.com/database/121/ARPLS/d_appinf.htm#ARPLS65237
         public override int MaxApplicationNameLength => 64;
 
-        public override TransactionSupport TransactionSupport => throw new NotImplementedException();
+        public override TransactionSupport TransactionSupport => TransactionSupport.ImplicitParticipation;
 
         public override int CountActiveSessions(string applicationName)
         {
