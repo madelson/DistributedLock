@@ -9,12 +9,11 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading.Oracle
 {
-    // TODO rwlock
+    // TODO rwlock + provider
     // TODO version bump for oracle and for Core and for PG and for umbrella
     // TODO any nexts for Core?
     // TODO OracleDLTest
     // TODO OracleDRWLTest
-    // TODO options builder test
 
     public sealed partial class OracleDistributedLock : IInternalDistributedLock<OracleDistributedLockHandle>
     {
