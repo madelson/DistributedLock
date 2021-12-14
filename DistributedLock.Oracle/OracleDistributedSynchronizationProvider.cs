@@ -44,6 +44,10 @@ namespace Medallion.Threading.Oracle
 
         IDistributedLock IDistributedLockProvider.CreateLock(string name) => this.CreateLock(name);
 
+        /// <summary>
+        /// Creates a <see cref="OracleDistributedReaderWriterLock"/> with the provided <paramref name="name"/>. Unless <paramref name="exactName"/> 
+        /// is specified, invalid names will be escaped/hashed.
+        /// </summary>
         public OracleDistributedReaderWriterLock CreateReaderWriterLock(string name, bool exactName = false) => this._readerWriterLockFactory(name, exactName);
 
         IDistributedUpgradeableReaderWriterLock IDistributedUpgradeableReaderWriterLockProvider.CreateUpgradeableReaderWriterLock(string name) =>
