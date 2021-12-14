@@ -47,6 +47,12 @@ namespace Medallion.Threading.Oracle
 
         private OracleDistributedLock(string name, bool exactName, Func<string, IDbDistributedLock> internalLockFactory)
         {
+            this.Name = GetName(name, exactName);
+            this._internalLock = internalLockFactory(this.Name);
+        }
+
+        internal static string GetName(string name, bool exactName)
+        {
             if (name == null) { throw new ArgumentNullException(nameof(name)); }
 
             if (exactName)
@@ -54,14 +60,10 @@ namespace Medallion.Threading.Oracle
                 if (name.Length > MaxNameLength) { throw new FormatException($"{nameof(name)}: must be at most {MaxNameLength} characters"); }
                 // Oracle treats NULL as the empty string. See https://stackoverflow.com/questions/13278773/null-vs-empty-string-in-oracle
                 if (name.Length == 0) { throw new FormatException($"{nameof(name)} must not be empty"); }
-                this.Name = name;
+                return name;
             }
-            else
-            {
-                this.Name = DistributedLockHelpers.ToSafeName(name, MaxNameLength, s => s.Length == 0 ? "EMPTY" : s);
-            }
-
-            this._internalLock = internalLockFactory(this.Name);
+            
+            return DistributedLockHelpers.ToSafeName(name, MaxNameLength, s => s.Length == 0 ? "EMPTY" : s);
         }
 
         /// <summary>
@@ -70,9 +72,9 @@ namespace Medallion.Threading.Oracle
         public string Name { get; }
 
         ValueTask<OracleDistributedLockHandle?> IInternalDistributedLock<OracleDistributedLockHandle>.InternalTryAcquireAsync(TimeoutValue timeout, CancellationToken cancellationToken) =>
-            this._internalLock.TryAcquireAsync(timeout, new OracleDbmsLock(), cancellationToken, contextHandle: null).Wrap(h => new OracleDistributedLockHandle(h));
+            this._internalLock.TryAcquireAsync(timeout, OracleDbmsLock.ExclusiveLock, cancellationToken, contextHandle: null).Wrap(h => new OracleDistributedLockHandle(h));
 
-        private static IDbDistributedLock CreateInternalLock(string name, string connectionString, Action<OracleConnectionOptionsBuilder>? options)
+        internal static IDbDistributedLock CreateInternalLock(string name, string connectionString, Action<OracleConnectionOptionsBuilder>? options)
         {
             if (connectionString == null) { throw new ArgumentNullException(nameof(connectionString)); }
 
@@ -86,7 +88,7 @@ namespace Medallion.Threading.Oracle
             return new DedicatedConnectionOrTransactionDbDistributedLock(name, () => new OracleDatabaseConnection(connectionString), useTransaction: false, keepaliveCadence);
         }
 
-        private static IDbDistributedLock CreateInternalLock(string name, IDbConnection connection)
+        internal static IDbDistributedLock CreateInternalLock(string name, IDbConnection connection)
         {
             if (connection == null) { throw new ArgumentNullException(nameof(connection)); }
 

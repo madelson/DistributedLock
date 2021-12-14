@@ -64,7 +64,7 @@ namespace Medallion.Threading.Tests
 
                 upgradeableHandle.TryUpgradeToWriteLock().ShouldEqual(true);
 
-                readTask = Lock().AcquireReadLockAsync().AsTask();
+                readTask = Task.Run(() => Lock().AcquireReadLockAsync().AsTask());
                 readTask.Wait(TimeSpan.FromSeconds(.1)).ShouldEqual(false, "write lock held");
             }
 

@@ -60,6 +60,9 @@ namespace DistributedLockTaker
                 case nameof(OracleDistributedLock):
                     handle = new OracleDistributedLock(name, OracleCredentials.GetConnectionString(Environment.CurrentDirectory)).Acquire();
                     break;
+                case "Write" + nameof(OracleDistributedReaderWriterLock):
+                    handle = new OracleDistributedReaderWriterLock(name, OracleCredentials.GetConnectionString(Environment.CurrentDirectory)).AcquireWriteLock();
+                    break;
                 case nameof(EventWaitHandleDistributedLock):
                     handle = new EventWaitHandleDistributedLock(name).Acquire();
                     break;

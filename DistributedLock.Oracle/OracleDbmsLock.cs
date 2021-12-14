@@ -18,12 +18,47 @@ namespace Medallion.Threading.Oracle
         private const int MaxWaitSeconds = 32767;
         private const int MaxTimeoutSeconds = MaxWaitSeconds - 1;
 
+        public static readonly OracleDbmsLock SharedLock = new OracleDbmsLock(Mode.Shared),
+            UpdateLock = new OracleDbmsLock(Mode.Update),
+            ExclusiveLock = new OracleDbmsLock(Mode.Exclusive),
+            UpgradeLock = new OracleDbmsLock(Mode.Exclusive, isUpgrade: true);
+
         private static readonly object Cookie = new();
 
-        public bool IsUpgradeable => false; // TODO revisit
+        private readonly Mode _mode;
+        private readonly bool _isUpgrade;
+
+        private OracleDbmsLock(Mode mode, bool isUpgrade = false)
+        {
+            Invariant.Require(!isUpgrade || mode == Mode.Exclusive);
+
+            this._mode = mode;
+            this._isUpgrade = isUpgrade;
+        }
+
+        public bool IsUpgradeable => this._mode == Mode.Update;
+
+        private string ModeSqlConstant
+        {
+            get
+            {
+                var modeCode = this._mode switch
+                {
+                    Mode.Shared => "SS",
+                    Mode.Update => "SSX",
+                    Mode.Exclusive => "X",
+                    _ => throw new InvalidOperationException(),
+                };
+                return $"SYS.DBMS_LOCK.{modeCode}_MODE";
+            }
+        }
 
         public async ValueTask ReleaseAsync(DatabaseConnection connection, string resourceName, object lockCookie)
         {
+            // Since we we don't allow downgrading and therefore "releasing" an upgrade only happens on disposal of the
+            // original handle, this can safely be a noop.
+            if (this._isUpgrade) { return; }
+
             using var command = connection.CreateCommand();
             command.SetCommandText(@"
                 DECLARE
@@ -48,14 +83,14 @@ namespace Medallion.Threading.Oracle
 
         public async ValueTask<object?> TryAcquireAsync(DatabaseConnection connection, string resourceName, TimeoutValue timeout, CancellationToken cancellationToken)
         {
+            var acquireFunction = this._isUpgrade ? "CONVERT" : "REQUEST";
             using var command = connection.CreateCommand();
-            // TODO revisit mode
-            command.SetCommandText(@"
+            command.SetCommandText($@"
                 DECLARE
                     lockHandle VARCHAR2(128);
                 BEGIN
                     SYS.DBMS_LOCK.ALLOCATE_UNIQUE(:lockName, lockHandle);
-                    :returnValue := SYS.DBMS_LOCK.REQUEST(lockhandle => lockHandle, lockmode => SYS.DBMS_LOCK.X_MODE, timeout => :timeout, release_on_commit => FALSE);
+                    :returnValue := SYS.DBMS_LOCK.{acquireFunction}(lockhandle => lockHandle, lockmode => {this.ModeSqlConstant}, timeout => :timeout);
                 END;"
             );
             // note: parameters bind by position by default!
@@ -86,13 +121,20 @@ namespace Medallion.Threading.Oracle
             };
 
             string GetErrorMessage(string description) =>
-                $"SYS.DBMS_LOCK.REQUEST returned error code {returnValue} ({description})";
+                $"SYS.DBMS_LOCK.{acquireFunction} returned error code {returnValue} ({description})";
 
             async ValueTask<object?> WaitThenReturnNullAsync()
             {
                 await SyncViaAsync.Delay(timeout, cancellationToken).ConfigureAwait(false);
                 return null;
             }
+        }
+
+        private enum Mode
+        {
+            Shared,
+            Update,
+            Exclusive,
         }
     }
 }

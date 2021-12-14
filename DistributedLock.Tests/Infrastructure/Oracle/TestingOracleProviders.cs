@@ -26,4 +26,18 @@ namespace Medallion.Threading.Tests.Oracle
             if (options.keepaliveCadence is { } keepaliveCadence) { o.KeepaliveCadence(keepaliveCadence); }
         };
     }
+
+    public sealed class TestingOracleDistributedReaderWriterLockProvider<TStrategy> : TestingUpgradeableReaderWriterLockProvider<TStrategy>
+        where TStrategy : TestingDbSynchronizationStrategy<TestingOracleDb>, new()
+    {
+        public override IDistributedUpgradeableReaderWriterLock CreateUpgradeableReaderWriterLockWithExactName(string name) =>
+            this.Strategy.GetConnectionOptions()
+                .Create(
+                    (connectionString, options) =>
+                        new OracleDistributedReaderWriterLock(name, connectionString, TestingOracleDistributedLockProvider<TStrategy>.ToOracleOptions(options), exactName: true),
+                    connection => new OracleDistributedReaderWriterLock(name, connection, exactName: true),
+                    transaction => new OracleDistributedReaderWriterLock(name, transaction.Connection, exactName: true));
+
+        public override string GetSafeName(string name) => new OracleDistributedReaderWriterLock(name, TestingOracleDb.DefaultConnectionString).Name;
+    }
 }
