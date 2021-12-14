@@ -134,6 +134,8 @@ public class SomeService
 Contributions are welcome! If you are interested in contributing towards a new or existing issue, please let me know via comments on the issue so that I can help you get started and avoid wasted effort on your part.
 
 ## Release notes
+- 2.3.0
+	- Made file-based locking more robust to transient `UnauthorizedAccessException`s ([#106](https://github.com/madelson/DistributedLock/issues/106) & [#109](https://github.com/madelson/DistributedLock/issues/109), DistributedLock.FileSystem 1.0.1)
 - 2.2.0
 	- Added MySQL/MariaDB-based implementation ([#95](https://github.com/madelson/DistributedLock/issues/95), DistributedLock.MySql 1.0.0)
 - 2.1.0
