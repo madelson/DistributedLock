@@ -9,10 +9,8 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading.Oracle
 {
-    // TODO rwlock + provider
     // TODO version bump for oracle and for Core and for PG and for umbrella
     // TODO any nexts for Core?
-    // TODO OracleDRWLTest
     // TODO audit for TODOs
 
     /// <summary>

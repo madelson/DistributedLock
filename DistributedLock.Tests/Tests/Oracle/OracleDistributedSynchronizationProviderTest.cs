@@ -23,10 +23,26 @@ namespace Medallion.Threading.Tests.Oracle
             var provider = new OracleDistributedSynchronizationProvider(TestingOracleDb.DefaultConnectionString);
 
             const string LockName = TargetFramework.Current + "ProviderBasicTest";
+
             await using (await provider.AcquireLockAsync(LockName))
             {
                 await using var handle = await provider.TryAcquireLockAsync(LockName);
                 Assert.IsNull(handle);
+            }
+
+            await using (await provider.AcquireReadLockAsync(LockName))
+            {
+                await using var readHandle = await provider.TryAcquireReadLockAsync(LockName);
+                Assert.IsNotNull(readHandle);
+
+                await using (var upgradeHandle = await provider.TryAcquireUpgradeableReadLockAsync(LockName))
+                {
+                    Assert.IsNotNull(upgradeHandle);
+                    Assert.IsFalse(await upgradeHandle!.TryUpgradeToWriteLockAsync());
+                }
+
+                await using var writeHandle = await provider.TryAcquireWriteLockAsync(LockName);
+                Assert.IsNull(writeHandle);
             }
         }
     }
