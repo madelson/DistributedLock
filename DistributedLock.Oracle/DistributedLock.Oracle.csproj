@@ -16,7 +16,7 @@
     <Description>Provides a distributed lock implementation based on Oracle Database</Description>
     <Copyright>Copyright © 2021 Michael Adelson</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageTags>distributed lock async mutex sql oracle</PackageTags>
+    <PackageTags>distributed lock async mutex reader writer sql oracle</PackageTags>
     <PackageProjectUrl>https://github.com/madelson/DistributedLock</PackageProjectUrl>
     <RepositoryUrl>https://github.com/madelson/DistributedLock</RepositoryUrl>
     <FileVersion>1.0.0.0</FileVersion>

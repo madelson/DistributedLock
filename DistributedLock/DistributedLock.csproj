@@ -17,7 +17,7 @@
     </Description>
     <Copyright>Copyright © 2017 Michael Adelson</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageTags>distributed lock async waithandle mutex sql sqlserver postgres reader writer azure semaphore</PackageTags>
+    <PackageTags>distributed lock async mutex sql reader writer semaphore azure sqlserver postgres mysql mariadb oracle redis waithandle zookeeper</PackageTags>
     <PackageProjectUrl>https://github.com/madelson/DistributedLock</PackageProjectUrl>
     <RepositoryUrl>https://github.com/madelson/DistributedLock</RepositoryUrl>
     <FileVersion>1.0.0.0</FileVersion>

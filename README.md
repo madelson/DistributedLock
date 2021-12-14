@@ -17,6 +17,7 @@ DistributedLock contains implementations based on various technologies; you can 
 - **[DistributedLock.SqlServer](docs/DistributedLock.SqlServer.md)** [![NuGet Status](http://img.shields.io/nuget/v/DistributedLock.SqlServer.svg?style=flat)](https://www.nuget.org/packages/DistributedLock.SqlServer/): uses Microsoft SQL Server
 - **[DistributedLock.Postgres](docs/DistributedLock.Postgres.md)** [![NuGet Status](http://img.shields.io/nuget/v/DistributedLock.Postgres.svg?style=flat)](https://www.nuget.org/packages/DistributedLock.Postgres/): uses Postgresql
 - **[DistributedLock.MySql](docs/DistributedLock.MySql.md)** [![NuGet Status](http://img.shields.io/nuget/v/DistributedLock.MySql.svg?style=flat)](https://www.nuget.org/packages/DistributedLock.MySql/): uses MySQL or MariaDB
+- **[DistributedLock.Oracle](docs/DistributedLock.Oracle.md)** [![NuGet Status](http://img.shields.io/nuget/v/DistributedLock.Oracle.svg?style=flat)](https://www.nuget.org/packages/DistributedLock.Oracle/): uses Oracle
 - **[DistributedLock.Redis](docs/DistributedLock.Redis.md)** [![NuGet Status](http://img.shields.io/nuget/v/DistributedLock.Redis.svg?style=flat)](https://www.nuget.org/packages/DistributedLock.Redis/): uses Redis
 - **[DistributedLock.Azure](docs/DistributedLock.Azure.md)** [![NuGet Status](http://img.shields.io/nuget/v/DistributedLock.Azure.svg?style=flat)](https://www.nuget.org/packages/DistributedLock.Azure/): uses Azure blobs
 - **[DistributedLock.ZooKeeper](docs/DistributedLock.ZooKeeper.md)** [![NuGet Status](http://img.shields.io/nuget/v/DistributedLock.ZooKeeper.svg?style=flat)](https://www.nuget.org/packages/DistributedLock.ZooKeeper/): uses Apache ZooKeeper
@@ -135,9 +136,11 @@ Contributions are welcome! If you are interested in contributing towards a new o
 
 ## Release notes
 - 2.3.0
+	- Added Oracle-based implementation ([#45](https://github.com/madelson/DistributedLock/issues/45), DistributedLock.Oracle 1.0.0). Thanks [@odin568](https://github.com/odin568) for testing!
 	- Made file-based locking more robust to transient `UnauthorizedAccessException`s ([#106](https://github.com/madelson/DistributedLock/issues/106) & [#109](https://github.com/madelson/DistributedLock/issues/109), DistributedLock.FileSystem 1.0.1)
+	- Work around cancellation bug in Npgsql command preparation ([#112](https://github.com/madelson/DistributedLock/issues/112), DistributedLock.Postgres 1.0.2)
 - 2.2.0
-	- Added MySQL/MariaDB-based implementation ([#95](https://github.com/madelson/DistributedLock/issues/95), DistributedLock.MySql 1.0.0)
+	- Added MySQL/MariaDB-based implementation ([#95](https://github.com/madelson/DistributedLock/issues/95), DistributedLock.MySql 1.0.0). Thanks [@theplacefordev](https://github.com/theplacefordev) for testing!
 - 2.1.0
 	- Added ZooKeeper-based implementation ([#41](https://github.com/madelson/DistributedLock/issues/41), DistributedLock.ZooKeeper 1.0.0)
 - 2.0.2
