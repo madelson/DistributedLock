@@ -9,7 +9,6 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading.Oracle
 {
-    // TODO version bump for oracle and for Core and for PG and for umbrella
     // TODO any nexts for Core?
     // TODO audit for TODOs
 
