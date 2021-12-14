@@ -12,7 +12,6 @@ namespace Medallion.Threading.Tests.Oracle
         public override IDistributedLock CreateLockWithExactName(string name) =>
             this.Strategy.GetConnectionOptions()
                 .Create(
-                    // todo pass in app name here
                     (connectionString, options) => new OracleDistributedLock(name, connectionString, options: ToOracleOptions(options)),
                     connection => new OracleDistributedLock(name, connection),
                     transaction => new OracleDistributedLock(name, transaction.Connection)

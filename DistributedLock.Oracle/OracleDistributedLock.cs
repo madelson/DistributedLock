@@ -9,9 +9,6 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading.Oracle
 {
-    // TODO any nexts for Core?
-    // TODO audit for TODOs
-
     /// <summary>
     /// Implements a distributed lock for Oracle databse based on the DBMS_LOCK package
     /// </summary>

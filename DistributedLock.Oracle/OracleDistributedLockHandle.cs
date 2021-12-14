@@ -20,7 +20,7 @@ namespace Medallion.Threading.Oracle
         }
 
         /// <summary>
-        /// TODO reference issue
+        /// Implements <see cref="IDistributedSynchronizationHandle.HandleLostToken"/>
         /// </summary>
         public CancellationToken HandleLostToken => this._innerHandle?.HandleLostToken ?? throw this.ObjectDisposed();
 
