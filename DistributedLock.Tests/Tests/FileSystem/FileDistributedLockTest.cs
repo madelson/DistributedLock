@@ -470,6 +470,8 @@ namespace Medallion.Threading.Tests.FileSystem
             var @lock = new FileDistributedLock(LockFileDirectoryInfo, Guid.NewGuid().ToString());
             File.WriteAllText(@lock.Name, "some text");
 
+            Assert.IsTrue(File.Exists(@lock.Name), $"File: {@lock.Name}, Directory? {Directory.Exists(Path.GetDirectoryName(@lock.Name))}");
+
             try
             {
                 File.SetAttributes(@lock.Name, FileAttributes.ReadOnly);
