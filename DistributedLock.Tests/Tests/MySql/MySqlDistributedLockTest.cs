@@ -49,7 +49,7 @@ namespace Medallion.Threading.Tests.MySql
         [TestCase(typeof(TestingMariaDbDb))]
         public async Task TestMySqlCommandMustExplicitlyParticipateInTransaction(Type testingDbType)
         {
-            var db = (ITestingDb)Activator.CreateInstance(testingDbType)!;
+            var db = (TestingDb)Activator.CreateInstance(testingDbType)!;
 
             using var connection = new MySqlConnection(db.ConnectionStringBuilder.ConnectionString);
             await connection.OpenAsync();

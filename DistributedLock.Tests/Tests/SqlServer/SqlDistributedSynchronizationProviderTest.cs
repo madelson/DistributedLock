@@ -21,7 +21,7 @@ namespace Medallion.Threading.Tests.SqlServer
         [Test]
         public async Task BasicTest()
         {
-            var provider = new SqlDistributedSynchronizationProvider(TestingSqlServerDb.ConnectionString);
+            var provider = new SqlDistributedSynchronizationProvider(TestingSqlServerDb.DefaultConnectionString);
 
             const string LockName = TargetFramework.Current + "ProviderBasicTest";
             await using (await provider.AcquireLockAsync(LockName))

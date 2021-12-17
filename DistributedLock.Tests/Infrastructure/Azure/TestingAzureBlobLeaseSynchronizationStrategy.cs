@@ -40,7 +40,7 @@ namespace Medallion.Threading.Tests.Azure
             return new HandleLostScope(this.ContainerName);
         }
 
-        public override void PrepareForHighContention()
+        public override void PrepareForHighContention(ref int maxConcurrentAcquires)
         {
             this.Options = null; // reduces # of requests under high contention
             this.CreateBlobBeforeLockIsCreated = true;

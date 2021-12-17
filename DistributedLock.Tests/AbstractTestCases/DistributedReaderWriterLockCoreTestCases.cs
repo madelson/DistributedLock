@@ -27,7 +27,7 @@ namespace Medallion.Threading.Tests
             using var writeHandle1 = Lock().TryAcquireWriteLock();
             Assert.IsNull(writeHandle1);
 
-            var writeHandleTask = Lock().AcquireWriteLockAsync().AsTask();
+            var writeHandleTask = Task.Run(() => Lock().AcquireWriteLockAsync().AsTask());
             Assert.IsFalse(writeHandleTask.Wait(TimeSpan.FromSeconds(.05)));
 
             readHandle1!.Dispose();
@@ -54,7 +54,7 @@ namespace Medallion.Threading.Tests
 
             await using var readerHandle = await Lock().AcquireReadLockAsync();
 
-            var writerHandleTask = Lock().AcquireWriteLockAsync().AsTask();
+            var writerHandleTask = Task.Run(() => Lock().AcquireWriteLockAsync().AsTask());
             Assert.IsFalse(await writerHandleTask.WaitAsync(TimeSpan.FromSeconds(0.2)));
 
             // trying to take a read lock here fails because there is a writer waiting

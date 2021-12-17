@@ -72,8 +72,8 @@ namespace Medallion.Threading.Tests.SqlServer
         private static SqlDatabaseConnection CreateConnection(bool isSystemDataSqlClient) =>
             new SqlDatabaseConnection(
                 isSystemDataSqlClient
-                    ? new System.Data.SqlClient.SqlConnection(TestingSqlServerDb.ConnectionString).As<DbConnection>()
-                    : new Microsoft.Data.SqlClient.SqlConnection(TestingSqlServerDb.ConnectionString),
+                    ? new System.Data.SqlClient.SqlConnection(TestingSqlServerDb.DefaultConnectionString).As<DbConnection>()
+                    : new Microsoft.Data.SqlClient.SqlConnection(TestingSqlServerDb.DefaultConnectionString),
                 isExternallyOwned: false
             );
     }

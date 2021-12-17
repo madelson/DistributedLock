@@ -20,7 +20,7 @@ namespace Medallion.Threading.Tests.Postgres
         [Test]
         public async Task BasicTest()
         {
-            var provider = new PostgresDistributedSynchronizationProvider(TestingPostgresDb.ConnectionString);
+            var provider = new PostgresDistributedSynchronizationProvider(TestingPostgresDb.DefaultConnectionString);
 
             const string LockName = TargetFramework.Current + "ProviderBasicTest";
             await using (await provider.AcquireLockAsync(LockName))

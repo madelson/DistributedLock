@@ -150,7 +150,8 @@ namespace Medallion.Threading.Tests
             var source = new CancellationTokenSource();
             using (var handle = this._lockProvider.CreateLock(lockName).Acquire())
             {
-                var blocked = @lock.AcquireAsync(cancellationToken: source.Token).AsTask();
+                // Task.Run() forces true asynchrony even for locks that don't support it
+                var blocked = Task.Run(() => @lock.AcquireAsync(cancellationToken: source.Token).AsTask());
                 blocked.Wait(TimeSpan.FromSeconds(.1)).ShouldEqual(false);
                 source.Cancel();
                 blocked.ContinueWith(_ => { }).Wait(TimeSpan.FromSeconds(10)).ShouldEqual(true, this.GetType().Name);
@@ -164,20 +165,24 @@ namespace Medallion.Threading.Tests
         }
 
         [Test]
-        public void TestParallelism()
+        public async Task TestParallelism()
         {
-            this._lockProvider.Strategy.PrepareForHighContention();
+            var taskCount = 100;
+            this._lockProvider.Strategy.PrepareForHighContention(ref taskCount);
 
             // NOTE: if this test fails for Postgres, we may need to raise the default connection limit. This can 
             // be done by setting max_connections in C:\Program Files\PostgreSQL\<version>\data\postgresql.conf or 
-            // /var/lib/pgsql/<version>/data/postgresql.conf and then restarting Postgres.
+            // /var/lib/pgsql/<version>/data/postgresql.conf and then restarting Postgres. I set max_connections = 10000.
             // See https://docs.alfresco.com/5.0/tasks/postgresql-config.html
 
+            var locks = Enumerable.Range(0, taskCount)
+                .Select(_ => this._lockProvider.CreateLock("parallel_test"))
+                .ToArray();
             var counter = 0;
-            var tasks = Enumerable.Range(1, 100).Select(async _ =>
+            // Task.Run() ensures true parallelism even for locks that don't support it
+            var tasks = Enumerable.Range(0, taskCount).Select(i => Task.Run(async () =>
                 {
-                    var @lock = this._lockProvider.CreateLock("parallel_test");
-                    await using (await @lock.AcquireAsync())
+                    await using (await locks[i].AcquireAsync())
                     {
                         // increment going in
                         if (Interlocked.Increment(ref counter) == 2)
@@ -191,10 +196,20 @@ namespace Medallion.Threading.Tests
                         // decrement and return on the way out (returns # inside the lock when this left ... should be 0)
                         return Interlocked.Decrement(ref counter);
                     }
-                })
+                }))
                 .ToList();
 
-            Task.WaitAll(tasks.ToArray<Task>(), TimeSpan.FromSeconds(30)).ShouldEqual(true, this.GetType().Name);
+            var failure = new TaskCompletionSource<Exception>();
+            foreach (var task in tasks)
+            {
+                _ = task.ContinueWith(t => failure.TrySetException(t.Exception!), TaskContinuationOptions.OnlyOnFaulted);
+            }
+
+            var timeout = Task.Delay(TimeSpan.FromSeconds(30));
+
+            var completed = await Task.WhenAny(Task.WhenAll(tasks), failure.Task, timeout);
+            Assert.AreNotSame(failure.Task, completed, $"Failed with {(failure.Task.IsFaulted ? failure.Task.Exception!.ToString() : null)}");
+            Assert.AreNotSame(timeout, completed, $"Timed out! (only {tasks.Count(t => t.IsCompleted)}/{taskCount} completed)");
 
             tasks.ForEach(t => t.Result.ShouldEqual(0));
         }
@@ -288,27 +303,31 @@ namespace Medallion.Threading.Tests
 
             var @lock = this._lockProvider.CreateLock(nameof(TestHandleLostTriggersCorrectly));
 
-            using var handle = await @lock.AcquireAsync();
-
-            handle.HandleLostToken.CanBeCanceled.ShouldEqual(handleLostHelper != null);
-            Assert.IsFalse(handle.HandleLostToken.IsCancellationRequested);
-
-            if (handleLostHelper != null)
+            var handle = await @lock.AcquireAsync();
+            try
             {
-                using var canceledEvent = new ManualResetEventSlim(initialState: false);
-                using var registration = handle.HandleLostToken.Register(canceledEvent.Set);
+                handle.HandleLostToken.CanBeCanceled.ShouldEqual(handleLostHelper != null);
+                Assert.IsFalse(handle.HandleLostToken.IsCancellationRequested);
 
-                Assert.IsFalse(canceledEvent.Wait(TimeSpan.FromSeconds(.05)));
+                if (handleLostHelper != null)
+                {
+                    using var canceledEvent = new ManualResetEventSlim(initialState: false);
+                    using var registration = handle.HandleLostToken.Register(canceledEvent.Set);
 
-                handleLostHelper.Dispose();
+                    Assert.IsFalse(canceledEvent.Wait(TimeSpan.FromSeconds(.05)));
 
-                Assert.IsTrue(canceledEvent.Wait(TimeSpan.FromSeconds(10)));
-                Assert.IsTrue(handle.HandleLostToken.IsCancellationRequested);
+                    handleLostHelper.Dispose();
+
+                    Assert.IsTrue(canceledEvent.Wait(TimeSpan.FromSeconds(10)));
+                    Assert.IsTrue(handle.HandleLostToken.IsCancellationRequested);
+                }
             }
-
-            // when the handle is lost, Dispose() may throw
-            try { await handle.DisposeAsync(); }
-            catch { }
+            finally
+            {
+                // when the handle is lost, Dispose() may throw
+                try { await handle.DisposeAsync(); }
+                catch { }
+            }
 
             Assert.Throws<ObjectDisposedException>(() => handle.HandleLostToken.GetType());
         }
@@ -321,15 +340,12 @@ namespace Medallion.Threading.Tests
             this._lockProvider.CreateLock(nameof(TestHandleLostReturnsAlreadyCanceledIfHandleAlreadyLost));
 
             var handleLostHelper = this._lockProvider.Strategy.PrepareForHandleLost();
-            if (handleLostHelper == null)
-            {
-                Assert.Pass();
-            }
+            if (handleLostHelper == null) { Assert.Pass(); }
 
             var @lock = this._lockProvider.CreateLock(nameof(TestHandleLostReturnsAlreadyCanceledIfHandleAlreadyLost));
 
             using var handle = await @lock.AcquireAsync();
-
+            
             handleLostHelper!.Dispose();
 
             using var canceledEvent = new ManualResetEventSlim(initialState: false);
@@ -418,7 +434,8 @@ namespace Medallion.Threading.Tests
             var @lock = this._lockProvider.CreateLockWithExactName(name);
 
             var acquireTask = asyncWait
-                ? @lock.TryAcquireAsync(TimeSpan.FromSeconds(20)).AsTask()
+                // always use Task.Run() to force asynchrony even for locks that don't truly support it
+                ? Task.Run(() => @lock.TryAcquireAsync(TimeSpan.FromSeconds(20)).AsTask())
                 : Task.Run(() => @lock.TryAcquire(TimeSpan.FromSeconds(20)));
             acquireTask.Wait(TimeSpan.FromSeconds(.1)).ShouldEqual(false, this.GetType().Name);
 
