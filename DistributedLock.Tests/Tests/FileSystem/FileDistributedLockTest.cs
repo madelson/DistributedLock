@@ -464,7 +464,7 @@ namespace Medallion.Threading.Tests.FileSystem
         /// Documents a limitation we've imposed for now to keep the code simpler
         /// </summary>
         [Test]
-        public void TestLockingReadOnlyFileIsNotSupported()
+        public void TestLockingReadOnlyFileIsNotSupportedOnWindows()
         {
             Directory.CreateDirectory(LockFileDirectory);
             var @lock = new FileDistributedLock(LockFileDirectoryInfo, Guid.NewGuid().ToString());
@@ -474,7 +474,14 @@ namespace Medallion.Threading.Tests.FileSystem
             {
                 File.SetAttributes(@lock.Name, FileAttributes.ReadOnly);
 
-                Assert.Throws<NotSupportedException>(() => @lock.TryAcquire()?.Dispose());
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                {
+                    Assert.Throws<NotSupportedException>(() => @lock.TryAcquire()?.Dispose());
+                }
+                else
+                {
+                    Assert.DoesNotThrow(() => @lock.Acquire().Dispose());
+                }
             }
             finally
             {

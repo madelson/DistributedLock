@@ -18,7 +18,7 @@ namespace Medallion.Threading.FileSystem
         /// before we assume that the issue is non-transient. Empirically I've found 50 to work fine so I doubled it just to be safe (if there IS a problem
         /// there's little risk to trying more times because we'll eventually be failing hard).
         /// </summary>
-        private const int MaxUnauthorizedAccessExceptionRetries = 100;
+        private const int MaxUnauthorizedAccessExceptionRetries = 400;
 
         // These are not configurable currently because in the future we may want to change the implementation of FileDistributedLock
         // to leverage native methods which may allow for actual blocking. The values here reflect the idea that we expect file locks
