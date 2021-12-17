@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;netstandard2.1;net461</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;netstandard2.1;net461;net462</TargetFrameworks>
     <RootNamespace>Medallion.Threading</RootNamespace>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
     <WarningLevel>4</WarningLevel>
@@ -10,14 +10,14 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <Version>2.2.0</Version>
+    <Version>2.3.0</Version>
     <AssemblyVersion>2.0.0.0</AssemblyVersion>
     <Authors>Michael Adelson</Authors>
     <Description>Provides easy-to-use mutexes, reader-writer locks, and semaphores that can synchronize across processes and machines. This is an umbrella package that brings in the entire family of DistributedLock.* packages (e. g. DistributedLock.SqlServer) as references. Those packages can also be installed individually.
     </Description>
     <Copyright>Copyright © 2017 Michael Adelson</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageTags>distributed lock async waithandle mutex sql sqlserver postgres reader writer azure semaphore</PackageTags>
+    <PackageTags>distributed lock async mutex sql reader writer semaphore azure sqlserver postgres mysql mariadb oracle redis waithandle zookeeper</PackageTags>
     <PackageProjectUrl>https://github.com/madelson/DistributedLock</PackageProjectUrl>
     <RepositoryUrl>https://github.com/madelson/DistributedLock</RepositoryUrl>
     <FileVersion>1.0.0.0</FileVersion>
@@ -50,6 +50,7 @@
     <ProjectReference Include="..\DistributedLock.Redis\DistributedLock.Redis.csproj" />
     <ProjectReference Include="..\DistributedLock.ZooKeeper\DistributedLock.ZooKeeper.csproj" />
     <ProjectReference Include="..\DistributedLock.MySql\DistributedLock.MySql.csproj" />
+    <ProjectReference Include="..\DistributedLock.Oracle\DistributedLock.Oracle.csproj" Condition="'$(TargetFramework)' != 'netstandard2.0' AND '$(TargetFramework)' != 'net461'" />
   </ItemGroup>
 
   <ItemGroup>

@@ -12,7 +12,7 @@ namespace Medallion.Threading.Tests.Data
 {
     public abstract class MultiplexingConnectionStrategyTestCases<TLockProvider, TDb>
         where TLockProvider : TestingLockProvider<TestingConnectionMultiplexingSynchronizationStrategy<TDb>>, new()
-        where TDb : ITestingPrimaryClientDb, new()
+        where TDb : TestingPrimaryClientDb, new()
     {
         private TLockProvider _lockProvider = default!;
 
@@ -89,7 +89,7 @@ namespace Medallion.Threading.Tests.Data
             }
 
             // assign a unique app name to make sure we'll own the entire pool
-            this._lockProvider.Strategy.SetUniqueApplicationName();
+            this._lockProvider.Strategy.Db.SetUniqueApplicationName();
             this._lockProvider.Strategy.Db.MaxPoolSize = 1;
 
             async Task Test()
@@ -131,7 +131,7 @@ namespace Medallion.Threading.Tests.Data
             // application name and therefore won't be killed
             this._lockProvider.CreateLock("1");
             this._lockProvider.CreateLock("2");
-            var applicationName = this._lockProvider.Strategy.SetUniqueApplicationName();
+            var applicationName = this._lockProvider.Strategy.Db.SetUniqueApplicationName();
 
             var lock1 = this._lockProvider.CreateLock("1");
             await using var handle1 = await lock1.AcquireAsync();

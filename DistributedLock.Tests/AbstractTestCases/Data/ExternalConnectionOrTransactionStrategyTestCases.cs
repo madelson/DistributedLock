@@ -12,7 +12,7 @@ namespace Medallion.Threading.Tests.Data
     public abstract class ExternalConnectionOrTransactionStrategyTestCases<TLockProvider, TStrategy, TDb>
         where TLockProvider : TestingLockProvider<TStrategy>, new()
         where TStrategy : TestingExternalConnectionOrTransactionSynchronizationStrategy<TDb>, new()
-        where TDb : ITestingDb, new()
+        where TDb : TestingDb, new()
     {
         private TLockProvider _lockProvider = default!;
 
@@ -23,7 +23,7 @@ namespace Medallion.Threading.Tests.Data
         [NonParallelizable, Retry(tryCount: 3)] // timing sensitive for SqlSemaphore (see comment in that file regarding the 32ms wait)
         public void TestDeadlockDetection()
         {
-            var timeout = TimeSpan.FromSeconds(15);
+            var timeout = TimeSpan.FromSeconds(20);
 
             using var barrier = new Barrier(participantCount: 2);
             const string LockName1 = nameof(TestDeadlockDetection) + "_1",
@@ -46,7 +46,7 @@ namespace Medallion.Threading.Tests.Data
 
             var tasks = new[] { RunDeadlock(isFirst: true), RunDeadlock(isFirst: false) };
 
-            Task.WhenAll(tasks).ContinueWith(_ => { }).Wait(TimeSpan.FromSeconds(10)).ShouldEqual(true, this.GetType().Name);
+            Task.WhenAll(tasks).ContinueWith(_ => { }).Wait(TimeSpan.FromSeconds(15)).ShouldEqual(true, this.GetType().Name);
 
             // MariaDB fails both tasks due to deadlock instead of just picking a single victim
             Assert.GreaterOrEqual(tasks.Count(t => t.IsFaulted), 1);
@@ -91,8 +91,15 @@ namespace Medallion.Threading.Tests.Data
             GetStateChanged(this._lockProvider.Strategy.AmbientConnection!).ShouldEqual(initialHandler);
 
             static StateChangeEventHandler? GetStateChanged(DbConnection connection) =>
-                (StateChangeEventHandler?)typeof(DbConnection).GetFields(BindingFlags.Instance | BindingFlags.NonPublic)
-                    .Single(f => f.FieldType == typeof(StateChangeEventHandler))
+                // We check both the connection type and the base type because OracleConnection overrides the storage for
+                // the StateChange event handler
+                (StateChangeEventHandler?)new[] { connection.GetType(), typeof(DbConnection) }
+                    .Select(
+                        t => t.GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.DeclaredOnly)
+                            .Where(f => f.FieldType == typeof(StateChangeEventHandler))
+                            .SingleOrDefault()
+                    )
+                    .First(f => f != null)
                     .GetValue(connection);
         }
     }

@@ -11,7 +11,7 @@ namespace Medallion.Threading.Tests.Data
 {
     public abstract class OwnedConnectionStrategyTestCases<TLockProvider, TDb>
         where TLockProvider : TestingLockProvider<TestingOwnedConnectionSynchronizationStrategy<TDb>>, new()
-        where TDb : ITestingPrimaryClientDb, new()
+        where TDb : TestingPrimaryClientDb, new()
     {
         private TLockProvider _lockProvider = default!;
 
@@ -32,7 +32,7 @@ namespace Medallion.Threading.Tests.Data
             // application name and therefore won't be counted or killed
             this._lockProvider.CreateLock(nameof(TestIdleSessionKiller));
 
-            var applicationName = this._lockProvider.Strategy.SetUniqueApplicationName();
+            var applicationName = this._lockProvider.Strategy.Db.SetUniqueApplicationName();
             var @lock = this._lockProvider.CreateLock(nameof(TestIdleSessionKiller));
 
             // go through one acquire/dispose cycle to ensure all commands are prepared. Due to 

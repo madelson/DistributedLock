@@ -13,6 +13,13 @@ namespace Medallion.Threading.FileSystem
     /// </summary>
     public sealed partial class FileDistributedLock : IInternalDistributedLock<FileDistributedLockHandle>
     {
+        /// <summary>
+        /// Since <see cref="UnauthorizedAccessException"/> can be thrown EITHER transiently or for permissions issues, we retry up to this many times
+        /// before we assume that the issue is non-transient. Empirically I've found this value to be reliable both locally and on AppVeyor (if there 
+        /// IS a problem there's little risk to trying more times because we'll eventually be failing hard).
+        /// </summary>
+        private const int MaxUnauthorizedAccessExceptionRetries = 400;
+
         // These are not configurable currently because in the future we may want to change the implementation of FileDistributedLock
         // to leverage native methods which may allow for actual blocking. The values here reflect the idea that we expect file locks
         // to be used in cases where contention is rare
@@ -64,15 +71,13 @@ namespace Medallion.Threading.FileSystem
 
         private FileDistributedLockHandle? TryAcquire(CancellationToken cancellationToken)
         {
+            var retryCount = 0;
+
             while (true)
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                try { System.IO.Directory.CreateDirectory(this.Directory); }
-                catch (Exception ex)
-                {
-                    throw new InvalidOperationException($"Failed to ensure that lock file directory {this.Directory} exists", ex);
-                }
+                this.EnsureDirectoryExists();
 
                 FileStream lockFileStream;
                 try
@@ -88,9 +93,36 @@ namespace Medallion.Threading.FileSystem
                     // this should almost never happen because we just created the directory but in a race condition it could. Just retry
                     continue;
                 }
-                catch (UnauthorizedAccessException) when (System.IO.Directory.Exists(this.Name))
+                catch (UnauthorizedAccessException)
                 {
-                    throw new InvalidOperationException($"Failed to create lock file '{this.Name}' because it is already the name of a directory");
+                    // This can happen in few cases:
+                    
+                    // The path is already directory, so we'll never be able to open a handle of it as a file
+                    if (System.IO.Directory.Exists(this.Name))
+                    {
+                        throw new InvalidOperationException($"Failed to create lock file '{this.Name}' because it is already the name of a directory");
+                    }
+
+                    // The file exists and is read-only
+                    FileAttributes attributes;
+                    try { attributes = File.GetAttributes(this.Name); }
+                    catch { attributes = FileAttributes.Normal; } // e. g. could fail with FileNotFoundException
+                    if (attributes.HasFlag(FileAttributes.ReadOnly))
+                    {
+                        // We could support this by eschewing DeleteOnClose once we detect that a file is read-only,
+                        // but absent interest or a use-case we'll just throw for now
+                        throw new NotSupportedException($"Locking on read-only file '{this.Name}' is not supported");
+                    }
+
+                    // Frustratingly, this error can be thrown transiently due to concurrent creation/deletion. Initially assume
+                    // that it is transient and just retry
+                    if (++retryCount <= MaxUnauthorizedAccessExceptionRetries)
+                    {
+                        continue;
+                    }
+
+                    // If we get here, we've exhausted our retries: assume that it is a legitimate permissions issue
+                    throw;
                 }
                 // this should never happen because we validate. However if it does (e. g. due to some system configuration change?), throw so that
                 // this doesn't end up in the IOException block (PathTooLongException is IOException)
@@ -102,6 +134,27 @@ namespace Medallion.Threading.FileSystem
                 }
 
                 return new FileDistributedLockHandle(lockFileStream);
+            }
+        }
+
+        private void EnsureDirectoryExists()
+        {
+            var retryCount = 0;
+
+            while (true)
+            {
+                try
+                {
+                    System.IO.Directory.CreateDirectory(this.Directory);
+                    return;
+                }
+                // This can indicate either a transient failure during concurrent creation/deletion or a permissions issue.
+                // If we encounter it, assume it is transient unless it persists.
+                catch (UnauthorizedAccessException) when (++retryCount <= MaxUnauthorizedAccessExceptionRetries) { }
+                catch (Exception ex)
+                {
+                    throw new InvalidOperationException($"Failed to ensure that lock file directory {this.Directory} exists", ex);
+                }
             }
         }
     }

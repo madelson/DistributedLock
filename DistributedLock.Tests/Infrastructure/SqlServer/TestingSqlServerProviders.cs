@@ -8,7 +8,7 @@ namespace Medallion.Threading.Tests.SqlServer
 {
     public sealed class TestingSqlDistributedLockProvider<TStrategy, TDb> : TestingLockProvider<TStrategy>
         where TStrategy : TestingDbSynchronizationStrategy<TDb>, new()
-        where TDb : ITestingSqlServerDb, new()
+        where TDb : TestingDb, ITestingSqlServerDb, new()
     {
         public override IDistributedLock CreateLockWithExactName(string name) =>
             this.Strategy.GetConnectionOptions()
@@ -28,7 +28,7 @@ namespace Medallion.Threading.Tests.SqlServer
 
     public sealed class TestingSqlDistributedReaderWriterLockProvider<TStrategy, TDb> : TestingUpgradeableReaderWriterLockProvider<TStrategy>
         where TStrategy : TestingDbSynchronizationStrategy<TDb>, new()
-        where TDb : ITestingSqlServerDb, new()
+        where TDb : TestingDb, ITestingSqlServerDb, new()
     {
         public override IDistributedUpgradeableReaderWriterLock CreateUpgradeableReaderWriterLockWithExactName(string name) =>
             this.Strategy.GetConnectionOptions()
@@ -43,7 +43,7 @@ namespace Medallion.Threading.Tests.SqlServer
 
     public sealed class TestingSqlDistributedSemaphoreProvider<TStrategy, TDb> : TestingSemaphoreProvider<TStrategy>
         where TStrategy : TestingDbSynchronizationStrategy<TDb>, new()
-        where TDb : ITestingSqlServerDb, new()
+        where TDb : TestingDb, ITestingSqlServerDb, new()
     {
         public override IDistributedSemaphore CreateSemaphoreWithExactName(string name, int maxCount) =>
             this.Strategy.GetConnectionOptions()

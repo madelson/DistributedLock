@@ -7,6 +7,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Medallion.Threading.Tests.FileSystem
@@ -362,6 +363,126 @@ namespace Medallion.Threading.Tests.FileSystem
                 {
                     charCounts[@char].ShouldEqual(0);
                 }
+            }
+        }
+
+        /// <summary>
+        /// Reproduces https://github.com/madelson/DistributedLock/issues/109
+        /// 
+        /// Basically, there is a small window where concurrent file creation/deletion throws
+        /// <see cref="UnauthorizedAccessException"/> despite there being no access permission errors.
+        /// See also https://github.com/dotnet/runtime/issues/61395.
+        /// 
+        /// This test shows that we are not vulnerable to this.
+        /// </summary>
+        [Test]
+        public void TestDoesNotFailDueToUnauthorizedAccessExceptionOnFileCreation()
+        {
+            Directory.CreateDirectory(LockFileDirectory);
+            var @lock = new FileDistributedLock(LockFileDirectoryInfo, Guid.NewGuid().ToString());
+
+            const int TaskCount = 20;
+
+            using var barrier = new Barrier(TaskCount);
+
+            var tasks = Enumerable.Range(0, TaskCount)
+                .Select(_ => Task.Factory.StartNew(() =>
+                {
+                    barrier.SignalAndWait();
+
+                    for (var i = 0; i < 500; ++i)
+                    {
+                        @lock.TryAcquire()?.Dispose();
+                    }
+                }, TaskCreationOptions.LongRunning))
+                .ToArray();
+
+            Assert.DoesNotThrowAsync(() => Task.WhenAll(tasks));
+        }
+
+        /// <summary>
+        /// Reproduces https://github.com/madelson/DistributedLock/issues/106
+        /// 
+        /// Basically, there is a small window where concurrent creation/deletion of directories
+        /// throws <see cref="UnauthorizedAccessException"/> even though there are no access permission errors.
+        /// 
+        /// This test confirms that we recover from such errors.
+        /// </summary>
+        [Test]
+        public void TestDoesNotFailDueToUnauthorizedAccessExceptionOnDirectoryCreation()
+        {
+            var @lock = new FileDistributedLock(LockFileDirectoryInfo, Guid.NewGuid().ToString());
+
+            const int TaskCount = 20;
+
+            using var barrier = new Barrier(TaskCount);
+            using var cancelationTokenSource = new CancellationTokenSource();
+
+            var tasks = Enumerable.Range(0, TaskCount)
+                .Select(task => Task.Factory.StartNew(() =>
+                {
+                    for (var i = 0; i < 1000; ++i)
+                    {
+                        // line up all the threads
+                        try { barrier.SignalAndWait(cancelationTokenSource.Token); }
+                        catch when (cancelationTokenSource.Token.IsCancellationRequested) { return; }
+
+                        // have one thread clear the directory
+                        if (task == 0 && Directory.Exists(LockFileDirectory)) { Directory.Delete(LockFileDirectory, recursive: true); }
+
+                        // line up all the threads
+                        if (!barrier.SignalAndWait(TimeSpan.FromSeconds(3))) { throw new TimeoutException("should never get here"); }
+
+                        // have half the threads just create and delete the directory, catching any errors
+                        if (task % 2 == 0)
+                        {
+                            try
+                            {
+                                Directory.CreateDirectory(LockFileDirectory);
+                                Directory.Delete(LockFileDirectory);
+                            }
+                            catch { }
+                        }
+                        // the other half will attempt to acquire the lock
+                        else
+                        {
+                            try { @lock.TryAcquire()?.Dispose(); }
+                            catch
+                            {
+                                cancelationTokenSource.Cancel(); // exception found: exit
+                                throw;
+                            }
+                        }
+                    }
+                }, TaskCreationOptions.LongRunning))
+                .ToArray();
+
+            Assert.DoesNotThrowAsync(() => Task.WhenAll(tasks));
+        }
+
+        /// <summary>
+        /// Documents a limitation we've imposed for now to keep the code simpler
+        /// </summary>
+        [Test]
+        public void TestLockingReadOnlyFileIsNotSupportedOnWindows()
+        {
+            // File.SetAttributes is failing on Ubuntu with FileNotFoundException even though File.Exists
+            // returns true. Likely some platform compat issue with that method
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) { return; }
+
+            Directory.CreateDirectory(LockFileDirectory);
+            var @lock = new FileDistributedLock(LockFileDirectoryInfo, Guid.NewGuid().ToString());
+            File.Create(@lock.Name).Dispose();
+
+            try
+            {
+                File.SetAttributes(@lock.Name, FileAttributes.ReadOnly);
+
+                Assert.Throws<NotSupportedException>(() => @lock.TryAcquire()?.Dispose());
+            }
+            finally
+            {
+                File.SetAttributes(@lock.Name, FileAttributes.Normal);
             }
         }
 

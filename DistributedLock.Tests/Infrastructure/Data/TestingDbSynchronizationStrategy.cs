@@ -13,30 +13,21 @@ namespace Medallion.Threading.Tests.Data
     /// </summary>
     public abstract class TestingDbSynchronizationStrategy : TestingSynchronizationStrategy
     {
-        protected TestingDbSynchronizationStrategy(ITestingDb db)
+        protected TestingDbSynchronizationStrategy(TestingDb db)
         {
             this.Db = db;
         }
 
-        public ITestingDb Db { get; }
+        public TestingDb Db { get; }
 
         public abstract TestingDbConnectionOptions GetConnectionOptions();
 
-        public string SetUniqueApplicationName(string baseName = "")
-        {
-            // note: due to retries, we incorporate a GUID here to ensure that we have a fresh connection pool
-            var applicationName = DistributedLockHelpers.ToSafeName(
-                $"{(baseName.Length > 0 ? baseName + "_" : string.Empty)}{TestContext.CurrentContext.Test.FullName}_{TargetFramework.Current}_{Guid.NewGuid()}",
-                maxNameLength: this.Db.MaxApplicationNameLength, 
-                s => s
-            );
-            this.Db.ConnectionStringBuilder["Application Name"] = applicationName;
-            return applicationName;
-        }
+        public override void PrepareForHighContention(ref int maxConcurrentAcquires) =>
+            this.Db.PrepareForHighContention(ref maxConcurrentAcquires);
     }
 
     public abstract class TestingDbSynchronizationStrategy<TDb> : TestingDbSynchronizationStrategy
-        where TDb : ITestingDb, new()
+        where TDb : TestingDb, new()
     {
         protected TestingDbSynchronizationStrategy() : base(new TDb()) { }
 
@@ -46,7 +37,7 @@ namespace Medallion.Threading.Tests.Data
         {
             // if we have a uniquely-named connection, clear it's pool to avoid "leaking" connections into pools we'll never
             // use again
-            if (!Equals(this.Db.ConnectionStringBuilder["Application Name"], new TDb().ConnectionStringBuilder["Application Name"]))
+            if (!Equals(this.Db.ApplicationName, new TDb().ApplicationName))
             {
                 using var connection = this.Db.CreateConnection();
                 this.Db.ClearPool(connection);
@@ -59,7 +50,7 @@ namespace Medallion.Threading.Tests.Data
     public abstract class TestingConnectionStringSynchronizationStrategy<TDb> : TestingDbSynchronizationStrategy<TDb>
         // since we're just going to be generating from connection strings, we only care about
         // the primary ADO client for the database
-        where TDb : ITestingPrimaryClientDb, new()
+        where TDb : TestingPrimaryClientDb, new()
     {
         protected abstract bool? UseMultiplexingNotTransaction { get; }
         public TimeSpan? KeepaliveCadence { get; set; }
@@ -67,14 +58,14 @@ namespace Medallion.Threading.Tests.Data
         public sealed override TestingDbConnectionOptions GetConnectionOptions() =>
             new TestingDbConnectionOptions 
             { 
-                ConnectionString = this.Db.ConnectionStringBuilder.ConnectionString, 
+                ConnectionString = this.Db.ConnectionString, 
                 ConnectionStringUseMultiplexing = this.UseMultiplexingNotTransaction == true,
                 ConnectionStringUseTransaction = this.UseMultiplexingNotTransaction == false,
                 ConnectionStringKeepaliveCadence = this.KeepaliveCadence,
             };
 
-        public sealed override IDisposable? PrepareForHandleLost() =>
-            new HandleLostScope(this.SetUniqueApplicationName(nameof(PrepareForHandleLost)), this.Db);
+        public sealed override IDisposable? PrepareForHandleLost() => 
+            new HandleLostScope(this.Db.SetUniqueApplicationName(nameof(this.PrepareForHandleLost)), this.Db);
 
         private class HandleLostScope : IDisposable
         {
@@ -99,25 +90,25 @@ namespace Medallion.Threading.Tests.Data
     }
 
     public sealed class TestingConnectionMultiplexingSynchronizationStrategy<TDb> : TestingConnectionStringSynchronizationStrategy<TDb>
-        where TDb : ITestingPrimaryClientDb, new()
+        where TDb : TestingPrimaryClientDb, new()
     {
         protected override bool? UseMultiplexingNotTransaction => true;
     }
 
     public sealed class TestingOwnedConnectionSynchronizationStrategy<TDb> : TestingConnectionStringSynchronizationStrategy<TDb>
-        where TDb : ITestingPrimaryClientDb, new()
+        where TDb : TestingPrimaryClientDb, new()
     {
         protected override bool? UseMultiplexingNotTransaction => null;
     }
 
     public sealed class TestingOwnedTransactionSynchronizationStrategy<TDb> : TestingConnectionStringSynchronizationStrategy<TDb>
-        where TDb : ITestingPrimaryClientDb, new()
+        where TDb : TestingPrimaryClientDb, new()
     {
         protected override bool? UseMultiplexingNotTransaction => false;
     }
 
     public abstract class TestingExternalConnectionOrTransactionSynchronizationStrategy<TDb> : TestingDbSynchronizationStrategy<TDb>
-        where TDb : ITestingDb, new()
+        where TDb : TestingDb, new()
     {
         /// <summary>
         /// Starts a new "ambient" connection or transaction that future locks will be created with
@@ -149,7 +140,7 @@ namespace Medallion.Threading.Tests.Data
     }
 
     public sealed class TestingExternalConnectionSynchronizationStrategy<TDb> : TestingExternalConnectionOrTransactionSynchronizationStrategy<TDb>
-        where TDb : ITestingDb, new()
+        where TDb : TestingDb, new()
     {
         private readonly DisposableCollection _disposables = new DisposableCollection();
         private DbConnection? _ambientConnection;
@@ -190,7 +181,7 @@ namespace Medallion.Threading.Tests.Data
     }
 
     public sealed class TestingExternalTransactionSynchronizationStrategy<TDb> : TestingExternalConnectionOrTransactionSynchronizationStrategy<TDb>
-        where TDb : ITestingDb, new()
+        where TDb : TestingDb, new()
     {
         private readonly DisposableCollection _disposables = new DisposableCollection();
 

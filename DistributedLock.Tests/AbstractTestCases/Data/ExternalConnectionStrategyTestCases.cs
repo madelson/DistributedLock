@@ -5,7 +5,7 @@ namespace Medallion.Threading.Tests.Data
 {
     public abstract class ExternalConnectionStrategyTestCases<TLockProvider, TDb>
         where TLockProvider : TestingLockProvider<TestingExternalConnectionSynchronizationStrategy<TDb>>, new()
-        where TDb : ITestingDb, new()
+        where TDb : TestingDb, new()
     {
         private TLockProvider _lockProvider = default!;
 

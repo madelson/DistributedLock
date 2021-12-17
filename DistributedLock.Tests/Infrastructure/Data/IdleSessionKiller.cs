@@ -11,7 +11,7 @@ namespace Medallion.Threading.Tests.Data
         private readonly CancellationTokenSource _cancellationTokenSource;
         private readonly Task _task;
 
-        public IdleSessionKiller(ITestingPrimaryClientDb db, string applicationName, TimeSpan idleTimeout)
+        public IdleSessionKiller(TestingPrimaryClientDb db, string applicationName, TimeSpan idleTimeout)
         {
             this._cancellationTokenSource = new CancellationTokenSource();
             var cancellationToken = this._cancellationTokenSource.Token;

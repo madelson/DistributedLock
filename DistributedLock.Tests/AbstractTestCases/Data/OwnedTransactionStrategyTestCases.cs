@@ -1,12 +1,13 @@
 using Medallion.Threading.Internal;
 using NUnit.Framework;
+using System;
 using System.Data;
 
 namespace Medallion.Threading.Tests.Data
 {
     public abstract class OwnedTransactionStrategyTestCases<TLockProvider, TDb>
         where TLockProvider : TestingLockProvider<TestingOwnedTransactionSynchronizationStrategy<TDb>>, new()
-        where TDb : ITestingPrimaryClientDb, new()
+        where TDb : TestingPrimaryClientDb, new()
     {
         private TLockProvider _lockProvider = default!;
 
@@ -38,7 +39,15 @@ namespace Medallion.Threading.Tests.Data
             using (var connection = this._lockProvider.Strategy.Db.CreateConnection())
             {
                 connection.Open();
-                defaultIsolationLevel = this._lockProvider.Strategy.Db.GetIsolationLevel(connection);
+                try
+                {
+                    defaultIsolationLevel = this._lockProvider.Strategy.Db.GetIsolationLevel(connection);
+                }
+                catch (NotSupportedException)
+                {
+                    Assert.Pass("Getting isolation level not supported");
+                    throw;
+                }
             }
 
             // Pre-generate the lock we will use. This is necessary for our Semaphore5 strategy, where the first lock created
@@ -47,7 +56,7 @@ namespace Medallion.Threading.Tests.Data
             this._lockProvider.CreateLock(nameof(TestIsolationLevelLeakage));
 
             // use a unique pool of size 1 so we can reclaim the connection after we use it and test for leaks
-            this._lockProvider.Strategy.SetUniqueApplicationName();
+            this._lockProvider.Strategy.Db.SetUniqueApplicationName();
             this._lockProvider.Strategy.Db.MaxPoolSize = 1;
 
             AssertHasDefaultIsolationLevel();
