@@ -15,8 +15,8 @@ namespace Medallion.Threading.FileSystem
     {
         /// <summary>
         /// Since <see cref="UnauthorizedAccessException"/> can be thrown EITHER transiently or for permissions issues, we retry up to this many times
-        /// before we assume that the issue is non-transient. Empirically I've found 50 to work fine so I doubled it just to be safe (if there IS a problem
-        /// there's little risk to trying more times because we'll eventually be failing hard).
+        /// before we assume that the issue is non-transient. Empirically I've found this value to be reliable both locally and on AppVeyor (if there 
+        /// IS a problem there's little risk to trying more times because we'll eventually be failing hard).
         /// </summary>
         private const int MaxUnauthorizedAccessExceptionRetries = 400;
 
