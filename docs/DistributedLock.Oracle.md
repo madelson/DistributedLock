@@ -14,7 +14,7 @@ using (@lock.Acquire())
 
 ## Setup
 
-Because the library use's Oracle's DBMS_LOCK package under the hood, **you may need to permission your user to that package**. If you encounter an error like `identifier 'SYS.DBMS_LOCK' must be declared ORA-06550`, configure your Oracle user like so:
+Because the library uses Oracle's DBMS_LOCK package under the hood, **you may need to permission your user to that package**. If you encounter an error like `identifier 'SYS.DBMS_LOCK' must be declared ORA-06550`, configure your Oracle user like so:
 
 ```SQL
 connect as sys
