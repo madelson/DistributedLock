@@ -12,6 +12,17 @@ using (@lock.Acquire())
 }
 ```
 
+## Setup
+
+Because the library use's Oracle's DBMS_LOCK package under the hood, **you may need to permission your user to that package**. If you encounter an error like `identifier 'SYS.DBMS_LOCK' must be declared ORA-06550`, configure your Oracle user like so:
+
+```SQL
+connect as sys
+grant execute on SYS.DBMS_LOCK to someuser;
+```
+
+See [this StackOverflow question](https://stackoverflow.com/questions/10870787/oracle-pl-sql-dbms-lock-error) for more info.
+
 ## APIs
 
 - The `OracleDistributedLock` class implements the `IDistributedLock` interface.
