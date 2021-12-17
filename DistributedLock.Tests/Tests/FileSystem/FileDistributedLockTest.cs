@@ -468,7 +468,7 @@ namespace Medallion.Threading.Tests.FileSystem
         {
             Directory.CreateDirectory(LockFileDirectory);
             var @lock = new FileDistributedLock(LockFileDirectoryInfo, Guid.NewGuid().ToString());
-            File.Create(@lock.Name).Dispose();
+            File.WriteAllText(@lock.Name, "some text");
 
             try
             {

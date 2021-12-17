@@ -7,7 +7,6 @@ using System.Text;
 
 namespace Medallion.Threading.Tests.FileSystem
 {
-    [Category("CIWindows")]
     public class FileDistributedLockWindowsTest
     {
         /// <summary>
