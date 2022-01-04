@@ -26,6 +26,33 @@ namespace Medallion.Threading.Redis
         {
         }
 
+#if NETSTANDARD2_0_OR_GREATER
+        /// <summary>
+        /// Constructs a <see cref="RedisDistributedSynchronizationProvider"/> that connects to redis according to the provided <paramref name="connectionString"/>
+        /// and the <paramref name="db"/> with the provided <paramref name="options"/>.
+        /// </summary>
+        /// <param name="connectionString">Redis connection string</param>
+        /// <param name="db">Redis Database</param>
+        /// <param name="options">Redis Distributed Synchronization Options</param>
+        public RedisDistributedSynchronizationProvider(string connectionString, int db = -1, Action<RedisDistributedSynchronizationOptionsBuilder>? options = null)
+            : this(ConfigurationOptions.Parse(connectionString), db, options)
+        {
+        }
+
+
+        /// <summary>
+        /// Constructs a <see cref="RedisDistributedSynchronizationProvider"/> that connects to redis according to the provided <paramref name="configurationOptions"/>
+        /// and the <paramref name="db"/> with the provided <paramref name="options"/>.
+        /// </summary>
+        /// <param name="configurationOptions">StackExchange Redis Configuration Options</param>
+        /// <param name="db">Redis Database</param>
+        /// <param name="options">Redis Distributed Synchronization Options</param>
+        public RedisDistributedSynchronizationProvider(ConfigurationOptions configurationOptions, int db = -1, Action<RedisDistributedSynchronizationOptionsBuilder>? options = null)
+            : this(ConnectionMultiplexer.Connect(configurationOptions).GetDatabase(db), options)
+        {
+        }
+#endif
+
         /// <summary>
         /// Constructs a <see cref="RedisDistributedSynchronizationProvider"/> that connects to the provided <paramref name="databases"/>
         /// and uses the provided <paramref name="options"/>.
