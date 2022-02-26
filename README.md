@@ -24,6 +24,8 @@ DistributedLock contains implementations based on various technologies; you can 
 - **[DistributedLock.FileSystem](docs/DistributedLock.FileSystem.md)** [![NuGet Status](http://img.shields.io/nuget/v/DistributedLock.FileSystem.svg?style=flat)](https://www.nuget.org/packages/DistributedLock.FileSystem/): uses lock files
 - **[DistributedLock.WaitHandles](docs/DistributedLock.WaitHandles.md)** [![NuGet Status](http://img.shields.io/nuget/v/DistributedLock.WaitHandles.svg?style=flat)](https://www.nuget.org/packages/DistributedLock.WaitHandles/): uses operating system global `WaitHandle`s (Windows only)
 
+**Click on the name** of any of the above packages to see the documentation specific to that implementation, or read on for general documentation that applies to all implementations.
+
 The [DistributedLock.Core](https://www.nuget.org/packages/DistributedLock.Core) [![NuGet Status](http://img.shields.io/nuget/v/DistributedLock.Core.svg?style=flat)](https://www.nuget.org/packages/DistributedLock.Core/) package contains common code and abstractions and is referenced by all implementations.
 
 ## Synchronization primitives
