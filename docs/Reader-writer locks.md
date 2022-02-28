@@ -48,6 +48,8 @@ class DistributedCache
 
 This approach is more efficient than simply wrapping the entire operation in a regular distributed lock because cache hits don't block each other.
 
+Writers are given precedence over readers so that a stream of overlapping readers cannot lock out a queued writer forever.
+
 ## Upgradeable reader-writer locks
 
 Some reader-writer lock implementations further support acquiring an *upgradeable read* lock. When acquired, this lock blocks other writers and upgradeable readers but does not block other readers. Furthermore, an upgradeable read lock can be upgraded to a write lock without having to be released first (with a regular read lock, you must release it before acquiring a write lock.
