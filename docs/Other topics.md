@@ -26,9 +26,9 @@ handle.HandeLostToken.Register(() => Console.WriteLine("Lock was lost!"));
 
 Any code that acquires a distributed lock or other primitive should be sure to dispose of it upon completion of its work to ensure that other parts of the system are not blocked.
 
-However, in a large and complex system there is always risk that this doesn't happen, either through sloppily written code or a bug that causes an exception to occur in an unexpected place.
+However, in a large and complex system there is always risk that this doesn't happen, either through sloppily written code, a bug that causes an exception to occur in an unexpected place, or the handle-holding process crashing.
 
-To provide additional protection against the "leaking" of lock handles, DistributedLock's primitives are designed so that a handle being garbage collected without being disposed or a handle-holding process crashing will not cause a lock to be held forever. This helps ensure that systems built on distributed locking are robust to unexpected failures.
+To provide additional protection against the "leaking" of lock handles, DistributedLock's primitives are designed so that a handle being garbage collected without being disposed or a handle-holding process exiting unexpectedly **will not cause a lock to be held forever**. This helps ensure that systems built on distributed locking are robust to unexpected failures.
 
 ## Safety of distributed locking
 
