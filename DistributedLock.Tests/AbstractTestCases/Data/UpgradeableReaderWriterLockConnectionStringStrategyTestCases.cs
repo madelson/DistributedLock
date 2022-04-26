@@ -29,14 +29,14 @@ namespace Medallion.Threading.Tests.Data
             this._lockProvider.Strategy.KeepaliveCadence = TimeSpan.FromSeconds(.1);
             var @lock = this._lockProvider.CreateUpgradeableReaderWriterLock(Guid.NewGuid().ToString());
 
-            using var idleSessionKiller = new IdleSessionKiller(this._lockProvider.Strategy.Db, applicationName, idleTimeout: TimeSpan.FromSeconds(.5));
+            using var idleSessionKiller = new IdleSessionKiller(this._lockProvider.Strategy.Db, applicationName, idleTimeout: TimeSpan.FromSeconds(2));
 
             using (@lock.AcquireReadLock())
             {
                 var handle = @lock.AcquireUpgradeableReadLock();
                 handle.TryUpgradeToWriteLock().ShouldEqual(false);
                 handle.TryUpgradeToWriteLockAsync().Result.ShouldEqual(false);
-                Thread.Sleep(TimeSpan.FromSeconds(1));
+                Thread.Sleep(TimeSpan.FromSeconds(4));
                 Assert.DoesNotThrow(() => handle.Dispose());
             }
         }
