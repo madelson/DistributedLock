@@ -30,7 +30,7 @@ Natively, MySQL's locking functions are case-insensitive with respect to the loc
 In addition to specifying the `name`, several tuning options are available for `connectionString`-based locks:
 
 - `KeepaliveCadence` allows you to have the implementation periodically issue a cheap query on a connection holding a lock. This helps in configurations which are set up to aggressively kill idle connections. Defaults to OFF (`Timeout.InfiniteTimeSpan`).
-- `UseMultiplexing` allows the implementation to re-use connections under the hood to hold multiple locks under certain scenarios, leading to lower resource consumption. This behavior defaults to ON; you should not disable it unless you suspect that it is causing issues for you (please file an issue here if so!).
+- `UseMultiplexing` allows the implementation to re-use connections under the hood to hold multiple locks under certain scenarios, leading to lower resource consumption. This behavior defaults to ON. **Note that this behavior must be disabled if you are using a version of MySQL older than 5.7** (see [here](https://github.com/madelson/DistributedLock/issues/123) and [here](https://dev.mysql.com/doc/refman/5.6/en/locking-functions.html) for more). Otherwise, you should not disable it unless you suspect that it is causing issues for you (please file an issue here if so!).
 
 
 
