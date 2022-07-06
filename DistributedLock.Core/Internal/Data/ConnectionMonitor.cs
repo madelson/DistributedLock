@@ -253,9 +253,10 @@ namespace Medallion.Threading.Internal.Data
                 // the state to disposed above which the monitoring loop will check if it
                 // takes over the Cancel() thread.
                 this._monitorStateChangedTokenSource?.Cancel();
-                
-                // unsubscribe from state change tracking
-                if (this._stateChangedHandler != null
+
+                // If disposing, unsubscribe from state change tracking.
+                if (isDispose
+                    && this._stateChangedHandler != null
                     && this._weakConnection.TryGetTarget(out var connection))
                 {
                     ((DbConnection)connection.InnerConnection).StateChange -= this._stateChangedHandler;
@@ -424,7 +425,7 @@ namespace Medallion.Threading.Internal.Data
 
         private sealed class AlreadyCanceledHandle : IDatabaseConnectionMonitoringHandle
         {
-            private readonly CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
+            private readonly CancellationTokenSource _cancellationTokenSource = new();
 
             public AlreadyCanceledHandle()
             {
@@ -438,7 +439,7 @@ namespace Medallion.Threading.Internal.Data
 
         private sealed class NullHandle : IDatabaseConnectionMonitoringHandle
         {
-            public static readonly NullHandle Instance = new NullHandle();
+            public static readonly NullHandle Instance = new();
 
             private NullHandle() { }
 
