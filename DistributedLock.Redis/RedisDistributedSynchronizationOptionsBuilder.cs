@@ -145,12 +145,15 @@ namespace Medallion.Threading.Redis
             TimeoutValue extensionCadence;
             if (options?._extensionCadence is { } specifiedExtensionCadence)
             {
+                // Note: we do not allow for disabling auto-extension here because it leads to traps
+                // where people might abandon the handle and then have it be closed due to GC.
+                // See discussion here: https://github.com/madelson/DistributedLock/issues/130.
                 if (specifiedExtensionCadence.CompareTo(minValidityTime) >= 0)
                 {
                     throw new ArgumentOutOfRangeException(
                         nameof(extensionCadence),
                         specifiedExtensionCadence.TimeSpan,
-                        $"{nameof(extensionCadence)} must be less than {nameof(expiry)} ({expiry.TimeSpan}). To disable auto-extension, specify {nameof(Timeout)}.{nameof(Timeout.InfiniteTimeSpan)}"
+                        $"{nameof(extensionCadence)} must be less than {nameof(expiry)} ({expiry.TimeSpan})"
                     );
                 }
                 extensionCadence = specifiedExtensionCadence;
