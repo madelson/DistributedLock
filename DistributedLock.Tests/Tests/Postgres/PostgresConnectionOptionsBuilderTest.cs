@@ -6,6 +6,7 @@ using System.Text;
 
 namespace Medallion.Threading.Tests.Postgres
 {
+    [Category("CI")]
     public class PostgresConnectionOptionsBuilderTest
     {
         [Test]

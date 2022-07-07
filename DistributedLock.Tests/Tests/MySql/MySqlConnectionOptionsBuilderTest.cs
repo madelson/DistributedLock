@@ -6,6 +6,7 @@ using System.Text;
 
 namespace Medallion.Threading.Tests.MySql
 {
+    [Category("CI")]
     public class MySqlConnectionOptionsBuilderTest
     {
         [Test]

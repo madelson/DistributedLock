@@ -6,6 +6,7 @@ using System.Text;
 
 namespace Medallion.Threading.Tests.SqlServer
 {
+    [Category("CI")]
     public class SqlConnectionOptionsBuilderTest
     {
         [Test]
