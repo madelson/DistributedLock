@@ -31,7 +31,7 @@ See [this StackOverflow question](https://stackoverflow.com/questions/10870787/o
 
 ## Implementation notes
 
-Oracle-based locks locks can be constructed with a connectionString or an `IDbConnection` as a means of connecting to the database. In most cases, using a connectionString is preferred because it allows for the library to efficiently multiplex connections under the hood and eliminates the risk that the passed-in `IDbConnection` gets used in a way that disrupts the locking process.
+Oracle-based locks locks can be constructed with a connectionString or an `IDbConnection` as a means of connecting to the database. In most cases, using a connectionString is preferred because it allows for the library to efficiently multiplex connections under the hood and eliminates the risk that the passed-in `IDbConnection` gets used in a way that disrupts the locking process. **NOTE that since `IDbConnection` objects are not thread-safe, lock objects constructed with them can only be used by one thread at a time.**
 
 The classes in this package support async operations per the common distributed lock and ADO.NET interfaces. However, as of 2021-12-14, the Oracle .NET client libraries do not support true async IO. Therefore, if you are using the Oracle-based implementation you might get slightly better performance out of the synchronous APIs (e. g. `OracleDistributedLock.Acquire()` instead of `OracleDistributedLock.AcquireAsync()`).
 
