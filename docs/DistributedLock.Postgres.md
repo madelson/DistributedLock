@@ -28,7 +28,7 @@ Under the hood, [Postgres advisory locks can be based on either one 64-bit integ
 - Passing an ASCII string with 0-9 characters, which will be mapped to a `long` based on a custom scheme.
 - Passing an arbitrary string with the `allowHashing` option set to `true` which will be hashed to a `long`. Note that hashing will only be used if other methods of interpreting the string fail.
 
-In addition to specifying the `key`, Postgres-based locks allow you to specify either a `connectionString` or an `IDbConnection` as a means of connecting to the database. In most cases, using a `connectionString` is preferred because it allows for the library to efficiently multiplex connections under the hood and eliminates the risk that the passed-in `IDbConnection` gets used in a way that disrupts the locking process.
+In addition to specifying the `key`, Postgres-based locks allow you to specify either a `connectionString` or an `IDbConnection` as a means of connecting to the database. In most cases, using a `connectionString` is preferred because it allows for the library to efficiently multiplex connections under the hood and eliminates the risk that the passed-in `IDbConnection` gets used in a way that disrupts the locking process. **NOTE that since `IDbConnection` objects are not thread-safe, lock objects constructed with them can only be used by one thread at a time.**
 
 ## Options
 
