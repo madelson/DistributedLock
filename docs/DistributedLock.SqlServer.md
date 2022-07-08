@@ -21,7 +21,7 @@ await using (await @lock.AcquireAsync())
 
 ## Implementation notes
 
-SQL-based locks can be constructed with a connection string, an `IDbConnection`, or an `IDbTransaction`. When a connection is passed, the lock will be scoped to that connection and when a transaction is passed the lock will be scoped to that transaction. In most cases, using a `connectionString` is preferred because it allows for the library to efficiently multiplex connections under the hood and eliminates the risk that the passed-in `IDbConnection`/`IDbTransaction` gets used in a way that disrupts the locking process.
+SQL-based locks can be constructed with a connection string, an `IDbConnection`, or an `IDbTransaction`. When a connection is passed, the lock will be scoped to that connection and when a transaction is passed the lock will be scoped to that transaction. In most cases, using a `connectionString` is preferred because it allows for the library to efficiently multiplex connections under the hood and eliminates the risk that the passed-in `IDbConnection`/`IDbTransaction` gets used in a way that disrupts the locking process. **NOTE that since `IDbConnection`/`IDbTransaction` objects are not thread-safe, lock objects constructed with them can only be used by one thread at a time.**
 
 ## Options
 
