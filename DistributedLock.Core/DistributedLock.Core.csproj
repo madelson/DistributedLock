@@ -32,6 +32,7 @@
     <TreatSpecificWarningsAsErrors />
     <!-- see https://github.com/dotnet/sdk/issues/2679 -->
     <DebugType>embedded</DebugType>
+    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
