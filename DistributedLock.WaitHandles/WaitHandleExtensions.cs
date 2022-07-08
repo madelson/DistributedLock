@@ -42,6 +42,8 @@ namespace Medallion.Threading.WaitHandles
         // based on http://www.thomaslevesque.com/2015/06/04/async-and-cancellation-support-for-wait-handles/
         private static async ValueTask<bool> InternalWaitOneAsync(this WaitHandle waitHandle, TimeoutValue timeout, CancellationToken cancellationToken)
         {
+            Invariant.Require(waitHandle is EventWaitHandle or Semaphore); // keep in sync with Resignal()
+
             RegisteredWaitHandle? registeredHandle = null;
             CancellationTokenRegistration tokenRegistration = default;
             try
@@ -50,13 +52,13 @@ namespace Medallion.Threading.WaitHandles
                 // if, upon entering the method we are already both canceled and signaled,
                 // putting this first ensures that we cancel
                 tokenRegistration = cancellationToken.Register(
-                    state => ((TaskCompletionSource<bool>)state).TrySetCanceled(),
+                    static state => ((TaskCompletionSource<bool>)state).TrySetCanceled(),
                     state: taskCompletionSource
                 );
                 registeredHandle = ThreadPool.RegisterWaitForSingleObject(
                     waitHandle,
-                    (state, timedOut) => ((TaskCompletionSource<bool>)state).TrySetResult(!timedOut),
-                    state: taskCompletionSource,
+                    static (state, timedOut) => OnSignaled(state, timedOut),
+                    state: Tuple.Create(taskCompletionSource, waitHandle),
                     millisecondsTimeOutInterval: timeout.InMilliseconds,
                     executeOnlyOnce: true
                 );
@@ -70,6 +72,37 @@ namespace Medallion.Threading.WaitHandles
                 // http://referencesource.microsoft.com/#mscorlib/system/threading/threadpool.cs,065408fc096354fd
                 registeredHandle?.Unregister(null);
                 tokenRegistration.Dispose();
+            }
+
+            static void OnSignaled(object state, bool timedOut)
+            {
+                var (taskCompletionSource, waitHandle) = (Tuple<TaskCompletionSource<bool>, WaitHandle>)state;
+                if (!taskCompletionSource.TrySetResult(!timedOut) && !timedOut && taskCompletionSource.Task.IsCanceled)
+                {
+                    // If we received a signal (not a timeout) and we lost the race with cancellation, resignal
+                    // the handle to avoid the signal being lost. See https://github.com/madelson/DistributedLock/issues/120
+                    Resignal(waitHandle);
+                }
+            }
+        }
+
+        private static void Resignal(WaitHandle waitHandle)
+        {
+            try
+            {
+                if (waitHandle is EventWaitHandle @event)
+                {
+                    @event.Set();
+                }
+                else if (waitHandle is Semaphore semaphore)
+                {
+                    semaphore.Release();
+                }
+            }
+            catch
+            {
+                // Since this method runs in a threadpool thread, we don't want it to throw
+                // even if the methods above fail (e.g. with SemaphoreFullException).
             }
         }
     }

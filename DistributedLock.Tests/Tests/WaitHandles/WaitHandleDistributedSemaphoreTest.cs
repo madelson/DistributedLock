@@ -4,6 +4,7 @@ using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Medallion.Threading.Tests.WaitHandles
@@ -76,6 +77,41 @@ namespace Medallion.Threading.Tests.WaitHandles
                 .ShouldEqual(@"Global\_____________________________________________________________________________________________________________________________________________________________________Y7DJXlpJeJjeX5XAOWV+ka/3ONBj5dHhKWcSH4pd5AC9YHFm+l1gBArGpBSBn3WcX00ArcDtKw7g24kJaHLifQ==");
             new WaitHandleDistributedSemaphore(new string('x', MaxNameLengthWithoutGlobalPrefix + 1), 1).Name
                 .ShouldEqual(@"Global\xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxsrCnXZ1XHiT//dOSBfAU0iC4Gtnlr0dQACBUK8Ev2OdRYJ9jcvbiqVCv/rjyPemTW9AvOonkdr0B2bG04gmeYA==");
+        }
+
+        /// <summary>
+        /// Reproduces https://github.com/madelson/DistributedLock/issues/120
+        /// </summary>
+        [Test]
+        public async Task TestCancellationDoesNotLeadToLostSignal([Values] bool async)
+        {
+            var semaphore = new WaitHandleDistributedSemaphore(nameof(this.TestCancellationDoesNotLeadToLostSignal), 2);
+            await using var _ = await semaphore.AcquireAsync(TimeSpan.FromSeconds(1));
+
+            for (var i = 0; i < 50; ++i)
+            {
+                using var barrier = new Barrier(2);
+                using var source = new CancellationTokenSource();
+                var acquireTask = Task.Run(async () =>
+                {
+                    barrier.SignalAndWait();
+                    try
+                    { 
+                        if (async) { await using var _ = await semaphore.AcquireAsync(cancellationToken: source.Token); }
+                        else { using var _ = semaphore.Acquire(cancellationToken: source.Token); }
+                    }
+                    catch when (source.Token.IsCancellationRequested) { }
+                });
+                var cancelTask = Task.Run(() =>
+                {
+                    barrier.SignalAndWait();
+                    source.Cancel();
+                });
+                await Task.WhenAll(acquireTask, cancelTask);
+            }
+
+            await using var handle = await semaphore.TryAcquireAsync();
+            Assert.IsNotNull(handle); // if we lost even a single signal due to cancellation in the loop above, this will fail
         }
 
         private static WaitHandleDistributedSemaphore CreateAsLock(string name, NameStyle nameStyle) =>
