@@ -32,6 +32,9 @@
     <TreatSpecificWarningsAsErrors />
     <!-- see https://github.com/dotnet/sdk/issues/2679 -->
     <DebugType>embedded</DebugType>
+    <!-- see https://mitchelsellers.com/blog/article/net-5-deterministic-builds-source-linking -->
+    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
