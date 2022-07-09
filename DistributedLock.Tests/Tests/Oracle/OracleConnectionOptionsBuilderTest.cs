@@ -7,6 +7,7 @@ using System.Threading;
 
 namespace Medallion.Threading.Tests.Oracle
 {
+    [Category("CI")]
     public class OracleConnectionOptionsBuilderTest
     {
         [Test]
