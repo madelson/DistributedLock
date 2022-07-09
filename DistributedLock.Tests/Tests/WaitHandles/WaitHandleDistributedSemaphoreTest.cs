@@ -48,7 +48,7 @@ namespace Medallion.Threading.Tests.WaitHandles
         public async Task TestGarbageCollection()
         {
             var @lock = CreateAsLock("gc_test", NameStyle.AddPrefix);
-            WeakReference AbandonLock() => new WeakReference(@lock.Acquire());
+            WeakReference AbandonLock() => new(@lock.Acquire());
 
             var weakHandle = AbandonLock();
             GC.Collect();
@@ -80,7 +80,10 @@ namespace Medallion.Threading.Tests.WaitHandles
         }
 
         /// <summary>
-        /// Reproduces https://github.com/madelson/DistributedLock/issues/120
+        /// Attempts to reproduce https://github.com/madelson/DistributedLock/issues/120.
+        /// 
+        /// NOTE: in practice this race condition is so slim that to reproduce with any reliability requires
+        /// adding a call to Thread.Sleep(1) at the start of WaitHandleExtensions.Resignal().
         /// </summary>
         [Test]
         public async Task TestCancellationDoesNotLeadToLostSignal([Values] bool async)
@@ -88,26 +91,50 @@ namespace Medallion.Threading.Tests.WaitHandles
             var semaphore = new WaitHandleDistributedSemaphore(nameof(this.TestCancellationDoesNotLeadToLostSignal), 2);
             await using var _ = await semaphore.AcquireAsync(TimeSpan.FromSeconds(1));
 
+            Random random = new();
             for (var i = 0; i < 50; ++i)
             {
-                using var barrier = new Barrier(2);
-                using var source = new CancellationTokenSource();
+                using var blockingHandle = semaphore.TryAcquire(TimeSpan.Zero); // claim the last slot on the semaphore
+                Assert.IsNotNull(blockingHandle);
+
+                using CancellationTokenSource source = new();
+
+                using SemaphoreSlim acquiringEvent = new(initialCount: 0, maxCount: 1);
                 var acquireTask = Task.Run(async () =>
                 {
-                    barrier.SignalAndWait();
                     try
-                    { 
-                        if (async) { await using var _ = await semaphore.AcquireAsync(cancellationToken: source.Token); }
-                        else { using var _ = semaphore.Acquire(cancellationToken: source.Token); }
+                    {
+                        if (async)
+                        {
+                            var acquireHandleTask = semaphore.AcquireAsync(TimeSpan.FromSeconds(30), source.Token);
+                            acquiringEvent.Release();
+                            (await acquireHandleTask).Dispose();
+                        }
+                        else
+                        {
+                            acquiringEvent.Release();
+                            semaphore.Acquire(TimeSpan.FromSeconds(30), source.Token).Dispose();
+                        }
                     }
-                    catch when (source.Token.IsCancellationRequested) { }
+                    catch (OperationCanceledException) { }
+                });
+                await acquiringEvent.WaitAsync();
+                Assert.IsFalse(acquireTask.IsCompleted);
+
+                using Barrier barrier = new(participantCount: 2);
+                var releaseTask = Task.Run(() =>
+                {
+                    barrier.SignalAndWait();
+                    blockingHandle!.Dispose();
                 });
                 var cancelTask = Task.Run(() =>
                 {
                     barrier.SignalAndWait();
+                    var yieldCount = random.Next(5, 25);
+                    for (var i = 0; i < yieldCount; ++i) { Thread.Yield(); }
                     source.Cancel();
                 });
-                await Task.WhenAll(acquireTask, cancelTask);
+                await Task.WhenAll(acquireTask, releaseTask, cancelTask);
             }
 
             await using var handle = await semaphore.TryAcquireAsync();
@@ -115,7 +142,7 @@ namespace Medallion.Threading.Tests.WaitHandles
         }
 
         private static WaitHandleDistributedSemaphore CreateAsLock(string name, NameStyle nameStyle) =>
-            new WaitHandleDistributedSemaphore(
+            new(
                 nameStyle == NameStyle.AddPrefix ? DistributedWaitHandleHelpers.GlobalPrefix + name : name,
                 maxCount: 1,
                 abandonmentCheckCadence: TimeSpan.FromSeconds(.3),

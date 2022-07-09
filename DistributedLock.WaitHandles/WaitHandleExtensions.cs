@@ -9,9 +9,14 @@ namespace Medallion.Threading.WaitHandles
     {
         public static async ValueTask<bool> WaitOneAsync(this WaitHandle waitHandle, TimeoutValue timeout, CancellationToken cancellationToken)
         {
-            return SyncViaAsync.IsSynchronous
-                ? waitHandle.InternalWaitOne(timeout, cancellationToken)
-                : await waitHandle.InternalWaitOneAsync(timeout, cancellationToken).ConfigureAwait(false);
+            if (timeout.IsZero || SyncViaAsync.IsSynchronous)
+            {
+                return waitHandle.InternalWaitOne(timeout, cancellationToken);
+            }
+
+            // when doing an async wait, still do a quick sync check first with timeout zero to optimize the already-signaled case
+            return waitHandle.InternalWaitOne(TimeSpan.Zero, cancellationToken) 
+                || await waitHandle.InternalWaitOneAsync(timeout, cancellationToken).ConfigureAwait(false);
         }
 
         private static bool InternalWaitOne(this WaitHandle waitHandle, TimeoutValue timeout, CancellationToken cancellationToken)
@@ -24,6 +29,16 @@ namespace Medallion.Threading.WaitHandles
             // if, upon entering the method we are already both canceled and signaled, this check
             // ensures that we cancel
             cancellationToken.ThrowIfCancellationRequested();
+
+            // optimize the already-signaled case
+            if (waitHandle.WaitOne(TimeSpan.Zero))
+            {
+                return true;
+            }
+            if (timeout.IsZero)
+            {
+                return false;
+            }
 
             // cancellable wait based on
             // http://www.thomaslevesque.com/2015/06/04/async-and-cancellation-support-for-wait-handles/
@@ -42,13 +57,14 @@ namespace Medallion.Threading.WaitHandles
         // based on http://www.thomaslevesque.com/2015/06/04/async-and-cancellation-support-for-wait-handles/
         private static async ValueTask<bool> InternalWaitOneAsync(this WaitHandle waitHandle, TimeoutValue timeout, CancellationToken cancellationToken)
         {
-            Invariant.Require(waitHandle is EventWaitHandle or Semaphore); // keep in sync with Resignal()
+            Invariant.Require(!cancellationToken.CanBeCanceled || waitHandle is EventWaitHandle or Semaphore); // keep in sync with Resignal()
+
+            var taskCompletionSource = new TaskCompletionSource<bool>();
 
             RegisteredWaitHandle? registeredHandle = null;
             CancellationTokenRegistration tokenRegistration = default;
             try
             {
-                var taskCompletionSource = new TaskCompletionSource<bool>();
                 // if, upon entering the method we are already both canceled and signaled,
                 // putting this first ensures that we cancel
                 tokenRegistration = cancellationToken.Register(
@@ -66,11 +82,24 @@ namespace Medallion.Threading.WaitHandles
             }
             finally
             {
-                // this is different from the referenced site, but I think this is more correct:
-                // the handle passed to unregister is a handle to be signaled, not the one to unregister
-                // (that one is already captured by the registered handle). See
-                // http://referencesource.microsoft.com/#mscorlib/system/threading/threadpool.cs,065408fc096354fd
-                registeredHandle?.Unregister(null);
+                if (registeredHandle != null)
+                {
+                    if (taskCompletionSource.Task.IsCanceled)
+                    {
+                        // If the task got canceled, then there is a slim chance of a race condition where
+                        // the wait callback is still running, and hasn't re-signaled the handle yet. If we
+                        // return before that point then we might dispose the handle, before getting to re-signal
+                        // it. To prevent that, we pass in an MRE which will be signaled when the reservation fully
+                        // completes and we wait for that signal before returning.
+                        using ManualResetEvent unregisterCompleteEvent = new(initialState: false);
+                        registeredHandle.Unregister(unregisterCompleteEvent);
+                        await unregisterCompleteEvent.WaitOneAsync(Timeout.InfiniteTimeSpan, CancellationToken.None).ConfigureAwait(false);
+                    }
+                    else
+                    {
+                        registeredHandle.Unregister(null);
+                    }
+                }
                 tokenRegistration.Dispose();
             }
 
