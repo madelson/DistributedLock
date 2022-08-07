@@ -55,13 +55,5 @@
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All" />
   </ItemGroup>
 
-  <Import Project="..\CopyPackageToPublishDirectory.targets" />
-
-  <PropertyGroup>
-    <DefaultDocumentationConfigurationFile>..\DefaultDocumentation.json</DefaultDocumentationConfigurationFile>
-    <DefaultDocumentationLinksOutputFile>..\publish\apiReference\$(AssemblyName).links.txt</DefaultDocumentationLinksOutputFile>
-  </PropertyGroup>
-  <ItemGroup>
-    <PackageReference Include="DefaultDocumentation" Version="0.8.2" PrivateAssets="All" Condition="'$(Configuration)' == 'Release' AND '$(TargetFramework)' == 'netstandard2.1'" />
-  </ItemGroup> 
+  <Import Project="..\CopyPackageToPublishDirectory.targets" /> 
 </Project>

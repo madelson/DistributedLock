@@ -1,0 +1,32 @@
+#### [DistributedLock.Redis](README.md 'README')
+### [Medallion.Threading.Redis](Medallion.Threading.Redis.md 'Medallion.Threading.Redis')
+
+## RedisDistributedLock Class
+
+Implements a [IDistributedLock](https://github.com/madelson/DistributedLock/tree/default-documentation/docs/api/DistributedLock.Core/IDistributedLock.md 'Medallion.Threading.IDistributedLock') using Redis. Can leverage multiple servers via the RedLock algorithm.
+
+```csharp
+public sealed class RedisDistributedLock :
+Medallion.Threading.IDistributedLock
+```
+
+Inheritance [System.Object](https://docs.microsoft.com/en-us/dotnet/api/System.Object 'System.Object') &#129106; RedisDistributedLock
+
+Implements [IDistributedLock](https://github.com/madelson/DistributedLock/tree/default-documentation/docs/api/DistributedLock.Core/IDistributedLock.md 'Medallion.Threading.IDistributedLock')
+
+| Constructors | |
+| :--- | :--- |
+| [RedisDistributedLock(RedisKey, IDatabase, Action&lt;RedisDistributedSynchronizationOptionsBuilder&gt;)](RedisDistributedLock..ctor.umu5PN9uhldmmDNU7XvM2g.md 'Medallion.Threading.Redis.RedisDistributedLock.RedisDistributedLock(RedisKey, IDatabase, System.Action<Medallion.Threading.Redis.RedisDistributedSynchronizationOptionsBuilder>)') | Constructs a lock named [key](RedisDistributedLock..ctor.umu5PN9uhldmmDNU7XvM2g.md#Medallion.Threading.Redis.RedisDistributedLock.RedisDistributedLock(RedisKey,IDatabase,System.Action_Medallion.Threading.Redis.RedisDistributedSynchronizationOptionsBuilder_).key 'Medallion.Threading.Redis.RedisDistributedLock.RedisDistributedLock(RedisKey, IDatabase, System.Action<Medallion.Threading.Redis.RedisDistributedSynchronizationOptionsBuilder>).key') using the provided [database](RedisDistributedLock..ctor.umu5PN9uhldmmDNU7XvM2g.md#Medallion.Threading.Redis.RedisDistributedLock.RedisDistributedLock(RedisKey,IDatabase,System.Action_Medallion.Threading.Redis.RedisDistributedSynchronizationOptionsBuilder_).database 'Medallion.Threading.Redis.RedisDistributedLock.RedisDistributedLock(RedisKey, IDatabase, System.Action<Medallion.Threading.Redis.RedisDistributedSynchronizationOptionsBuilder>).database') and [options](RedisDistributedLock..ctor.umu5PN9uhldmmDNU7XvM2g.md#Medallion.Threading.Redis.RedisDistributedLock.RedisDistributedLock(RedisKey,IDatabase,System.Action_Medallion.Threading.Redis.RedisDistributedSynchronizationOptionsBuilder_).options 'Medallion.Threading.Redis.RedisDistributedLock.RedisDistributedLock(RedisKey, IDatabase, System.Action<Medallion.Threading.Redis.RedisDistributedSynchronizationOptionsBuilder>).options'). |
+| [RedisDistributedLock(RedisKey, IEnumerable&lt;IDatabase&gt;, Action&lt;RedisDistributedSynchronizationOptionsBuilder&gt;)](RedisDistributedLock..ctor.CAJif2Aj+id/ZDgt9bfHHg.md 'Medallion.Threading.Redis.RedisDistributedLock.RedisDistributedLock(RedisKey, System.Collections.Generic.IEnumerable<IDatabase>, System.Action<Medallion.Threading.Redis.RedisDistributedSynchronizationOptionsBuilder>)') | Constructs a lock named [key](RedisDistributedLock..ctor.CAJif2Aj+id/ZDgt9bfHHg.md#Medallion.Threading.Redis.RedisDistributedLock.RedisDistributedLock(RedisKey,System.Collections.Generic.IEnumerable_IDatabase_,System.Action_Medallion.Threading.Redis.RedisDistributedSynchronizationOptionsBuilder_).key 'Medallion.Threading.Redis.RedisDistributedLock.RedisDistributedLock(RedisKey, System.Collections.Generic.IEnumerable<IDatabase>, System.Action<Medallion.Threading.Redis.RedisDistributedSynchronizationOptionsBuilder>).key') using the provided [databases](RedisDistributedLock..ctor.CAJif2Aj+id/ZDgt9bfHHg.md#Medallion.Threading.Redis.RedisDistributedLock.RedisDistributedLock(RedisKey,System.Collections.Generic.IEnumerable_IDatabase_,System.Action_Medallion.Threading.Redis.RedisDistributedSynchronizationOptionsBuilder_).databases 'Medallion.Threading.Redis.RedisDistributedLock.RedisDistributedLock(RedisKey, System.Collections.Generic.IEnumerable<IDatabase>, System.Action<Medallion.Threading.Redis.RedisDistributedSynchronizationOptionsBuilder>).databases') and [options](RedisDistributedLock..ctor.CAJif2Aj+id/ZDgt9bfHHg.md#Medallion.Threading.Redis.RedisDistributedLock.RedisDistributedLock(RedisKey,System.Collections.Generic.IEnumerable_IDatabase_,System.Action_Medallion.Threading.Redis.RedisDistributedSynchronizationOptionsBuilder_).options 'Medallion.Threading.Redis.RedisDistributedLock.RedisDistributedLock(RedisKey, System.Collections.Generic.IEnumerable<IDatabase>, System.Action<Medallion.Threading.Redis.RedisDistributedSynchronizationOptionsBuilder>).options'). |
+
+| Properties | |
+| :--- | :--- |
+| [Key](RedisDistributedLock.Key.md 'Medallion.Threading.Redis.RedisDistributedLock.Key') | The Redis key used to implement the lock |
+| [Name](RedisDistributedLock.Name.md 'Medallion.Threading.Redis.RedisDistributedLock.Name') | Implements [Name](https://github.com/madelson/DistributedLock/tree/default-documentation/docs/api/DistributedLock.Core/IDistributedLock.Name.md 'Medallion.Threading.IDistributedLock.Name') |
+
+| Methods | |
+| :--- | :--- |
+| [Acquire(Nullable&lt;TimeSpan&gt;, CancellationToken)](RedisDistributedLock.Acquire.AACQakRhT+jw+D9lUnMpvw.md 'Medallion.Threading.Redis.RedisDistributedLock.Acquire(System.Nullable<System.TimeSpan>, System.Threading.CancellationToken)') | Acquires the lock synchronously, failing with [System.TimeoutException](https://docs.microsoft.com/en-us/dotnet/api/System.TimeoutException 'System.TimeoutException') if the attempt times out. Usage: |
+| [AcquireAsync(Nullable&lt;TimeSpan&gt;, CancellationToken)](RedisDistributedLock.AcquireAsync./QjYv9rC4HwcQmk9yh4x5g.md 'Medallion.Threading.Redis.RedisDistributedLock.AcquireAsync(System.Nullable<System.TimeSpan>, System.Threading.CancellationToken)') | Acquires the lock asynchronously, failing with [System.TimeoutException](https://docs.microsoft.com/en-us/dotnet/api/System.TimeoutException 'System.TimeoutException') if the attempt times out. Usage: |
+| [TryAcquire(TimeSpan, CancellationToken)](RedisDistributedLock.TryAcquire.XoE9A2OxVcVYbo4P3xgjoQ.md 'Medallion.Threading.Redis.RedisDistributedLock.TryAcquire(System.TimeSpan, System.Threading.CancellationToken)') | Attempts to acquire the lock synchronously. Usage: |
+| [TryAcquireAsync(TimeSpan, CancellationToken)](RedisDistributedLock.TryAcquireAsync.hVlE8jBuI52oxFuu/5kjZQ.md 'Medallion.Threading.Redis.RedisDistributedLock.TryAcquireAsync(System.TimeSpan, System.Threading.CancellationToken)') | Attempts to acquire the lock asynchronously. Usage: |

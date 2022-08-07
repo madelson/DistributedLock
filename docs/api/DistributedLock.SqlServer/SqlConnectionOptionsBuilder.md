@@ -1,0 +1,18 @@
+#### [DistributedLock.SqlServer](README.md 'README')
+### [Medallion.Threading.SqlServer](Medallion.Threading.SqlServer.md 'Medallion.Threading.SqlServer')
+
+## SqlConnectionOptionsBuilder Class
+
+Specifies options for connecting to and locking against a SQL database
+
+```csharp
+public sealed class SqlConnectionOptionsBuilder
+```
+
+Inheritance [System.Object](https://docs.microsoft.com/en-us/dotnet/api/System.Object 'System.Object') &#129106; SqlConnectionOptionsBuilder
+
+| Methods | |
+| :--- | :--- |
+| [KeepaliveCadence(TimeSpan)](SqlConnectionOptionsBuilder.KeepaliveCadence.Y0oyczbLNxA6zX68I22Kzg.md 'Medallion.Threading.SqlServer.SqlConnectionOptionsBuilder.KeepaliveCadence(System.TimeSpan)') | Using SQL Azure as a distributed synchronization provider can be challenging due to Azure's aggressive connection governor<br/>which proactively kills idle connections. <br/><br/>To prevent this, this option sets the cadence at which we run a no-op "keepalive" query on a connection that is holding a lock. <br/>Note that this still does not guarantee protection for the connection from all conditions where the governor might kill it.<br/><br/>To disable keepalive, set to [System.Threading.Timeout.InfiniteTimeSpan](https://docs.microsoft.com/en-us/dotnet/api/System.Threading.Timeout.InfiniteTimeSpan 'System.Threading.Timeout.InfiniteTimeSpan').<br/><br/>Defaults to 10 minutes based on Azure's 30 minute default behavior.<br/><br/>For more information, see the dicussion on https://github.com/madelson/DistributedLock/issues/5 |
+| [UseMultiplexing(bool)](SqlConnectionOptionsBuilder.UseMultiplexing.Bompdy7BJ8LPLMDka9l5hA.md 'Medallion.Threading.SqlServer.SqlConnectionOptionsBuilder.UseMultiplexing(bool)') | This mode takes advantage of the fact that while "holding" a lock (or other synchronization primitive)<br/>a connection is essentially idle. Thus, rather than creating a new connection for each held lock it is <br/>often possible to multiplex a shared connection so that that connection can hold multiple locks at the same time.<br/><br/>Multiplexing is on by default.<br/><br/>This is implemented in such a way that releasing a lock held on such a connection will never be blocked by an<br/>Acquire() call that is waiting to acquire a lock on that same connection. For this reason, the multiplexing<br/>strategy is "optimistic": if the lock can't be acquired instantaneously on the shared connection, a new (shareable) <br/>connection will be allocated.<br/><br/>This option can improve performance and avoid connection pool starvation in high-load scenarios. It is also<br/>particularly applicable to cases where [TryAcquire(TimeSpan, CancellationToken)](https://github.com/madelson/DistributedLock/tree/default-documentation/docs/api/DistributedLock.Core/IDistributedLock.TryAcquire.GcM73KNvUAY5aoOOhgln1g.md 'Medallion.Threading.IDistributedLock.TryAcquire(System.TimeSpan,System.Threading.CancellationToken)')<br/>semantics are used with a zero-length timeout. |
+| [UseTransaction(bool)](SqlConnectionOptionsBuilder.UseTransaction.TqcdtREm34ssKiEMMEofaA.md 'Medallion.Threading.SqlServer.SqlConnectionOptionsBuilder.UseTransaction(bool)') | Whether the synchronization should use a transaction scope rather than a session scope. Defaults to false.<br/><br/>Synchronizing based on a transaction is marginally less expensive than using a connection<br/>because releasing requires only disposing the underlying [System.Data.IDbTransaction](https://docs.microsoft.com/en-us/dotnet/api/System.Data.IDbTransaction 'System.Data.IDbTransaction').<br/>The disadvantage is that using this strategy may lead to long-running transactions, which can be<br/>problematic for databases using the full recovery model. |

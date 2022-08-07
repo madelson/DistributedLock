@@ -1,7 +1,0 @@
-{
-	"OutputDirectoryPath": "docs/apiReference",
-	"GeneratedAccessModifiers": "Public,Protected,ProtectedInternal",
-	"ExternLinksFilePaths": ["publish/apiReference/*.links..txt"],
-	"FileNameFactory": "Md5",
-	"LogLevel": "Trace"
-}

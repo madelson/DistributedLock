@@ -1,0 +1,26 @@
+#### [DistributedLock.WaitHandles](README.md 'README')
+### [Medallion.Threading.WaitHandles](Medallion.Threading.WaitHandles.md 'Medallion.Threading.WaitHandles')
+
+## WaitHandleDistributedSynchronizationProvider Class
+
+Implements [IDistributedLockProvider](https://github.com/madelson/DistributedLock/tree/default-documentation/docs/api/DistributedLock.Core/IDistributedLockProvider.md 'Medallion.Threading.IDistributedLockProvider') for [EventWaitHandleDistributedLock](EventWaitHandleDistributedLock.md 'Medallion.Threading.WaitHandles.EventWaitHandleDistributedLock')  
+and [IDistributedSemaphoreProvider](https://github.com/madelson/DistributedLock/tree/default-documentation/docs/api/DistributedLock.Core/IDistributedSemaphoreProvider.md 'Medallion.Threading.IDistributedSemaphoreProvider') for [WaitHandleDistributedSemaphore](WaitHandleDistributedSemaphore.md 'Medallion.Threading.WaitHandles.WaitHandleDistributedSemaphore').
+
+```csharp
+public sealed class WaitHandleDistributedSynchronizationProvider :
+Medallion.Threading.IDistributedLockProvider,
+Medallion.Threading.IDistributedSemaphoreProvider
+```
+
+Inheritance [System.Object](https://docs.microsoft.com/en-us/dotnet/api/System.Object 'System.Object') &#129106; WaitHandleDistributedSynchronizationProvider
+
+Implements [IDistributedLockProvider](https://github.com/madelson/DistributedLock/tree/default-documentation/docs/api/DistributedLock.Core/IDistributedLockProvider.md 'Medallion.Threading.IDistributedLockProvider'), [IDistributedSemaphoreProvider](https://github.com/madelson/DistributedLock/tree/default-documentation/docs/api/DistributedLock.Core/IDistributedSemaphoreProvider.md 'Medallion.Threading.IDistributedSemaphoreProvider')
+
+| Constructors | |
+| :--- | :--- |
+| [WaitHandleDistributedSynchronizationProvider(Nullable&lt;TimeSpan&gt;)](WaitHandleDistributedSynchronizationProvider..ctor.e6xRwWsJppw/KT0BMNM9Fg.md 'Medallion.Threading.WaitHandles.WaitHandleDistributedSynchronizationProvider.WaitHandleDistributedSynchronizationProvider(System.Nullable<System.TimeSpan>)') | Constructs a [WaitHandleDistributedSynchronizationProvider](WaitHandleDistributedSynchronizationProvider.md 'Medallion.Threading.WaitHandles.WaitHandleDistributedSynchronizationProvider') using the provided [abandonmentCheckCadence](WaitHandleDistributedSynchronizationProvider..ctor.e6xRwWsJppw/KT0BMNM9Fg.md#Medallion.Threading.WaitHandles.WaitHandleDistributedSynchronizationProvider.WaitHandleDistributedSynchronizationProvider(System.Nullable_System.TimeSpan_).abandonmentCheckCadence 'Medallion.Threading.WaitHandles.WaitHandleDistributedSynchronizationProvider.WaitHandleDistributedSynchronizationProvider(System.Nullable<System.TimeSpan>).abandonmentCheckCadence'). |
+
+| Methods | |
+| :--- | :--- |
+| [CreateLock(string, bool)](WaitHandleDistributedSynchronizationProvider.CreateLock.+f5b/NJBO/BPj27n2I4gbA.md 'Medallion.Threading.WaitHandles.WaitHandleDistributedSynchronizationProvider.CreateLock(string, bool)') | Creates a [EventWaitHandleDistributedLock](EventWaitHandleDistributedLock.md 'Medallion.Threading.WaitHandles.EventWaitHandleDistributedLock') with the given [name](WaitHandleDistributedSynchronizationProvider.CreateLock.+f5b/NJBO/BPj27n2I4gbA.md#Medallion.Threading.WaitHandles.WaitHandleDistributedSynchronizationProvider.CreateLock(string,bool).name 'Medallion.Threading.WaitHandles.WaitHandleDistributedSynchronizationProvider.CreateLock(string, bool).name'). Unless<br/>[exactName](WaitHandleDistributedSynchronizationProvider.CreateLock.+f5b/NJBO/BPj27n2I4gbA.md#Medallion.Threading.WaitHandles.WaitHandleDistributedSynchronizationProvider.CreateLock(string,bool).exactName 'Medallion.Threading.WaitHandles.WaitHandleDistributedSynchronizationProvider.CreateLock(string, bool).exactName') is specified, invalid wait handle names will be escaped/hashed. |
+| [CreateSemaphore(string, int, bool)](WaitHandleDistributedSynchronizationProvider.CreateSemaphore.lScE6Nm5quO4w5D+oiHGrA.md 'Medallion.Threading.WaitHandles.WaitHandleDistributedSynchronizationProvider.CreateSemaphore(string, int, bool)') | Creates a [WaitHandleDistributedSemaphore](WaitHandleDistributedSemaphore.md 'Medallion.Threading.WaitHandles.WaitHandleDistributedSemaphore') with the given [name](WaitHandleDistributedSynchronizationProvider.CreateSemaphore.lScE6Nm5quO4w5D+oiHGrA.md#Medallion.Threading.WaitHandles.WaitHandleDistributedSynchronizationProvider.CreateSemaphore(string,int,bool).name 'Medallion.Threading.WaitHandles.WaitHandleDistributedSynchronizationProvider.CreateSemaphore(string, int, bool).name')<br/>and [maxCount](WaitHandleDistributedSynchronizationProvider.CreateSemaphore.lScE6Nm5quO4w5D+oiHGrA.md#Medallion.Threading.WaitHandles.WaitHandleDistributedSynchronizationProvider.CreateSemaphore(string,int,bool).maxCount 'Medallion.Threading.WaitHandles.WaitHandleDistributedSynchronizationProvider.CreateSemaphore(string, int, bool).maxCount'). Unless [exactName](WaitHandleDistributedSynchronizationProvider.CreateSemaphore.lScE6Nm5quO4w5D+oiHGrA.md#Medallion.Threading.WaitHandles.WaitHandleDistributedSynchronizationProvider.CreateSemaphore(string,int,bool).exactName 'Medallion.Threading.WaitHandles.WaitHandleDistributedSynchronizationProvider.CreateSemaphore(string, int, bool).exactName') is specified, invalid wait <br/>handle names will be escaped/hashed. |

@@ -1,0 +1,31 @@
+#### [DistributedLock.Core](README.md 'README')
+### [Medallion.Threading](Medallion.Threading.md 'Medallion.Threading').[DistributedReaderWriterLockProviderExtensions](DistributedReaderWriterLockProviderExtensions.md 'Medallion.Threading.DistributedReaderWriterLockProviderExtensions')
+
+## DistributedReaderWriterLockProviderExtensions.AcquireWriteLockAsync(this IDistributedReaderWriterLockProvider, string, Nullable<TimeSpan>, CancellationToken) Method
+
+Equivalent to calling [CreateReaderWriterLock(string)](IDistributedReaderWriterLockProvider.CreateReaderWriterLock.BJyxJJllIyIqdlfqBHLDTA.md 'Medallion.Threading.IDistributedReaderWriterLockProvider.CreateReaderWriterLock(string)') and then  
+[AcquireWriteLockAsync(Nullable&lt;TimeSpan&gt;, CancellationToken)](IDistributedReaderWriterLock.AcquireWriteLockAsync.fFyCc0HswQXUnGvjzNHJ+A.md 'Medallion.Threading.IDistributedReaderWriterLock.AcquireWriteLockAsync(System.Nullable<System.TimeSpan>, System.Threading.CancellationToken)').
+
+```csharp
+public static System.Threading.Tasks.ValueTask<Medallion.Threading.IDistributedSynchronizationHandle> AcquireWriteLockAsync(this Medallion.Threading.IDistributedReaderWriterLockProvider provider, string name, System.Nullable<System.TimeSpan> timeout=null, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='Medallion.Threading.DistributedReaderWriterLockProviderExtensions.AcquireWriteLockAsync(thisMedallion.Threading.IDistributedReaderWriterLockProvider,string,System.Nullable_System.TimeSpan_,System.Threading.CancellationToken).provider'></a>
+
+`provider` [IDistributedReaderWriterLockProvider](IDistributedReaderWriterLockProvider.md 'Medallion.Threading.IDistributedReaderWriterLockProvider')
+
+<a name='Medallion.Threading.DistributedReaderWriterLockProviderExtensions.AcquireWriteLockAsync(thisMedallion.Threading.IDistributedReaderWriterLockProvider,string,System.Nullable_System.TimeSpan_,System.Threading.CancellationToken).name'></a>
+
+`name` [System.String](https://docs.microsoft.com/en-us/dotnet/api/System.String 'System.String')
+
+<a name='Medallion.Threading.DistributedReaderWriterLockProviderExtensions.AcquireWriteLockAsync(thisMedallion.Threading.IDistributedReaderWriterLockProvider,string,System.Nullable_System.TimeSpan_,System.Threading.CancellationToken).timeout'></a>
+
+`timeout` [System.Nullable&lt;](https://docs.microsoft.com/en-us/dotnet/api/System.Nullable-1 'System.Nullable`1')[System.TimeSpan](https://docs.microsoft.com/en-us/dotnet/api/System.TimeSpan 'System.TimeSpan')[&gt;](https://docs.microsoft.com/en-us/dotnet/api/System.Nullable-1 'System.Nullable`1')
+
+<a name='Medallion.Threading.DistributedReaderWriterLockProviderExtensions.AcquireWriteLockAsync(thisMedallion.Threading.IDistributedReaderWriterLockProvider,string,System.Nullable_System.TimeSpan_,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System.Threading.CancellationToken](https://docs.microsoft.com/en-us/dotnet/api/System.Threading.CancellationToken 'System.Threading.CancellationToken')
+
+#### Returns
+[System.Threading.Tasks.ValueTask&lt;](https://docs.microsoft.com/en-us/dotnet/api/System.Threading.Tasks.ValueTask-1 'System.Threading.Tasks.ValueTask`1')[IDistributedSynchronizationHandle](IDistributedSynchronizationHandle.md 'Medallion.Threading.IDistributedSynchronizationHandle')[&gt;](https://docs.microsoft.com/en-us/dotnet/api/System.Threading.Tasks.ValueTask-1 'System.Threading.Tasks.ValueTask`1')
