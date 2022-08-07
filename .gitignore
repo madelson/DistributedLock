@@ -53,3 +53,5 @@ StyleCop.Cache
 packages/
 
 credentials/
+
+publish/

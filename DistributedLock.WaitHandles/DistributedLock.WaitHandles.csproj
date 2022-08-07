@@ -54,4 +54,12 @@
 
   <Import Project="..\CopyPackageToPublishDirectory.targets" />
   <Import Project="..\FixDistributedLockCoreDependencyVersion.targets" />
+
+  <PropertyGroup>
+    <DefaultDocumentationConfigurationFile>..\DefaultDocumentation.json</DefaultDocumentationConfigurationFile>
+    <DefaultDocumentationLinksOutputFile>..\publish\apiReference\$(AssemblyName).links.txt</DefaultDocumentationLinksOutputFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="DefaultDocumentation" Version="0.8.2" PrivateAssets="All" Condition="'$(Configuration)' == 'Release' AND '$(TargetFramework)' == 'netstandard2.1'" />
+  </ItemGroup> 
 </Project>
