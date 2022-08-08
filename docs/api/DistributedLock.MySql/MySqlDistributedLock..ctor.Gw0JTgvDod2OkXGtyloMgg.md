@@ -3,8 +3,8 @@
 
 ## MySqlDistributedLock(string, IDbConnection, bool) Constructor
 
-Constructs a lock with the given [name](MySqlDistributedLock..ctor.Gw0JTgvDod2OkXGtyloMgg.md#Medallion.Threading.MySql.MySqlDistributedLock.MySqlDistributedLock(string,System.Data.IDbConnection,bool).name 'Medallion.Threading.MySql.MySqlDistributedLock.MySqlDistributedLock(string, System.Data.IDbConnection, bool).name') that connects using the provided [connection](MySqlDistributedLock..ctor.Gw0JTgvDod2OkXGtyloMgg.md#Medallion.Threading.MySql.MySqlDistributedLock.MySqlDistributedLock(string,System.Data.IDbConnection,bool).connection 'Medallion.Threading.MySql.MySqlDistributedLock.MySqlDistributedLock(string, System.Data.IDbConnection, bool).connection').  
-  
+Constructs a lock with the given [name](MySqlDistributedLock..ctor.Gw0JTgvDod2OkXGtyloMgg.md#Medallion.Threading.MySql.MySqlDistributedLock.MySqlDistributedLock(string,System.Data.IDbConnection,bool).name 'Medallion.Threading.MySql.MySqlDistributedLock.MySqlDistributedLock(string, System.Data.IDbConnection, bool).name') that connects using the provided [connection](MySqlDistributedLock..ctor.Gw0JTgvDod2OkXGtyloMgg.md#Medallion.Threading.MySql.MySqlDistributedLock.MySqlDistributedLock(string,System.Data.IDbConnection,bool).connection 'Medallion.Threading.MySql.MySqlDistributedLock.MySqlDistributedLock(string, System.Data.IDbConnection, bool).connection').
+
 Unless [exactName](MySqlDistributedLock..ctor.Gw0JTgvDod2OkXGtyloMgg.md#Medallion.Threading.MySql.MySqlDistributedLock.MySqlDistributedLock(string,System.Data.IDbConnection,bool).exactName 'Medallion.Threading.MySql.MySqlDistributedLock.MySqlDistributedLock(string, System.Data.IDbConnection, bool).exactName') is specified, [name](MySqlDistributedLock..ctor.Gw0JTgvDod2OkXGtyloMgg.md#Medallion.Threading.MySql.MySqlDistributedLock.MySqlDistributedLock(string,System.Data.IDbConnection,bool).name 'Medallion.Threading.MySql.MySqlDistributedLock.MySqlDistributedLock(string, System.Data.IDbConnection, bool).name') will be escaped/hashed to ensure name validity.
 
 ```csharp

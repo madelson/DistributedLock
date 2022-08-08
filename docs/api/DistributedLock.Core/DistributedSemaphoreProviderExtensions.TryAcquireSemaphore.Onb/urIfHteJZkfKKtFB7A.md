@@ -3,7 +3,7 @@
 
 ## DistributedSemaphoreProviderExtensions.TryAcquireSemaphore(this IDistributedSemaphoreProvider, string, int, TimeSpan, CancellationToken) Method
 
-Equivalent to calling [CreateSemaphore(string, int)](IDistributedSemaphoreProvider.CreateSemaphore.AA9FahTKczyqDQd0GIAGzQ.md 'Medallion.Threading.IDistributedSemaphoreProvider.CreateSemaphore(string, int)') and then  
+Equivalent to calling [CreateSemaphore(string, int)](IDistributedSemaphoreProvider.CreateSemaphore.AA9FahTKczyqDQd0GIAGzQ.md 'Medallion.Threading.IDistributedSemaphoreProvider.CreateSemaphore(string, int)') and then
 [TryAcquire(TimeSpan, CancellationToken)](IDistributedSemaphore.TryAcquire.G9QqgKI96XBtpNQoUp0RZg.md 'Medallion.Threading.IDistributedSemaphore.TryAcquire(System.TimeSpan, System.Threading.CancellationToken)').
 
 ```csharp

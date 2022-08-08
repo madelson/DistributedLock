@@ -3,7 +3,7 @@
 
 ## SqlDistributedSynchronizationProvider.CreateLock(string, bool) Method
 
-Constructs an instance of [SqlDistributedLock](SqlDistributedLock.md 'Medallion.Threading.SqlServer.SqlDistributedLock') with the provided [name](SqlDistributedSynchronizationProvider.CreateLock.OBB/tAHXb7DSNADefkuRKg.md#Medallion.Threading.SqlServer.SqlDistributedSynchronizationProvider.CreateLock(string,bool).name 'Medallion.Threading.SqlServer.SqlDistributedSynchronizationProvider.CreateLock(string, bool).name'). Unless [exactName](SqlDistributedSynchronizationProvider.CreateLock.OBB/tAHXb7DSNADefkuRKg.md#Medallion.Threading.SqlServer.SqlDistributedSynchronizationProvider.CreateLock(string,bool).exactName 'Medallion.Threading.SqlServer.SqlDistributedSynchronizationProvider.CreateLock(string, bool).exactName')   
+Constructs an instance of [SqlDistributedLock](SqlDistributedLock.md 'Medallion.Threading.SqlServer.SqlDistributedLock') with the provided [name](SqlDistributedSynchronizationProvider.CreateLock.OBB/tAHXb7DSNADefkuRKg.md#Medallion.Threading.SqlServer.SqlDistributedSynchronizationProvider.CreateLock(string,bool).name 'Medallion.Threading.SqlServer.SqlDistributedSynchronizationProvider.CreateLock(string, bool).name'). Unless [exactName](SqlDistributedSynchronizationProvider.CreateLock.OBB/tAHXb7DSNADefkuRKg.md#Medallion.Threading.SqlServer.SqlDistributedSynchronizationProvider.CreateLock(string,bool).exactName 'Medallion.Threading.SqlServer.SqlDistributedSynchronizationProvider.CreateLock(string, bool).exactName') 
 is specified, invalid applock names will be escaped/hashed.
 
 ```csharp

@@ -3,8 +3,8 @@
 
 ## OracleDistributedLock(string, IDbConnection, bool) Constructor
 
-Constructs a lock with the given [name](OracleDistributedLock..ctor.ruFnlqTt8A/yRSLZE0t3dA.md#Medallion.Threading.Oracle.OracleDistributedLock.OracleDistributedLock(string,System.Data.IDbConnection,bool).name 'Medallion.Threading.Oracle.OracleDistributedLock.OracleDistributedLock(string, System.Data.IDbConnection, bool).name') that connects using the provided [connection](OracleDistributedLock..ctor.ruFnlqTt8A/yRSLZE0t3dA.md#Medallion.Threading.Oracle.OracleDistributedLock.OracleDistributedLock(string,System.Data.IDbConnection,bool).connection 'Medallion.Threading.Oracle.OracleDistributedLock.OracleDistributedLock(string, System.Data.IDbConnection, bool).connection').  
-  
+Constructs a lock with the given [name](OracleDistributedLock..ctor.ruFnlqTt8A/yRSLZE0t3dA.md#Medallion.Threading.Oracle.OracleDistributedLock.OracleDistributedLock(string,System.Data.IDbConnection,bool).name 'Medallion.Threading.Oracle.OracleDistributedLock.OracleDistributedLock(string, System.Data.IDbConnection, bool).name') that connects using the provided [connection](OracleDistributedLock..ctor.ruFnlqTt8A/yRSLZE0t3dA.md#Medallion.Threading.Oracle.OracleDistributedLock.OracleDistributedLock(string,System.Data.IDbConnection,bool).connection 'Medallion.Threading.Oracle.OracleDistributedLock.OracleDistributedLock(string, System.Data.IDbConnection, bool).connection').
+
 Unless [exactName](OracleDistributedLock..ctor.ruFnlqTt8A/yRSLZE0t3dA.md#Medallion.Threading.Oracle.OracleDistributedLock.OracleDistributedLock(string,System.Data.IDbConnection,bool).exactName 'Medallion.Threading.Oracle.OracleDistributedLock.OracleDistributedLock(string, System.Data.IDbConnection, bool).exactName') is specified, [name](OracleDistributedLock..ctor.ruFnlqTt8A/yRSLZE0t3dA.md#Medallion.Threading.Oracle.OracleDistributedLock.OracleDistributedLock(string,System.Data.IDbConnection,bool).name 'Medallion.Threading.Oracle.OracleDistributedLock.OracleDistributedLock(string, System.Data.IDbConnection, bool).name') will be escaped/hashed to ensure name validity.
 
 ```csharp

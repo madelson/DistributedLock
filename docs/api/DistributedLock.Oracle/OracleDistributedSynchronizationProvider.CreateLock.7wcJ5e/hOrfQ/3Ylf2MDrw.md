@@ -3,7 +3,7 @@
 
 ## OracleDistributedSynchronizationProvider.CreateLock(string, bool) Method
 
-Creates a [OracleDistributedLock](OracleDistributedLock.md 'Medallion.Threading.Oracle.OracleDistributedLock') with the provided [name](OracleDistributedSynchronizationProvider.CreateLock.7wcJ5e/hOrfQ/3Ylf2MDrw.md#Medallion.Threading.Oracle.OracleDistributedSynchronizationProvider.CreateLock(string,bool).name 'Medallion.Threading.Oracle.OracleDistributedSynchronizationProvider.CreateLock(string, bool).name'). Unless [exactName](OracleDistributedSynchronizationProvider.CreateLock.7wcJ5e/hOrfQ/3Ylf2MDrw.md#Medallion.Threading.Oracle.OracleDistributedSynchronizationProvider.CreateLock(string,bool).exactName 'Medallion.Threading.Oracle.OracleDistributedSynchronizationProvider.CreateLock(string, bool).exactName')   
+Creates a [OracleDistributedLock](OracleDistributedLock.md 'Medallion.Threading.Oracle.OracleDistributedLock') with the provided [name](OracleDistributedSynchronizationProvider.CreateLock.7wcJ5e/hOrfQ/3Ylf2MDrw.md#Medallion.Threading.Oracle.OracleDistributedSynchronizationProvider.CreateLock(string,bool).name 'Medallion.Threading.Oracle.OracleDistributedSynchronizationProvider.CreateLock(string, bool).name'). Unless [exactName](OracleDistributedSynchronizationProvider.CreateLock.7wcJ5e/hOrfQ/3Ylf2MDrw.md#Medallion.Threading.Oracle.OracleDistributedSynchronizationProvider.CreateLock(string,bool).exactName 'Medallion.Threading.Oracle.OracleDistributedSynchronizationProvider.CreateLock(string, bool).exactName') 
 is specified, invalid names will be escaped/hashed.
 
 ```csharp

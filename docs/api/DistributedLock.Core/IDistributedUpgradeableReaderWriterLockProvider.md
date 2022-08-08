@@ -3,7 +3,7 @@
 
 ## IDistributedUpgradeableReaderWriterLockProvider Interface
 
-Acts as a factory for [IDistributedUpgradeableReaderWriterLock](IDistributedUpgradeableReaderWriterLock.md 'Medallion.Threading.IDistributedUpgradeableReaderWriterLock') instances of a certain type. This interface may be  
+Acts as a factory for [IDistributedUpgradeableReaderWriterLock](IDistributedUpgradeableReaderWriterLock.md 'Medallion.Threading.IDistributedUpgradeableReaderWriterLock') instances of a certain type. This interface may be
 easier to use than [IDistributedUpgradeableReaderWriterLock](IDistributedUpgradeableReaderWriterLock.md 'Medallion.Threading.IDistributedUpgradeableReaderWriterLock') in dependency injection scenarios.
 
 ```csharp

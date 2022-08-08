@@ -3,7 +3,7 @@
 
 ## DistributedLockProviderExtensions.TryAcquireLock(this IDistributedLockProvider, string, TimeSpan, CancellationToken) Method
 
-Equivalent to calling [CreateLock(string)](IDistributedLockProvider.CreateLock.lcl3dolUp9eZyeUENeHU9w.md 'Medallion.Threading.IDistributedLockProvider.CreateLock(string)') and then  
+Equivalent to calling [CreateLock(string)](IDistributedLockProvider.CreateLock.lcl3dolUp9eZyeUENeHU9w.md 'Medallion.Threading.IDistributedLockProvider.CreateLock(string)') and then
 [TryAcquire(TimeSpan, CancellationToken)](IDistributedLock.TryAcquire.GcM73KNvUAY5aoOOhgln1g.md 'Medallion.Threading.IDistributedLock.TryAcquire(System.TimeSpan, System.Threading.CancellationToken)').
 
 ```csharp

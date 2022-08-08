@@ -3,14 +3,14 @@
 
 ## IDistributedUpgradeableReaderWriterLock.AcquireUpgradeableReadLock(Nullable<TimeSpan>, CancellationToken) Method
 
-Acquires an UPGRADE lock synchronously, failing with [System.TimeoutException](https://docs.microsoft.com/en-us/dotnet/api/System.TimeoutException 'System.TimeoutException') if the attempt times out. Not compatible with another UPGRADE lock or a WRITE lock. Usage:   
-  
-```csharp  
-using (myLock.AcquireUpgradeableReadLock(...))  
-{  
-    /* we have the lock! */  
-}  
-// dispose releases the lock  
+Acquires an UPGRADE lock synchronously, failing with [System.TimeoutException](https://docs.microsoft.com/en-us/dotnet/api/System.TimeoutException 'System.TimeoutException') if the attempt times out. Not compatible with another UPGRADE lock or a WRITE lock. Usage: 
+
+```csharp
+using (myLock.AcquireUpgradeableReadLock(...))
+{
+    /* we have the lock! */
+}
+// dispose releases the lock
 ```
 
 ```csharp

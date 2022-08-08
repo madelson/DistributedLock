@@ -3,14 +3,14 @@
 
 ## IDistributedSemaphore.Acquire(Nullable<TimeSpan>, CancellationToken) Method
 
-Acquires a semaphore ticket synchronously, failing with [System.TimeoutException](https://docs.microsoft.com/en-us/dotnet/api/System.TimeoutException 'System.TimeoutException') if the attempt times out. Usage:   
-  
-```csharp  
-using (mySemaphore.Acquire(...))  
-{  
-    /* we have the ticket! */  
-}  
-// dispose releases the ticket  
+Acquires a semaphore ticket synchronously, failing with [System.TimeoutException](https://docs.microsoft.com/en-us/dotnet/api/System.TimeoutException 'System.TimeoutException') if the attempt times out. Usage: 
+
+```csharp
+using (mySemaphore.Acquire(...))
+{
+    /* we have the ticket! */
+}
+// dispose releases the ticket
 ```
 
 ```csharp

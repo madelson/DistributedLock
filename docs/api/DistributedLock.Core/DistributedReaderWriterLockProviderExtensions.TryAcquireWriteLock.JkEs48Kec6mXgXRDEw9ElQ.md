@@ -3,7 +3,7 @@
 
 ## DistributedReaderWriterLockProviderExtensions.TryAcquireWriteLock(this IDistributedReaderWriterLockProvider, string, TimeSpan, CancellationToken) Method
 
-Equivalent to calling [CreateReaderWriterLock(string)](IDistributedReaderWriterLockProvider.CreateReaderWriterLock.BJyxJJllIyIqdlfqBHLDTA.md 'Medallion.Threading.IDistributedReaderWriterLockProvider.CreateReaderWriterLock(string)') and then  
+Equivalent to calling [CreateReaderWriterLock(string)](IDistributedReaderWriterLockProvider.CreateReaderWriterLock.BJyxJJllIyIqdlfqBHLDTA.md 'Medallion.Threading.IDistributedReaderWriterLockProvider.CreateReaderWriterLock(string)') and then
 [TryAcquireWriteLock(TimeSpan, CancellationToken)](IDistributedReaderWriterLock.TryAcquireWriteLock.ypAYPzEP3B1U6LcOEQzWBw.md 'Medallion.Threading.IDistributedReaderWriterLock.TryAcquireWriteLock(System.TimeSpan, System.Threading.CancellationToken)').
 
 ```csharp

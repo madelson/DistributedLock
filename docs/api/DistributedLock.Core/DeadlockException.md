@@ -3,7 +3,7 @@
 
 ## DeadlockException Class
 
-An exception that SOME distributed locks will throw under SOME deadlock conditions. Note that even locks  
+An exception that SOME distributed locks will throw under SOME deadlock conditions. Note that even locks
 that throw this exception under some circumstances cannot detect ALL deadlock conditions
 
 ```csharp

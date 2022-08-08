@@ -3,11 +3,11 @@
 
 ## EventWaitHandleDistributedLock(string, Nullable<TimeSpan>, bool) Constructor
 
-Constructs a lock with the given [name](EventWaitHandleDistributedLock..ctor.2Tva732RJcbYY7yOGc2Dtg.md#Medallion.Threading.WaitHandles.EventWaitHandleDistributedLock.EventWaitHandleDistributedLock(string,System.Nullable_System.TimeSpan_,bool).name 'Medallion.Threading.WaitHandles.EventWaitHandleDistributedLock.EventWaitHandleDistributedLock(string, System.Nullable<System.TimeSpan>, bool).name').  
-  
-[abandonmentCheckCadence](EventWaitHandleDistributedLock..ctor.2Tva732RJcbYY7yOGc2Dtg.md#Medallion.Threading.WaitHandles.EventWaitHandleDistributedLock.EventWaitHandleDistributedLock(string,System.Nullable_System.TimeSpan_,bool).abandonmentCheckCadence 'Medallion.Threading.WaitHandles.EventWaitHandleDistributedLock.EventWaitHandleDistributedLock(string, System.Nullable<System.TimeSpan>, bool).abandonmentCheckCadence') specifies how frequently we refresh our [System.Threading.EventWaitHandle](https://docs.microsoft.com/en-us/dotnet/api/System.Threading.EventWaitHandle 'System.Threading.EventWaitHandle') object in case it is abandoned by  
-its original owner. The default is 2s.  
-  
+Constructs a lock with the given [name](EventWaitHandleDistributedLock..ctor.2Tva732RJcbYY7yOGc2Dtg.md#Medallion.Threading.WaitHandles.EventWaitHandleDistributedLock.EventWaitHandleDistributedLock(string,System.Nullable_System.TimeSpan_,bool).name 'Medallion.Threading.WaitHandles.EventWaitHandleDistributedLock.EventWaitHandleDistributedLock(string, System.Nullable<System.TimeSpan>, bool).name').
+
+[abandonmentCheckCadence](EventWaitHandleDistributedLock..ctor.2Tva732RJcbYY7yOGc2Dtg.md#Medallion.Threading.WaitHandles.EventWaitHandleDistributedLock.EventWaitHandleDistributedLock(string,System.Nullable_System.TimeSpan_,bool).abandonmentCheckCadence 'Medallion.Threading.WaitHandles.EventWaitHandleDistributedLock.EventWaitHandleDistributedLock(string, System.Nullable<System.TimeSpan>, bool).abandonmentCheckCadence') specifies how frequently we refresh our [System.Threading.EventWaitHandle](https://docs.microsoft.com/en-us/dotnet/api/System.Threading.EventWaitHandle 'System.Threading.EventWaitHandle') object in case it is abandoned by
+its original owner. The default is 2s.
+
 Unless [exactName](EventWaitHandleDistributedLock..ctor.2Tva732RJcbYY7yOGc2Dtg.md#Medallion.Threading.WaitHandles.EventWaitHandleDistributedLock.EventWaitHandleDistributedLock(string,System.Nullable_System.TimeSpan_,bool).exactName 'Medallion.Threading.WaitHandles.EventWaitHandleDistributedLock.EventWaitHandleDistributedLock(string, System.Nullable<System.TimeSpan>, bool).exactName') is specified, [name](EventWaitHandleDistributedLock..ctor.2Tva732RJcbYY7yOGc2Dtg.md#Medallion.Threading.WaitHandles.EventWaitHandleDistributedLock.EventWaitHandleDistributedLock(string,System.Nullable_System.TimeSpan_,bool).name 'Medallion.Threading.WaitHandles.EventWaitHandleDistributedLock.EventWaitHandleDistributedLock(string, System.Nullable<System.TimeSpan>, bool).name') will be escaped/hashed to ensure name validity.
 
 ```csharp

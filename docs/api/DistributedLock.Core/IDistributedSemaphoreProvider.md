@@ -3,7 +3,7 @@
 
 ## IDistributedSemaphoreProvider Interface
 
-Acts as a factory for [IDistributedSemaphore](IDistributedSemaphore.md 'Medallion.Threading.IDistributedSemaphore') instances of a certain type. This interface may be  
+Acts as a factory for [IDistributedSemaphore](IDistributedSemaphore.md 'Medallion.Threading.IDistributedSemaphore') instances of a certain type. This interface may be
 easier to use than [IDistributedSemaphore](IDistributedSemaphore.md 'Medallion.Threading.IDistributedSemaphore') in dependency injection scenarios.
 
 ```csharp

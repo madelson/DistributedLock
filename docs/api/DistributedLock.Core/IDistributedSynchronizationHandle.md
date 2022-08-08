@@ -3,7 +3,7 @@
 
 ## IDistributedSynchronizationHandle Interface
 
-A handle to a distributed lock or other synchronization primitive. To unlock/release,  
+A handle to a distributed lock or other synchronization primitive. To unlock/release,
 simply dispose the handle.
 
 ```csharp
@@ -19,4 +19,4 @@ Implements [System.IDisposable](https://docs.microsoft.com/en-us/dotnet/api/Syst
 
 | Properties | |
 | :--- | :--- |
-| [HandleLostToken](IDistributedSynchronizationHandle.HandleLostToken.md 'Medallion.Threading.IDistributedSynchronizationHandle.HandleLostToken') | Gets a [System.Threading.CancellationToken](https://docs.microsoft.com/en-us/dotnet/api/System.Threading.CancellationToken 'System.Threading.CancellationToken') instance which may be used to <br/>monitor whether the handle to the lock is lost before the handle is<br/>disposed. <br/><br/>For example, this could happen if the lock is backed by a <br/>database and the connection to the database is disrupted.<br/><br/>Not all lock types support this; those that don't will return [System.Threading.CancellationToken.None](https://docs.microsoft.com/en-us/dotnet/api/System.Threading.CancellationToken.None 'System.Threading.CancellationToken.None')<br/>which can be detected by checking [System.Threading.CancellationToken.CanBeCanceled](https://docs.microsoft.com/en-us/dotnet/api/System.Threading.CancellationToken.CanBeCanceled 'System.Threading.CancellationToken.CanBeCanceled').<br/><br/>For lock types that do support this, accessing this property may incur additional<br/>costs, such as polling to detect connectivity loss. |
+| [HandleLostToken](IDistributedSynchronizationHandle.HandleLostToken.md 'Medallion.Threading.IDistributedSynchronizationHandle.HandleLostToken') | Gets a [System.Threading.CancellationToken](https://docs.microsoft.com/en-us/dotnet/api/System.Threading.CancellationToken 'System.Threading.CancellationToken') instance which may be used to  monitor whether the handle to the lock is lost before the handle is disposed.   For example, this could happen if the lock is backed by a  database and the connection to the database is disrupted.  Not all lock types support this; those that don't will return [System.Threading.CancellationToken.None](https://docs.microsoft.com/en-us/dotnet/api/System.Threading.CancellationToken.None 'System.Threading.CancellationToken.None') which can be detected by checking [System.Threading.CancellationToken.CanBeCanceled](https://docs.microsoft.com/en-us/dotnet/api/System.Threading.CancellationToken.CanBeCanceled 'System.Threading.CancellationToken.CanBeCanceled').  For lock types that do support this, accessing this property may incur additional costs, such as polling to detect connectivity loss. |

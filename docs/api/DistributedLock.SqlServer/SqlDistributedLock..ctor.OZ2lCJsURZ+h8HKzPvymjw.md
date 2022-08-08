@@ -3,11 +3,11 @@
 
 ## SqlDistributedLock(string, IDbConnection, bool) Constructor
 
-Constructs a new lock using the provided [name](SqlDistributedLock..ctor.OZ2lCJsURZ+h8HKzPvymjw.md#Medallion.Threading.SqlServer.SqlDistributedLock.SqlDistributedLock(string,System.Data.IDbConnection,bool).name 'Medallion.Threading.SqlServer.SqlDistributedLock.SqlDistributedLock(string, System.Data.IDbConnection, bool).name').  
-  
-The provided [connection](SqlDistributedLock..ctor.OZ2lCJsURZ+h8HKzPvymjw.md#Medallion.Threading.SqlServer.SqlDistributedLock.SqlDistributedLock(string,System.Data.IDbConnection,bool).connection 'Medallion.Threading.SqlServer.SqlDistributedLock.SqlDistributedLock(string, System.Data.IDbConnection, bool).connection') will be used to connect to the database and will provide lock scope. It is assumed to be externally managed and  
-will not be opened or closed.  
-  
+Constructs a new lock using the provided [name](SqlDistributedLock..ctor.OZ2lCJsURZ+h8HKzPvymjw.md#Medallion.Threading.SqlServer.SqlDistributedLock.SqlDistributedLock(string,System.Data.IDbConnection,bool).name 'Medallion.Threading.SqlServer.SqlDistributedLock.SqlDistributedLock(string, System.Data.IDbConnection, bool).name').
+
+The provided [connection](SqlDistributedLock..ctor.OZ2lCJsURZ+h8HKzPvymjw.md#Medallion.Threading.SqlServer.SqlDistributedLock.SqlDistributedLock(string,System.Data.IDbConnection,bool).connection 'Medallion.Threading.SqlServer.SqlDistributedLock.SqlDistributedLock(string, System.Data.IDbConnection, bool).connection') will be used to connect to the database and will provide lock scope. It is assumed to be externally managed and
+will not be opened or closed.
+
 Unless [exactName](SqlDistributedLock..ctor.OZ2lCJsURZ+h8HKzPvymjw.md#Medallion.Threading.SqlServer.SqlDistributedLock.SqlDistributedLock(string,System.Data.IDbConnection,bool).exactName 'Medallion.Threading.SqlServer.SqlDistributedLock.SqlDistributedLock(string, System.Data.IDbConnection, bool).exactName') is specified, [name](SqlDistributedLock..ctor.OZ2lCJsURZ+h8HKzPvymjw.md#Medallion.Threading.SqlServer.SqlDistributedLock.SqlDistributedLock(string,System.Data.IDbConnection,bool).name 'Medallion.Threading.SqlServer.SqlDistributedLock.SqlDistributedLock(string, System.Data.IDbConnection, bool).name') will be escaped/hashed to ensure name validity.
 
 ```csharp

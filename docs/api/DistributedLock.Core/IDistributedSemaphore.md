@@ -3,7 +3,7 @@
 
 ## IDistributedSemaphore Interface
 
-A synchronization primitive which restricts access to a resource or critical section of code to a fixed number of concurrent threads/processes.  
+A synchronization primitive which restricts access to a resource or critical section of code to a fixed number of concurrent threads/processes.
 Compare to [System.Threading.Semaphore](https://docs.microsoft.com/en-us/dotnet/api/System.Threading.Semaphore 'System.Threading.Semaphore').
 
 ```csharp
@@ -12,7 +12,7 @@ public interface IDistributedSemaphore
 
 | Properties | |
 | :--- | :--- |
-| [MaxCount](IDistributedSemaphore.MaxCount.md 'Medallion.Threading.IDistributedSemaphore.MaxCount') | The maximum number of "tickets" available for the semaphore (ie the number of processes which can acquire<br/>the semaphore concurrently). |
+| [MaxCount](IDistributedSemaphore.MaxCount.md 'Medallion.Threading.IDistributedSemaphore.MaxCount') | The maximum number of "tickets" available for the semaphore (ie the number of processes which can acquire the semaphore concurrently). |
 | [Name](IDistributedSemaphore.Name.md 'Medallion.Threading.IDistributedSemaphore.Name') | A name that uniquely identifies the semaphore |
 
 | Methods | |

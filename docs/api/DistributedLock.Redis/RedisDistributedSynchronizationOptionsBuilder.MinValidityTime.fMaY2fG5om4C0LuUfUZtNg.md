@@ -3,11 +3,11 @@
 
 ## RedisDistributedSynchronizationOptionsBuilder.MinValidityTime(TimeSpan) Method
 
-The lock expiry determines how long the lock will be held without being extended. However, since it takes some amount  
-of time to acquire the lock, we will not have all of expiry available upon acquisition.  
-  
-This value sets a minimum amount which we'll be guaranteed to have left once acquisition completes.  
-  
+The lock expiry determines how long the lock will be held without being extended. However, since it takes some amount
+of time to acquire the lock, we will not have all of expiry available upon acquisition.
+
+This value sets a minimum amount which we'll be guaranteed to have left once acquisition completes.
+
 Defaults to 90% of the specified lock expiry.
 
 ```csharp

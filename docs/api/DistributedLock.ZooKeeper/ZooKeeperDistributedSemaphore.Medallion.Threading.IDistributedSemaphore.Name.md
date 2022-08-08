@@ -3,7 +3,7 @@
 
 ## ZooKeeperDistributedSemaphore.Medallion.Threading.IDistributedSemaphore.Name Property
 
-Implements [Name](https://github.com/madelson/DistributedLock/tree/default-documentation/docs/api/DistributedLock.Core/IDistributedSemaphore.Name.md 'Medallion.Threading.IDistributedSemaphore.Name'). Implemented explicitly to avoid confusion with the fact  
+Implements [Name](https://github.com/madelson/DistributedLock/tree/default-documentation/docs/api/DistributedLock.Core/IDistributedSemaphore.Name.md 'Medallion.Threading.IDistributedSemaphore.Name'). Implemented explicitly to avoid confusion with the fact
 that this will include the leading "/" and base directory alongside the passed-in name.
 
 ```csharp

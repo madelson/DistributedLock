@@ -3,7 +3,7 @@
 
 ## ZooKeeperDistributedReaderWriterLock.Medallion.Threading.IDistributedReaderWriterLock.Name Property
 
-Implements [Name](https://github.com/madelson/DistributedLock/tree/default-documentation/docs/api/DistributedLock.Core/IDistributedReaderWriterLock.Name.md 'Medallion.Threading.IDistributedReaderWriterLock.Name'). Implemented explicitly to avoid confusion with the fact  
+Implements [Name](https://github.com/madelson/DistributedLock/tree/default-documentation/docs/api/DistributedLock.Core/IDistributedReaderWriterLock.Name.md 'Medallion.Threading.IDistributedReaderWriterLock.Name'). Implemented explicitly to avoid confusion with the fact
 that this will include the leading "/" and base directory alongside the passed-in name.
 
 ```csharp

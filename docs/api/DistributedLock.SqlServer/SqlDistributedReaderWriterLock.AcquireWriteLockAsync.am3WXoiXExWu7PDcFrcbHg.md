@@ -3,14 +3,14 @@
 
 ## SqlDistributedReaderWriterLock.AcquireWriteLockAsync(Nullable<TimeSpan>, CancellationToken) Method
 
-Acquires a WRITE lock asynchronously, failing with [System.TimeoutException](https://docs.microsoft.com/en-us/dotnet/api/System.TimeoutException 'System.TimeoutException') if the attempt times out. Not compatible with another WRITE lock or an UPGRADE lock. Usage:   
-  
-```csharp  
-await using (await myLock.AcquireWriteLockAsync(...))  
-{  
-    /* we have the lock! */  
-}  
-// dispose releases the lock  
+Acquires a WRITE lock asynchronously, failing with [System.TimeoutException](https://docs.microsoft.com/en-us/dotnet/api/System.TimeoutException 'System.TimeoutException') if the attempt times out. Not compatible with another WRITE lock or an UPGRADE lock. Usage: 
+
+```csharp
+await using (await myLock.AcquireWriteLockAsync(...))
+{
+    /* we have the lock! */
+}
+// dispose releases the lock
 ```
 
 ```csharp

@@ -3,14 +3,14 @@
 
 ## OracleDistributedLock.AcquireAsync(Nullable<TimeSpan>, CancellationToken) Method
 
-Acquires the lock asynchronously, failing with [System.TimeoutException](https://docs.microsoft.com/en-us/dotnet/api/System.TimeoutException 'System.TimeoutException') if the attempt times out. Usage:   
-  
-```csharp  
-await using (await myLock.AcquireAsync(...))  
-{  
-    /* we have the lock! */  
-}  
-// dispose releases the lock  
+Acquires the lock asynchronously, failing with [System.TimeoutException](https://docs.microsoft.com/en-us/dotnet/api/System.TimeoutException 'System.TimeoutException') if the attempt times out. Usage: 
+
+```csharp
+await using (await myLock.AcquireAsync(...))
+{
+    /* we have the lock! */
+}
+// dispose releases the lock
 ```
 
 ```csharp

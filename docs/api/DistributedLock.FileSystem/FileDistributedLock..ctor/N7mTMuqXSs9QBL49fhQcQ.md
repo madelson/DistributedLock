@@ -3,9 +3,9 @@
 
 ## FileDistributedLock(FileInfo) Constructor
 
-Constructs a lock which uses the provided [lockFile](FileDistributedLock..ctor./N7mTMuqXSs9QBL49fhQcQ.md#Medallion.Threading.FileSystem.FileDistributedLock.FileDistributedLock(System.IO.FileInfo).lockFile 'Medallion.Threading.FileSystem.FileDistributedLock.FileDistributedLock(System.IO.FileInfo).lockFile') as the exact file name.  
-  
-Upon acquiring the lock, the file's directory will be created automatically if it does not already exist. The file   
+Constructs a lock which uses the provided [lockFile](FileDistributedLock..ctor./N7mTMuqXSs9QBL49fhQcQ.md#Medallion.Threading.FileSystem.FileDistributedLock.FileDistributedLock(System.IO.FileInfo).lockFile 'Medallion.Threading.FileSystem.FileDistributedLock.FileDistributedLock(System.IO.FileInfo).lockFile') as the exact file name.
+
+Upon acquiring the lock, the file's directory will be created automatically if it does not already exist. The file 
 will similarly be created if it does not already exist, and will be deleted when the lock is released.
 
 ```csharp

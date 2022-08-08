@@ -3,11 +3,11 @@
 
 ## SqlDistributedReaderWriterLock(string, IDbConnection, bool) Constructor
 
-Constructs a new lock using the provided [name](SqlDistributedReaderWriterLock..ctor.aQ4wmiPxon1R/D2jE25+dg.md#Medallion.Threading.SqlServer.SqlDistributedReaderWriterLock.SqlDistributedReaderWriterLock(string,System.Data.IDbConnection,bool).name 'Medallion.Threading.SqlServer.SqlDistributedReaderWriterLock.SqlDistributedReaderWriterLock(string, System.Data.IDbConnection, bool).name').  
-  
-The provided [connection](SqlDistributedReaderWriterLock..ctor.aQ4wmiPxon1R/D2jE25+dg.md#Medallion.Threading.SqlServer.SqlDistributedReaderWriterLock.SqlDistributedReaderWriterLock(string,System.Data.IDbConnection,bool).connection 'Medallion.Threading.SqlServer.SqlDistributedReaderWriterLock.SqlDistributedReaderWriterLock(string, System.Data.IDbConnection, bool).connection') will be used to connect to the database and will provide lock scope. It is assumed to be externally managed and  
-will not be opened or closed.  
-  
+Constructs a new lock using the provided [name](SqlDistributedReaderWriterLock..ctor.aQ4wmiPxon1R/D2jE25+dg.md#Medallion.Threading.SqlServer.SqlDistributedReaderWriterLock.SqlDistributedReaderWriterLock(string,System.Data.IDbConnection,bool).name 'Medallion.Threading.SqlServer.SqlDistributedReaderWriterLock.SqlDistributedReaderWriterLock(string, System.Data.IDbConnection, bool).name').
+
+The provided [connection](SqlDistributedReaderWriterLock..ctor.aQ4wmiPxon1R/D2jE25+dg.md#Medallion.Threading.SqlServer.SqlDistributedReaderWriterLock.SqlDistributedReaderWriterLock(string,System.Data.IDbConnection,bool).connection 'Medallion.Threading.SqlServer.SqlDistributedReaderWriterLock.SqlDistributedReaderWriterLock(string, System.Data.IDbConnection, bool).connection') will be used to connect to the database and will provide lock scope. It is assumed to be externally managed and
+will not be opened or closed.
+
 Unless [exactName](SqlDistributedReaderWriterLock..ctor.aQ4wmiPxon1R/D2jE25+dg.md#Medallion.Threading.SqlServer.SqlDistributedReaderWriterLock.SqlDistributedReaderWriterLock(string,System.Data.IDbConnection,bool).exactName 'Medallion.Threading.SqlServer.SqlDistributedReaderWriterLock.SqlDistributedReaderWriterLock(string, System.Data.IDbConnection, bool).exactName') is specified, [name](SqlDistributedReaderWriterLock..ctor.aQ4wmiPxon1R/D2jE25+dg.md#Medallion.Threading.SqlServer.SqlDistributedReaderWriterLock.SqlDistributedReaderWriterLock(string,System.Data.IDbConnection,bool).name 'Medallion.Threading.SqlServer.SqlDistributedReaderWriterLock.SqlDistributedReaderWriterLock(string, System.Data.IDbConnection, bool).name') will be escaped/hashed to ensure name validity.
 
 ```csharp

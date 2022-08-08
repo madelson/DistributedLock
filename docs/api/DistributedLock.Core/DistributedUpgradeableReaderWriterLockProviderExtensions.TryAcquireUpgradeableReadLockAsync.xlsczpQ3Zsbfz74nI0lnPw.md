@@ -3,7 +3,7 @@
 
 ## DistributedUpgradeableReaderWriterLockProviderExtensions.TryAcquireUpgradeableReadLockAsync(this IDistributedUpgradeableReaderWriterLockProvider, string, TimeSpan, CancellationToken) Method
 
-Equivalent to calling [CreateUpgradeableReaderWriterLock(string)](IDistributedUpgradeableReaderWriterLockProvider.CreateUpgradeableReaderWriterLock.CLmVtTtcnh6LtTDHkHXXtQ.md 'Medallion.Threading.IDistributedUpgradeableReaderWriterLockProvider.CreateUpgradeableReaderWriterLock(string)') and then  
+Equivalent to calling [CreateUpgradeableReaderWriterLock(string)](IDistributedUpgradeableReaderWriterLockProvider.CreateUpgradeableReaderWriterLock.CLmVtTtcnh6LtTDHkHXXtQ.md 'Medallion.Threading.IDistributedUpgradeableReaderWriterLockProvider.CreateUpgradeableReaderWriterLock(string)') and then
 [TryAcquireUpgradeableReadLockAsync(TimeSpan, CancellationToken)](IDistributedUpgradeableReaderWriterLock.TryAcquireUpgradeableReadLockAsync.NeQQ4jMkCO0IteXQSJv/1w.md 'Medallion.Threading.IDistributedUpgradeableReaderWriterLock.TryAcquireUpgradeableReadLockAsync(System.TimeSpan, System.Threading.CancellationToken)').
 
 ```csharp

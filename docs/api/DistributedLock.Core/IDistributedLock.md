@@ -3,7 +3,7 @@
 
 ## IDistributedLock Interface
 
-A mutex synchronization primitive which can be used to coordinate access to a resource or critical region of code  
+A mutex synchronization primitive which can be used to coordinate access to a resource or critical region of code
 across processes or systems. The scope and capabilities of the lock are dependent on the particular implementation
 
 ```csharp

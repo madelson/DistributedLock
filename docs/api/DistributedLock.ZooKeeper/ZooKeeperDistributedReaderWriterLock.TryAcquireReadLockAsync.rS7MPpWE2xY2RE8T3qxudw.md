@@ -3,14 +3,14 @@
 
 ## ZooKeeperDistributedReaderWriterLock.TryAcquireReadLockAsync(TimeSpan, CancellationToken) Method
 
-Attempts to acquire a READ lock asynchronously. Multiple readers are allowed. Not compatible with a WRITE lock. Usage:   
-  
-```csharp  
-await using (var handle = await myLock.TryAcquireReadLockAsync(...))  
-{  
-    if (handle != null) { /* we have the lock! */ }  
-}  
-// dispose releases the lock if we took it  
+Attempts to acquire a READ lock asynchronously. Multiple readers are allowed. Not compatible with a WRITE lock. Usage: 
+
+```csharp
+await using (var handle = await myLock.TryAcquireReadLockAsync(...))
+{
+    if (handle != null) { /* we have the lock! */ }
+}
+// dispose releases the lock if we took it
 ```
 
 ```csharp

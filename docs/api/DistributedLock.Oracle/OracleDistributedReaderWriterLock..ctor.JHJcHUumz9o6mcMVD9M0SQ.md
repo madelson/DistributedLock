@@ -3,11 +3,11 @@
 
 ## OracleDistributedReaderWriterLock(string, IDbConnection, bool) Constructor
 
-Constructs a new lock using the provided [name](OracleDistributedReaderWriterLock..ctor.JHJcHUumz9o6mcMVD9M0SQ.md#Medallion.Threading.Oracle.OracleDistributedReaderWriterLock.OracleDistributedReaderWriterLock(string,System.Data.IDbConnection,bool).name 'Medallion.Threading.Oracle.OracleDistributedReaderWriterLock.OracleDistributedReaderWriterLock(string, System.Data.IDbConnection, bool).name').  
-  
-The provided [connection](OracleDistributedReaderWriterLock..ctor.JHJcHUumz9o6mcMVD9M0SQ.md#Medallion.Threading.Oracle.OracleDistributedReaderWriterLock.OracleDistributedReaderWriterLock(string,System.Data.IDbConnection,bool).connection 'Medallion.Threading.Oracle.OracleDistributedReaderWriterLock.OracleDistributedReaderWriterLock(string, System.Data.IDbConnection, bool).connection') will be used to connect to the database and will provide lock scope. It is assumed to be externally managed and  
-will not be opened or closed.  
-  
+Constructs a new lock using the provided [name](OracleDistributedReaderWriterLock..ctor.JHJcHUumz9o6mcMVD9M0SQ.md#Medallion.Threading.Oracle.OracleDistributedReaderWriterLock.OracleDistributedReaderWriterLock(string,System.Data.IDbConnection,bool).name 'Medallion.Threading.Oracle.OracleDistributedReaderWriterLock.OracleDistributedReaderWriterLock(string, System.Data.IDbConnection, bool).name').
+
+The provided [connection](OracleDistributedReaderWriterLock..ctor.JHJcHUumz9o6mcMVD9M0SQ.md#Medallion.Threading.Oracle.OracleDistributedReaderWriterLock.OracleDistributedReaderWriterLock(string,System.Data.IDbConnection,bool).connection 'Medallion.Threading.Oracle.OracleDistributedReaderWriterLock.OracleDistributedReaderWriterLock(string, System.Data.IDbConnection, bool).connection') will be used to connect to the database and will provide lock scope. It is assumed to be externally managed and
+will not be opened or closed.
+
 Unless [exactName](OracleDistributedReaderWriterLock..ctor.JHJcHUumz9o6mcMVD9M0SQ.md#Medallion.Threading.Oracle.OracleDistributedReaderWriterLock.OracleDistributedReaderWriterLock(string,System.Data.IDbConnection,bool).exactName 'Medallion.Threading.Oracle.OracleDistributedReaderWriterLock.OracleDistributedReaderWriterLock(string, System.Data.IDbConnection, bool).exactName') is specified, [name](OracleDistributedReaderWriterLock..ctor.JHJcHUumz9o6mcMVD9M0SQ.md#Medallion.Threading.Oracle.OracleDistributedReaderWriterLock.OracleDistributedReaderWriterLock(string,System.Data.IDbConnection,bool).name 'Medallion.Threading.Oracle.OracleDistributedReaderWriterLock.OracleDistributedReaderWriterLock(string, System.Data.IDbConnection, bool).name') will be escaped/hashed to ensure name validity.
 
 ```csharp

@@ -3,11 +3,11 @@
 
 ## SqlConnectionOptionsBuilder.UseTransaction(bool) Method
 
-Whether the synchronization should use a transaction scope rather than a session scope. Defaults to false.  
-  
-Synchronizing based on a transaction is marginally less expensive than using a connection  
-because releasing requires only disposing the underlying [System.Data.IDbTransaction](https://docs.microsoft.com/en-us/dotnet/api/System.Data.IDbTransaction 'System.Data.IDbTransaction').  
-The disadvantage is that using this strategy may lead to long-running transactions, which can be  
+Whether the synchronization should use a transaction scope rather than a session scope. Defaults to false.
+
+Synchronizing based on a transaction is marginally less expensive than using a connection
+because releasing requires only disposing the underlying [System.Data.IDbTransaction](https://docs.microsoft.com/en-us/dotnet/api/System.Data.IDbTransaction 'System.Data.IDbTransaction').
+The disadvantage is that using this strategy may lead to long-running transactions, which can be
 problematic for databases using the full recovery model.
 
 ```csharp

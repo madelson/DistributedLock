@@ -3,7 +3,7 @@
 
 ## WaitHandleDistributedSynchronizationProvider.CreateLock(string, bool) Method
 
-Creates a [EventWaitHandleDistributedLock](EventWaitHandleDistributedLock.md 'Medallion.Threading.WaitHandles.EventWaitHandleDistributedLock') with the given [name](WaitHandleDistributedSynchronizationProvider.CreateLock.+f5b/NJBO/BPj27n2I4gbA.md#Medallion.Threading.WaitHandles.WaitHandleDistributedSynchronizationProvider.CreateLock(string,bool).name 'Medallion.Threading.WaitHandles.WaitHandleDistributedSynchronizationProvider.CreateLock(string, bool).name'). Unless  
+Creates a [EventWaitHandleDistributedLock](EventWaitHandleDistributedLock.md 'Medallion.Threading.WaitHandles.EventWaitHandleDistributedLock') with the given [name](WaitHandleDistributedSynchronizationProvider.CreateLock.+f5b/NJBO/BPj27n2I4gbA.md#Medallion.Threading.WaitHandles.WaitHandleDistributedSynchronizationProvider.CreateLock(string,bool).name 'Medallion.Threading.WaitHandles.WaitHandleDistributedSynchronizationProvider.CreateLock(string, bool).name'). Unless
 [exactName](WaitHandleDistributedSynchronizationProvider.CreateLock.+f5b/NJBO/BPj27n2I4gbA.md#Medallion.Threading.WaitHandles.WaitHandleDistributedSynchronizationProvider.CreateLock(string,bool).exactName 'Medallion.Threading.WaitHandles.WaitHandleDistributedSynchronizationProvider.CreateLock(string, bool).exactName') is specified, invalid wait handle names will be escaped/hashed.
 
 ```csharp

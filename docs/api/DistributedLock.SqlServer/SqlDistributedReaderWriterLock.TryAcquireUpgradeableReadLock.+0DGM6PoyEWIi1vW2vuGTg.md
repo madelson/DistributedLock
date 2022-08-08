@@ -3,14 +3,14 @@
 
 ## SqlDistributedReaderWriterLock.TryAcquireUpgradeableReadLock(TimeSpan, CancellationToken) Method
 
-Attempts to acquire an UPGRADE lock synchronously. Not compatible with another UPGRADE lock or a WRITE lock. Usage:   
-  
-```csharp  
-using (var handle = myLock.TryAcquireUpgradeableReadLock(...))  
-{  
-    if (handle != null) { /* we have the lock! */ }  
-}  
-// dispose releases the lock if we took it  
+Attempts to acquire an UPGRADE lock synchronously. Not compatible with another UPGRADE lock or a WRITE lock. Usage: 
+
+```csharp
+using (var handle = myLock.TryAcquireUpgradeableReadLock(...))
+{
+    if (handle != null) { /* we have the lock! */ }
+}
+// dispose releases the lock if we took it
 ```
 
 ```csharp

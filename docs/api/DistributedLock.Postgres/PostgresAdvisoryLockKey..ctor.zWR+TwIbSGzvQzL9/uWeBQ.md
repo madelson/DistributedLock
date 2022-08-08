@@ -3,7 +3,7 @@
 
 ## PostgresAdvisoryLockKey(long) Constructor
 
-Constructs a key from a single 64-bit value. This is a separate key space   
+Constructs a key from a single 64-bit value. This is a separate key space 
 than [PostgresAdvisoryLockKey(int, int)](PostgresAdvisoryLockKey..ctor.LedpDNSMoNGTkn636aYbow.md 'Medallion.Threading.Postgres.PostgresAdvisoryLockKey.PostgresAdvisoryLockKey(int, int)').
 
 ```csharp

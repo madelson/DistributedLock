@@ -3,7 +3,7 @@
 
 ## PostgresAdvisoryLockKey.ToString() Method
 
-Returns a string representation of the key that can be round-tripped through  
+Returns a string representation of the key that can be round-tripped through
 [PostgresAdvisoryLockKey(string, bool)](PostgresAdvisoryLockKey..ctor.nrSDuGGKUsKtcB73EU1nXg.md 'Medallion.Threading.Postgres.PostgresAdvisoryLockKey.PostgresAdvisoryLockKey(string, bool)')
 
 ```csharp

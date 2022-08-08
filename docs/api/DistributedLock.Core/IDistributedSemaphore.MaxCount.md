@@ -3,7 +3,7 @@
 
 ## IDistributedSemaphore.MaxCount Property
 
-The maximum number of "tickets" available for the semaphore (ie the number of processes which can acquire  
+The maximum number of "tickets" available for the semaphore (ie the number of processes which can acquire
 the semaphore concurrently).
 
 ```csharp

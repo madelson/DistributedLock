@@ -3,10 +3,10 @@
 
 ## ZooKeeperDistributedSynchronizationOptionsBuilder.SessionTimeout(TimeSpan) Method
 
-Configures the [sessionTimeout](ZooKeeperDistributedSynchronizationOptionsBuilder.SessionTimeout.a4s4suCBjQ12y3wfkImgaw.md#Medallion.Threading.ZooKeeper.ZooKeeperDistributedSynchronizationOptionsBuilder.SessionTimeout(System.TimeSpan).sessionTimeout 'Medallion.Threading.ZooKeeper.ZooKeeperDistributedSynchronizationOptionsBuilder.SessionTimeout(System.TimeSpan).sessionTimeout') for connections to ZooKeeper. Because the underlying ZooKeeper client periodically renews  
-the session, this value generally will not impact behavior. Lower values mean that locks will be released more quickly following a crash  
-of the lock-holding process, but also increase the risk that transient connection issues will result in a dropped lock.  
-  
+Configures the [sessionTimeout](ZooKeeperDistributedSynchronizationOptionsBuilder.SessionTimeout.a4s4suCBjQ12y3wfkImgaw.md#Medallion.Threading.ZooKeeper.ZooKeeperDistributedSynchronizationOptionsBuilder.SessionTimeout(System.TimeSpan).sessionTimeout 'Medallion.Threading.ZooKeeper.ZooKeeperDistributedSynchronizationOptionsBuilder.SessionTimeout(System.TimeSpan).sessionTimeout') for connections to ZooKeeper. Because the underlying ZooKeeper client periodically renews
+the session, this value generally will not impact behavior. Lower values mean that locks will be released more quickly following a crash
+of the lock-holding process, but also increase the risk that transient connection issues will result in a dropped lock.
+
 Defaults to 20s.
 
 ```csharp

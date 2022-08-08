@@ -3,8 +3,8 @@
 
 ## IDistributedUpgradeableReaderWriterLock Interface
 
-Extends [IDistributedReaderWriterLock](IDistributedReaderWriterLock.md 'Medallion.Threading.IDistributedReaderWriterLock') with the ability to take an "upgrade" lock. Like a read lock, an upgrade lock   
-allows for other concurrent read locks, but not for other upgrade or write locks. However, an upgrade lock can also be upgraded to a write  
+Extends [IDistributedReaderWriterLock](IDistributedReaderWriterLock.md 'Medallion.Threading.IDistributedReaderWriterLock') with the ability to take an "upgrade" lock. Like a read lock, an upgrade lock 
+allows for other concurrent read locks, but not for other upgrade or write locks. However, an upgrade lock can also be upgraded to a write
 lock without releasing the underlying handle.
 
 ```csharp

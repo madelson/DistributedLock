@@ -71,26 +71,28 @@ namespace DistributedLockCodeGen
             {
                 var projectName = Path.GetFileName(projectDirectory);
                 var binDirectory = Path.Combine(projectDirectory, "bin", "Release", DocsFramework);
+                var outputDirectoryPath = Path.Combine(contentPath, projectName);
 
-                var config = new
+                var config = new Dictionary<string, object>
                 {
-                    AssemblyFilePath = Path.Combine(binDirectory, projectName + ".dll"),
-                    DocumentationFilePath = Path.Combine(binDirectory, projectName + ".xml"),
-                    ProjectDirectoryPath = projectDirectory,
-                    OutputDirectoryPath = Path.Combine(contentPath, projectName),
-                    AssemblyPageName = "README",
-                    GeneratedAccessModifiers = "Public,Protected,ProtectedInternal",
-                    GeneratedPages = "Assembly,Namespaces,Types,Members",
-                    LinksOutputFilePath = Path.Combine(linksPath, projectName + ".txt"),
-                    LinksBaseUrl = $"https://github.com/madelson/DistributedLock/tree/default-documentation/{DocsFolder}/{ApiFolder}/{projectName}/",
-                    ExternLinksFilePaths = new string[] { Path.Combine(linksPath, "*.txt") },
-                    FileNameFactory = "NameAndMd5Mix",
+                    { "AssemblyFilePath", Path.Combine(binDirectory, projectName + ".dll") },
+                    { "DocumentationFilePath", Path.Combine(binDirectory, projectName + ".xml") },
+                    { "ProjectDirectoryPath", projectDirectory },
+                    { "OutputDirectoryPath", outputDirectoryPath },
+                    { "AssemblyPageName", "README" },
+                    { "GeneratedAccessModifiers", "Public,Protected,ProtectedInternal" },
+                    { "GeneratedPages", "Assembly,Namespaces,Types,Members" },
+                    { "LinksOutputFilePath", Path.Combine(linksPath, projectName + ".txt") },
+                    { "LinksBaseUrl", $"https://github.com/madelson/DistributedLock/tree/default-documentation/{DocsFolder}/{ApiFolder}/{projectName}/" },
+                    { "ExternLinksFilePaths", new string[] { Path.Combine(linksPath, "*.txt") } },
+                    { "FileNameFactory", "NameAndMd5Mix" },
+                    { "Markdown.IgnoreLineBreak", true },
                 };
 
                 var configFilePath = Path.Combine(tempDirectory, projectName + "_config.json");
                 File.WriteAllText(configFilePath, JsonSerializer.Serialize(config));
 
-                DeleteDirectoryIfExists(config.OutputDirectoryPath);
+                DeleteDirectoryIfExists(outputDirectoryPath);
                 await Shell.Run("defaultdocumentation", "-j", configFilePath).Task;
             }
         }

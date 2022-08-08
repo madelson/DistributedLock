@@ -3,14 +3,14 @@
 
 ## PostgresDistributedLock.Acquire(Nullable<TimeSpan>, CancellationToken) Method
 
-Acquires the lock synchronously, failing with [System.TimeoutException](https://docs.microsoft.com/en-us/dotnet/api/System.TimeoutException 'System.TimeoutException') if the attempt times out. Usage:   
-  
-```csharp  
-using (myLock.Acquire(...))  
-{  
-    /* we have the lock! */  
-}  
-// dispose releases the lock  
+Acquires the lock synchronously, failing with [System.TimeoutException](https://docs.microsoft.com/en-us/dotnet/api/System.TimeoutException 'System.TimeoutException') if the attempt times out. Usage: 
+
+```csharp
+using (myLock.Acquire(...))
+{
+    /* we have the lock! */
+}
+// dispose releases the lock
 ```
 
 ```csharp

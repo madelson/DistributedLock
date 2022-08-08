@@ -3,7 +3,7 @@
 
 ## MySqlDistributedSynchronizationProvider.CreateLock(string, bool) Method
 
-Creates a [MySqlDistributedLock](MySqlDistributedLock.md 'Medallion.Threading.MySql.MySqlDistributedLock') with the provided [name](MySqlDistributedSynchronizationProvider.CreateLock.BfFkX376FOT5FK96U7Fr1g.md#Medallion.Threading.MySql.MySqlDistributedSynchronizationProvider.CreateLock(string,bool).name 'Medallion.Threading.MySql.MySqlDistributedSynchronizationProvider.CreateLock(string, bool).name'). Unless [exactName](MySqlDistributedSynchronizationProvider.CreateLock.BfFkX376FOT5FK96U7Fr1g.md#Medallion.Threading.MySql.MySqlDistributedSynchronizationProvider.CreateLock(string,bool).exactName 'Medallion.Threading.MySql.MySqlDistributedSynchronizationProvider.CreateLock(string, bool).exactName')   
+Creates a [MySqlDistributedLock](MySqlDistributedLock.md 'Medallion.Threading.MySql.MySqlDistributedLock') with the provided [name](MySqlDistributedSynchronizationProvider.CreateLock.BfFkX376FOT5FK96U7Fr1g.md#Medallion.Threading.MySql.MySqlDistributedSynchronizationProvider.CreateLock(string,bool).name 'Medallion.Threading.MySql.MySqlDistributedSynchronizationProvider.CreateLock(string, bool).name'). Unless [exactName](MySqlDistributedSynchronizationProvider.CreateLock.BfFkX376FOT5FK96U7Fr1g.md#Medallion.Threading.MySql.MySqlDistributedSynchronizationProvider.CreateLock(string,bool).exactName 'Medallion.Threading.MySql.MySqlDistributedSynchronizationProvider.CreateLock(string, bool).exactName') 
 is specified, invalid names will be escaped/hashed.
 
 ```csharp

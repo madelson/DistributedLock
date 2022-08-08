@@ -3,7 +3,7 @@
 
 ## ZooKeeperPath Struct
 
-Represents a path to a ZooKeeper node. The constructor validates that the input is a valid path.  
+Represents a path to a ZooKeeper node. The constructor validates that the input is a valid path.
 Call [ToString()](ZooKeeperPath.ToString().md 'Medallion.Threading.ZooKeeper.ZooKeeperPath.ToString()') to get the path value.
 
 ```csharp

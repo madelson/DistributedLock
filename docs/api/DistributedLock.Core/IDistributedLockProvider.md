@@ -3,7 +3,7 @@
 
 ## IDistributedLockProvider Interface
 
-Acts as a factory for [IDistributedLock](IDistributedLock.md 'Medallion.Threading.IDistributedLock') instances of a certain type. This interface may be  
+Acts as a factory for [IDistributedLock](IDistributedLock.md 'Medallion.Threading.IDistributedLock') instances of a certain type. This interface may be
 easier to use than [IDistributedLock](IDistributedLock.md 'Medallion.Threading.IDistributedLock') in dependency injection scenarios.
 
 ```csharp

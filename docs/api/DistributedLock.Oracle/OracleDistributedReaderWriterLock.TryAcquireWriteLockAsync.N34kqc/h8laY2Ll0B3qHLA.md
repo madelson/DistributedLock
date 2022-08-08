@@ -3,14 +3,14 @@
 
 ## OracleDistributedReaderWriterLock.TryAcquireWriteLockAsync(TimeSpan, CancellationToken) Method
 
-Attempts to acquire a WRITE lock asynchronously. Not compatible with another WRITE lock or an UPGRADE lock. Usage:   
-  
-```csharp  
-await using (var handle = await myLock.TryAcquireWriteLockAsync(...))  
-{  
-    if (handle != null) { /* we have the lock! */ }  
-}  
-// dispose releases the lock if we took it  
+Attempts to acquire a WRITE lock asynchronously. Not compatible with another WRITE lock or an UPGRADE lock. Usage: 
+
+```csharp
+await using (var handle = await myLock.TryAcquireWriteLockAsync(...))
+{
+    if (handle != null) { /* we have the lock! */ }
+}
+// dispose releases the lock if we took it
 ```
 
 ```csharp

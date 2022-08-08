@@ -3,9 +3,9 @@
 
 ## ZooKeeperDistributedSynchronizationOptionsBuilder.AddAccessControl(string, string, int) Method
 
-Configures the access control list (ACL) for any created ZooKeeper nodes. Each call to this method adds another entry to the access control  
-list. See https://zookeeper.apache.org/doc/r3.5.4-beta/zookeeperProgrammers.html for more information on ZooKeeper ACLs.  
-  
+Configures the access control list (ACL) for any created ZooKeeper nodes. Each call to this method adds another entry to the access control
+list. See https://zookeeper.apache.org/doc/r3.5.4-beta/zookeeperProgrammers.html for more information on ZooKeeper ACLs.
+
 If no ACL entries are specified, the ACL used will be a singleton list that grants all permissions to (world, anyone).
 
 ```csharp

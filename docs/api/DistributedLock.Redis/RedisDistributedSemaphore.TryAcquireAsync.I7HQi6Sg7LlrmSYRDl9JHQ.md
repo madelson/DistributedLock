@@ -3,14 +3,14 @@
 
 ## RedisDistributedSemaphore.TryAcquireAsync(TimeSpan, CancellationToken) Method
 
-Attempts to acquire a semaphore ticket asynchronously. Usage:   
-  
-```csharp  
-await using (var handle = await mySemaphore.TryAcquireAsync(...))  
-{  
-    if (handle != null) { /* we have the ticket! */ }  
-}  
-// dispose releases the ticket if we took it  
+Attempts to acquire a semaphore ticket asynchronously. Usage: 
+
+```csharp
+await using (var handle = await mySemaphore.TryAcquireAsync(...))
+{
+    if (handle != null) { /* we have the ticket! */ }
+}
+// dispose releases the ticket if we took it
 ```
 
 ```csharp

@@ -3,14 +3,14 @@
 
 ## PostgresDistributedLock.TryAcquire(TimeSpan, CancellationToken) Method
 
-Attempts to acquire the lock synchronously. Usage:   
-  
-```csharp  
-using (var handle = myLock.TryAcquire(...))  
-{  
-    if (handle != null) { /* we have the lock! */ }  
-}  
-// dispose releases the lock if we took it  
+Attempts to acquire the lock synchronously. Usage: 
+
+```csharp
+using (var handle = myLock.TryAcquire(...))
+{
+    if (handle != null) { /* we have the lock! */ }
+}
+// dispose releases the lock if we took it
 ```
 
 ```csharp

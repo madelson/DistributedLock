@@ -3,14 +3,14 @@
 
 ## ZooKeeperDistributedLock.TryAcquireAsync(TimeSpan, CancellationToken) Method
 
-Attempts to acquire the lock asynchronously. Usage:   
-  
-```csharp  
-await using (var handle = await myLock.TryAcquireAsync(...))  
-{  
-    if (handle != null) { /* we have the lock! */ }  
-}  
-// dispose releases the lock if we took it  
+Attempts to acquire the lock asynchronously. Usage: 
+
+```csharp
+await using (var handle = await myLock.TryAcquireAsync(...))
+{
+    if (handle != null) { /* we have the lock! */ }
+}
+// dispose releases the lock if we took it
 ```
 
 ```csharp

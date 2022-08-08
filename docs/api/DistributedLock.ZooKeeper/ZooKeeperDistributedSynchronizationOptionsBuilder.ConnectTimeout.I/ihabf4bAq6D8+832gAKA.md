@@ -3,8 +3,8 @@
 
 ## ZooKeeperDistributedSynchronizationOptionsBuilder.ConnectTimeout(TimeSpan) Method
 
-Configures how long to wait to establish a connection to ZooKeeper before failing with a [System.TimeoutException](https://docs.microsoft.com/en-us/dotnet/api/System.TimeoutException 'System.TimeoutException').  
-  
+Configures how long to wait to establish a connection to ZooKeeper before failing with a [System.TimeoutException](https://docs.microsoft.com/en-us/dotnet/api/System.TimeoutException 'System.TimeoutException').
+
 Defaults to 15s.
 
 ```csharp

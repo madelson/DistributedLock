@@ -3,14 +3,14 @@
 
 ## IDistributedSemaphore.TryAcquire(TimeSpan, CancellationToken) Method
 
-Attempts to acquire a semaphore ticket synchronously. Usage:   
-  
-```csharp  
-using (var handle = mySemaphore.TryAcquire(...))  
-{  
-    if (handle != null) { /* we have the ticket! */ }  
-}  
-// dispose releases the ticket if we took it  
+Attempts to acquire a semaphore ticket synchronously. Usage: 
+
+```csharp
+using (var handle = mySemaphore.TryAcquire(...))
+{
+    if (handle != null) { /* we have the ticket! */ }
+}
+// dispose releases the ticket if we took it
 ```
 
 ```csharp
