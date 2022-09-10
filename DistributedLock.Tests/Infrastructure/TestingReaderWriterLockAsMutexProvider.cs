@@ -12,6 +12,7 @@ namespace Medallion.Threading.Tests
         public bool DisableUpgradeLock { get; set; }
     }
 
+    [SupportsContinuousIntegration]
     public sealed class TestingReaderWriterLockAsMutexProvider<TReaderWriterLockProvider, TStrategy> : TestingLockProvider<TStrategy>, ITestingReaderWriterLockAsMutexProvider
         where TReaderWriterLockProvider : TestingReaderWriterLockProvider<TStrategy>, new()
         where TStrategy : TestingSynchronizationStrategy, new()

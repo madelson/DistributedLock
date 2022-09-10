@@ -54,6 +54,7 @@
     <ProjectReference Include="..\DistributedLock.ZooKeeper\DistributedLock.ZooKeeper.csproj" />
     <ProjectReference Include="..\DistributedLock.MySql\DistributedLock.MySql.csproj" />
     <ProjectReference Include="..\DistributedLock.Oracle\DistributedLock.Oracle.csproj" Condition="'$(TargetFramework)' != 'netstandard2.0' AND '$(TargetFramework)' != 'net461'" />
+    <ProjectReference Include="..\DistributedLock.ProcessScoped\DistributedLock.ProcessScoped.csproj" />
   </ItemGroup>
 
   <ItemGroup>

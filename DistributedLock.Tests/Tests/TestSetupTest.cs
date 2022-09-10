@@ -92,8 +92,7 @@ $@"namespace {g.Key}
             }
 
             // remove words that are very common and therefore don't add much to the name
-            var testClassName = Regex.Replace(GetTestClassName(testClassType), "Distributed|Lock|Testing|TestCases", string.Empty) + "Test";
-
+            var testClassName = Regex.Replace(GetTestClassName(testClassType), "Distributed|Named|Lock|Testing|TestCases", string.Empty) + "Test";
             var supportsContinuousIntegrationAttributes = TraverseDepthFirst(testClassType, t => t.GetGenericArguments())
                 .Where(t => t != testClassType)
                 .Select(a => a.GetCustomAttribute<SupportsContinuousIntegrationAttribute>())

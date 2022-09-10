@@ -395,6 +395,8 @@ namespace Medallion.Threading.Tests
         [Test]
         public void TestCrossProcess()
         {
+            if (!this._lockProvider.Strategy.SupportsCrossProcess) { Assert.Pass(); }
+
             var lockName = this._lockProvider.GetUniqueSafeName();
             var command = this.RunLockTaker(this._lockProvider, this._lockProvider.GetCrossProcessLockType(), lockName);
             Assert.IsTrue(command.StandardOutput.ReadLineAsync().Wait(TimeSpan.FromSeconds(10)));
@@ -426,6 +428,8 @@ namespace Medallion.Threading.Tests
 
         private void CrossProcessAbandonmentHelper(bool asyncWait, bool kill)
         {
+            if (!this._lockProvider.Strategy.SupportsCrossProcess) { Assert.Pass(); }
+
             var name = this._lockProvider.GetUniqueSafeName($"cpl-{asyncWait}-{kill}");
             var command = this.RunLockTaker(this._lockProvider, this._lockProvider.GetCrossProcessLockType(), name);
             Assert.IsTrue(command.StandardOutput.ReadLineAsync().Wait(TimeSpan.FromSeconds(10)));

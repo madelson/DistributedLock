@@ -11,7 +11,12 @@ namespace Medallion.Threading.Internal
     /// <see cref="IDisposable.Dispose"/> method because <see cref="SemaphoreSlim"/> does not require disposal unless its
     /// <see cref="SemaphoreSlim.AvailableWaitHandle"/> is accessed
     /// </summary>
-    internal readonly struct AsyncLock
+#if DEBUG
+    public
+#else
+    internal
+#endif
+    readonly struct AsyncLock
     {
         private readonly SemaphoreSlim _semaphore;
 

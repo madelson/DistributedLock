@@ -22,7 +22,8 @@ namespace Medallion.Threading.Tests
         public void TestPublicNamespaces(AssemblyName assemblyName)
         {
             var expectedNamespace = assemblyName.Name!.Replace("DistributedLock", "Medallion.Threading")
-                .Replace(".Core", string.Empty);
+                .Replace(".Core", string.Empty)
+                .Replace(".ProcessScoped", string.Empty);
             foreach (var type in GetPublicTypes(Assembly.Load(assemblyName)))
             {
                 type.Namespace.ShouldEqual(expectedNamespace, $"{type} in {assemblyName}");

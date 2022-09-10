@@ -10,11 +10,13 @@ namespace Medallion.Threading.Tests
     /// </summary>
     public abstract class TestingSynchronizationStrategy : IDisposable
     {
+        public virtual bool SupportsCrossProcess => true;
+
         /// <summary>
         /// Whether or not abandoning a ticket held in another process will cause that ticket
         /// to be released if tickets are still held elsewhere
         /// </summary>
-        public virtual bool SupportsCrossProcessSingleSemaphoreTicketAbandonment => true;
+        public virtual bool SupportsCrossProcessSingleSemaphoreTicketAbandonment => this.SupportsCrossProcess;
 
         public virtual void PrepareForHandleAbandonment() { }
         public virtual void PerformAdditionalCleanupForHandleAbandonment() { }

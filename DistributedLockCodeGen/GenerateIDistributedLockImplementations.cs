@@ -16,7 +16,7 @@ namespace DistributedLockCodeGen
         {
             var files = CodeGenHelpers.EnumerateSolutionFiles()
                 .Where(f => !f.Contains($"Distributed{name}.Core", StringComparison.OrdinalIgnoreCase))
-                .Where(f => f.EndsWith($"Distributed{name}.cs", StringComparison.OrdinalIgnoreCase) && Path.GetFileName(f)[0] != 'I');
+                .Where(f => Regex.IsMatch(f, $"(Distributed|Named){name}.cs$", RegexOptions.IgnoreCase) && Path.GetFileName(f)[0] != 'I');
             
             var errors = new List<string>();
             foreach (var file in files)
@@ -98,7 +98,7 @@ namespace {@namespace}
         {
             var files = CodeGenHelpers.EnumerateSolutionFiles()
                 .Where(f => f.IndexOf("DistributedLock.Core", StringComparison.OrdinalIgnoreCase) < 0)
-                .Where(f => Regex.IsMatch(Path.GetFileName(f), @"Distributed.*?ReaderWriterLock\.cs$", RegexOptions.IgnoreCase));
+                .Where(f => Regex.IsMatch(Path.GetFileName(f), @"(Distributed|Named).*?ReaderWriterLock\.cs$", RegexOptions.IgnoreCase));
 
             var errors = new List<string>();
             foreach (var file in files)

@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.29613.14
+# Visual Studio Version 17
+VisualStudioVersion = 17.2.32616.157
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DistributedLock", "DistributedLock\DistributedLock.csproj", "{C1F56B68-C2EE-48E5-A99B-B40D397AE34F}"
 EndProject
@@ -35,7 +35,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DistributedLock.ZooKeeper",
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DistributedLock.MySql", "DistributedLock.MySql\DistributedLock.MySql.csproj", "{6C13E55C-51A7-47CD-88A5-7C8564EBCB3C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DistributedLock.Oracle", "DistributedLock.Oracle\DistributedLock.Oracle.csproj", "{1CAB9A1D-0C02-459C-A90E-47819832BD58}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DistributedLock.Oracle", "DistributedLock.Oracle\DistributedLock.Oracle.csproj", "{1CAB9A1D-0C02-459C-A90E-47819832BD58}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DistributedLock.ProcessScoped", "DistributedLock.ProcessScoped\DistributedLock.ProcessScoped.csproj", "{78EFB915-5E25-41BA-AB82-FD227E61B1D6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -99,6 +101,10 @@ Global
 		{1CAB9A1D-0C02-459C-A90E-47819832BD58}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1CAB9A1D-0C02-459C-A90E-47819832BD58}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1CAB9A1D-0C02-459C-A90E-47819832BD58}.Release|Any CPU.Build.0 = Release|Any CPU
+		{78EFB915-5E25-41BA-AB82-FD227E61B1D6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{78EFB915-5E25-41BA-AB82-FD227E61B1D6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{78EFB915-5E25-41BA-AB82-FD227E61B1D6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{78EFB915-5E25-41BA-AB82-FD227E61B1D6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
