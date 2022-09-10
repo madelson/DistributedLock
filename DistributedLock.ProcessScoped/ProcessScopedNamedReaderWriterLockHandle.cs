@@ -7,6 +7,9 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading
 {
+    /// <summary>
+    /// Implements <see cref="IDistributedSynchronizationHandle"/>
+    /// </summary>
     public abstract class ProcessScopedNamedReaderWriterLockHandle : IDistributedSynchronizationHandle
     {
         // forbid external inheritors
@@ -16,8 +19,14 @@ namespace Medallion.Threading
 
         private protected abstract bool IsDisposed { get; }
 
+        /// <summary>
+        /// Releases the lock
+        /// </summary>
         public abstract void Dispose();
 
+        /// <summary>
+        /// Releases the lock
+        /// </summary>
         public ValueTask DisposeAsync()
         {
             this.Dispose();
@@ -45,6 +54,9 @@ namespace Medallion.Threading
         }
     }
 
+    /// <summary>
+    /// Implements <see cref="IDistributedLockUpgradeableHandle"/>
+    /// </summary>
     public sealed class ProcessScopedNamedReaderWriterLockUpgradeableHandle : ProcessScopedNamedReaderWriterLockHandle, IInternalDistributedLockUpgradeableHandle
     {
         private HandleAndLease<AsyncReaderWriterLock.UpgradeableHandle>? _handleAndLease;
@@ -58,6 +70,9 @@ namespace Medallion.Threading
 
         private protected override bool IsDisposed => Volatile.Read(ref this._finalizerRegistration) is null;
 
+        /// <summary>
+        /// Releases the lock
+        /// </summary>
         public override void Dispose()
         {
             Interlocked.Exchange(ref this._handleAndLease, null)?.Dispose(); // call this first because it can throw if upgrading

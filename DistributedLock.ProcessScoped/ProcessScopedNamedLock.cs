@@ -7,15 +7,26 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading
 {
+    /// <summary>
+    /// An implementation of <see cref="IDistributedLock"/> which is SCOPED TO JUST THE CURRENT PROCESS and therefore
+    /// is NOT TRULY DISTRIBUTED. Therefore, this implementation is intended primarily for testing or scenarios where
+    /// name-based locking is useful (e.g. when frequently creating and destroying fine-grained locks).
+    /// </summary>
     public sealed partial class ProcessScopedNamedLock : IInternalDistributedLock<ProcessScopedNamedLockHandle>
     {
         private static readonly NamedObjectPool<AsyncLockWrapper> NamedObjectPool = new(_ => new());
 
+        /// <summary>
+        /// Constructs a lock with <paramref name="name"/>.
+        /// </summary>
         public ProcessScopedNamedLock(string name)
         {
             this.Name = name ?? throw new ArgumentNullException(nameof(name));
         }
 
+        /// <summary>
+        /// Implements <see cref="IDistributedLock.Name"/>
+        /// </summary>
         public string Name { get; }
 
         async ValueTask<ProcessScopedNamedLockHandle?> IInternalDistributedLock<ProcessScopedNamedLockHandle>.InternalTryAcquireAsync(

@@ -69,7 +69,11 @@ namespace Medallion.Threading.Tests
 
                 foreach (var provider in providers)
                 {
-                    Assert.That(provider.Name, Does.EndWith("DistributedSynchronizationProvider"));
+                    Assert.That(
+                        provider.Name,
+                        Does.EndWith("DistributedSynchronizationProvider")
+                            .Or.EqualTo("ProcessScopedNamedSynchronizationProvider")
+                    );
                 }
             }
         }

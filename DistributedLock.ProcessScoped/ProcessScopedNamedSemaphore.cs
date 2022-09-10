@@ -7,10 +7,18 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading
 {
+    /// <summary>
+    /// An implementation of <see cref="IDistributedSemaphore"/> which is SCOPED TO JUST THE CURRENT PROCESS and therefore
+    /// is NOT TRULY DISTRIBUTED. Therefore, this implementation is intended primarily for testing or scenarios where
+    /// name-based locking is useful (e.g. when frequently creating and destroying fine-grained locks).
+    /// </summary>
     public sealed partial class ProcessScopedNamedSemaphore : IInternalDistributedSemaphore<ProcessScopedNamedSemaphoreHandle>
     {
         private static readonly NamedObjectPool<SemaphoreBox> NamedObjectPool = new(_ => new());
 
+        /// <summary>
+        /// Constructs a semaphore with <paramref name="name"/> and <paramref name="maxCount"/>.
+        /// </summary>
         public ProcessScopedNamedSemaphore(string name, int maxCount)
         {
             if (maxCount < 1) { throw new ArgumentOutOfRangeException(nameof(maxCount), maxCount, "must be positive"); }
@@ -19,7 +27,13 @@ namespace Medallion.Threading
             this.MaxCount = maxCount;
         }
 
+        /// <summary>
+        /// Implements <see cref="IDistributedSemaphore.Name"/>
+        /// </summary>
         public string Name { get; }
+        /// <summary>
+        /// Implements <see cref="IDistributedSemaphore.MaxCount"/>
+        /// </summary>
         public int MaxCount { get; }
 
         async ValueTask<ProcessScopedNamedSemaphoreHandle?> IInternalDistributedSemaphore<ProcessScopedNamedSemaphoreHandle>.InternalTryAcquireAsync(

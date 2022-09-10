@@ -7,6 +7,9 @@ using System.Threading.Tasks;
 
 namespace Medallion.Threading
 {
+    /// <summary>
+    /// Implements <see cref="IDistributedSynchronizationHandle"/>
+    /// </summary>
     public sealed class ProcessScopedNamedLockHandle : IDistributedSynchronizationHandle
     {
         private HandleAndLease<IDisposable>? _handleAndLease;
@@ -21,12 +24,18 @@ namespace Medallion.Threading
         CancellationToken IDistributedSynchronizationHandle.HandleLostToken => 
             this._handleAndLease is null ? throw this.ObjectDisposed() : CancellationToken.None;
 
+        /// <summary>
+        /// Releases the lock
+        /// </summary>
         public void Dispose()
         {
             Interlocked.Exchange(ref this._finalizerRegistration, null)?.Dispose();
             Interlocked.Exchange(ref this._handleAndLease, null)?.Dispose();
         }
 
+        /// <summary>
+        /// Releases the lock
+        /// </summary>
         public ValueTask DisposeAsync()
         {
             this.Dispose();
