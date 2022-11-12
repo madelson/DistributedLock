@@ -16,13 +16,10 @@ namespace Medallion.Threading.Postgres
     /// </summary>
     internal class PostgresAdvisoryLock : IDbSynchronizationStrategy<object>
     {
-        // matches SqlApplicationLock
-        private const int AlreadyHeldReturnCode = 103;
+        private static readonly object Cookie = new();
 
-        private static readonly object Cookie = new object();
-
-        public static readonly PostgresAdvisoryLock ExclusiveLock = new PostgresAdvisoryLock(isShared: false),
-            SharedLock = new PostgresAdvisoryLock(isShared: true);
+        public static readonly PostgresAdvisoryLock ExclusiveLock = new(isShared: false),
+            SharedLock = new(isShared: true);
 
         private readonly bool _isShared;
 
@@ -40,7 +37,16 @@ namespace Medallion.Threading.Postgres
         {
             const string SavePointName = "medallion_threading_postgres_advisory_lock_acquire";
 
-            var key = new PostgresAdvisoryLockKey(resourceName);
+            PostgresAdvisoryLockKey key = new(resourceName);
+
+            if (connection.IsExernallyOwned 
+                && await this.IsHoldingLockAsync(connection, key, cancellationToken).ConfigureAwait(false))
+            {
+                if (timeout.IsZero) { return null; }
+                if (timeout.IsInfinite) { throw new DeadlockException("Attempted to acquire a lock that is already held on the same connection"); }
+                await SyncViaAsync.Delay(timeout, cancellationToken).ConfigureAwait(false);
+                return null;
+            }
 
             var hasTransaction = await HasTransactionAsync(connection).ConfigureAwait(false);
             if (hasTransaction)
@@ -58,10 +64,10 @@ namespace Medallion.Threading.Postgres
 
             using var acquireCommand = this.CreateAcquireCommand(connection, key, timeout);
 
-            int acquireCommandResult;
+            object acquireCommandResult;
             try
             {
-                acquireCommandResult = (int)await acquireCommand.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
+                acquireCommandResult = await acquireCommand.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -73,7 +79,14 @@ namespace Medallion.Threading.Postgres
                     {
                         // lock_timeout error code from https://www.postgresql.org/docs/10/errcodes-appendix.html
                         case "55P03":
-                            return null;
+                            // Even though we hit a lock timeout, an underlying race condition in Postgres means that we might actually
+                            // have acquired the lock right before timing out. To account for this, we simply re-check whether we are
+                            // holding the lock to determine the final return value. See https://github.com/madelson/DistributedLock/issues/147
+                            // and https://www.postgresql.org/message-id/63573.1668271677%40sss.pgh.pa.us for more details.
+                            // NOTE: we use CancellationToken.None for this check because if we ARE holding the lock it would be invalid to abort.
+                            return await this.IsHoldingLockAsync(connection, key, CancellationToken.None).ConfigureAwait(false)
+                                ? Cookie
+                                : null;
                         // deadlock_detected error code from https://www.postgresql.org/docs/10/errcodes-appendix.html
                         case "40P01":
                             throw new DeadlockException($"The request for the distributed lock failed with exit code '{postgresException.SqlState}' (deadlock_detected)", ex);
@@ -91,18 +104,13 @@ namespace Medallion.Threading.Postgres
 
             await RollBackTransactionTimeoutVariablesIfNeededAsync().ConfigureAwait(false);
 
-            switch (acquireCommandResult)
+            return acquireCommandResult switch
             {
-                case 0: return null;
-                case 1: return Cookie;
-                case AlreadyHeldReturnCode:
-                    if (timeout.IsZero) { return null; }
-                    if (timeout.IsInfinite) { throw new DeadlockException("Attempted to acquire a lock that is already held on the same connection"); }
-                    await SyncViaAsync.Delay(timeout, cancellationToken).ConfigureAwait(false);
-                    return null;
-                default:
-                    throw new InvalidOperationException($"Unexpected return code {acquireCommandResult}");
-            }
+                DBNull _ => Cookie, // indicates we called pg_advisory_lock and not pg_try_advisory_lock
+                false => null,
+                true => Cookie,
+                _ => throw new InvalidOperationException($"Unexpected value '{acquireCommandResult}' from acquire command")
+            };
 
             async ValueTask RollBackTransactionTimeoutVariablesIfNeededAsync()
             {
@@ -114,6 +122,22 @@ namespace Medallion.Threading.Postgres
                     await rollBackSavePointCommand.ExecuteNonQueryAsync(CancellationToken.None).ConfigureAwait(false);
                 }
             }
+        }
+
+        private async Task<bool> IsHoldingLockAsync(DatabaseConnection connection, PostgresAdvisoryLockKey key, CancellationToken cancellationToken)
+        {
+            using var command = connection.CreateCommand();
+            command.SetCommandText($@"
+                SELECT COUNT(*) 
+                FROM pg_catalog.pg_locks l
+                JOIN pg_catalog.pg_database d
+                    ON d.oid = l.database
+                WHERE l.locktype = 'advisory' 
+                    AND {AddPGLocksFilterParametersAndGetFilterExpression(command, key)} 
+                    AND l.pid = pg_catalog.pg_backend_pid() 
+                    AND d.datname = pg_catalog.current_database()"
+            );
+            return (long)await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false) != 0;
         }
 
         private DatabaseCommand CreateAcquireCommand(DatabaseConnection connection, PostgresAdvisoryLockKey key, TimeoutValue timeout)
@@ -128,55 +152,19 @@ namespace Medallion.Threading.Postgres
             // we'll be using the pg_try_advisory_lock function which doesn't block in that case.
             commandText.AppendLine($"SET LOCAL lock_timeout = {(timeout.IsZero || timeout.IsInfinite ? 0 : timeout.InMilliseconds)};");
 
-            if (connection.IsExernallyOwned)
-            {
-                commandText.Append($@"
-                    SELECT 
-                        CASE WHEN EXISTS(
-                            SELECT * 
-                            FROM pg_catalog.pg_locks l
-                            JOIN pg_catalog.pg_database d
-                                ON d.oid = l.database
-                            WHERE l.locktype = 'advisory' 
-                                AND {AddPGLocksFilterParametersAndGetFilterExpression(command, key)} 
-                                AND l.pid = pg_catalog.pg_backend_pid() 
-                                AND d.datname = pg_catalog.current_database()
-                        ) 
-                            THEN {AlreadyHeldReturnCode}
-                        ELSE
-                            "
-                );
-                AppendAcquireFunctionCall();
-                commandText.AppendLine().Append("END");
-            }
-            else
-            {
-                commandText.Append("SELECT ");
-                AppendAcquireFunctionCall();
-            }
-            commandText.Append(" AS result");
+            commandText.Append("SELECT ");
+            var isTry = timeout.IsZero;
+            commandText.Append("pg_catalog.pg");
+            if (isTry) { commandText.Append("_try"); }
+            commandText.Append("_advisory_lock");
+            if (this._isShared) { commandText.Append("_shared"); }
+            commandText.Append('(').Append(AddKeyParametersAndGetKeyArguments(command, key)).Append(')')
+                .Append(" AS result");
 
             command.SetCommandText(commandText.ToString());
             command.SetTimeout(timeout);
 
             return command;
-
-            void AppendAcquireFunctionCall()
-            {
-                // creates an expression like
-                // pg_try_advisory_lock(@key1, @key2)::int
-                // OR (SELECT 1 FROM (SELECT pg_advisory_lock(@key)) f)
-                var isTry = timeout.IsZero;
-                if (!isTry) { commandText.Append("(SELECT 1 FROM (SELECT "); }
-                commandText.Append("pg_catalog.pg");
-                if (isTry) { commandText.Append("_try"); }
-                commandText.Append("_advisory");
-                commandText.Append("_lock");
-                if (this._isShared) { commandText.Append("_shared"); }
-                commandText.Append('(').Append(AddKeyParametersAndGetKeyArguments(command, key)).Append(')');
-                if (isTry) { commandText.Append("::int"); }
-                else { commandText.Append(") f)"); }
-            }
         }
 
         private static async ValueTask<bool> HasTransactionAsync(DatabaseConnection connection)
@@ -249,6 +237,7 @@ namespace Medallion.Threading.Postgres
             }
             else
             {
+                AddKeyParametersAndGetKeyArguments(command, key);
                 classIdParameter = "key1";
                 objIdParameter = "key2";
                 objSubId = "2";
