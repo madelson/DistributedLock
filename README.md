@@ -137,6 +137,8 @@ public class SomeService
 Contributions are welcome! If you are interested in contributing towards a new or existing issue, please let me know via comments on the issue so that I can help you get started and avoid wasted effort on your part.
 
 ## Release notes
+- 2.3.2
+	- Work around underlying Postgres race condition when waiting on advisory locks with a short non-zero timeout ([#147](https://github.com/madelson/DistributedLock/issues/147), DistributedLock.Postgres 1.0.4). Thanks @Tzachi009 for reporting and isolating the issue!
 - 2.3.1
 	- Fixed concurrency issue with `HandleLostToken` for relational database locks ([#133](https://github.com/madelson/DistributedLock/issues/133), DistributedLock.Core 1.0.5, DistributedLock.MySql 1.0.1, DistributedLock.Oracle 1.0.1, DistributedLock.Postgres 1.0.3, DistributedLock.SqlServer 1.0.2). Thanks [@OskarKlintrot](https://github.com/OskarKlintrot) for testing!
 	- Fixed misleading error message why trying to disable auto-extension in Redis ([#130](https://github.com/madelson/DistributedLock/issues/130), DistributedLock.Redis 1.0.2)
