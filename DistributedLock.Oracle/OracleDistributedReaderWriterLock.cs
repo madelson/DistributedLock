@@ -3,6 +3,7 @@ using Medallion.Threading.Internal.Data;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -23,6 +24,7 @@ namespace Medallion.Threading.Oracle
         /// 
         /// Unless <paramref name="exactName"/> is specified, <paramref name="name"/> will be escaped/hashed to ensure name validity.
         /// </summary>
+        [SuppressMessage("", "RS0026", Justification = "https://github.com/dotnet/roslyn-analyzers/issues/6264")]
         public OracleDistributedReaderWriterLock(string name, string connectionString, Action<OracleConnectionOptionsBuilder>? options = null, bool exactName = false)
             : this(name, exactName, n => OracleDistributedLock.CreateInternalLock(n, connectionString, options))
         {
@@ -36,6 +38,7 @@ namespace Medallion.Threading.Oracle
         /// 
         /// Unless <paramref name="exactName"/> is specified, <paramref name="name"/> will be escaped/hashed to ensure name validity.
         /// </summary>
+        [SuppressMessage("", "RS0026", Justification = "https://github.com/dotnet/roslyn-analyzers/issues/6264")]
         public OracleDistributedReaderWriterLock(string name, IDbConnection connection, bool exactName = false)
             : this(name, exactName, n => OracleDistributedLock.CreateInternalLock(n, connection))
         {

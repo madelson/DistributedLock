@@ -1,0 +1,67 @@
+﻿#nullable enable
+abstract Medallion.Threading.SqlServer.SqlDistributedReaderWriterLockHandle.DisposeAsync() -> System.Threading.Tasks.ValueTask
+abstract Medallion.Threading.SqlServer.SqlDistributedReaderWriterLockHandle.HandleLostToken.get -> System.Threading.CancellationToken
+Medallion.Threading.SqlServer.SqlConnectionOptionsBuilder
+Medallion.Threading.SqlServer.SqlConnectionOptionsBuilder.KeepaliveCadence(System.TimeSpan keepaliveCadence) -> Medallion.Threading.SqlServer.SqlConnectionOptionsBuilder!
+Medallion.Threading.SqlServer.SqlConnectionOptionsBuilder.UseMultiplexing(bool useMultiplexing = true) -> Medallion.Threading.SqlServer.SqlConnectionOptionsBuilder!
+Medallion.Threading.SqlServer.SqlConnectionOptionsBuilder.UseTransaction(bool useTransaction = true) -> Medallion.Threading.SqlServer.SqlConnectionOptionsBuilder!
+Medallion.Threading.SqlServer.SqlDistributedLock
+Medallion.Threading.SqlServer.SqlDistributedLock.Acquire(System.TimeSpan? timeout = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> Medallion.Threading.SqlServer.SqlDistributedLockHandle!
+Medallion.Threading.SqlServer.SqlDistributedLock.AcquireAsync(System.TimeSpan? timeout = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<Medallion.Threading.SqlServer.SqlDistributedLockHandle!>
+Medallion.Threading.SqlServer.SqlDistributedLock.Name.get -> string!
+Medallion.Threading.SqlServer.SqlDistributedLock.SqlDistributedLock(string! name, string! connectionString, System.Action<Medallion.Threading.SqlServer.SqlConnectionOptionsBuilder!>? options = null, bool exactName = false) -> void
+Medallion.Threading.SqlServer.SqlDistributedLock.SqlDistributedLock(string! name, System.Data.IDbConnection! connection, bool exactName = false) -> void
+Medallion.Threading.SqlServer.SqlDistributedLock.SqlDistributedLock(string! name, System.Data.IDbTransaction! transaction, bool exactName = false) -> void
+Medallion.Threading.SqlServer.SqlDistributedLock.TryAcquire(System.TimeSpan timeout = default(System.TimeSpan), System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> Medallion.Threading.SqlServer.SqlDistributedLockHandle?
+Medallion.Threading.SqlServer.SqlDistributedLock.TryAcquireAsync(System.TimeSpan timeout = default(System.TimeSpan), System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<Medallion.Threading.SqlServer.SqlDistributedLockHandle?>
+Medallion.Threading.SqlServer.SqlDistributedLockHandle
+Medallion.Threading.SqlServer.SqlDistributedLockHandle.Dispose() -> void
+Medallion.Threading.SqlServer.SqlDistributedLockHandle.DisposeAsync() -> System.Threading.Tasks.ValueTask
+Medallion.Threading.SqlServer.SqlDistributedLockHandle.HandleLostToken.get -> System.Threading.CancellationToken
+Medallion.Threading.SqlServer.SqlDistributedReaderWriterLock
+Medallion.Threading.SqlServer.SqlDistributedReaderWriterLock.AcquireReadLock(System.TimeSpan? timeout = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> Medallion.Threading.SqlServer.SqlDistributedReaderWriterLockHandle!
+Medallion.Threading.SqlServer.SqlDistributedReaderWriterLock.AcquireReadLockAsync(System.TimeSpan? timeout = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<Medallion.Threading.SqlServer.SqlDistributedReaderWriterLockHandle!>
+Medallion.Threading.SqlServer.SqlDistributedReaderWriterLock.AcquireUpgradeableReadLock(System.TimeSpan? timeout = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> Medallion.Threading.SqlServer.SqlDistributedReaderWriterLockUpgradeableHandle!
+Medallion.Threading.SqlServer.SqlDistributedReaderWriterLock.AcquireUpgradeableReadLockAsync(System.TimeSpan? timeout = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<Medallion.Threading.SqlServer.SqlDistributedReaderWriterLockUpgradeableHandle!>
+Medallion.Threading.SqlServer.SqlDistributedReaderWriterLock.AcquireWriteLock(System.TimeSpan? timeout = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> Medallion.Threading.SqlServer.SqlDistributedReaderWriterLockHandle!
+Medallion.Threading.SqlServer.SqlDistributedReaderWriterLock.AcquireWriteLockAsync(System.TimeSpan? timeout = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<Medallion.Threading.SqlServer.SqlDistributedReaderWriterLockHandle!>
+Medallion.Threading.SqlServer.SqlDistributedReaderWriterLock.Name.get -> string!
+Medallion.Threading.SqlServer.SqlDistributedReaderWriterLock.SqlDistributedReaderWriterLock(string! name, string! connectionString, System.Action<Medallion.Threading.SqlServer.SqlConnectionOptionsBuilder!>? options = null, bool exactName = false) -> void
+Medallion.Threading.SqlServer.SqlDistributedReaderWriterLock.SqlDistributedReaderWriterLock(string! name, System.Data.IDbConnection! connection, bool exactName = false) -> void
+Medallion.Threading.SqlServer.SqlDistributedReaderWriterLock.SqlDistributedReaderWriterLock(string! name, System.Data.IDbTransaction! transaction, bool exactName = false) -> void
+Medallion.Threading.SqlServer.SqlDistributedReaderWriterLock.TryAcquireReadLock(System.TimeSpan timeout = default(System.TimeSpan), System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> Medallion.Threading.SqlServer.SqlDistributedReaderWriterLockHandle?
+Medallion.Threading.SqlServer.SqlDistributedReaderWriterLock.TryAcquireReadLockAsync(System.TimeSpan timeout = default(System.TimeSpan), System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<Medallion.Threading.SqlServer.SqlDistributedReaderWriterLockHandle?>
+Medallion.Threading.SqlServer.SqlDistributedReaderWriterLock.TryAcquireUpgradeableReadLock(System.TimeSpan timeout = default(System.TimeSpan), System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> Medallion.Threading.SqlServer.SqlDistributedReaderWriterLockUpgradeableHandle?
+Medallion.Threading.SqlServer.SqlDistributedReaderWriterLock.TryAcquireUpgradeableReadLockAsync(System.TimeSpan timeout = default(System.TimeSpan), System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<Medallion.Threading.SqlServer.SqlDistributedReaderWriterLockUpgradeableHandle?>
+Medallion.Threading.SqlServer.SqlDistributedReaderWriterLock.TryAcquireWriteLock(System.TimeSpan timeout = default(System.TimeSpan), System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> Medallion.Threading.SqlServer.SqlDistributedReaderWriterLockHandle?
+Medallion.Threading.SqlServer.SqlDistributedReaderWriterLock.TryAcquireWriteLockAsync(System.TimeSpan timeout = default(System.TimeSpan), System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<Medallion.Threading.SqlServer.SqlDistributedReaderWriterLockHandle?>
+Medallion.Threading.SqlServer.SqlDistributedReaderWriterLockHandle
+Medallion.Threading.SqlServer.SqlDistributedReaderWriterLockHandle.Dispose() -> void
+Medallion.Threading.SqlServer.SqlDistributedReaderWriterLockUpgradeableHandle
+Medallion.Threading.SqlServer.SqlDistributedReaderWriterLockUpgradeableHandle.TryUpgradeToWriteLock(System.TimeSpan timeout = default(System.TimeSpan), System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> bool
+Medallion.Threading.SqlServer.SqlDistributedReaderWriterLockUpgradeableHandle.TryUpgradeToWriteLockAsync(System.TimeSpan timeout = default(System.TimeSpan), System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<bool>
+Medallion.Threading.SqlServer.SqlDistributedReaderWriterLockUpgradeableHandle.UpgradeToWriteLock(System.TimeSpan? timeout = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> void
+Medallion.Threading.SqlServer.SqlDistributedReaderWriterLockUpgradeableHandle.UpgradeToWriteLockAsync(System.TimeSpan? timeout = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+Medallion.Threading.SqlServer.SqlDistributedSemaphore
+Medallion.Threading.SqlServer.SqlDistributedSemaphore.Acquire(System.TimeSpan? timeout = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> Medallion.Threading.SqlServer.SqlDistributedSemaphoreHandle!
+Medallion.Threading.SqlServer.SqlDistributedSemaphore.AcquireAsync(System.TimeSpan? timeout = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<Medallion.Threading.SqlServer.SqlDistributedSemaphoreHandle!>
+Medallion.Threading.SqlServer.SqlDistributedSemaphore.MaxCount.get -> int
+Medallion.Threading.SqlServer.SqlDistributedSemaphore.Name.get -> string!
+Medallion.Threading.SqlServer.SqlDistributedSemaphore.SqlDistributedSemaphore(string! name, int maxCount, string! connectionString, System.Action<Medallion.Threading.SqlServer.SqlConnectionOptionsBuilder!>? options = null) -> void
+Medallion.Threading.SqlServer.SqlDistributedSemaphore.SqlDistributedSemaphore(string! name, int maxCount, System.Data.IDbConnection! connection) -> void
+Medallion.Threading.SqlServer.SqlDistributedSemaphore.SqlDistributedSemaphore(string! name, int maxCount, System.Data.IDbTransaction! transaction) -> void
+Medallion.Threading.SqlServer.SqlDistributedSemaphore.TryAcquire(System.TimeSpan timeout = default(System.TimeSpan), System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> Medallion.Threading.SqlServer.SqlDistributedSemaphoreHandle?
+Medallion.Threading.SqlServer.SqlDistributedSemaphore.TryAcquireAsync(System.TimeSpan timeout = default(System.TimeSpan), System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<Medallion.Threading.SqlServer.SqlDistributedSemaphoreHandle?>
+Medallion.Threading.SqlServer.SqlDistributedSemaphoreHandle
+Medallion.Threading.SqlServer.SqlDistributedSemaphoreHandle.Dispose() -> void
+Medallion.Threading.SqlServer.SqlDistributedSemaphoreHandle.DisposeAsync() -> System.Threading.Tasks.ValueTask
+Medallion.Threading.SqlServer.SqlDistributedSemaphoreHandle.HandleLostToken.get -> System.Threading.CancellationToken
+Medallion.Threading.SqlServer.SqlDistributedSynchronizationProvider
+Medallion.Threading.SqlServer.SqlDistributedSynchronizationProvider.CreateLock(string! name, bool exactName = false) -> Medallion.Threading.SqlServer.SqlDistributedLock!
+Medallion.Threading.SqlServer.SqlDistributedSynchronizationProvider.CreateReaderWriterLock(string! name, bool exactName = false) -> Medallion.Threading.SqlServer.SqlDistributedReaderWriterLock!
+Medallion.Threading.SqlServer.SqlDistributedSynchronizationProvider.CreateSemaphore(string! name, int maxCount) -> Medallion.Threading.SqlServer.SqlDistributedSemaphore!
+Medallion.Threading.SqlServer.SqlDistributedSynchronizationProvider.SqlDistributedSynchronizationProvider(string! connectionString, System.Action<Medallion.Threading.SqlServer.SqlConnectionOptionsBuilder!>? options = null) -> void
+Medallion.Threading.SqlServer.SqlDistributedSynchronizationProvider.SqlDistributedSynchronizationProvider(System.Data.IDbConnection! connection) -> void
+Medallion.Threading.SqlServer.SqlDistributedSynchronizationProvider.SqlDistributedSynchronizationProvider(System.Data.IDbTransaction! transaction) -> void
+override Medallion.Threading.SqlServer.SqlDistributedReaderWriterLockUpgradeableHandle.DisposeAsync() -> System.Threading.Tasks.ValueTask
+override Medallion.Threading.SqlServer.SqlDistributedReaderWriterLockUpgradeableHandle.HandleLostToken.get -> System.Threading.CancellationToken

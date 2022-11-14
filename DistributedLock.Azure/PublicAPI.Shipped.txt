@@ -1,0 +1,21 @@
+﻿#nullable enable
+Medallion.Threading.Azure.AzureBlobLeaseDistributedLock
+Medallion.Threading.Azure.AzureBlobLeaseDistributedLock.Acquire(System.TimeSpan? timeout = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> Medallion.Threading.Azure.AzureBlobLeaseDistributedLockHandle!
+Medallion.Threading.Azure.AzureBlobLeaseDistributedLock.AcquireAsync(System.TimeSpan? timeout = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<Medallion.Threading.Azure.AzureBlobLeaseDistributedLockHandle!>
+Medallion.Threading.Azure.AzureBlobLeaseDistributedLock.AzureBlobLeaseDistributedLock(Azure.Storage.Blobs.BlobContainerClient! blobContainerClient, string! name, System.Action<Medallion.Threading.Azure.AzureBlobLeaseOptionsBuilder!>? options = null) -> void
+Medallion.Threading.Azure.AzureBlobLeaseDistributedLock.AzureBlobLeaseDistributedLock(Azure.Storage.Blobs.Specialized.BlobBaseClient! blobClient, System.Action<Medallion.Threading.Azure.AzureBlobLeaseOptionsBuilder!>? options = null) -> void
+Medallion.Threading.Azure.AzureBlobLeaseDistributedLock.Name.get -> string!
+Medallion.Threading.Azure.AzureBlobLeaseDistributedLock.TryAcquire(System.TimeSpan timeout = default(System.TimeSpan), System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> Medallion.Threading.Azure.AzureBlobLeaseDistributedLockHandle?
+Medallion.Threading.Azure.AzureBlobLeaseDistributedLock.TryAcquireAsync(System.TimeSpan timeout = default(System.TimeSpan), System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<Medallion.Threading.Azure.AzureBlobLeaseDistributedLockHandle?>
+Medallion.Threading.Azure.AzureBlobLeaseDistributedLockHandle
+Medallion.Threading.Azure.AzureBlobLeaseDistributedLockHandle.Dispose() -> void
+Medallion.Threading.Azure.AzureBlobLeaseDistributedLockHandle.DisposeAsync() -> System.Threading.Tasks.ValueTask
+Medallion.Threading.Azure.AzureBlobLeaseDistributedLockHandle.HandleLostToken.get -> System.Threading.CancellationToken
+Medallion.Threading.Azure.AzureBlobLeaseDistributedLockHandle.LeaseId.get -> string!
+Medallion.Threading.Azure.AzureBlobLeaseDistributedSynchronizationProvider
+Medallion.Threading.Azure.AzureBlobLeaseDistributedSynchronizationProvider.AzureBlobLeaseDistributedSynchronizationProvider(Azure.Storage.Blobs.BlobContainerClient! blobContainerClient, System.Action<Medallion.Threading.Azure.AzureBlobLeaseOptionsBuilder!>? options = null) -> void
+Medallion.Threading.Azure.AzureBlobLeaseDistributedSynchronizationProvider.CreateLock(string! name) -> Medallion.Threading.Azure.AzureBlobLeaseDistributedLock!
+Medallion.Threading.Azure.AzureBlobLeaseOptionsBuilder
+Medallion.Threading.Azure.AzureBlobLeaseOptionsBuilder.BusyWaitSleepTime(System.TimeSpan min, System.TimeSpan max) -> Medallion.Threading.Azure.AzureBlobLeaseOptionsBuilder!
+Medallion.Threading.Azure.AzureBlobLeaseOptionsBuilder.Duration(System.TimeSpan duration) -> Medallion.Threading.Azure.AzureBlobLeaseOptionsBuilder!
+Medallion.Threading.Azure.AzureBlobLeaseOptionsBuilder.RenewalCadence(System.TimeSpan renewalCadence) -> Medallion.Threading.Azure.AzureBlobLeaseOptionsBuilder!

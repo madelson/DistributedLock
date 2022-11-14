@@ -1,0 +1,53 @@
+﻿#nullable enable
+Medallion.Threading.Redis.RedisDistributedLock
+Medallion.Threading.Redis.RedisDistributedLock.Acquire(System.TimeSpan? timeout = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> Medallion.Threading.Redis.RedisDistributedLockHandle!
+Medallion.Threading.Redis.RedisDistributedLock.AcquireAsync(System.TimeSpan? timeout = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<Medallion.Threading.Redis.RedisDistributedLockHandle!>
+Medallion.Threading.Redis.RedisDistributedLock.Key.get -> StackExchange.Redis.RedisKey
+Medallion.Threading.Redis.RedisDistributedLock.Name.get -> string!
+Medallion.Threading.Redis.RedisDistributedLock.RedisDistributedLock(StackExchange.Redis.RedisKey key, StackExchange.Redis.IDatabase! database, System.Action<Medallion.Threading.Redis.RedisDistributedSynchronizationOptionsBuilder!>? options = null) -> void
+Medallion.Threading.Redis.RedisDistributedLock.RedisDistributedLock(StackExchange.Redis.RedisKey key, System.Collections.Generic.IEnumerable<StackExchange.Redis.IDatabase!>! databases, System.Action<Medallion.Threading.Redis.RedisDistributedSynchronizationOptionsBuilder!>? options = null) -> void
+Medallion.Threading.Redis.RedisDistributedLock.TryAcquire(System.TimeSpan timeout = default(System.TimeSpan), System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> Medallion.Threading.Redis.RedisDistributedLockHandle?
+Medallion.Threading.Redis.RedisDistributedLock.TryAcquireAsync(System.TimeSpan timeout = default(System.TimeSpan), System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<Medallion.Threading.Redis.RedisDistributedLockHandle?>
+Medallion.Threading.Redis.RedisDistributedLockHandle
+Medallion.Threading.Redis.RedisDistributedLockHandle.Dispose() -> void
+Medallion.Threading.Redis.RedisDistributedLockHandle.DisposeAsync() -> System.Threading.Tasks.ValueTask
+Medallion.Threading.Redis.RedisDistributedLockHandle.HandleLostToken.get -> System.Threading.CancellationToken
+Medallion.Threading.Redis.RedisDistributedReaderWriterLock
+Medallion.Threading.Redis.RedisDistributedReaderWriterLock.AcquireReadLock(System.TimeSpan? timeout = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> Medallion.Threading.Redis.RedisDistributedReaderWriterLockHandle!
+Medallion.Threading.Redis.RedisDistributedReaderWriterLock.AcquireReadLockAsync(System.TimeSpan? timeout = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<Medallion.Threading.Redis.RedisDistributedReaderWriterLockHandle!>
+Medallion.Threading.Redis.RedisDistributedReaderWriterLock.AcquireWriteLock(System.TimeSpan? timeout = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> Medallion.Threading.Redis.RedisDistributedReaderWriterLockHandle!
+Medallion.Threading.Redis.RedisDistributedReaderWriterLock.AcquireWriteLockAsync(System.TimeSpan? timeout = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<Medallion.Threading.Redis.RedisDistributedReaderWriterLockHandle!>
+Medallion.Threading.Redis.RedisDistributedReaderWriterLock.Name.get -> string!
+Medallion.Threading.Redis.RedisDistributedReaderWriterLock.RedisDistributedReaderWriterLock(string! name, StackExchange.Redis.IDatabase! database, System.Action<Medallion.Threading.Redis.RedisDistributedSynchronizationOptionsBuilder!>? options = null) -> void
+Medallion.Threading.Redis.RedisDistributedReaderWriterLock.RedisDistributedReaderWriterLock(string! name, System.Collections.Generic.IEnumerable<StackExchange.Redis.IDatabase!>! databases, System.Action<Medallion.Threading.Redis.RedisDistributedSynchronizationOptionsBuilder!>? options = null) -> void
+Medallion.Threading.Redis.RedisDistributedReaderWriterLock.TryAcquireReadLock(System.TimeSpan timeout = default(System.TimeSpan), System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> Medallion.Threading.Redis.RedisDistributedReaderWriterLockHandle?
+Medallion.Threading.Redis.RedisDistributedReaderWriterLock.TryAcquireReadLockAsync(System.TimeSpan timeout = default(System.TimeSpan), System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<Medallion.Threading.Redis.RedisDistributedReaderWriterLockHandle?>
+Medallion.Threading.Redis.RedisDistributedReaderWriterLock.TryAcquireWriteLock(System.TimeSpan timeout = default(System.TimeSpan), System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> Medallion.Threading.Redis.RedisDistributedReaderWriterLockHandle?
+Medallion.Threading.Redis.RedisDistributedReaderWriterLock.TryAcquireWriteLockAsync(System.TimeSpan timeout = default(System.TimeSpan), System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<Medallion.Threading.Redis.RedisDistributedReaderWriterLockHandle?>
+Medallion.Threading.Redis.RedisDistributedReaderWriterLockHandle
+Medallion.Threading.Redis.RedisDistributedReaderWriterLockHandle.Dispose() -> void
+Medallion.Threading.Redis.RedisDistributedReaderWriterLockHandle.DisposeAsync() -> System.Threading.Tasks.ValueTask
+Medallion.Threading.Redis.RedisDistributedReaderWriterLockHandle.HandleLostToken.get -> System.Threading.CancellationToken
+Medallion.Threading.Redis.RedisDistributedSemaphore
+Medallion.Threading.Redis.RedisDistributedSemaphore.Acquire(System.TimeSpan? timeout = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> Medallion.Threading.Redis.RedisDistributedSemaphoreHandle!
+Medallion.Threading.Redis.RedisDistributedSemaphore.AcquireAsync(System.TimeSpan? timeout = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<Medallion.Threading.Redis.RedisDistributedSemaphoreHandle!>
+Medallion.Threading.Redis.RedisDistributedSemaphore.MaxCount.get -> int
+Medallion.Threading.Redis.RedisDistributedSemaphore.Name.get -> string!
+Medallion.Threading.Redis.RedisDistributedSemaphore.RedisDistributedSemaphore(StackExchange.Redis.RedisKey key, int maxCount, StackExchange.Redis.IDatabase! database, System.Action<Medallion.Threading.Redis.RedisDistributedSynchronizationOptionsBuilder!>? options = null) -> void
+Medallion.Threading.Redis.RedisDistributedSemaphore.TryAcquire(System.TimeSpan timeout = default(System.TimeSpan), System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> Medallion.Threading.Redis.RedisDistributedSemaphoreHandle?
+Medallion.Threading.Redis.RedisDistributedSemaphore.TryAcquireAsync(System.TimeSpan timeout = default(System.TimeSpan), System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<Medallion.Threading.Redis.RedisDistributedSemaphoreHandle?>
+Medallion.Threading.Redis.RedisDistributedSemaphoreHandle
+Medallion.Threading.Redis.RedisDistributedSemaphoreHandle.Dispose() -> void
+Medallion.Threading.Redis.RedisDistributedSemaphoreHandle.DisposeAsync() -> System.Threading.Tasks.ValueTask
+Medallion.Threading.Redis.RedisDistributedSemaphoreHandle.HandleLostToken.get -> System.Threading.CancellationToken
+Medallion.Threading.Redis.RedisDistributedSynchronizationOptionsBuilder
+Medallion.Threading.Redis.RedisDistributedSynchronizationOptionsBuilder.BusyWaitSleepTime(System.TimeSpan min, System.TimeSpan max) -> Medallion.Threading.Redis.RedisDistributedSynchronizationOptionsBuilder!
+Medallion.Threading.Redis.RedisDistributedSynchronizationOptionsBuilder.Expiry(System.TimeSpan expiry) -> Medallion.Threading.Redis.RedisDistributedSynchronizationOptionsBuilder!
+Medallion.Threading.Redis.RedisDistributedSynchronizationOptionsBuilder.ExtensionCadence(System.TimeSpan extensionCadence) -> Medallion.Threading.Redis.RedisDistributedSynchronizationOptionsBuilder!
+Medallion.Threading.Redis.RedisDistributedSynchronizationOptionsBuilder.MinValidityTime(System.TimeSpan minValidityTime) -> Medallion.Threading.Redis.RedisDistributedSynchronizationOptionsBuilder!
+Medallion.Threading.Redis.RedisDistributedSynchronizationProvider
+Medallion.Threading.Redis.RedisDistributedSynchronizationProvider.CreateLock(StackExchange.Redis.RedisKey key) -> Medallion.Threading.Redis.RedisDistributedLock!
+Medallion.Threading.Redis.RedisDistributedSynchronizationProvider.CreateReaderWriterLock(string! name) -> Medallion.Threading.Redis.RedisDistributedReaderWriterLock!
+Medallion.Threading.Redis.RedisDistributedSynchronizationProvider.CreateSemaphore(StackExchange.Redis.RedisKey key, int maxCount) -> Medallion.Threading.Redis.RedisDistributedSemaphore!
+Medallion.Threading.Redis.RedisDistributedSynchronizationProvider.RedisDistributedSynchronizationProvider(StackExchange.Redis.IDatabase! database, System.Action<Medallion.Threading.Redis.RedisDistributedSynchronizationOptionsBuilder!>? options = null) -> void
+Medallion.Threading.Redis.RedisDistributedSynchronizationProvider.RedisDistributedSynchronizationProvider(System.Collections.Generic.IEnumerable<StackExchange.Redis.IDatabase!>! databases, System.Action<Medallion.Threading.Redis.RedisDistributedSynchronizationOptionsBuilder!>? options = null) -> void

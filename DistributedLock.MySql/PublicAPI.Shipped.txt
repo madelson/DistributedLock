@@ -1,0 +1,22 @@
+﻿#nullable enable
+Medallion.Threading.MySql.MySqlConnectionOptionsBuilder
+Medallion.Threading.MySql.MySqlConnectionOptionsBuilder.KeepaliveCadence(System.TimeSpan keepaliveCadence) -> Medallion.Threading.MySql.MySqlConnectionOptionsBuilder!
+Medallion.Threading.MySql.MySqlConnectionOptionsBuilder.UseMultiplexing(bool useMultiplexing = true) -> Medallion.Threading.MySql.MySqlConnectionOptionsBuilder!
+Medallion.Threading.MySql.MySqlDistributedLock
+Medallion.Threading.MySql.MySqlDistributedLock.Acquire(System.TimeSpan? timeout = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> Medallion.Threading.MySql.MySqlDistributedLockHandle!
+Medallion.Threading.MySql.MySqlDistributedLock.AcquireAsync(System.TimeSpan? timeout = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<Medallion.Threading.MySql.MySqlDistributedLockHandle!>
+Medallion.Threading.MySql.MySqlDistributedLock.MySqlDistributedLock(string! name, string! connectionString, System.Action<Medallion.Threading.MySql.MySqlConnectionOptionsBuilder!>? options = null, bool exactName = false) -> void
+Medallion.Threading.MySql.MySqlDistributedLock.MySqlDistributedLock(string! name, System.Data.IDbConnection! connection, bool exactName = false) -> void
+Medallion.Threading.MySql.MySqlDistributedLock.MySqlDistributedLock(string! name, System.Data.IDbTransaction! transaction, bool exactName = false) -> void
+Medallion.Threading.MySql.MySqlDistributedLock.Name.get -> string!
+Medallion.Threading.MySql.MySqlDistributedLock.TryAcquire(System.TimeSpan timeout = default(System.TimeSpan), System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> Medallion.Threading.MySql.MySqlDistributedLockHandle?
+Medallion.Threading.MySql.MySqlDistributedLock.TryAcquireAsync(System.TimeSpan timeout = default(System.TimeSpan), System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<Medallion.Threading.MySql.MySqlDistributedLockHandle?>
+Medallion.Threading.MySql.MySqlDistributedLockHandle
+Medallion.Threading.MySql.MySqlDistributedLockHandle.Dispose() -> void
+Medallion.Threading.MySql.MySqlDistributedLockHandle.DisposeAsync() -> System.Threading.Tasks.ValueTask
+Medallion.Threading.MySql.MySqlDistributedLockHandle.HandleLostToken.get -> System.Threading.CancellationToken
+Medallion.Threading.MySql.MySqlDistributedSynchronizationProvider
+Medallion.Threading.MySql.MySqlDistributedSynchronizationProvider.CreateLock(string! name, bool exactName = false) -> Medallion.Threading.MySql.MySqlDistributedLock!
+Medallion.Threading.MySql.MySqlDistributedSynchronizationProvider.MySqlDistributedSynchronizationProvider(string! connectionString, System.Action<Medallion.Threading.MySql.MySqlConnectionOptionsBuilder!>? options = null) -> void
+Medallion.Threading.MySql.MySqlDistributedSynchronizationProvider.MySqlDistributedSynchronizationProvider(System.Data.IDbConnection! connection) -> void
+Medallion.Threading.MySql.MySqlDistributedSynchronizationProvider.MySqlDistributedSynchronizationProvider(System.Data.IDbTransaction! transaction) -> void

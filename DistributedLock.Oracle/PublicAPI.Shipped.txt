@@ -1,0 +1,48 @@
+﻿#nullable enable
+abstract Medallion.Threading.Oracle.OracleDistributedReaderWriterLockHandle.DisposeAsync() -> System.Threading.Tasks.ValueTask
+abstract Medallion.Threading.Oracle.OracleDistributedReaderWriterLockHandle.HandleLostToken.get -> System.Threading.CancellationToken
+Medallion.Threading.Oracle.OracleConnectionOptionsBuilder
+Medallion.Threading.Oracle.OracleConnectionOptionsBuilder.KeepaliveCadence(System.TimeSpan keepaliveCadence) -> Medallion.Threading.Oracle.OracleConnectionOptionsBuilder!
+Medallion.Threading.Oracle.OracleConnectionOptionsBuilder.UseMultiplexing(bool useMultiplexing = true) -> Medallion.Threading.Oracle.OracleConnectionOptionsBuilder!
+Medallion.Threading.Oracle.OracleDistributedLock
+Medallion.Threading.Oracle.OracleDistributedLock.Acquire(System.TimeSpan? timeout = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> Medallion.Threading.Oracle.OracleDistributedLockHandle!
+Medallion.Threading.Oracle.OracleDistributedLock.AcquireAsync(System.TimeSpan? timeout = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<Medallion.Threading.Oracle.OracleDistributedLockHandle!>
+Medallion.Threading.Oracle.OracleDistributedLock.Name.get -> string!
+Medallion.Threading.Oracle.OracleDistributedLock.OracleDistributedLock(string! name, string! connectionString, System.Action<Medallion.Threading.Oracle.OracleConnectionOptionsBuilder!>? options = null, bool exactName = false) -> void
+Medallion.Threading.Oracle.OracleDistributedLock.OracleDistributedLock(string! name, System.Data.IDbConnection! connection, bool exactName = false) -> void
+Medallion.Threading.Oracle.OracleDistributedLock.TryAcquire(System.TimeSpan timeout = default(System.TimeSpan), System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> Medallion.Threading.Oracle.OracleDistributedLockHandle?
+Medallion.Threading.Oracle.OracleDistributedLock.TryAcquireAsync(System.TimeSpan timeout = default(System.TimeSpan), System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<Medallion.Threading.Oracle.OracleDistributedLockHandle?>
+Medallion.Threading.Oracle.OracleDistributedLockHandle
+Medallion.Threading.Oracle.OracleDistributedLockHandle.Dispose() -> void
+Medallion.Threading.Oracle.OracleDistributedLockHandle.DisposeAsync() -> System.Threading.Tasks.ValueTask
+Medallion.Threading.Oracle.OracleDistributedLockHandle.HandleLostToken.get -> System.Threading.CancellationToken
+Medallion.Threading.Oracle.OracleDistributedReaderWriterLock
+Medallion.Threading.Oracle.OracleDistributedReaderWriterLock.AcquireReadLock(System.TimeSpan? timeout = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> Medallion.Threading.Oracle.OracleDistributedReaderWriterLockHandle!
+Medallion.Threading.Oracle.OracleDistributedReaderWriterLock.AcquireReadLockAsync(System.TimeSpan? timeout = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<Medallion.Threading.Oracle.OracleDistributedReaderWriterLockHandle!>
+Medallion.Threading.Oracle.OracleDistributedReaderWriterLock.AcquireUpgradeableReadLock(System.TimeSpan? timeout = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> Medallion.Threading.Oracle.OracleDistributedReaderWriterLockUpgradeableHandle!
+Medallion.Threading.Oracle.OracleDistributedReaderWriterLock.AcquireUpgradeableReadLockAsync(System.TimeSpan? timeout = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<Medallion.Threading.Oracle.OracleDistributedReaderWriterLockUpgradeableHandle!>
+Medallion.Threading.Oracle.OracleDistributedReaderWriterLock.AcquireWriteLock(System.TimeSpan? timeout = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> Medallion.Threading.Oracle.OracleDistributedReaderWriterLockHandle!
+Medallion.Threading.Oracle.OracleDistributedReaderWriterLock.AcquireWriteLockAsync(System.TimeSpan? timeout = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<Medallion.Threading.Oracle.OracleDistributedReaderWriterLockHandle!>
+Medallion.Threading.Oracle.OracleDistributedReaderWriterLock.Name.get -> string!
+Medallion.Threading.Oracle.OracleDistributedReaderWriterLock.OracleDistributedReaderWriterLock(string! name, string! connectionString, System.Action<Medallion.Threading.Oracle.OracleConnectionOptionsBuilder!>? options = null, bool exactName = false) -> void
+Medallion.Threading.Oracle.OracleDistributedReaderWriterLock.OracleDistributedReaderWriterLock(string! name, System.Data.IDbConnection! connection, bool exactName = false) -> void
+Medallion.Threading.Oracle.OracleDistributedReaderWriterLock.TryAcquireReadLock(System.TimeSpan timeout = default(System.TimeSpan), System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> Medallion.Threading.Oracle.OracleDistributedReaderWriterLockHandle?
+Medallion.Threading.Oracle.OracleDistributedReaderWriterLock.TryAcquireReadLockAsync(System.TimeSpan timeout = default(System.TimeSpan), System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<Medallion.Threading.Oracle.OracleDistributedReaderWriterLockHandle?>
+Medallion.Threading.Oracle.OracleDistributedReaderWriterLock.TryAcquireUpgradeableReadLock(System.TimeSpan timeout = default(System.TimeSpan), System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> Medallion.Threading.Oracle.OracleDistributedReaderWriterLockUpgradeableHandle?
+Medallion.Threading.Oracle.OracleDistributedReaderWriterLock.TryAcquireUpgradeableReadLockAsync(System.TimeSpan timeout = default(System.TimeSpan), System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<Medallion.Threading.Oracle.OracleDistributedReaderWriterLockUpgradeableHandle?>
+Medallion.Threading.Oracle.OracleDistributedReaderWriterLock.TryAcquireWriteLock(System.TimeSpan timeout = default(System.TimeSpan), System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> Medallion.Threading.Oracle.OracleDistributedReaderWriterLockHandle?
+Medallion.Threading.Oracle.OracleDistributedReaderWriterLock.TryAcquireWriteLockAsync(System.TimeSpan timeout = default(System.TimeSpan), System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<Medallion.Threading.Oracle.OracleDistributedReaderWriterLockHandle?>
+Medallion.Threading.Oracle.OracleDistributedReaderWriterLockHandle
+Medallion.Threading.Oracle.OracleDistributedReaderWriterLockHandle.Dispose() -> void
+Medallion.Threading.Oracle.OracleDistributedReaderWriterLockUpgradeableHandle
+Medallion.Threading.Oracle.OracleDistributedReaderWriterLockUpgradeableHandle.TryUpgradeToWriteLock(System.TimeSpan timeout = default(System.TimeSpan), System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> bool
+Medallion.Threading.Oracle.OracleDistributedReaderWriterLockUpgradeableHandle.TryUpgradeToWriteLockAsync(System.TimeSpan timeout = default(System.TimeSpan), System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<bool>
+Medallion.Threading.Oracle.OracleDistributedReaderWriterLockUpgradeableHandle.UpgradeToWriteLock(System.TimeSpan? timeout = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> void
+Medallion.Threading.Oracle.OracleDistributedReaderWriterLockUpgradeableHandle.UpgradeToWriteLockAsync(System.TimeSpan? timeout = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+Medallion.Threading.Oracle.OracleDistributedSynchronizationProvider
+Medallion.Threading.Oracle.OracleDistributedSynchronizationProvider.CreateLock(string! name, bool exactName = false) -> Medallion.Threading.Oracle.OracleDistributedLock!
+Medallion.Threading.Oracle.OracleDistributedSynchronizationProvider.CreateReaderWriterLock(string! name, bool exactName = false) -> Medallion.Threading.Oracle.OracleDistributedReaderWriterLock!
+Medallion.Threading.Oracle.OracleDistributedSynchronizationProvider.OracleDistributedSynchronizationProvider(string! connectionString, System.Action<Medallion.Threading.Oracle.OracleConnectionOptionsBuilder!>? options = null) -> void
+Medallion.Threading.Oracle.OracleDistributedSynchronizationProvider.OracleDistributedSynchronizationProvider(System.Data.IDbConnection! connection) -> void
+override Medallion.Threading.Oracle.OracleDistributedReaderWriterLockUpgradeableHandle.DisposeAsync() -> System.Threading.Tasks.ValueTask
+override Medallion.Threading.Oracle.OracleDistributedReaderWriterLockUpgradeableHandle.HandleLostToken.get -> System.Threading.CancellationToken

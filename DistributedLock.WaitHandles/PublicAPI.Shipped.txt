@@ -1,0 +1,27 @@
+﻿#nullable enable
+Medallion.Threading.WaitHandles.EventWaitHandleDistributedLock
+Medallion.Threading.WaitHandles.EventWaitHandleDistributedLock.Acquire(System.TimeSpan? timeout = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> Medallion.Threading.WaitHandles.EventWaitHandleDistributedLockHandle!
+Medallion.Threading.WaitHandles.EventWaitHandleDistributedLock.AcquireAsync(System.TimeSpan? timeout = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<Medallion.Threading.WaitHandles.EventWaitHandleDistributedLockHandle!>
+Medallion.Threading.WaitHandles.EventWaitHandleDistributedLock.EventWaitHandleDistributedLock(string! name, System.TimeSpan? abandonmentCheckCadence = null, bool exactName = false) -> void
+Medallion.Threading.WaitHandles.EventWaitHandleDistributedLock.Name.get -> string!
+Medallion.Threading.WaitHandles.EventWaitHandleDistributedLock.TryAcquire(System.TimeSpan timeout = default(System.TimeSpan), System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> Medallion.Threading.WaitHandles.EventWaitHandleDistributedLockHandle?
+Medallion.Threading.WaitHandles.EventWaitHandleDistributedLock.TryAcquireAsync(System.TimeSpan timeout = default(System.TimeSpan), System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<Medallion.Threading.WaitHandles.EventWaitHandleDistributedLockHandle?>
+Medallion.Threading.WaitHandles.EventWaitHandleDistributedLockHandle
+Medallion.Threading.WaitHandles.EventWaitHandleDistributedLockHandle.Dispose() -> void
+Medallion.Threading.WaitHandles.EventWaitHandleDistributedLockHandle.DisposeAsync() -> System.Threading.Tasks.ValueTask
+Medallion.Threading.WaitHandles.WaitHandleDistributedSemaphore
+Medallion.Threading.WaitHandles.WaitHandleDistributedSemaphore.Acquire(System.TimeSpan? timeout = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> Medallion.Threading.WaitHandles.WaitHandleDistributedSemaphoreHandle!
+Medallion.Threading.WaitHandles.WaitHandleDistributedSemaphore.AcquireAsync(System.TimeSpan? timeout = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<Medallion.Threading.WaitHandles.WaitHandleDistributedSemaphoreHandle!>
+Medallion.Threading.WaitHandles.WaitHandleDistributedSemaphore.MaxCount.get -> int
+Medallion.Threading.WaitHandles.WaitHandleDistributedSemaphore.Name.get -> string!
+Medallion.Threading.WaitHandles.WaitHandleDistributedSemaphore.TryAcquire(System.TimeSpan timeout = default(System.TimeSpan), System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> Medallion.Threading.WaitHandles.WaitHandleDistributedSemaphoreHandle?
+Medallion.Threading.WaitHandles.WaitHandleDistributedSemaphore.TryAcquireAsync(System.TimeSpan timeout = default(System.TimeSpan), System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<Medallion.Threading.WaitHandles.WaitHandleDistributedSemaphoreHandle?>
+Medallion.Threading.WaitHandles.WaitHandleDistributedSemaphore.WaitHandleDistributedSemaphore(string! name, int maxCount, System.TimeSpan? abandonmentCheckCadence = null, bool exactName = false) -> void
+Medallion.Threading.WaitHandles.WaitHandleDistributedSemaphoreHandle
+Medallion.Threading.WaitHandles.WaitHandleDistributedSemaphoreHandle.Dispose() -> void
+Medallion.Threading.WaitHandles.WaitHandleDistributedSemaphoreHandle.DisposeAsync() -> System.Threading.Tasks.ValueTask
+Medallion.Threading.WaitHandles.WaitHandleDistributedSemaphoreHandle.HandleLostToken.get -> System.Threading.CancellationToken
+Medallion.Threading.WaitHandles.WaitHandleDistributedSynchronizationProvider
+Medallion.Threading.WaitHandles.WaitHandleDistributedSynchronizationProvider.CreateLock(string! name, bool exactName = false) -> Medallion.Threading.WaitHandles.EventWaitHandleDistributedLock!
+Medallion.Threading.WaitHandles.WaitHandleDistributedSynchronizationProvider.CreateSemaphore(string! name, int maxCount, bool exactName = false) -> Medallion.Threading.WaitHandles.WaitHandleDistributedSemaphore!
+Medallion.Threading.WaitHandles.WaitHandleDistributedSynchronizationProvider.WaitHandleDistributedSynchronizationProvider(System.TimeSpan? abandonmentCheckCadence = null) -> void
