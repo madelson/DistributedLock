@@ -5,29 +5,28 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
-namespace Medallion.Threading.Tests.Azure
-{
-    public sealed class TestingAzureBlobLeaseDistributedLockProvider : TestingLockProvider<TestingAzureBlobLeaseSynchronizationStrategy>
-    {
-        private readonly HashSet<Uri> _createdBlobs = new HashSet<Uri>();
+namespace Medallion.Threading.Tests.Azure;
 
-        public override IDistributedLock CreateLockWithExactName(string name)
+public sealed class TestingAzureBlobLeaseDistributedLockProvider : TestingLockProvider<TestingAzureBlobLeaseSynchronizationStrategy>
+{
+    private readonly HashSet<Uri> _createdBlobs = new HashSet<Uri>();
+
+    public override IDistributedLock CreateLockWithExactName(string name)
+    {
+        var client = new BlobClient(AzureCredentials.ConnectionString, this.Strategy.ContainerName, name);
+        if (this.Strategy.CreateBlobBeforeLockIsCreated)
         {
-            var client = new BlobClient(AzureCredentials.ConnectionString, this.Strategy.ContainerName, name);
-            if (this.Strategy.CreateBlobBeforeLockIsCreated)
+            lock (this._createdBlobs)
             {
-                lock (this._createdBlobs)
+                if (this._createdBlobs.Add(client.Uri))
                 {
-                    if (this._createdBlobs.Add(client.Uri))
-                    {
-                        client.Upload(Stream.Null);
-                    }
+                    client.Upload(Stream.Null);
                 }
             }
-            return new AzureBlobLeaseDistributedLock(client, this.Strategy.Options);
         }
-
-        public override string GetSafeName(string name) => 
-            AzureBlobLeaseDistributedLock.GetSafeName(name, new BlobContainerClient(AzureCredentials.ConnectionString, this.Strategy.ContainerName));
+        return new AzureBlobLeaseDistributedLock(client, this.Strategy.Options);
     }
+
+    public override string GetSafeName(string name) => 
+        AzureBlobLeaseDistributedLock.GetSafeName(name, new BlobContainerClient(AzureCredentials.ConnectionString, this.Strategy.ContainerName));
 }

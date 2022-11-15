@@ -6,153 +6,152 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Medallion.Threading.Internal
-{
-    /// <summary>
-    /// Utility for monitoring/renewing a fixed length "lease" lock
-    /// </summary>
+namespace Medallion.Threading.Internal;
+
+/// <summary>
+/// Utility for monitoring/renewing a fixed length "lease" lock
+/// </summary>
 #if DEBUG
-    public
+public
 #else
-    internal
+internal
 #endif
-        sealed class LeaseMonitor : IDisposable, IAsyncDisposable
+    sealed class LeaseMonitor : IDisposable, IAsyncDisposable
+{
+    private readonly CancellationTokenSource _disposalSource = new CancellationTokenSource(),
+        _handleLostSource = new CancellationTokenSource();
+
+    private readonly ILeaseHandle _leaseHandle;
+    private readonly Task _monitoringTask;
+    private Task? _cancellationTask;
+
+    public LeaseMonitor(ILeaseHandle leaseHandle)
     {
-        private readonly CancellationTokenSource _disposalSource = new CancellationTokenSource(),
-            _handleLostSource = new CancellationTokenSource();
+        Invariant.Require(leaseHandle.LeaseDuration.CompareTo(leaseHandle.MonitoringCadence) >= 0);
 
-        private readonly ILeaseHandle _leaseHandle;
-        private readonly Task _monitoringTask;
-        private Task? _cancellationTask;
+        this._leaseHandle = leaseHandle;
+        this._monitoringTask = CreateMonitoringLoopTask(new WeakReference<LeaseMonitor>(this), leaseHandle.MonitoringCadence, this._disposalSource.Token);
+    }
 
-        public LeaseMonitor(ILeaseHandle leaseHandle)
+    public CancellationToken HandleLostToken => this._handleLostSource.Token;
+
+    public void Dispose() => this.DisposeSyncViaAsync();
+
+    public async ValueTask DisposeAsync()
+    {
+        try
         {
-            Invariant.Require(leaseHandle.LeaseDuration.CompareTo(leaseHandle.MonitoringCadence) >= 0);
+            if (!this._disposalSource.IsCancellationRequested) // idempotent
+            {
+                this._disposalSource.Cancel();
+            }
 
-            this._leaseHandle = leaseHandle;
-            this._monitoringTask = CreateMonitoringLoopTask(new WeakReference<LeaseMonitor>(this), leaseHandle.MonitoringCadence, this._disposalSource.Token);
+            await this._monitoringTask.AwaitSyncOverAsync().ConfigureAwait(false);
+        }
+        finally
+        {
+            if (this._cancellationTask != null)
+            {
+                _ = this._cancellationTask.ContinueWith((_, state) => ((CancellationTokenSource)state).Dispose(), state: this._handleLostSource);
+            }
+            else
+            {
+                this._handleLostSource.Dispose();
+            }
+            this._disposalSource.Dispose();
+        }
+    }
+
+    private static Task CreateMonitoringLoopTask(WeakReference<LeaseMonitor> weakMonitor, TimeoutValue monitoringCadence, CancellationToken disposalToken)
+    {
+        return Task.Run(() => MonitoringLoop());
+
+        async Task MonitoringLoop()
+        {
+            var leaseLifetime = Stopwatch.StartNew();
+            do
+            {
+                // wait until the next monitoring check
+                await Task.Delay(monitoringCadence.InMilliseconds, disposalToken).TryAwait();
+            }
+            while (!disposalToken.IsCancellationRequested && await RunMonitoringLoopIterationAsync(weakMonitor, leaseLifetime).ConfigureAwait(false));
+        }
+    }
+
+    private static async Task<bool> RunMonitoringLoopIterationAsync(WeakReference<LeaseMonitor> weakMonitor, Stopwatch leaseLifetime)
+    {
+        // if the monitor has been GC'd, just exit
+        if (!weakMonitor.TryGetTarget(out var monitor)) { return false; }
+
+        // lease expired
+        if (monitor._leaseHandle.LeaseDuration.CompareTo(leaseLifetime.Elapsed) < 0)
+        {
+            OnHandleLost();
+            return false;
         }
 
-        public CancellationToken HandleLostToken => this._handleLostSource.Token;
-
-        public void Dispose() => this.DisposeSyncViaAsync();
-
-        public async ValueTask DisposeAsync()
+        var leaseState = await monitor.CheckLeaseAsync().ConfigureAwait(false);
+        switch (leaseState)
         {
-            try
-            {
-                if (!this._disposalSource.IsCancellationRequested) // idempotent
-                {
-                    this._disposalSource.Cancel();
-                }
-
-                await this._monitoringTask.AwaitSyncOverAsync().ConfigureAwait(false);
-            }
-            finally
-            {
-                if (this._cancellationTask != null)
-                {
-                    _ = this._cancellationTask.ContinueWith((_, state) => ((CancellationTokenSource)state).Dispose(), state: this._handleLostSource);
-                }
-                else
-                {
-                    this._handleLostSource.Dispose();
-                }
-                this._disposalSource.Dispose();
-            }
-        }
-
-        private static Task CreateMonitoringLoopTask(WeakReference<LeaseMonitor> weakMonitor, TimeoutValue monitoringCadence, CancellationToken disposalToken)
-        {
-            return Task.Run(() => MonitoringLoop());
-
-            async Task MonitoringLoop()
-            {
-                var leaseLifetime = Stopwatch.StartNew();
-                do
-                {
-                    // wait until the next monitoring check
-                    await Task.Delay(monitoringCadence.InMilliseconds, disposalToken).TryAwait();
-                }
-                while (!disposalToken.IsCancellationRequested && await RunMonitoringLoopIterationAsync(weakMonitor, leaseLifetime).ConfigureAwait(false));
-            }
-        }
-
-        private static async Task<bool> RunMonitoringLoopIterationAsync(WeakReference<LeaseMonitor> weakMonitor, Stopwatch leaseLifetime)
-        {
-            // if the monitor has been GC'd, just exit
-            if (!weakMonitor.TryGetTarget(out var monitor)) { return false; }
- 
-            // lease expired
-            if (monitor._leaseHandle.LeaseDuration.CompareTo(leaseLifetime.Elapsed) < 0)
-            {
+            case LeaseState.Lost:
                 OnHandleLost();
                 return false;
-            }
 
-            var leaseState = await monitor.CheckLeaseAsync().ConfigureAwait(false);
-            switch (leaseState)
-            {
-                case LeaseState.Lost:
-                    OnHandleLost();
-                    return false;
+            case LeaseState.Renewed:
+                leaseLifetime.Restart();
+                return true;
 
-                case LeaseState.Renewed:
-                    leaseLifetime.Restart();
-                    return true;
+            // If the lease is held but not renewed or if we don't know (e. g. due to transient failure),
+            // then just continue. We can't yet say that it is lost but it isn't renewed so we can't reset
+            // the lifetime either.
+            case LeaseState.Held:
+            case LeaseState.Unknown:
+                return true;
 
-                // If the lease is held but not renewed or if we don't know (e. g. due to transient failure),
-                // then just continue. We can't yet say that it is lost but it isn't renewed so we can't reset
-                // the lifetime either.
-                case LeaseState.Held:
-                case LeaseState.Unknown:
-                    return true;
-
-                default:
-                    throw new InvalidOperationException("should never get here");
-            }
-
-            // offload cancel to a background thread to avoid hangs or errors
-            void OnHandleLost() => monitor._cancellationTask = Task.Run(() => monitor._handleLostSource.Cancel());
+            default:
+                throw new InvalidOperationException("should never get here");
         }
 
-        private async Task<LeaseState> CheckLeaseAsync()
-        {
-            var renewOrValidateTask = Helpers.SafeCreateTask(state => state.leaseHandle.RenewOrValidateLeaseAsync(state.Token), (leaseHandle: this._leaseHandle, this._disposalSource.Token));
-            await renewOrValidateTask.TryAwait();
-            return this._disposalSource.IsCancellationRequested || renewOrValidateTask.Status != TaskStatus.RanToCompletion
-                ? LeaseState.Unknown
-                : renewOrValidateTask.Result;
-        }
+        // offload cancel to a background thread to avoid hangs or errors
+        void OnHandleLost() => monitor._cancellationTask = Task.Run(() => monitor._handleLostSource.Cancel());
+    }
 
-        public interface ILeaseHandle
-        {
-            TimeoutValue LeaseDuration { get; }
-            TimeoutValue MonitoringCadence { get; }
-            Task<LeaseState> RenewOrValidateLeaseAsync(CancellationToken cancellationToken);
-        }
+    private async Task<LeaseState> CheckLeaseAsync()
+    {
+        var renewOrValidateTask = Helpers.SafeCreateTask(state => state.leaseHandle.RenewOrValidateLeaseAsync(state.Token), (leaseHandle: this._leaseHandle, this._disposalSource.Token));
+        await renewOrValidateTask.TryAwait();
+        return this._disposalSource.IsCancellationRequested || renewOrValidateTask.Status != TaskStatus.RanToCompletion
+            ? LeaseState.Unknown
+            : renewOrValidateTask.Result;
+    }
 
-        public enum LeaseState
-        {
-            /// <summary>
-            /// The lease is known to be still held but was not renewed
-            /// </summary>
-            Held,
+    public interface ILeaseHandle
+    {
+        TimeoutValue LeaseDuration { get; }
+        TimeoutValue MonitoringCadence { get; }
+        Task<LeaseState> RenewOrValidateLeaseAsync(CancellationToken cancellationToken);
+    }
 
-            /// <summary>
-            /// The lease has been renewed for <see cref="ILeaseHandle.LeaseDuration"/>
-            /// </summary>
-            Renewed,
+    public enum LeaseState
+    {
+        /// <summary>
+        /// The lease is known to be still held but was not renewed
+        /// </summary>
+        Held,
 
-            /// <summary>
-            /// The lease is known to no longer be held
-            /// </summary>
-            Lost,
+        /// <summary>
+        /// The lease has been renewed for <see cref="ILeaseHandle.LeaseDuration"/>
+        /// </summary>
+        Renewed,
 
-            /// <summary>
-            /// The lease may or may not be held any longer
-            /// </summary>
-            Unknown,
-        }
+        /// <summary>
+        /// The lease is known to no longer be held
+        /// </summary>
+        Lost,
+
+        /// <summary>
+        /// The lease may or may not be held any longer
+        /// </summary>
+        Unknown,
     }
 }

@@ -4,37 +4,36 @@ using System.Data.Common;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Medallion.Threading.Tests.Data
+namespace Medallion.Threading.Tests.Data;
+
+internal class IdleSessionKiller : IDisposable
 {
-    internal class IdleSessionKiller : IDisposable
+    private readonly CancellationTokenSource _cancellationTokenSource;
+    private readonly Task _task;
+
+    public IdleSessionKiller(TestingPrimaryClientDb db, string applicationName, TimeSpan idleTimeout)
     {
-        private readonly CancellationTokenSource _cancellationTokenSource;
-        private readonly Task _task;
-
-        public IdleSessionKiller(TestingPrimaryClientDb db, string applicationName, TimeSpan idleTimeout)
+        this._cancellationTokenSource = new CancellationTokenSource();
+        var cancellationToken = this._cancellationTokenSource.Token;
+        this._task = Task.Run(async () =>
         {
-            this._cancellationTokenSource = new CancellationTokenSource();
-            var cancellationToken = this._cancellationTokenSource.Token;
-            this._task = Task.Run(async () =>
+            while (!cancellationToken.IsCancellationRequested)
             {
-                while (!cancellationToken.IsCancellationRequested)
-                {
-                    var expirationDate = DateTimeOffset.Now - idleTimeout;
-                    await db.KillSessionsAsync(applicationName, expirationDate);
-                    await Task.Delay(TimeSpan.FromTicks(idleTimeout.Ticks / 2), cancellationToken);
-                }
-            });
-        }
+                var expirationDate = DateTimeOffset.Now - idleTimeout;
+                await db.KillSessionsAsync(applicationName, expirationDate);
+                await Task.Delay(TimeSpan.FromTicks(idleTimeout.Ticks / 2), cancellationToken);
+            }
+        });
+    }
 
-        public void Dispose()
-        {
-            this._cancellationTokenSource.Cancel();
+    public void Dispose()
+    {
+        this._cancellationTokenSource.Cancel();
 
-            // wait and swallow any OCE
-            try { this._task.Wait(); }
-            catch when (this._task.IsCanceled) { }
+        // wait and swallow any OCE
+        try { this._task.Wait(); }
+        catch when (this._task.IsCanceled) { }
 
-            this._cancellationTokenSource.Dispose();
-        }
+        this._cancellationTokenSource.Dispose();
     }
 }

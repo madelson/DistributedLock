@@ -1,22 +1,21 @@
 using NUnit.Framework;
 using System.Linq;
 
-namespace Medallion.Threading.Tests.Core
+namespace Medallion.Threading.Tests.Core;
+
+[Category("CI")]
+public class InternalVisibilityTest
 {
-    [Category("CI")]
-    public class InternalVisibilityTest
+    [Test]
+    public void TestInternalNamespaceMethodsHaveCorrectVisibility()
     {
-        [Test]
-        public void TestInternalNamespaceMethodsHaveCorrectVisibility()
-        {
-            var internalNamespaceTypes = typeof(IDistributedLock).Assembly.GetTypes()
-                .Where(t => t.Namespace?.Contains(".Internal") ?? false)
-                .ToList();
-            Assert.IsNotEmpty(internalNamespaceTypes);
+        var internalNamespaceTypes = typeof(IDistributedLock).Assembly.GetTypes()
+            .Where(t => t.Namespace?.Contains(".Internal") ?? false)
+            .ToList();
+        Assert.IsNotEmpty(internalNamespaceTypes);
 
 #if !DEBUG
-            Assert.IsEmpty(internalNamespaceTypes.Where(t => t.IsPublic));
+        Assert.IsEmpty(internalNamespaceTypes.Where(t => t.IsPublic));
 #endif
-        }
     }
 }

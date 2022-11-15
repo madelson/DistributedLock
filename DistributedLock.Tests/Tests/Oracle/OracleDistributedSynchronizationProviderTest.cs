@@ -6,44 +6,43 @@ using System.Data;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Medallion.Threading.Tests.Oracle
+namespace Medallion.Threading.Tests.Oracle;
+
+public class OracleDistributedSynchronizationProviderTest
 {
-    public class OracleDistributedSynchronizationProviderTest
+    [Test]
+    public void TestArgumentValidation()
     {
-        [Test]
-        public void TestArgumentValidation()
+        Assert.Throws<ArgumentNullException>(() => new OracleDistributedSynchronizationProvider(default(string)!));
+        Assert.Throws<ArgumentNullException>(() => new OracleDistributedSynchronizationProvider(default(IDbConnection)!));
+    }
+
+    [Test]
+    public async Task BasicTest()
+    {
+        var provider = new OracleDistributedSynchronizationProvider(TestingOracleDb.DefaultConnectionString);
+
+        const string LockName = TargetFramework.Current + "ProviderBasicTest";
+
+        await using (await provider.AcquireLockAsync(LockName))
         {
-            Assert.Throws<ArgumentNullException>(() => new OracleDistributedSynchronizationProvider(default(string)!));
-            Assert.Throws<ArgumentNullException>(() => new OracleDistributedSynchronizationProvider(default(IDbConnection)!));
+            await using var handle = await provider.TryAcquireLockAsync(LockName);
+            Assert.IsNull(handle);
         }
 
-        [Test]
-        public async Task BasicTest()
+        await using (await provider.AcquireReadLockAsync(LockName))
         {
-            var provider = new OracleDistributedSynchronizationProvider(TestingOracleDb.DefaultConnectionString);
+            await using var readHandle = await provider.TryAcquireReadLockAsync(LockName);
+            Assert.IsNotNull(readHandle);
 
-            const string LockName = TargetFramework.Current + "ProviderBasicTest";
-
-            await using (await provider.AcquireLockAsync(LockName))
+            await using (var upgradeHandle = await provider.TryAcquireUpgradeableReadLockAsync(LockName))
             {
-                await using var handle = await provider.TryAcquireLockAsync(LockName);
-                Assert.IsNull(handle);
+                Assert.IsNotNull(upgradeHandle);
+                Assert.IsFalse(await upgradeHandle!.TryUpgradeToWriteLockAsync());
             }
 
-            await using (await provider.AcquireReadLockAsync(LockName))
-            {
-                await using var readHandle = await provider.TryAcquireReadLockAsync(LockName);
-                Assert.IsNotNull(readHandle);
-
-                await using (var upgradeHandle = await provider.TryAcquireUpgradeableReadLockAsync(LockName))
-                {
-                    Assert.IsNotNull(upgradeHandle);
-                    Assert.IsFalse(await upgradeHandle!.TryUpgradeToWriteLockAsync());
-                }
-
-                await using var writeHandle = await provider.TryAcquireWriteLockAsync(LockName);
-                Assert.IsNull(writeHandle);
-            }
+            await using var writeHandle = await provider.TryAcquireWriteLockAsync(LockName);
+            Assert.IsNull(writeHandle);
         }
     }
 }

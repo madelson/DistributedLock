@@ -1,15 +1,14 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
 
-namespace Medallion.Threading.Internal
-{
+namespace Medallion.Threading.Internal;
+
 #if DEBUG
-    public
+public
 #else
-    internal
+internal
 #endif
-    interface IInternalDistributedLockUpgradeableHandle : IDistributedLockUpgradeableHandle
-    {
-        ValueTask<bool> InternalTryUpgradeToWriteLockAsync(TimeoutValue timeout, CancellationToken cancellationToken);
-    }
+interface IInternalDistributedLockUpgradeableHandle : IDistributedLockUpgradeableHandle
+{
+    ValueTask<bool> InternalTryUpgradeToWriteLockAsync(TimeoutValue timeout, CancellationToken cancellationToken);
 }

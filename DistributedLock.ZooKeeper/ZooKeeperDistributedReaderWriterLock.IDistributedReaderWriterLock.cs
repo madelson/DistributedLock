@@ -3,28 +3,28 @@ using System.Threading;
 using System.Threading.Tasks;
 using Medallion.Threading.Internal;
 
-namespace Medallion.Threading.ZooKeeper
-{
-    public partial class ZooKeeperDistributedReaderWriterLock
-    {
-        // AUTO-GENERATED
+namespace Medallion.Threading.ZooKeeper;
 
-        IDistributedSynchronizationHandle? IDistributedReaderWriterLock.TryAcquireReadLock(TimeSpan timeout, CancellationToken cancellationToken) =>
-            this.As<IInternalDistributedReaderWriterLock<ZooKeeperDistributedReaderWriterLockHandle>>().TryAcquireReadLock(timeout, cancellationToken);
-        IDistributedSynchronizationHandle IDistributedReaderWriterLock.AcquireReadLock(TimeSpan? timeout, CancellationToken cancellationToken) =>
-            this.As<IInternalDistributedReaderWriterLock<ZooKeeperDistributedReaderWriterLockHandle>>().AcquireReadLock(timeout, cancellationToken);
-        ValueTask<IDistributedSynchronizationHandle?> IDistributedReaderWriterLock.TryAcquireReadLockAsync(TimeSpan timeout, CancellationToken cancellationToken) =>
-            this.TryAcquireReadLockAsync(timeout, cancellationToken).Convert(To<IDistributedSynchronizationHandle?>.ValueTask);
-        ValueTask<IDistributedSynchronizationHandle> IDistributedReaderWriterLock.AcquireReadLockAsync(TimeSpan? timeout, CancellationToken cancellationToken) =>
-            this.AcquireReadLockAsync(timeout, cancellationToken).Convert(To<IDistributedSynchronizationHandle>.ValueTask);
-        IDistributedSynchronizationHandle? IDistributedReaderWriterLock.TryAcquireWriteLock(TimeSpan timeout, CancellationToken cancellationToken) =>
-            this.As<IInternalDistributedReaderWriterLock<ZooKeeperDistributedReaderWriterLockHandle>>().TryAcquireWriteLock(timeout, cancellationToken);
-        IDistributedSynchronizationHandle IDistributedReaderWriterLock.AcquireWriteLock(TimeSpan? timeout, CancellationToken cancellationToken) =>
-            this.As<IInternalDistributedReaderWriterLock<ZooKeeperDistributedReaderWriterLockHandle>>().AcquireWriteLock(timeout, cancellationToken);
-        ValueTask<IDistributedSynchronizationHandle?> IDistributedReaderWriterLock.TryAcquireWriteLockAsync(TimeSpan timeout, CancellationToken cancellationToken) =>
-            this.TryAcquireWriteLockAsync(timeout, cancellationToken).Convert(To<IDistributedSynchronizationHandle?>.ValueTask);
-        ValueTask<IDistributedSynchronizationHandle> IDistributedReaderWriterLock.AcquireWriteLockAsync(TimeSpan? timeout, CancellationToken cancellationToken) =>
-            this.AcquireWriteLockAsync(timeout, cancellationToken).Convert(To<IDistributedSynchronizationHandle>.ValueTask);
+public partial class ZooKeeperDistributedReaderWriterLock
+{
+    // AUTO-GENERATED
+
+    IDistributedSynchronizationHandle? IDistributedReaderWriterLock.TryAcquireReadLock(TimeSpan timeout, CancellationToken cancellationToken) =>
+        this.As<IInternalDistributedReaderWriterLock<ZooKeeperDistributedReaderWriterLockHandle>>().TryAcquireReadLock(timeout, cancellationToken);
+    IDistributedSynchronizationHandle IDistributedReaderWriterLock.AcquireReadLock(TimeSpan? timeout, CancellationToken cancellationToken) =>
+        this.As<IInternalDistributedReaderWriterLock<ZooKeeperDistributedReaderWriterLockHandle>>().AcquireReadLock(timeout, cancellationToken);
+    ValueTask<IDistributedSynchronizationHandle?> IDistributedReaderWriterLock.TryAcquireReadLockAsync(TimeSpan timeout, CancellationToken cancellationToken) =>
+        this.TryAcquireReadLockAsync(timeout, cancellationToken).Convert(To<IDistributedSynchronizationHandle?>.ValueTask);
+    ValueTask<IDistributedSynchronizationHandle> IDistributedReaderWriterLock.AcquireReadLockAsync(TimeSpan? timeout, CancellationToken cancellationToken) =>
+        this.AcquireReadLockAsync(timeout, cancellationToken).Convert(To<IDistributedSynchronizationHandle>.ValueTask);
+    IDistributedSynchronizationHandle? IDistributedReaderWriterLock.TryAcquireWriteLock(TimeSpan timeout, CancellationToken cancellationToken) =>
+        this.As<IInternalDistributedReaderWriterLock<ZooKeeperDistributedReaderWriterLockHandle>>().TryAcquireWriteLock(timeout, cancellationToken);
+    IDistributedSynchronizationHandle IDistributedReaderWriterLock.AcquireWriteLock(TimeSpan? timeout, CancellationToken cancellationToken) =>
+        this.As<IInternalDistributedReaderWriterLock<ZooKeeperDistributedReaderWriterLockHandle>>().AcquireWriteLock(timeout, cancellationToken);
+    ValueTask<IDistributedSynchronizationHandle?> IDistributedReaderWriterLock.TryAcquireWriteLockAsync(TimeSpan timeout, CancellationToken cancellationToken) =>
+        this.TryAcquireWriteLockAsync(timeout, cancellationToken).Convert(To<IDistributedSynchronizationHandle?>.ValueTask);
+    ValueTask<IDistributedSynchronizationHandle> IDistributedReaderWriterLock.AcquireWriteLockAsync(TimeSpan? timeout, CancellationToken cancellationToken) =>
+        this.AcquireWriteLockAsync(timeout, cancellationToken).Convert(To<IDistributedSynchronizationHandle>.ValueTask);
 
         ZooKeeperDistributedReaderWriterLockHandle? IInternalDistributedReaderWriterLock<ZooKeeperDistributedReaderWriterLockHandle>.TryAcquireReadLock(TimeSpan timeout, CancellationToken cancellationToken) =>
             DistributedLockHelpers.TryAcquire(this, timeout, cancellationToken, isWrite: false);
@@ -102,5 +102,4 @@ namespace Medallion.Threading.ZooKeeper
         public ValueTask<ZooKeeperDistributedReaderWriterLockHandle> AcquireWriteLockAsync(TimeSpan? timeout = null, CancellationToken cancellationToken = default) =>
             DistributedLockHelpers.AcquireAsync(this, timeout, cancellationToken, isWrite: true);
 
-    }
 }

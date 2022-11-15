@@ -5,89 +5,88 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Medallion.Threading.Tests
+namespace Medallion.Threading.Tests;
+
+public interface ITestingReaderWriterLockAsMutexProvider
 {
-    public interface ITestingReaderWriterLockAsMutexProvider
+    public bool DisableUpgradeLock { get; set; }
+}
+
+public sealed class TestingReaderWriterLockAsMutexProvider<TReaderWriterLockProvider, TStrategy> : TestingLockProvider<TStrategy>, ITestingReaderWriterLockAsMutexProvider
+    where TReaderWriterLockProvider : TestingReaderWriterLockProvider<TStrategy>, new()
+    where TStrategy : TestingSynchronizationStrategy, new()
+{
+    private readonly TReaderWriterLockProvider _readerWriterLockProvider = new TReaderWriterLockProvider();
+
+    public override TStrategy Strategy => this._readerWriterLockProvider.Strategy;
+
+    public bool DisableUpgradeLock { get; set; }
+
+    public override IDistributedLock CreateLockWithExactName(string name) => 
+        new ReaderWriterLockAsMutex(this._readerWriterLockProvider.CreateReaderWriterLockWithExactName(name), this);
+
+    public override string GetSafeName(string name) => this._readerWriterLockProvider.GetSafeName(name);
+
+    public override string GetCrossProcessLockType() => 
+        this._readerWriterLockProvider.GetCrossProcessLockType(ReaderWriterLockType.Write);
+
+    public override void Dispose()
     {
-        public bool DisableUpgradeLock { get; set; }
+        this._readerWriterLockProvider.Dispose();
+        base.Dispose();
     }
 
-    public sealed class TestingReaderWriterLockAsMutexProvider<TReaderWriterLockProvider, TStrategy> : TestingLockProvider<TStrategy>, ITestingReaderWriterLockAsMutexProvider
-        where TReaderWriterLockProvider : TestingReaderWriterLockProvider<TStrategy>, new()
-        where TStrategy : TestingSynchronizationStrategy, new()
+    private bool GetShouldUseUpgradeLock()
     {
-        private readonly TReaderWriterLockProvider _readerWriterLockProvider = new TReaderWriterLockProvider();
+        return !this.DisableUpgradeLock
+            // intended to be random yet consistent across runs (assuming no changes)
+            && (Environment.StackTrace.Length % 2) == 1;
+    }
 
-        public override TStrategy Strategy => this._readerWriterLockProvider.Strategy;
+    private class ReaderWriterLockAsMutex : IDistributedLock
+    {
+        private readonly TestingReaderWriterLockAsMutexProvider<TReaderWriterLockProvider, TStrategy> _provider;
+        private readonly IDistributedReaderWriterLock _readerWriterLock;
 
-        public bool DisableUpgradeLock { get; set; }
-
-        public override IDistributedLock CreateLockWithExactName(string name) => 
-            new ReaderWriterLockAsMutex(this._readerWriterLockProvider.CreateReaderWriterLockWithExactName(name), this);
-
-        public override string GetSafeName(string name) => this._readerWriterLockProvider.GetSafeName(name);
-
-        public override string GetCrossProcessLockType() => 
-            this._readerWriterLockProvider.GetCrossProcessLockType(ReaderWriterLockType.Write);
-
-        public override void Dispose()
+        public ReaderWriterLockAsMutex(IDistributedReaderWriterLock readerWriterLock, TestingReaderWriterLockAsMutexProvider<TReaderWriterLockProvider, TStrategy> provider)
         {
-            this._readerWriterLockProvider.Dispose();
-            base.Dispose();
+            this._readerWriterLock = readerWriterLock;
+            this._provider = provider;
         }
 
-        private bool GetShouldUseUpgradeLock()
-        {
-            return !this.DisableUpgradeLock
-                // intended to be random yet consistent across runs (assuming no changes)
-                && (Environment.StackTrace.Length % 2) == 1;
-        }
+        string IDistributedLock.Name => this._readerWriterLock.Name;
 
-        private class ReaderWriterLockAsMutex : IDistributedLock
-        {
-            private readonly TestingReaderWriterLockAsMutexProvider<TReaderWriterLockProvider, TStrategy> _provider;
-            private readonly IDistributedReaderWriterLock _readerWriterLock;
+        IDistributedSynchronizationHandle IDistributedLock.Acquire(TimeSpan? timeout, CancellationToken cancellationToken) =>
+           this.ShouldUseUpgrade(out var upgradeable)
+                ? upgradeable.AcquireUpgradeableReadLock(timeout, cancellationToken)
+                : this._readerWriterLock.AcquireWriteLock(timeout, cancellationToken);
 
-            public ReaderWriterLockAsMutex(IDistributedReaderWriterLock readerWriterLock, TestingReaderWriterLockAsMutexProvider<TReaderWriterLockProvider, TStrategy> provider)
+        ValueTask<IDistributedSynchronizationHandle> IDistributedLock.AcquireAsync(TimeSpan? timeout, CancellationToken cancellationToken) =>
+            this.ShouldUseUpgrade(out var upgradeable)
+                ? upgradeable.AcquireUpgradeableReadLockAsync(timeout, cancellationToken).Convert(To<IDistributedSynchronizationHandle>.ValueTask)
+                : this._readerWriterLock.AcquireWriteLockAsync(timeout, cancellationToken);
+
+        IDistributedSynchronizationHandle? IDistributedLock.TryAcquire(TimeSpan timeout, CancellationToken cancellationToken) =>
+            this.ShouldUseUpgrade(out var upgradeable)
+                ? upgradeable.TryAcquireUpgradeableReadLock(timeout, cancellationToken)
+                : this._readerWriterLock.TryAcquireWriteLock(timeout, cancellationToken);
+
+        ValueTask<IDistributedSynchronizationHandle?> IDistributedLock.TryAcquireAsync(TimeSpan timeout, CancellationToken cancellationToken) =>
+            this.ShouldUseUpgrade(out var upgradeable)
+                ? upgradeable.TryAcquireUpgradeableReadLockAsync(timeout, cancellationToken).Convert(To<IDistributedSynchronizationHandle?>.ValueTask)
+                : this._readerWriterLock.TryAcquireWriteLockAsync(timeout, cancellationToken);
+
+        private bool ShouldUseUpgrade(out IDistributedUpgradeableReaderWriterLock upgradeable)
+        {
+            if (this._readerWriterLock is IDistributedUpgradeableReaderWriterLock upgradeableLock
+                && this._provider.GetShouldUseUpgradeLock())
             {
-                this._readerWriterLock = readerWriterLock;
-                this._provider = provider;
+                upgradeable = upgradeableLock;
+                return true;
             }
 
-            string IDistributedLock.Name => this._readerWriterLock.Name;
-
-            IDistributedSynchronizationHandle IDistributedLock.Acquire(TimeSpan? timeout, CancellationToken cancellationToken) =>
-               this.ShouldUseUpgrade(out var upgradeable)
-                    ? upgradeable.AcquireUpgradeableReadLock(timeout, cancellationToken)
-                    : this._readerWriterLock.AcquireWriteLock(timeout, cancellationToken);
-
-            ValueTask<IDistributedSynchronizationHandle> IDistributedLock.AcquireAsync(TimeSpan? timeout, CancellationToken cancellationToken) =>
-                this.ShouldUseUpgrade(out var upgradeable)
-                    ? upgradeable.AcquireUpgradeableReadLockAsync(timeout, cancellationToken).Convert(To<IDistributedSynchronizationHandle>.ValueTask)
-                    : this._readerWriterLock.AcquireWriteLockAsync(timeout, cancellationToken);
-
-            IDistributedSynchronizationHandle? IDistributedLock.TryAcquire(TimeSpan timeout, CancellationToken cancellationToken) =>
-                this.ShouldUseUpgrade(out var upgradeable)
-                    ? upgradeable.TryAcquireUpgradeableReadLock(timeout, cancellationToken)
-                    : this._readerWriterLock.TryAcquireWriteLock(timeout, cancellationToken);
-
-            ValueTask<IDistributedSynchronizationHandle?> IDistributedLock.TryAcquireAsync(TimeSpan timeout, CancellationToken cancellationToken) =>
-                this.ShouldUseUpgrade(out var upgradeable)
-                    ? upgradeable.TryAcquireUpgradeableReadLockAsync(timeout, cancellationToken).Convert(To<IDistributedSynchronizationHandle?>.ValueTask)
-                    : this._readerWriterLock.TryAcquireWriteLockAsync(timeout, cancellationToken);
-
-            private bool ShouldUseUpgrade(out IDistributedUpgradeableReaderWriterLock upgradeable)
-            {
-                if (this._readerWriterLock is IDistributedUpgradeableReaderWriterLock upgradeableLock
-                    && this._provider.GetShouldUseUpgradeLock())
-                {
-                    upgradeable = upgradeableLock;
-                    return true;
-                }
-
-                upgradeable = null!;
-                return false;
-            }
+            upgradeable = null!;
+            return false;
         }
     }
 }

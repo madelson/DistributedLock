@@ -6,50 +6,49 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Medallion.Threading.Azure
+namespace Medallion.Threading.Azure;
+
+/// <summary>
+/// Adds <see cref="SyncViaAsync"/> support to <see cref="BlobLeaseClient"/>
+/// </summary>
+internal sealed class BlobLeaseClientWrapper
 {
-    /// <summary>
-    /// Adds <see cref="SyncViaAsync"/> support to <see cref="BlobLeaseClient"/>
-    /// </summary>
-    internal sealed class BlobLeaseClientWrapper
+    private readonly BlobLeaseClient _blobLeaseClient;
+
+    public BlobLeaseClientWrapper(BlobLeaseClient blobLeaseClient)
     {
-        private readonly BlobLeaseClient _blobLeaseClient;
+        this._blobLeaseClient = blobLeaseClient;
+    }
 
-        public BlobLeaseClientWrapper(BlobLeaseClient blobLeaseClient)
+    public string LeaseId => this._blobLeaseClient.LeaseId;
+
+    public ValueTask AcquireAsync(TimeoutValue duration, CancellationToken cancellationToken)
+    {
+        if (SyncViaAsync.IsSynchronous)
         {
-            this._blobLeaseClient = blobLeaseClient;
+            this._blobLeaseClient.Acquire(duration.TimeSpan, cancellationToken: cancellationToken);
+            return default;
         }
+        return new ValueTask(this._blobLeaseClient.AcquireAsync(duration.TimeSpan, cancellationToken: cancellationToken));
+    }
 
-        public string LeaseId => this._blobLeaseClient.LeaseId;
-
-        public ValueTask AcquireAsync(TimeoutValue duration, CancellationToken cancellationToken)
+    public ValueTask RenewAsync(CancellationToken cancellationToken)
+    {
+        if (SyncViaAsync.IsSynchronous)
         {
-            if (SyncViaAsync.IsSynchronous)
-            {
-                this._blobLeaseClient.Acquire(duration.TimeSpan, cancellationToken: cancellationToken);
-                return default;
-            }
-            return new ValueTask(this._blobLeaseClient.AcquireAsync(duration.TimeSpan, cancellationToken: cancellationToken));
+            this._blobLeaseClient.Renew(cancellationToken: cancellationToken);
+            return default;
         }
+        return new ValueTask(this._blobLeaseClient.RenewAsync(cancellationToken: cancellationToken));
+    }
 
-        public ValueTask RenewAsync(CancellationToken cancellationToken)
+    public ValueTask ReleaseAsync()
+    {
+        if (SyncViaAsync.IsSynchronous)
         {
-            if (SyncViaAsync.IsSynchronous)
-            {
-                this._blobLeaseClient.Renew(cancellationToken: cancellationToken);
-                return default;
-            }
-            return new ValueTask(this._blobLeaseClient.RenewAsync(cancellationToken: cancellationToken));
+            this._blobLeaseClient.Release();
+            return default;
         }
-
-        public ValueTask ReleaseAsync()
-        {
-            if (SyncViaAsync.IsSynchronous)
-            {
-                this._blobLeaseClient.Release();
-                return default;
-            }
-            return new ValueTask(this._blobLeaseClient.ReleaseAsync());
-        }
+        return new ValueTask(this._blobLeaseClient.ReleaseAsync());
     }
 }

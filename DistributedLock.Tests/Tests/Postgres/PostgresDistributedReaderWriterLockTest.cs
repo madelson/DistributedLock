@@ -7,15 +7,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Medallion.Threading.Tests.Postgres
+namespace Medallion.Threading.Tests.Postgres;
+
+public class PostgresDistributedReaderWriterLockTest
 {
-    public class PostgresDistributedReaderWriterLockTest
+    [Test]
+    public void TestValidatesConstructorArguments()
     {
-        [Test]
-        public void TestValidatesConstructorArguments()
-        {
-            Assert.Throws<ArgumentNullException>(() => new PostgresDistributedReaderWriterLock(new(0), default(string)!));
-            Assert.Throws<ArgumentNullException>(() => new PostgresDistributedReaderWriterLock(new(0), default(IDbConnection)!));
-        }
+        Assert.Throws<ArgumentNullException>(() => new PostgresDistributedReaderWriterLock(new(0), default(string)!));
+        Assert.Throws<ArgumentNullException>(() => new PostgresDistributedReaderWriterLock(new(0), default(IDbConnection)!));
     }
 }

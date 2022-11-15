@@ -1,22 +1,21 @@
 ﻿using System;
 using System.Diagnostics;
 
-namespace Medallion.Threading.Internal
-{
+namespace Medallion.Threading.Internal;
+
 #if DEBUG
-    public
+public
 #else
-    internal
+internal
 #endif
-    static class Invariant
+static class Invariant
+{
+    [Conditional("DEBUG")]
+    public static void Require(bool condition, string? message = null)
     {
-        [Conditional("DEBUG")]
-        public static void Require(bool condition, string? message = null)
+        if (!condition)
         {
-            if (!condition)
-            {
-                throw new InvalidOperationException(message ?? "invariant violated");
-            }
+            throw new InvalidOperationException(message ?? "invariant violated");
         }
     }
 }

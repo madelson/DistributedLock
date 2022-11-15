@@ -10,29 +10,28 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Medallion.Threading.Tests.Core.Data
+namespace Medallion.Threading.Tests.Core.Data;
+
+public class DatabaseConnectionTest
 {
-    public class DatabaseConnectionTest
+    /// <summary>
+    /// Reproduces the root cause of https://github.com/madelson/DistributedLock/issues/133
+    /// </summary>
+    [Test]
+    public async Task TestConnectionMonitorStaysSubscribedAfterClose()
     {
-        /// <summary>
-        /// Reproduces the root cause of https://github.com/madelson/DistributedLock/issues/133
-        /// </summary>
-        [Test]
-        public async Task TestConnectionMonitorStaysSubscribedAfterClose()
-        {
-            var db = new TestingSqlServerDb { ApplicationName = nameof(TestConnectionMonitorStaysSubscribedAfterClose) };
+        var db = new TestingSqlServerDb { ApplicationName = nameof(TestConnectionMonitorStaysSubscribedAfterClose) };
 
-            await using var connection = new SqlDatabaseConnection(db.ConnectionString);
+        await using var connection = new SqlDatabaseConnection(db.ConnectionString);
 
-            await connection.OpenAsync(CancellationToken.None);
-            connection.ConnectionMonitor.GetMonitoringHandle().Dispose(); // initialize monitoring
-            await connection.CloseAsync();
+        await connection.OpenAsync(CancellationToken.None);
+        connection.ConnectionMonitor.GetMonitoringHandle().Dispose(); // initialize monitoring
+        await connection.CloseAsync();
 
-            await connection.OpenAsync(CancellationToken.None);
-            using var handle = connection.ConnectionMonitor.GetMonitoringHandle();
-            Assert.IsFalse(handle.ConnectionLostToken.IsCancellationRequested);
-            await db.KillSessionsAsync(db.ApplicationName, idleSince: null);
-            Assert.IsTrue(await TestHelper.WaitForAsync(() => new(handle.ConnectionLostToken.IsCancellationRequested), timeout: TimeSpan.FromSeconds(5)));
-        }
+        await connection.OpenAsync(CancellationToken.None);
+        using var handle = connection.ConnectionMonitor.GetMonitoringHandle();
+        Assert.IsFalse(handle.ConnectionLostToken.IsCancellationRequested);
+        await db.KillSessionsAsync(db.ApplicationName, idleSince: null);
+        Assert.IsTrue(await TestHelper.WaitForAsync(() => new(handle.ConnectionLostToken.IsCancellationRequested), timeout: TimeSpan.FromSeconds(5)));
     }
 }

@@ -3,43 +3,42 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Medallion.Threading.WaitHandles
+namespace Medallion.Threading.WaitHandles;
+
+/// <summary>
+/// Implements <see cref="IDistributedSynchronizationHandle"/>
+/// </summary>
+public sealed class EventWaitHandleDistributedLockHandle : IDistributedSynchronizationHandle
 {
-    /// <summary>
-    /// Implements <see cref="IDistributedSynchronizationHandle"/>
-    /// </summary>
-    public sealed class EventWaitHandleDistributedLockHandle : IDistributedSynchronizationHandle
+    private EventWaitHandle? _event;
+
+    internal EventWaitHandleDistributedLockHandle(EventWaitHandle @event)
     {
-        private EventWaitHandle? _event;
+        this._event = @event;
+    }
 
-        internal EventWaitHandleDistributedLockHandle(EventWaitHandle @event)
+    CancellationToken IDistributedSynchronizationHandle.HandleLostToken => 
+        Volatile.Read(ref this._event) != null ? CancellationToken.None : throw this.ObjectDisposed();
+
+    /// <summary>
+    /// Releases the lock
+    /// </summary>
+    public void Dispose()
+    {
+        var @event = Interlocked.Exchange(ref this._event, null);
+        if (@event != null)
         {
-            this._event = @event;
+            @event.Set(); // signal
+            @event.Dispose();
         }
+    }
 
-        CancellationToken IDistributedSynchronizationHandle.HandleLostToken => 
-            Volatile.Read(ref this._event) != null ? CancellationToken.None : throw this.ObjectDisposed();
-
-        /// <summary>
-        /// Releases the lock
-        /// </summary>
-        public void Dispose()
-        {
-            var @event = Interlocked.Exchange(ref this._event, null);
-            if (@event != null)
-            {
-                @event.Set(); // signal
-                @event.Dispose();
-            }
-        }
-
-        /// <summary>
-        /// Releases the lock asynchronously
-        /// </summary>
-        public ValueTask DisposeAsync()
-        {
-            this.Dispose();
-            return default;
-        }
+    /// <summary>
+    /// Releases the lock asynchronously
+    /// </summary>
+    public ValueTask DisposeAsync()
+    {
+        this.Dispose();
+        return default;
     }
 }

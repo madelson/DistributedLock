@@ -3,11 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace Medallion.Threading.Tests
+namespace Medallion.Threading.Tests;
+
+internal static class RedisPorts
 {
-    internal static class RedisPorts
-    {
-        // 6379 is the redis default, so don't use that
-        public static readonly IReadOnlyList<int> DefaultPorts = Enumerable.Range(6380, count: 10).ToArray();
-    }
+    // 6379 is the redis default, so don't use that
+    public static readonly IReadOnlyList<int> DefaultPorts = Enumerable.Range(6380, count: 10).ToArray();
 }
