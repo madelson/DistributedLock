@@ -1,5 +1,7 @@
-﻿using NUnit.Framework;
+﻿#if NETCOREAPP // no need to run this on multiple frameworks
+using NUnit.Framework;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -24,7 +26,8 @@ public class TestSetupTest
             )
             .ToArray();
 
-        var expectedTestTypes = testCaseClasses.SelectMany(this.GetPossibleGenericInstantiations)
+        var expectedTestTypes = testCaseClasses.AsParallel()
+            .SelectMany(this.GetPossibleGenericInstantiations)
             .ToArray();
 
         var combinatorialTestsFile = Path.GetFullPath(Path.Combine(TestContext.CurrentContext.TestDirectory, "..", "..", "..", "Tests", "CombinatorialTests.cs"));
@@ -117,11 +120,18 @@ $@"namespace {g.Key}
 
     private static string RemoveGenericMarkers(string name) => Regex.Replace(name, @"`\d+", string.Empty);
 
+    private static readonly ConcurrentDictionary<Type, Type[]> PossibleGenericInstantiationsCache = new();
+
     private Type[] GetPossibleGenericInstantiations(Type genericTypeDefinition)
     {
+        if (PossibleGenericInstantiationsCache.TryGetValue(genericTypeDefinition, out var cached)) { return cached; }
+
         var genericParameterTypes = genericTypeDefinition.GetGenericArguments()
             .Select(this.GetTypesForGenericParameter)
             .ToArray();
+        // Re-check the cache since we may have computed the result in the call to GetTypesForGenericParameter
+        if (PossibleGenericInstantiationsCache.TryGetValue(genericTypeDefinition, out cached)) { return cached; }
+
         var allCombinations = TraverseDepthFirst(
                 root: (index: 0, value: Enumerable.Empty<Type>()),
                 children: t => t.index == genericParameterTypes.Length
@@ -132,19 +142,24 @@ $@"namespace {g.Key}
             .Select(t => MakeGenericTypeOrDefault(genericTypeDefinition, t.value.ToArray()))
             .Where(t => t != null).Select(t => t!)
             .ToArray();
+        PossibleGenericInstantiationsCache.TryAdd(genericTypeDefinition, allCombinations);
         return allCombinations;
     }
+
+    private static readonly IReadOnlyList<Type> GenericParameterTypeCandidates = typeof(TestSetupTest).Assembly
+        .GetTypes()
+        .Where(t => !t.IsNestedPrivate && !t.IsAbstract)
+        .ToArray();
 
     private Type[] GetTypesForGenericParameter(Type genericParameter)
     {
         var constraints = genericParameter.GetGenericParameterConstraints();
-        return this.GetType().Assembly
-            .GetTypes()
+        return GenericParameterTypeCandidates
             // This doesn't support all fancy constraints like class or new()
             // see https://stackoverflow.com/questions/4864496/checking-if-an-object-meets-a-generic-parameter-constraint.
             // It also does attempt to enforce cross-constraint rules (e. g. T : Foo[V]). The idea is to identify cases 
             // that might match
-            .Where(t => !t.IsNestedPrivate && !t.IsAbstract && constraints.All(c => IsDerivedFromOrDerivedFromGenericOf(derived: t, @base: c)))
+            .Where(t => constraints.All(c => IsDerivedFromOrDerivedFromGenericOf(derived: t, @base: c)))
             .SelectMany(t => t.IsGenericTypeDefinition ? this.GetPossibleGenericInstantiations(t) : new[] { t })
             .ToArray();
     }
@@ -212,3 +227,4 @@ $@"namespace {g.Key}
         }
     }
 }
+#endif
