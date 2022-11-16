@@ -1,7 +1,7 @@
 version: 1.0.{build}
 
 image: 
-  - Visual Studio 2019
+  - Visual Studio 2022
   - Ubuntu
 
 build_script:
@@ -15,6 +15,6 @@ for:
     matrix: 
       only: 
         - 
-          image: "Visual Studio 2019"
+          image: "Visual Studio 2022"
     test_script:
       - dotnet test DistributedLock.sln -c Release --no-build --filter "TestCategory=CI|TestCategory=CIWindows"
