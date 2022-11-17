@@ -1,7 +1,5 @@
 using NUnit.Framework;
-using System;
 using System.Data.Common;
-using System.Linq;
 using System.Runtime.CompilerServices;
 
 namespace Medallion.Threading.Tests.Data;

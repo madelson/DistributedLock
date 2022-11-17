@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Medallion.Threading.Tests;
+﻿namespace Medallion.Threading.Tests;
 
 /// <summary>
 /// Manages the underlying approach to synchronization. Having this class allows us to parameterize tests by

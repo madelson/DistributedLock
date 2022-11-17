@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Medallion.Threading;
+﻿namespace Medallion.Threading;
 
 /// <summary>
 /// An exception that SOME distributed locks will throw under SOME deadlock conditions. Note that even locks

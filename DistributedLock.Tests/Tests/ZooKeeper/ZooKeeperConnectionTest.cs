@@ -1,11 +1,5 @@
 ﻿using Medallion.Threading.ZooKeeper;
 using NUnit.Framework;
-using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Linq;
 using Medallion.Threading.Internal;
 
 namespace Medallion.Threading.Tests.ZooKeeper;

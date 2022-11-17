@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Medallion.Threading.WaitHandles;
+﻿namespace Medallion.Threading.WaitHandles;
 
 /// <summary>
 /// Implements <see cref="IDistributedLockProvider"/> for <see cref="EventWaitHandleDistributedLock"/>

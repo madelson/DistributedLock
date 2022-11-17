@@ -30,4 +30,5 @@
   <ItemGroup>
     <Compile Include="..\DistributedLock.Tests\Infrastructure\Shared\*.cs" />
   </ItemGroup>
+  
 </Project>

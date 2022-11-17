@@ -1,11 +1,7 @@
 using Medallion.Threading.Internal;
 using Medallion.Threading.SqlServer;
-using Medallion.Threading.Tests.SqlServer;
 using NUnit.Framework;
-using System;
 using System.Data.Common;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Medallion.Threading.Tests.SqlServer;
 

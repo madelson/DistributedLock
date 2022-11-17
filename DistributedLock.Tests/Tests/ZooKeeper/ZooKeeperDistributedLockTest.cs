@@ -1,15 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Cryptography;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using Medallion.Threading.Internal;
+﻿using Medallion.Threading.Internal;
 using Medallion.Threading.ZooKeeper;
 using NUnit.Framework;
-using org.apache.zookeeper;
-using org.apache.zookeeper.data;
 
 namespace Medallion.Threading.Tests.ZooKeeper;
 

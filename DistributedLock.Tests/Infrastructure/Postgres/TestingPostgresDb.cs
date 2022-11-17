@@ -3,12 +3,8 @@ using Medallion.Threading.Tests.Data;
 using Npgsql;
 using NpgsqlTypes;
 using NUnit.Framework;
-using System;
-using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Medallion.Threading.Tests.Postgres;
 

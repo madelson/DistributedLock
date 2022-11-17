@@ -6,6 +6,7 @@
     <TargetFrameworks Condition="'$(Configuration)' != 'Debug'">net471;netcoreapp3.1</TargetFrameworks> 
     <LangVersion>Latest</LangVersion>
     <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>Medallion.Threading.Tests</RootNamespace>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>..\DistributedLock.snk</AssemblyOriginatorKeyFile>

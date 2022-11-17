@@ -1,14 +1,7 @@
-﻿using Medallion.Threading.Internal;
-using Medallion.Threading.Redis;
+﻿using Medallion.Threading.Redis;
 using Moq;
 using NUnit.Framework;
 using StackExchange.Redis;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Medallion.Threading.Tests.Redis;
 

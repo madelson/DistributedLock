@@ -1,8 +1,5 @@
 ﻿using Medallion.Threading.MySql;
 using Medallion.Threading.Tests.Data;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Medallion.Threading.Tests.MySql;
 

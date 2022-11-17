@@ -1,6 +1,5 @@
 using Moq;
 using NUnit.Framework;
-using System;
 using System.Linq.Expressions;
 
 namespace Medallion.Threading.Tests.Core;

@@ -1,7 +1,4 @@
-﻿using System;
-using System.Threading;
-
-namespace Medallion.Threading.Internal;
+﻿namespace Medallion.Threading.Internal;
 
 /// <summary>
 /// Wraps a value tuple to be a read/write reference

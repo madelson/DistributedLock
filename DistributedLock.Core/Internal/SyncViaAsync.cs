@@ -1,8 +1,4 @@
-﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
-
-namespace Medallion.Threading.Internal;
+﻿namespace Medallion.Threading.Internal;
 
 /// <summary>
 /// Helps re-use code across sync and async pathways, leveraging the fact that async code will run synchronously

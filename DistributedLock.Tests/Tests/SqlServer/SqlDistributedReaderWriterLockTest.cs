@@ -1,5 +1,4 @@
 using NUnit.Framework;
-using System;
 using System.Data.Common;
 using Medallion.Threading.SqlServer;
 

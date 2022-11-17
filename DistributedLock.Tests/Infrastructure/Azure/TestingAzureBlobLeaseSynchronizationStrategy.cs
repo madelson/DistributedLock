@@ -2,12 +2,9 @@
 using Azure.Storage.Blobs.Specialized;
 using Medallion.Threading.Azure;
 using NUnit.Framework;
-using System;
-using System.Collections.Generic;
 using System.Numerics;
 using System.Security.Cryptography;
 using System.Text;
-using System.Threading;
 
 namespace Medallion.Threading.Tests.Azure;
 

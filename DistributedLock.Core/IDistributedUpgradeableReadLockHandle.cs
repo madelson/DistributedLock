@@ -1,8 +1,4 @@
-﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
-
-namespace Medallion.Threading;
+﻿namespace Medallion.Threading;
 
 /// <summary>
 /// A <see cref="IDistributedSynchronizationHandle"/> that can be upgraded to a write lock

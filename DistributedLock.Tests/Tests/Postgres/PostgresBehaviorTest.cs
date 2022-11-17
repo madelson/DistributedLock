@@ -1,11 +1,6 @@
 ﻿using Npgsql;
 using NUnit.Framework;
-using System;
-using System.Collections.Generic;
 using System.Data;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Medallion.Threading.Tests.Postgres;
 

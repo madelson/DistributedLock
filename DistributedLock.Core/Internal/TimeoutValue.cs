@@ -1,7 +1,4 @@
-﻿using System;
-using System.Threading;
-
-namespace Medallion.Threading.Internal;
+﻿namespace Medallion.Threading.Internal;
 
 /// <summary>
 /// A type which can only store a valid timeout value

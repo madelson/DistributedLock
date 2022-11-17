@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Medallion.Threading.ZooKeeper;
+﻿namespace Medallion.Threading.ZooKeeper;
 
 /// <summary>
 /// Implements <see cref="IDistributedLockProvider"/> for <see cref="ZooKeeperDistributedLock"/>,

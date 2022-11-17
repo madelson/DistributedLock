@@ -1,9 +1,5 @@
 ﻿using Azure.Storage.Blobs;
 using Medallion.Threading.Azure;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
 
 namespace Medallion.Threading.Tests.Azure;
 

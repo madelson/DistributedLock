@@ -1,9 +1,4 @@
-﻿using Medallion.Threading.Tests.Redis;
-using NUnit.Framework;
-using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading.Tasks;
+﻿using NUnit.Framework;
 
 namespace Medallion.Threading.Tests.Redis;
 

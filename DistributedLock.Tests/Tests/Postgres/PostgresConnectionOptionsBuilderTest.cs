@@ -1,8 +1,5 @@
 ﻿using Medallion.Threading.Postgres;
 using NUnit.Framework;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Medallion.Threading.Tests.Postgres;
 

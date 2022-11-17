@@ -1,7 +1,4 @@
-﻿using System;
-using System.Threading;
-
-namespace Medallion.Threading;
+﻿namespace Medallion.Threading;
 
 /// <summary>
 /// A handle to a distributed lock or other synchronization primitive. To unlock/release,

@@ -1,15 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using Medallion.Threading.Internal;
+using System.Collections;
 
 namespace Medallion.Threading.ZooKeeper;
 
-using Medallion.Threading.Internal;
 using org.apache.zookeeper;
-using System.Collections;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 
 /// <summary>
 /// We don't want to use one session (<see cref="org.apache.zookeeper.ZooKeeper"/>) per lock because "The creation and closing of sessions are 

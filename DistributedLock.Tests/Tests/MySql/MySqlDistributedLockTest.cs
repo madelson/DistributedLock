@@ -2,11 +2,7 @@
 using Medallion.Threading.Tests.Data;
 using MySqlConnector;
 using NUnit.Framework;
-using System;
-using System.Collections.Generic;
 using System.Data;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Medallion.Threading.Tests.MySql;
 

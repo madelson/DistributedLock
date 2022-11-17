@@ -7,6 +7,7 @@
     <WarningLevel>4</WarningLevel>
     <LangVersion>Latest</LangVersion>
     <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -52,6 +53,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\DistributedLock.Core\DistributedLock.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Remove="System.Net.Http"/>
   </ItemGroup>
 
   <Import Project="..\CopyPackageToPublishDirectory.targets" />

@@ -1,9 +1,7 @@
 using Medallion.Threading.SqlServer;
 using Microsoft.Data.SqlClient;
 using NUnit.Framework;
-using System;
 using System.Data;
-using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 

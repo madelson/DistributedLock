@@ -7,6 +7,7 @@
     <WarningLevel>4</WarningLevel>
     <LangVersion>Latest</LangVersion>
     <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -54,6 +55,11 @@
     </PackageReference>
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All"/>
     <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="3.3.3" PrivateAssets="All" Condition="$(Configuration) == 'Release'"/>
+    <Using Remove="System.Net.Http"/>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Remove="System.Net.Http"/>
   </ItemGroup>
 
   <Import Project="..\CopyPackageToPublishDirectory.targets" />

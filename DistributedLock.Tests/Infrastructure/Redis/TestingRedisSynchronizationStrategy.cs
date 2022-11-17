@@ -1,10 +1,5 @@
 ﻿using Medallion.Threading.Internal;
 using Medallion.Threading.Redis;
-using NUnit.Framework;
-using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading;
 
 namespace Medallion.Threading.Tests.Redis;
 

@@ -1,9 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Data.Common;
-using System.Threading;
-using System.Threading.Tasks;
-
 namespace Medallion.Threading.Tests.Data;
 
 internal class IdleSessionKiller : IDisposable

@@ -1,5 +1,4 @@
 using NUnit.Framework;
-using System.Linq;
 
 namespace Medallion.Threading.Tests.Core;
 

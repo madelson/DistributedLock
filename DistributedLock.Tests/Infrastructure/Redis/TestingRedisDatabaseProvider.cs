@@ -1,14 +1,7 @@
-﻿using Medallion.Threading.Tests.Redis;
-using NUnit.Framework;
+﻿using NUnit.Framework;
 using StackExchange.Redis;
 using StackExchange.Redis.KeyspaceIsolation;
-
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Medallion.Threading.Tests.Redis;
 

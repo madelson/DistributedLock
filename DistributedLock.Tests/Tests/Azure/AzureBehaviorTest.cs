@@ -3,11 +3,6 @@ using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Specialized;
 using Medallion.Threading.Azure;
 using NUnit.Framework;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Medallion.Threading.Tests.Azure;
 

@@ -1,9 +1,6 @@
 ﻿using Medallion.Threading.Internal;
-using System;
 using System.Security.AccessControl;
 using System.Security.Principal;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Medallion.Threading.WaitHandles;
 

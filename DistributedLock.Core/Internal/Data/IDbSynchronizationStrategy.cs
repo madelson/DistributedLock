@@ -1,8 +1,3 @@
-using Medallion.Threading.Internal;
-using Medallion.Threading.Internal.Data;
-using System.Threading;
-using System.Threading.Tasks;
-
 namespace Medallion.Threading.Internal.Data;
 
 /// <summary>

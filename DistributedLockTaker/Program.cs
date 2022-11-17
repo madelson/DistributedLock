@@ -11,7 +11,6 @@ using Medallion.Threading.Redis;
 using StackExchange.Redis;
 using System.Linq;
 using Medallion.Threading;
-using System.Drawing.Text;
 using System.Collections.Generic;
 using Medallion.Threading.ZooKeeper;
 using Medallion.Threading.MySql;

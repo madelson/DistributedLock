@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Medallion.Threading.Tests;
+﻿namespace Medallion.Threading.Tests;
 
 /// <summary>
 /// Indicates that a test infrastructure component supports being run in a remote continuous integration environment

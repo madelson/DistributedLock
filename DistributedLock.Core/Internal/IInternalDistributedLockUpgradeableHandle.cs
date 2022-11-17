@@ -1,7 +1,4 @@
-﻿using System.Threading;
-using System.Threading.Tasks;
-
-namespace Medallion.Threading.Internal;
+﻿namespace Medallion.Threading.Internal;
 
 #if DEBUG
 public

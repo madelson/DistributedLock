@@ -1,10 +1,6 @@
 ﻿#if NETCOREAPP // no need to run this on multiple frameworks
 using NUnit.Framework;
-using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
 

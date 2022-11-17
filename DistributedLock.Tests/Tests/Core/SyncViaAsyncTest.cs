@@ -1,7 +1,5 @@
 using Medallion.Threading.Internal;
 using NUnit.Framework;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Medallion.Threading.Tests.Core;
 

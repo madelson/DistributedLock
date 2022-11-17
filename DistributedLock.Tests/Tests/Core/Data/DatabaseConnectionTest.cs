@@ -1,14 +1,6 @@
-﻿using Medallion.Threading.Internal.Data;
-using Medallion.Threading.SqlServer;
+﻿using Medallion.Threading.SqlServer;
 using Medallion.Threading.Tests.SqlServer;
 using NUnit.Framework;
-using System;
-using System.Collections.Generic;
-using System.Data.SqlClient;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Medallion.Threading.Tests.Core.Data;
 

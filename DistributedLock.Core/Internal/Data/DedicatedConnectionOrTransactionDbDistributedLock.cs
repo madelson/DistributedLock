@@ -1,7 +1,4 @@
-using System;
 using System.Data;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Medallion.Threading.Internal.Data;
 

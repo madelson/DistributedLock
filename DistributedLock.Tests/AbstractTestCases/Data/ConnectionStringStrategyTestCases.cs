@@ -1,9 +1,5 @@
-﻿using Medallion.Threading.Internal;
-using NUnit.Framework;
-using System;
+﻿using NUnit.Framework;
 using System.Diagnostics;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Medallion.Threading.Tests.Data;
 

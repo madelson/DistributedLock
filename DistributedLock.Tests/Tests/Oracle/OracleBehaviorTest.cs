@@ -1,9 +1,5 @@
 ﻿using NUnit.Framework;
 using Oracle.ManagedDataAccess.Client;
-using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Medallion.Threading.Tests.Oracle;
 
