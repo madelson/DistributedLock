@@ -53,10 +53,7 @@ public class GenerateIDistributedLockImplementations
 
             var @namespace = Regex.Match(lockCode, @"\nnamespace (?<namespace>[^\s;]+)").Groups["namespace"].Value;
             var code =
-$@"using System;
-using System.Threading;
-using System.Threading.Tasks;
-using Medallion.Threading.Internal;
+$@"using Medallion.Threading.Internal;
 
 namespace {@namespace};
 
@@ -168,10 +165,7 @@ public partial class {lockType}
 
             var @namespace = Regex.Match(lockCode, @"\nnamespace (?<namespace>[^\s;]+)").Groups["namespace"].Value;
             var code =
-$@"using System;
-using System.Threading;
-using System.Threading.Tasks;
-using Medallion.Threading.Internal;
+$@"using Medallion.Threading.Internal;
 
 namespace {@namespace};
 

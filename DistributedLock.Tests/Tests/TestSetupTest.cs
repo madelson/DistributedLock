@@ -217,7 +217,7 @@ $@"namespace {g.Key}
     private static IEnumerable<T> TraverseAlong<T>(T? root, Func<T, T?> next)
         where T : class
     {
-        for (T? node = root; node != null; node = next(node))
+        for (var node = root; node != null; node = next(node))
         {
             yield return node;
         }
