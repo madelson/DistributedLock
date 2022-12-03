@@ -5,10 +5,10 @@ image:
   - Ubuntu
 
 build_script:
-  - dotnet build DistributedLock.sln -c Release
+  - dotnet build src/DistributedLock.sln -c Release
   
 test_script:
-  - dotnet test DistributedLock.sln -c Release -f netcoreapp3.1 --no-build --filter TestCategory=CI
+  - dotnet test src/DistributedLock.sln -c Release -f netcoreapp3.1 --no-build --filter TestCategory=CI
 
 for: 
   - 
@@ -17,4 +17,4 @@ for:
         - 
           image: "Visual Studio 2022"
     test_script:
-      - dotnet test DistributedLock.sln -c Release --no-build --filter "TestCategory=CI|TestCategory=CIWindows"
+      - dotnet test src/DistributedLock.sln -c Release --no-build --filter "TestCategory=CI|TestCategory=CIWindows"
