@@ -20,7 +20,7 @@ internal class ZooKeeperConnection : IDisposable
     /// Hopefully, 10m prevents leaks from ever getting too bad while granting efficiencies by allowing us to re-use
     /// sessions under load.
     /// </summary>
-    public static readonly Pool DefaultPool = new Pool(maxAge: TimeSpan.FromMinutes(10));
+    public static readonly Pool DefaultPool = new(maxAge: TimeSpan.FromMinutes(10));
 
     private readonly InternalConnection _internalConnection;
     private Action? _releaseToPool;
@@ -39,7 +39,7 @@ internal class ZooKeeperConnection : IDisposable
 
     public sealed class Pool
     {
-        private readonly Dictionary<ZooKeeperConnectionInfo, ConnectionEntry> Connections = new Dictionary<ZooKeeperConnectionInfo, ConnectionEntry>();
+        private readonly Dictionary<ZooKeeperConnectionInfo, ConnectionEntry> Connections = new();
         private readonly TimeoutValue _maxAge;
 
         public Pool(TimeoutValue maxAge) 
@@ -207,7 +207,7 @@ internal class ZooKeeperConnection : IDisposable
 
     private class ConnectionWatcher : Watcher, IDisposable
     {
-        private readonly CancellationTokenSource _connectionLostSource = new CancellationTokenSource();
+        private readonly CancellationTokenSource _connectionLostSource = new();
         private readonly TimeoutValue _sessionTimeout;
         private int _isWaitingForReconnect;
 

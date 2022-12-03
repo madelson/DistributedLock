@@ -9,7 +9,7 @@ internal static class ZooKeeperNodeCreator
     /// <summary>
     /// See https://zookeeper.apache.org/doc/r3.5.4-beta/zookeeperProgrammers.html under "Builtin ACL Schemes"
     /// </summary>
-    public static readonly ACL PublicAcl = new ACL(0x1f, new Id("world", "anyone"));
+    public static readonly ACL PublicAcl = new(0x1f, new Id("world", "anyone"));
 
     public static async Task<string> CreateEphemeralSequentialNode(
         this ZooKeeperConnection connection,
