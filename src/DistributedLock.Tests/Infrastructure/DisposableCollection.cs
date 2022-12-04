@@ -2,8 +2,8 @@
 
 internal sealed class DisposableCollection : IDisposable
 {
-    private readonly object _lock = new object();
-    private Stack<IDisposable>? _resources = new Stack<IDisposable>();
+    private readonly object _lock = new();
+    private Stack<IDisposable>? _resources = new();
 
     public void Add(IDisposable resource)
     {
