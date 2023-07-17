@@ -25,9 +25,10 @@ internal class BlobClientWrapper
     {
         var conditions = new BlobRequestConditions { LeaseId = leaseId };
         var properties = SyncViaAsync.IsSynchronous
-            ? this._blobClient.GetProperties(conditions, cancellationToken)
-            : await this._blobClient.GetPropertiesAsync(conditions, cancellationToken).ConfigureAwait(false);
-        return properties.Value.Metadata;
+            ? _blobClient.GetProperties(conditions, cancellationToken).AsTask()
+            : _blobClient.GetPropertiesAsync(conditions, cancellationToken);
+        return (await properties.ConfigureAwait(false)).Value.Metadata;
+
     }
 
     public ValueTask CreateIfNotExistsAsync(IDictionary<string, string> metadata, CancellationToken cancellationToken)
