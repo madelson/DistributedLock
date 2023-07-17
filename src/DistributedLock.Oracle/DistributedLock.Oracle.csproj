@@ -11,7 +11,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <Version>1.0.1</Version>
+    <Version>1.0.2</Version>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <Authors>Michael Adelson</Authors>
     <Description>Provides a distributed lock implementation based on Oracle Database</Description>
@@ -45,8 +45,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Oracle.ManagedDataAccess.Core" Version="3.21.4" Condition="'$(TargetFramework)' == 'netstandard2.1'" />
-    <PackageReference Include="Oracle.ManagedDataAccess" Version="21.4.0" Condition="'$(TargetFramework)' == 'net462'"/>
+    <PackageReference Include="Oracle.ManagedDataAccess.Core" Version="3.21.100" Condition="'$(TargetFramework)' == 'netstandard2.1'" />
+    <PackageReference Include="Oracle.ManagedDataAccess" Version="21.10.0" Condition="'$(TargetFramework)' == 'net462'"/>
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All" />
     <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="3.3.3" PrivateAssets="All" Condition="$(Configuration) == 'Release'"/>
   </ItemGroup>
