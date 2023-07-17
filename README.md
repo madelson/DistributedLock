@@ -138,7 +138,7 @@ Contributions are welcome! If you are interested in contributing towards a new o
 
 ## Release notes
 - 2.3.3
-	- Update Microsoft.Data.SqlClient due to vulnerabilities ([#49](https://github.com/madelson/DistributedLock/issues/149), DistributedLock.SqlServer 1.0.3)
+	- Update Microsoft.Data.SqlClient due to vulnerabilities ([#149](https://github.com/madelson/DistributedLock/issues/149), DistributedLock.SqlServer 1.0.3)
 	- Update versions of Oracle.ManagedDataAccess and Oracle.ManagedDataAccess.Core due to vulnerabilities  (DistributedLock.Oracle 1.0.2)
 - 2.3.2
 	- Work around underlying Postgres race condition when waiting on advisory locks with a short non-zero timeout ([#147](https://github.com/madelson/DistributedLock/issues/147), DistributedLock.Postgres 1.0.4). Thanks [@Tzachi009](https://github.com/Tzachi009) for reporting and isolating the issue!
