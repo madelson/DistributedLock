@@ -49,7 +49,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="StackExchange.Redis" Version="2.2.4" />
+    <PackageReference Include="StackExchange.Redis" Version="2.6.122" />
     <PackageReference Include="Nullable" Version="1.2.1" Condition="'$(TargetFramework)' != 'netstandard2.1'">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
