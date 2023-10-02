@@ -6,11 +6,10 @@ using System.Globalization;
 
 namespace Medallion.Threading.Tests.Redis;
 
-[Category("CI")]
 [NonParallelizable] // one of the tests temporarily changes CurrentCulture
 public class RedisDistributedLockTest
 {
-    [Test]
+    [Test, Category("CI")]
     public void TestName()
     {
         const string Name = "\0🐉汉字\b\r\n\\";
@@ -19,7 +18,7 @@ public class RedisDistributedLockTest
         @lock.Key.ShouldEqual(new RedisKey(Name));
     }
 
-    [Test]
+    [Test, Category("CI")]
     public void TestValidatesConstructorParameters()
     {
         var database = new Mock<IDatabase>(MockBehavior.Strict).Object;
@@ -39,7 +38,7 @@ public class RedisDistributedLockTest
     /// This is because there are both "dotted i" and "dotless i" in some Turkic languages:
     /// https://en.wikipedia.org/wiki/Dotted_and_dotless_I_in_computing
     /// </summary>
-    [Test]
+    [Test] // exclude from CI because RedisServer is local-only
     public void TestCanAcquireLockWhenCurrentCultureIsTurkishTurkey()
     {
         var originalCultureInfo = Thread.CurrentThread.CurrentCulture;
