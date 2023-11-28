@@ -103,6 +103,7 @@ internal class PostgresAdvisoryLock : IDbSynchronizationStrategy<object>
         return acquireCommandResult switch
         {
             DBNull _ => Cookie, // indicates we called pg_advisory_lock and not pg_try_advisory_lock
+            null => Cookie, // Npgsql 8 returns null instead of DBNull
             false => null,
             true => Cookie,
             _ => throw new InvalidOperationException($"Unexpected value '{acquireCommandResult}' from acquire command")
