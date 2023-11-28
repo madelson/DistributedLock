@@ -137,6 +137,8 @@ public class SomeService
 Contributions are welcome! If you are interested in contributing towards a new or existing issue, please let me know via comments on the issue so that I can help you get started and avoid wasted effort on your part.
 
 ## Release notes
+- 2.3.4
+	- Support Npgsql 8.0's [ExecuteScalar breaking change](https://github.com/npgsql/npgsql/issues/5143) ([#174](https://github.com/madelson/DistributedLock/issues/174), DistributedLock.Postgres 1.0.5). Thanks [@Kaffeetasse](https://github.com/Kaffeetasse) for diagnosing and fixing!
 - 2.3.3
 	- Update Microsoft.Data.SqlClient due to vulnerabilities ([#149](https://github.com/madelson/DistributedLock/issues/149), DistributedLock.SqlServer 1.0.3)
 	- Update versions of Oracle.ManagedDataAccess and Oracle.ManagedDataAccess.Core due to vulnerabilities  (DistributedLock.Oracle 1.0.2)
