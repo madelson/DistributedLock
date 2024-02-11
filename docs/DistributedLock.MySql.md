@@ -5,7 +5,7 @@
 The DistributedLock.MySql package offers distributed synchronization primitives based on [MySQL/MariaDB user locks](https://dev.mysql.com/doc/refman/5.7/en/locking-functions.html). For example:
 
 ```C#
-var @lock = new MySqlDistributedLock("mylockname"), connectionString);
+var @lock = new MySqlDistributedLock("mylockname", connectionString);
 await using (await @lock.AcquireAsync())
 {
    // I have the lock

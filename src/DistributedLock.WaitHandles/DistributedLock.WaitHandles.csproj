@@ -1,0 +1,63 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;netstandard2.1;net461</TargetFrameworks>
+    <RootNamespace>Medallion.Threading.WaitHandles</RootNamespace>
+    <GenerateDocumentationFile>True</GenerateDocumentationFile>
+    <WarningLevel>4</WarningLevel>
+    <LangVersion>Latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <Version>1.0.1</Version>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <Authors>Michael Adelson</Authors>
+    <Description>Provides a distributed lock implementation based on global WaitHandle objects in Windows</Description>
+    <Copyright>Copyright © 2020 Michael Adelson</Copyright>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageTags>distributed lock async mutex waithandle</PackageTags>
+    <PackageProjectUrl>https://github.com/madelson/DistributedLock</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/madelson/DistributedLock</RepositoryUrl>
+    <FileVersion>1.0.0.0</FileVersion>
+    <PackageReleaseNotes>See https://github.com/madelson/DistributedLock#release-notes</PackageReleaseNotes>
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>..\DistributedLock.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <Optimize>True</Optimize>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
+    <TreatSpecificWarningsAsErrors />
+    <!-- see https://github.com/dotnet/sdk/issues/2679 -->
+    <DebugType>embedded</DebugType>
+    <!-- see https://mitchelsellers.com/blog/article/net-5-deterministic-builds-source-linking -->
+    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+    <Optimize>False</Optimize>
+    <NoWarn>1591</NoWarn>
+    <DefineConstants>TRACE;DEBUG</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Threading.AccessControl" Version="5.0.0" Condition="'$(TargetFramework)' != 'net461'" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All"/>
+    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="3.3.3" PrivateAssets="All" Condition="$(Configuration) == 'Release'"/>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DistributedLock.Core\DistributedLock.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Remove="System.Net.Http"/>
+  </ItemGroup>
+
+  <Import Project="..\CopyPackageToPublishDirectory.targets" />
+  <Import Project="..\FixDistributedLockCoreDependencyVersion.targets" />
+</Project>

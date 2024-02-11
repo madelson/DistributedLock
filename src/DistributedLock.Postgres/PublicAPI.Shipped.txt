@@ -1,0 +1,48 @@
+﻿#nullable enable
+Medallion.Threading.Postgres.PostgresAdvisoryLockKey
+Medallion.Threading.Postgres.PostgresAdvisoryLockKey.Equals(Medallion.Threading.Postgres.PostgresAdvisoryLockKey that) -> bool
+Medallion.Threading.Postgres.PostgresAdvisoryLockKey.PostgresAdvisoryLockKey() -> void
+Medallion.Threading.Postgres.PostgresAdvisoryLockKey.PostgresAdvisoryLockKey(int key1, int key2) -> void
+Medallion.Threading.Postgres.PostgresAdvisoryLockKey.PostgresAdvisoryLockKey(long key) -> void
+Medallion.Threading.Postgres.PostgresAdvisoryLockKey.PostgresAdvisoryLockKey(string! name, bool allowHashing = false) -> void
+Medallion.Threading.Postgres.PostgresConnectionOptionsBuilder
+Medallion.Threading.Postgres.PostgresConnectionOptionsBuilder.KeepaliveCadence(System.TimeSpan keepaliveCadence) -> Medallion.Threading.Postgres.PostgresConnectionOptionsBuilder!
+Medallion.Threading.Postgres.PostgresConnectionOptionsBuilder.UseMultiplexing(bool useMultiplexing = true) -> Medallion.Threading.Postgres.PostgresConnectionOptionsBuilder!
+Medallion.Threading.Postgres.PostgresDistributedLock
+Medallion.Threading.Postgres.PostgresDistributedLock.Acquire(System.TimeSpan? timeout = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> Medallion.Threading.Postgres.PostgresDistributedLockHandle!
+Medallion.Threading.Postgres.PostgresDistributedLock.AcquireAsync(System.TimeSpan? timeout = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<Medallion.Threading.Postgres.PostgresDistributedLockHandle!>
+Medallion.Threading.Postgres.PostgresDistributedLock.Key.get -> Medallion.Threading.Postgres.PostgresAdvisoryLockKey
+Medallion.Threading.Postgres.PostgresDistributedLock.PostgresDistributedLock(Medallion.Threading.Postgres.PostgresAdvisoryLockKey key, string! connectionString, System.Action<Medallion.Threading.Postgres.PostgresConnectionOptionsBuilder!>? options = null) -> void
+Medallion.Threading.Postgres.PostgresDistributedLock.PostgresDistributedLock(Medallion.Threading.Postgres.PostgresAdvisoryLockKey key, System.Data.IDbConnection! connection) -> void
+Medallion.Threading.Postgres.PostgresDistributedLock.TryAcquire(System.TimeSpan timeout = default(System.TimeSpan), System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> Medallion.Threading.Postgres.PostgresDistributedLockHandle?
+Medallion.Threading.Postgres.PostgresDistributedLock.TryAcquireAsync(System.TimeSpan timeout = default(System.TimeSpan), System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<Medallion.Threading.Postgres.PostgresDistributedLockHandle?>
+Medallion.Threading.Postgres.PostgresDistributedLockHandle
+Medallion.Threading.Postgres.PostgresDistributedLockHandle.Dispose() -> void
+Medallion.Threading.Postgres.PostgresDistributedLockHandle.DisposeAsync() -> System.Threading.Tasks.ValueTask
+Medallion.Threading.Postgres.PostgresDistributedLockHandle.HandleLostToken.get -> System.Threading.CancellationToken
+Medallion.Threading.Postgres.PostgresDistributedReaderWriterLock
+Medallion.Threading.Postgres.PostgresDistributedReaderWriterLock.AcquireReadLock(System.TimeSpan? timeout = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> Medallion.Threading.Postgres.PostgresDistributedReaderWriterLockHandle!
+Medallion.Threading.Postgres.PostgresDistributedReaderWriterLock.AcquireReadLockAsync(System.TimeSpan? timeout = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<Medallion.Threading.Postgres.PostgresDistributedReaderWriterLockHandle!>
+Medallion.Threading.Postgres.PostgresDistributedReaderWriterLock.AcquireWriteLock(System.TimeSpan? timeout = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> Medallion.Threading.Postgres.PostgresDistributedReaderWriterLockHandle!
+Medallion.Threading.Postgres.PostgresDistributedReaderWriterLock.AcquireWriteLockAsync(System.TimeSpan? timeout = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<Medallion.Threading.Postgres.PostgresDistributedReaderWriterLockHandle!>
+Medallion.Threading.Postgres.PostgresDistributedReaderWriterLock.Key.get -> Medallion.Threading.Postgres.PostgresAdvisoryLockKey
+Medallion.Threading.Postgres.PostgresDistributedReaderWriterLock.PostgresDistributedReaderWriterLock(Medallion.Threading.Postgres.PostgresAdvisoryLockKey key, string! connectionString, System.Action<Medallion.Threading.Postgres.PostgresConnectionOptionsBuilder!>? options = null) -> void
+Medallion.Threading.Postgres.PostgresDistributedReaderWriterLock.PostgresDistributedReaderWriterLock(Medallion.Threading.Postgres.PostgresAdvisoryLockKey key, System.Data.IDbConnection! connection) -> void
+Medallion.Threading.Postgres.PostgresDistributedReaderWriterLock.TryAcquireReadLock(System.TimeSpan timeout = default(System.TimeSpan), System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> Medallion.Threading.Postgres.PostgresDistributedReaderWriterLockHandle?
+Medallion.Threading.Postgres.PostgresDistributedReaderWriterLock.TryAcquireReadLockAsync(System.TimeSpan timeout = default(System.TimeSpan), System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<Medallion.Threading.Postgres.PostgresDistributedReaderWriterLockHandle?>
+Medallion.Threading.Postgres.PostgresDistributedReaderWriterLock.TryAcquireWriteLock(System.TimeSpan timeout = default(System.TimeSpan), System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> Medallion.Threading.Postgres.PostgresDistributedReaderWriterLockHandle?
+Medallion.Threading.Postgres.PostgresDistributedReaderWriterLock.TryAcquireWriteLockAsync(System.TimeSpan timeout = default(System.TimeSpan), System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<Medallion.Threading.Postgres.PostgresDistributedReaderWriterLockHandle?>
+Medallion.Threading.Postgres.PostgresDistributedReaderWriterLockHandle
+Medallion.Threading.Postgres.PostgresDistributedReaderWriterLockHandle.Dispose() -> void
+Medallion.Threading.Postgres.PostgresDistributedReaderWriterLockHandle.DisposeAsync() -> System.Threading.Tasks.ValueTask
+Medallion.Threading.Postgres.PostgresDistributedReaderWriterLockHandle.HandleLostToken.get -> System.Threading.CancellationToken
+Medallion.Threading.Postgres.PostgresDistributedSynchronizationProvider
+Medallion.Threading.Postgres.PostgresDistributedSynchronizationProvider.CreateLock(Medallion.Threading.Postgres.PostgresAdvisoryLockKey key) -> Medallion.Threading.Postgres.PostgresDistributedLock!
+Medallion.Threading.Postgres.PostgresDistributedSynchronizationProvider.CreateReaderWriterLock(Medallion.Threading.Postgres.PostgresAdvisoryLockKey key) -> Medallion.Threading.Postgres.PostgresDistributedReaderWriterLock!
+Medallion.Threading.Postgres.PostgresDistributedSynchronizationProvider.PostgresDistributedSynchronizationProvider(string! connectionString, System.Action<Medallion.Threading.Postgres.PostgresConnectionOptionsBuilder!>? options = null) -> void
+Medallion.Threading.Postgres.PostgresDistributedSynchronizationProvider.PostgresDistributedSynchronizationProvider(System.Data.IDbConnection! connection) -> void
+override Medallion.Threading.Postgres.PostgresAdvisoryLockKey.Equals(object! obj) -> bool
+override Medallion.Threading.Postgres.PostgresAdvisoryLockKey.GetHashCode() -> int
+override Medallion.Threading.Postgres.PostgresAdvisoryLockKey.ToString() -> string!
+static Medallion.Threading.Postgres.PostgresAdvisoryLockKey.operator !=(Medallion.Threading.Postgres.PostgresAdvisoryLockKey a, Medallion.Threading.Postgres.PostgresAdvisoryLockKey b) -> bool
+static Medallion.Threading.Postgres.PostgresAdvisoryLockKey.operator ==(Medallion.Threading.Postgres.PostgresAdvisoryLockKey a, Medallion.Threading.Postgres.PostgresAdvisoryLockKey b) -> bool

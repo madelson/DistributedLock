@@ -1,0 +1,54 @@
+﻿#nullable enable
+Medallion.Threading.ZooKeeper.ZooKeeperDistributedLock
+Medallion.Threading.ZooKeeper.ZooKeeperDistributedLock.AcquireAsync(System.TimeSpan? timeout = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<Medallion.Threading.ZooKeeper.ZooKeeperDistributedLockHandle!>
+Medallion.Threading.ZooKeeper.ZooKeeperDistributedLock.Path.get -> Medallion.Threading.ZooKeeper.ZooKeeperPath
+Medallion.Threading.ZooKeeper.ZooKeeperDistributedLock.TryAcquireAsync(System.TimeSpan timeout = default(System.TimeSpan), System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<Medallion.Threading.ZooKeeper.ZooKeeperDistributedLockHandle?>
+Medallion.Threading.ZooKeeper.ZooKeeperDistributedLock.ZooKeeperDistributedLock(Medallion.Threading.ZooKeeper.ZooKeeperPath directoryPath, string! name, string! connectionString, System.Action<Medallion.Threading.ZooKeeper.ZooKeeperDistributedSynchronizationOptionsBuilder!>? options = null) -> void
+Medallion.Threading.ZooKeeper.ZooKeeperDistributedLock.ZooKeeperDistributedLock(Medallion.Threading.ZooKeeper.ZooKeeperPath path, string! connectionString, bool assumePathExists = false, System.Action<Medallion.Threading.ZooKeeper.ZooKeeperDistributedSynchronizationOptionsBuilder!>? options = null) -> void
+Medallion.Threading.ZooKeeper.ZooKeeperDistributedLock.ZooKeeperDistributedLock(string! name, string! connectionString, System.Action<Medallion.Threading.ZooKeeper.ZooKeeperDistributedSynchronizationOptionsBuilder!>? options = null) -> void
+Medallion.Threading.ZooKeeper.ZooKeeperDistributedLockHandle
+Medallion.Threading.ZooKeeper.ZooKeeperDistributedLockHandle.DisposeAsync() -> System.Threading.Tasks.ValueTask
+Medallion.Threading.ZooKeeper.ZooKeeperDistributedLockHandle.HandleLostToken.get -> System.Threading.CancellationToken
+Medallion.Threading.ZooKeeper.ZooKeeperDistributedReaderWriterLock
+Medallion.Threading.ZooKeeper.ZooKeeperDistributedReaderWriterLock.AcquireReadLockAsync(System.TimeSpan? timeout = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<Medallion.Threading.ZooKeeper.ZooKeeperDistributedReaderWriterLockHandle!>
+Medallion.Threading.ZooKeeper.ZooKeeperDistributedReaderWriterLock.AcquireWriteLockAsync(System.TimeSpan? timeout = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<Medallion.Threading.ZooKeeper.ZooKeeperDistributedReaderWriterLockHandle!>
+Medallion.Threading.ZooKeeper.ZooKeeperDistributedReaderWriterLock.Path.get -> Medallion.Threading.ZooKeeper.ZooKeeperPath
+Medallion.Threading.ZooKeeper.ZooKeeperDistributedReaderWriterLock.TryAcquireReadLockAsync(System.TimeSpan timeout = default(System.TimeSpan), System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<Medallion.Threading.ZooKeeper.ZooKeeperDistributedReaderWriterLockHandle?>
+Medallion.Threading.ZooKeeper.ZooKeeperDistributedReaderWriterLock.TryAcquireWriteLockAsync(System.TimeSpan timeout = default(System.TimeSpan), System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<Medallion.Threading.ZooKeeper.ZooKeeperDistributedReaderWriterLockHandle?>
+Medallion.Threading.ZooKeeper.ZooKeeperDistributedReaderWriterLock.ZooKeeperDistributedReaderWriterLock(Medallion.Threading.ZooKeeper.ZooKeeperPath directoryPath, string! name, string! connectionString, System.Action<Medallion.Threading.ZooKeeper.ZooKeeperDistributedSynchronizationOptionsBuilder!>? options = null) -> void
+Medallion.Threading.ZooKeeper.ZooKeeperDistributedReaderWriterLock.ZooKeeperDistributedReaderWriterLock(Medallion.Threading.ZooKeeper.ZooKeeperPath path, string! connectionString, bool assumePathExists = false, System.Action<Medallion.Threading.ZooKeeper.ZooKeeperDistributedSynchronizationOptionsBuilder!>? options = null) -> void
+Medallion.Threading.ZooKeeper.ZooKeeperDistributedReaderWriterLock.ZooKeeperDistributedReaderWriterLock(string! name, string! connectionString, System.Action<Medallion.Threading.ZooKeeper.ZooKeeperDistributedSynchronizationOptionsBuilder!>? options = null) -> void
+Medallion.Threading.ZooKeeper.ZooKeeperDistributedReaderWriterLockHandle
+Medallion.Threading.ZooKeeper.ZooKeeperDistributedReaderWriterLockHandle.DisposeAsync() -> System.Threading.Tasks.ValueTask
+Medallion.Threading.ZooKeeper.ZooKeeperDistributedReaderWriterLockHandle.HandleLostToken.get -> System.Threading.CancellationToken
+Medallion.Threading.ZooKeeper.ZooKeeperDistributedSemaphore
+Medallion.Threading.ZooKeeper.ZooKeeperDistributedSemaphore.AcquireAsync(System.TimeSpan? timeout = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<Medallion.Threading.ZooKeeper.ZooKeeperDistributedSemaphoreHandle!>
+Medallion.Threading.ZooKeeper.ZooKeeperDistributedSemaphore.MaxCount.get -> int
+Medallion.Threading.ZooKeeper.ZooKeeperDistributedSemaphore.Path.get -> Medallion.Threading.ZooKeeper.ZooKeeperPath
+Medallion.Threading.ZooKeeper.ZooKeeperDistributedSemaphore.TryAcquireAsync(System.TimeSpan timeout = default(System.TimeSpan), System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<Medallion.Threading.ZooKeeper.ZooKeeperDistributedSemaphoreHandle?>
+Medallion.Threading.ZooKeeper.ZooKeeperDistributedSemaphore.ZooKeeperDistributedSemaphore(Medallion.Threading.ZooKeeper.ZooKeeperPath directoryPath, string! name, int maxCount, string! connectionString, System.Action<Medallion.Threading.ZooKeeper.ZooKeeperDistributedSynchronizationOptionsBuilder!>? options = null) -> void
+Medallion.Threading.ZooKeeper.ZooKeeperDistributedSemaphore.ZooKeeperDistributedSemaphore(Medallion.Threading.ZooKeeper.ZooKeeperPath path, int maxCount, string! connectionString, bool assumePathExists = false, System.Action<Medallion.Threading.ZooKeeper.ZooKeeperDistributedSynchronizationOptionsBuilder!>? options = null) -> void
+Medallion.Threading.ZooKeeper.ZooKeeperDistributedSemaphore.ZooKeeperDistributedSemaphore(string! name, int maxCount, string! connectionString, System.Action<Medallion.Threading.ZooKeeper.ZooKeeperDistributedSynchronizationOptionsBuilder!>? options = null) -> void
+Medallion.Threading.ZooKeeper.ZooKeeperDistributedSemaphoreHandle
+Medallion.Threading.ZooKeeper.ZooKeeperDistributedSemaphoreHandle.DisposeAsync() -> System.Threading.Tasks.ValueTask
+Medallion.Threading.ZooKeeper.ZooKeeperDistributedSemaphoreHandle.HandleLostToken.get -> System.Threading.CancellationToken
+Medallion.Threading.ZooKeeper.ZooKeeperDistributedSynchronizationOptionsBuilder
+Medallion.Threading.ZooKeeper.ZooKeeperDistributedSynchronizationOptionsBuilder.AddAccessControl(string! scheme, string! id, int permissionFlags) -> Medallion.Threading.ZooKeeper.ZooKeeperDistributedSynchronizationOptionsBuilder!
+Medallion.Threading.ZooKeeper.ZooKeeperDistributedSynchronizationOptionsBuilder.AddAuthInfo(string! scheme, System.Collections.Generic.IReadOnlyList<byte>! auth) -> Medallion.Threading.ZooKeeper.ZooKeeperDistributedSynchronizationOptionsBuilder!
+Medallion.Threading.ZooKeeper.ZooKeeperDistributedSynchronizationOptionsBuilder.ConnectTimeout(System.TimeSpan connectTimeout) -> Medallion.Threading.ZooKeeper.ZooKeeperDistributedSynchronizationOptionsBuilder!
+Medallion.Threading.ZooKeeper.ZooKeeperDistributedSynchronizationOptionsBuilder.SessionTimeout(System.TimeSpan sessionTimeout) -> Medallion.Threading.ZooKeeper.ZooKeeperDistributedSynchronizationOptionsBuilder!
+Medallion.Threading.ZooKeeper.ZooKeeperDistributedSynchronizationProvider
+Medallion.Threading.ZooKeeper.ZooKeeperDistributedSynchronizationProvider.CreateLock(string! name) -> Medallion.Threading.ZooKeeper.ZooKeeperDistributedLock!
+Medallion.Threading.ZooKeeper.ZooKeeperDistributedSynchronizationProvider.CreateReaderWriterLock(string! name) -> Medallion.Threading.ZooKeeper.ZooKeeperDistributedReaderWriterLock!
+Medallion.Threading.ZooKeeper.ZooKeeperDistributedSynchronizationProvider.CreateSemaphore(string! name, int maxCount) -> Medallion.Threading.ZooKeeper.ZooKeeperDistributedSemaphore!
+Medallion.Threading.ZooKeeper.ZooKeeperDistributedSynchronizationProvider.ZooKeeperDistributedSynchronizationProvider(Medallion.Threading.ZooKeeper.ZooKeeperPath directoryPath, string! connectionString, System.Action<Medallion.Threading.ZooKeeper.ZooKeeperDistributedSynchronizationOptionsBuilder!>? options = null) -> void
+Medallion.Threading.ZooKeeper.ZooKeeperDistributedSynchronizationProvider.ZooKeeperDistributedSynchronizationProvider(string! connectionString, System.Action<Medallion.Threading.ZooKeeper.ZooKeeperDistributedSynchronizationOptionsBuilder!>? options = null) -> void
+Medallion.Threading.ZooKeeper.ZooKeeperPath
+Medallion.Threading.ZooKeeper.ZooKeeperPath.Equals(Medallion.Threading.ZooKeeper.ZooKeeperPath that) -> bool
+Medallion.Threading.ZooKeeper.ZooKeeperPath.ZooKeeperPath() -> void
+Medallion.Threading.ZooKeeper.ZooKeeperPath.ZooKeeperPath(string! path) -> void
+override Medallion.Threading.ZooKeeper.ZooKeeperPath.Equals(object! obj) -> bool
+override Medallion.Threading.ZooKeeper.ZooKeeperPath.GetHashCode() -> int
+override Medallion.Threading.ZooKeeper.ZooKeeperPath.ToString() -> string!
+static Medallion.Threading.ZooKeeper.ZooKeeperPath.operator !=(Medallion.Threading.ZooKeeper.ZooKeeperPath this, Medallion.Threading.ZooKeeper.ZooKeeperPath that) -> bool
+static Medallion.Threading.ZooKeeper.ZooKeeperPath.operator ==(Medallion.Threading.ZooKeeper.ZooKeeperPath this, Medallion.Threading.ZooKeeper.ZooKeeperPath that) -> bool

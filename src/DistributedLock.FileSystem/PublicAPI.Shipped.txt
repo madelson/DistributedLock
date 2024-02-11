@@ -1,0 +1,15 @@
+﻿#nullable enable
+Medallion.Threading.FileSystem.FileDistributedLock
+Medallion.Threading.FileSystem.FileDistributedLock.Acquire(System.TimeSpan? timeout = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> Medallion.Threading.FileSystem.FileDistributedLockHandle!
+Medallion.Threading.FileSystem.FileDistributedLock.AcquireAsync(System.TimeSpan? timeout = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<Medallion.Threading.FileSystem.FileDistributedLockHandle!>
+Medallion.Threading.FileSystem.FileDistributedLock.FileDistributedLock(System.IO.DirectoryInfo! lockFileDirectory, string! name) -> void
+Medallion.Threading.FileSystem.FileDistributedLock.FileDistributedLock(System.IO.FileInfo! lockFile) -> void
+Medallion.Threading.FileSystem.FileDistributedLock.Name.get -> string!
+Medallion.Threading.FileSystem.FileDistributedLock.TryAcquire(System.TimeSpan timeout = default(System.TimeSpan), System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> Medallion.Threading.FileSystem.FileDistributedLockHandle?
+Medallion.Threading.FileSystem.FileDistributedLock.TryAcquireAsync(System.TimeSpan timeout = default(System.TimeSpan), System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<Medallion.Threading.FileSystem.FileDistributedLockHandle?>
+Medallion.Threading.FileSystem.FileDistributedLockHandle
+Medallion.Threading.FileSystem.FileDistributedLockHandle.Dispose() -> void
+Medallion.Threading.FileSystem.FileDistributedLockHandle.DisposeAsync() -> System.Threading.Tasks.ValueTask
+Medallion.Threading.FileSystem.FileDistributedSynchronizationProvider
+Medallion.Threading.FileSystem.FileDistributedSynchronizationProvider.CreateLock(string! name) -> Medallion.Threading.FileSystem.FileDistributedLock!
+Medallion.Threading.FileSystem.FileDistributedSynchronizationProvider.FileDistributedSynchronizationProvider(System.IO.DirectoryInfo! lockFileDirectory) -> void
