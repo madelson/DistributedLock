@@ -15,7 +15,7 @@ public sealed class TestingPostgresDistributedLockProvider<TStrategy> : TestingL
                     ToPostgresOptions(options)
                 ),
                 connection => new PostgresDistributedLock(new PostgresAdvisoryLockKey(name, allowHashing: false), connection),
-                transaction => new PostgresDistributedLock(new PostgresAdvisoryLockKey(name, allowHashing: false), transaction.Connection)
+                transaction => new PostgresDistributedLock(new PostgresAdvisoryLockKey(name, allowHashing: false), transaction.Connection!)
         );
 
     public override string GetSafeName(string name) => new PostgresAdvisoryLockKey(name, allowHashing: true).ToString();
@@ -40,7 +40,7 @@ public sealed class TestingPostgresDistributedReaderWriterLockProvider<TStrategy
                         TestingPostgresDistributedLockProvider<TStrategy>.ToPostgresOptions(options)
                     ),
                 connection => new PostgresDistributedReaderWriterLock(new PostgresAdvisoryLockKey(name, allowHashing: false), connection),
-                transaction => new PostgresDistributedReaderWriterLock(new PostgresAdvisoryLockKey(name, allowHashing: false), transaction.Connection)
+                transaction => new PostgresDistributedReaderWriterLock(new PostgresAdvisoryLockKey(name, allowHashing: false), transaction.Connection!)
             );
 
     public override string GetSafeName(string name) => new PostgresAdvisoryLockKey(name, allowHashing: true).ToString();

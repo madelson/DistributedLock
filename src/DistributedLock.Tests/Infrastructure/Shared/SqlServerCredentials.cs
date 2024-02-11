@@ -6,7 +6,7 @@ internal static class SqlServerCredentials
 
     public static readonly string ConnectionString = new Microsoft.Data.SqlClient.SqlConnectionStringBuilder
         {
-            DataSource = @".\SQLEXPRESS",
+            DataSource = @"localhost", // localhost for SQL Developer, .\SQLEXPRESS for express
             InitialCatalog = "master",
             IntegratedSecurity = true,
             ApplicationName = ApplicationName,

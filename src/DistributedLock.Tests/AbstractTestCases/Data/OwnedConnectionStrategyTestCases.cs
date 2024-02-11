@@ -53,6 +53,6 @@ public abstract class OwnedConnectionStrategyTestCases<TLockProvider, TDb>
             }
         }
 
-        Assert.Catch<DbException>(() => handle.Dispose());
+        Assert.Catch<DbException>(handle.Dispose);
     }
 }

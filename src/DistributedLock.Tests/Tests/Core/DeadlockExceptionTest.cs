@@ -6,6 +6,7 @@ namespace Medallion.Threading.Tests.Core;
 [Category("CI")]
 public class DeadlockExceptionTest
 {
+#if NETFRAMEWORK // binary serialization has been removed from newer versions of .NET
     [Test]
     public void TestDeadlockExceptionSerialization()
     {
@@ -22,4 +23,5 @@ public class DeadlockExceptionTest
         deserialized.StackTrace.ShouldEqual(deadlockException.StackTrace);
         (deserialized.InnerException?.Message).ShouldEqual(deadlockException.InnerException?.Message);
     }
+#endif
 }

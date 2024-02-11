@@ -12,7 +12,7 @@ public abstract class DistributedLockCoreTestCases<TLockProvider, TStrategy>
     where TStrategy : TestingSynchronizationStrategy, new()
 {
     private TLockProvider _lockProvider = default!;
-    private readonly List<Action> _cleanupActions = new List<Action>();
+    private readonly List<Action> _cleanupActions = [];
 
     [SetUp] public void SetUp() => this._lockProvider = new TLockProvider();
 
@@ -99,8 +99,8 @@ public abstract class DistributedLockCoreTestCases<TLockProvider, TStrategy>
         Assert.IsNotNull(handle);
         handle.Dispose();
         var handle2 = @lock.Acquire(TimeSpan.FromSeconds(30));
-        Assert.DoesNotThrow(() => handle.Dispose());
-        Assert.DoesNotThrow(() => handle2.Dispose());
+        Assert.DoesNotThrow(handle.Dispose);
+        Assert.DoesNotThrow(handle2.Dispose);
     }
 
     [Test]

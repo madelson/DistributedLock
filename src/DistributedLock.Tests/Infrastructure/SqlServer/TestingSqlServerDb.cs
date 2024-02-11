@@ -47,7 +47,7 @@ public sealed class TestingSqlServerDb : TestingPrimaryClientDb, ITestingSqlServ
                     ELSE 'Unknown' END AS isolationLevel
                 FROM sys.dm_exec_sessions
                 WHERE session_id = @@SPID";
-        return (IsolationLevel)Enum.Parse(typeof(IsolationLevel), (string)command.ExecuteScalar());
+        return (IsolationLevel)Enum.Parse(typeof(IsolationLevel), (string)command.ExecuteScalar()!);
     }
 
     public override DbConnection CreateConnection() => new Microsoft.Data.SqlClient.SqlConnection(this.ConnectionStringBuilder.ConnectionString);

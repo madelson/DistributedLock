@@ -238,7 +238,10 @@ public class FileDistributedLockTest
         {
             AssertCanUseName(variant);
 
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+                // Restrictions were alleviated in Win11: https://superuser.com/a/1742520/281669
+                // Win <= 10 detection: see https://stackoverflow.com/a/69038652/1142970
+                && Environment.OSVersion.Version.Build < 22000)
             {
                 Assert.IsFalse(CanCreateFileWithName(variant), variant);
                 Assert.AreNotEqual(name, Path.GetFileName(new FileDistributedLock(LockFileDirectoryInfo, name).Name), variant);

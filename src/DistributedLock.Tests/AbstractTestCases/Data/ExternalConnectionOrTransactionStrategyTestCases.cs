@@ -95,7 +95,7 @@ public abstract class ExternalConnectionOrTransactionStrategyTestCases<TLockProv
                         .Where(f => f.FieldType == typeof(StateChangeEventHandler))
                         .SingleOrDefault()
                 )
-                .First(f => f != null)
+                .First(f => f != null)!
                 .GetValue(connection);
     }
 }

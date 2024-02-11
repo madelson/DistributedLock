@@ -25,10 +25,10 @@ public abstract class RedisExtensionTestCases<TLockProvider, TDatabaseProvider>
 
         var secondHandleTask = @lock.AcquireAsync().AsTask();
         _ = secondHandleTask.ContinueWith(t => t.Result.Dispose()); // ensure cleanup
-        Assert.IsFalse(await secondHandleTask.WaitAsync(TimeSpan.FromSeconds(2)));
+        Assert.IsFalse(await secondHandleTask.TryWaitAsync(TimeSpan.FromSeconds(2)));
 
         await handle.DisposeAsync();
 
-        Assert.IsTrue(await secondHandleTask.WaitAsync(TimeSpan.FromSeconds(5)));
+        Assert.IsTrue(await secondHandleTask.TryWaitAsync(TimeSpan.FromSeconds(5)));
     }
 }

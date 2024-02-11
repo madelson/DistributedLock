@@ -53,7 +53,7 @@ public abstract class DistributedReaderWriterLockCoreTestCases<TLockProvider, TS
         await using var readerHandle = await Lock().AcquireReadLockAsync();
 
         var writerHandleTask = Task.Run(() => Lock().AcquireWriteLockAsync().AsTask());
-        Assert.IsFalse(await writerHandleTask.WaitAsync(TimeSpan.FromSeconds(0.2)));
+        Assert.IsFalse(await writerHandleTask.TryWaitAsync(TimeSpan.FromSeconds(0.2)));
 
         // trying to take a read lock here fails because there is a writer waiting
         await using var readerHandle2 = await Lock().TryAcquireReadLockAsync();
@@ -61,7 +61,7 @@ public abstract class DistributedReaderWriterLockCoreTestCases<TLockProvider, TS
 
         await readerHandle.DisposeAsync();
 
-        Assert.IsTrue(await writerHandleTask.WaitAsync(TimeSpan.FromSeconds(5)));
+        Assert.IsTrue(await writerHandleTask.TryWaitAsync(TimeSpan.FromSeconds(5)));
         await writerHandleTask.Result.DisposeAsync();
     }
 

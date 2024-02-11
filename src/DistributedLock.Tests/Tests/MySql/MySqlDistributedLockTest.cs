@@ -51,22 +51,22 @@ public class MySqlDistributedLockTest
         await connection.OpenAsync();
 
         using var createTableCommand = connection.CreateCommand();
-        createTableCommand.CommandText = "CREATE TEMPORARY TABLE world.temp (id INT)";
+        createTableCommand.CommandText = "CREATE TEMPORARY TABLE distributed_lock.temp (id INT)";
         await createTableCommand.ExecuteNonQueryAsync();
 
         using var transaction = connection.BeginTransaction();
 
         using var commandInTransaction = connection.CreateCommand();
         commandInTransaction.Transaction = transaction;
-        commandInTransaction.CommandText = @"INSERT INTO world.temp (id) VALUES (1), (2)";
+        commandInTransaction.CommandText = @"INSERT INTO distributed_lock.temp (id) VALUES (1), (2)";
         await commandInTransaction.ExecuteNonQueryAsync();
 
         using var commandOutsideTransaction = connection.CreateCommand();
-        commandOutsideTransaction.CommandText = "SELECT COUNT(*) FROM world.temp";
+        commandOutsideTransaction.CommandText = "SELECT COUNT(*) FROM distributed_lock.temp";
         var exception = Assert.ThrowsAsync<InvalidOperationException>(() => commandOutsideTransaction.ExecuteScalarAsync());
         Assert.That(exception.Message, Does.Contain("The transaction associated with this command is not the connection's active transaction"));
 
-        commandInTransaction.CommandText = "SELECT COUNT(*) FROM world.temp";
+        commandInTransaction.CommandText = "SELECT COUNT(*) FROM distributed_lock.temp";
         (await commandInTransaction.ExecuteScalarAsync()).ShouldEqual(2);
     }
 }

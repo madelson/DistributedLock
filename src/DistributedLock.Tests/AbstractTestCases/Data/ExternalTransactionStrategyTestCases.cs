@@ -74,7 +74,7 @@ public abstract class ExternalTransactionStrategyTestCases<TLockProvider, TDb>
 
         if (closeConnection)
         {
-            this._lockProvider.Strategy.AmbientTransaction!.Connection.Dispose();
+            this._lockProvider.Strategy.AmbientTransaction!.Connection!.Dispose();
         }
         else
         {

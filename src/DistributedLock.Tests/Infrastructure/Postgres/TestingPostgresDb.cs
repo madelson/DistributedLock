@@ -43,7 +43,7 @@ public sealed class TestingPostgresDb : TestingPrimaryClientDb
         using var command = connection.CreateCommand();
         // values based on https://www.postgresql.org/docs/12/transaction-iso.html
         command.CommandText = "SELECT REPLACE(current_setting('transaction_isolation'), ' ', '')";
-        return (IsolationLevel)Enum.Parse(typeof(IsolationLevel), (string)command.ExecuteScalar(), ignoreCase: true);
+        return (IsolationLevel)Enum.Parse(typeof(IsolationLevel), (string)command.ExecuteScalar()!, ignoreCase: true);
     }
 
     public override DbConnection CreateConnection() => new NpgsqlConnection(this.ConnectionStringBuilder.ConnectionString);

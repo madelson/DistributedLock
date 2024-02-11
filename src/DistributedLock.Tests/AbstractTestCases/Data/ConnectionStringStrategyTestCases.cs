@@ -110,7 +110,7 @@ public abstract class ConnectionStringStrategyTestCases<TLockProvider, TStrategy
                     handle.HandleLostToken.Register(() => { });
                 }
             });
-            Assert.IsTrue(await accessHandleLostTokenTask.WaitAsync(TimeSpan.FromSeconds(5)));
+            Assert.IsTrue(await accessHandleLostTokenTask.TryWaitAsync(TimeSpan.FromSeconds(5)));
 
             // do this only on success; on failure we're likely deadlocked and dispose will hang
             await handle.DisposeAsync();

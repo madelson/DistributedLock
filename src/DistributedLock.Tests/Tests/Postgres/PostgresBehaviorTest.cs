@@ -22,9 +22,9 @@ public class PostgresBehaviorTest
         await connection.OpenAsync();
 
         using var transaction =
-#if NETCOREAPP3_1
+#if NETCOREAPP
             await connection.BeginTransactionAsync();
-#elif NET471
+#elif NETFRAMEWORK
             connection.BeginTransaction();
 #endif
 
@@ -121,7 +121,7 @@ public class PostgresBehaviorTest
 
         using var getPidCommand = connection.CreateCommand();
         getPidCommand.CommandText = "SELECT pg_backend_pid()";
-        var pid = (int)(await getPidCommand.ExecuteScalarAsync());
+        var pid = (int)(await getPidCommand.ExecuteScalarAsync())!;
 
         var stateChangedEvent = new ManualResetEventSlim(initialState: false);
         connection.StateChange += (_, _2) => stateChangedEvent.Set();
@@ -151,7 +151,7 @@ public class PostgresBehaviorTest
 
         using var getPidCommand = connection.CreateCommand();
         getPidCommand.CommandText = "SELECT pg_backend_pid()";
-        var pid = (int)(await getPidCommand.ExecuteScalarAsync());
+        var pid = (int)(await getPidCommand.ExecuteScalarAsync())!;
 
         Assert.AreEqual(ConnectionState.Open, connection.State);
 

@@ -23,12 +23,8 @@ public class ZooKeeperSetUpFixture
         }
         else
         {
-            // based on Windows install as per https://medium.com/@shaaslam/installing-apache-zookeeper-on-windows-45eda303e835
-
-            const string ZooKeeperHomeEnvironmentVariable = "ZOOKEEPER_HOME";
-            var zooKeeperHome = Environment.GetEnvironmentVariable(ZooKeeperHomeEnvironmentVariable);
-            if (zooKeeperHome == null) { throw new InvalidOperationException($"Environment variable '{ZooKeeperHomeEnvironmentVariable}' is not set"); }
-
+            var zooKeeperHome = File.ReadAllText(Path.Combine(TestContext.CurrentContext.TestDirectory, "..", "..", "..", "credentials", "zookeeper.txt")).Trim();
+            if (!Directory.Exists(zooKeeperHome)) { throw new DirectoryNotFoundException(zooKeeperHome);  }
             var zooKeeperPath = Path.Combine(zooKeeperHome, "bin", "zkServer.cmd");
 
             var command = Command.Run(zooKeeperPath, options: o => o.StartInfo(i => i.RedirectStandardInput = false))

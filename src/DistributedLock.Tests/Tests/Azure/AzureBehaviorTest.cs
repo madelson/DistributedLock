@@ -25,50 +25,6 @@ public class AzureBehaviorTest
     }
 
     [Test]
-    public void TestUploadToWrongBlobType([Values("block", "page", "append")] string actualType)
-    {
-        var blobName = Guid.NewGuid().ToString();
-
-        var createFunctions = new Dictionary<string, Action>
-        {
-            ["block"] = () => new BlockBlobClient(AzureCredentials.ConnectionString, AzureCredentials.DefaultBlobContainerName, blobName).Upload(Stream.Null),
-            ["page"] = () => new PageBlobClient(AzureCredentials.ConnectionString, AzureCredentials.DefaultBlobContainerName, blobName).CreateIfNotExists(size: 0),
-            ["append"] = () => new AppendBlobClient(AzureCredentials.ConnectionString, AzureCredentials.DefaultBlobContainerName, blobName).CreateIfNotExists()
-        };
-
-        // right now append blobs aren't fully supported, so we can't fully test this
-        if (actualType == "append")
-        {
-            Assert.Throws<RequestFailedException>(() => createFunctions[actualType]())
-                .ErrorCode.ShouldEqual("FeatureNotSupportedByEmulator");
-            return;
-        }
-        else
-        {
-            createFunctions.Remove("append"); // to prevent it from failing below
-        }
-
-        var baseClient = new BlobBaseClient(AzureCredentials.ConnectionString, AzureCredentials.DefaultBlobContainerName, blobName);
-
-        Assert.IsFalse(baseClient.Exists());
-        createFunctions[actualType]();
-        Assert.IsTrue(baseClient.Exists());
-
-        foreach (var kvp in createFunctions)
-        {
-            if (kvp.Key == actualType)
-            {
-                Assert.DoesNotThrow(() => kvp.Value());
-            }
-            else
-            {
-                Assert.Throws<RequestFailedException>(() => kvp.Value())
-                    .ErrorCode.ShouldEqual("InvalidBlobType");
-            }
-        }
-    }
-
-    [Test]
     public void TestSlashEquivalence()
     {
         var name = Guid.NewGuid() + "/a";

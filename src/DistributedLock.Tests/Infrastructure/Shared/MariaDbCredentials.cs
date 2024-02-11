@@ -29,7 +29,7 @@ internal static class MariaDbCredentials
 
         return new MySqlConnectionStringBuilder
         {
-            Port = 3307,
+            Port = 3306,
             Server = "localhost",
             Database = "mysql",
             UserID = username,
