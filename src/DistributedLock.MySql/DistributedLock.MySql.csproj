@@ -46,9 +46,9 @@
 
   <ItemGroup>
     <!-- Used as the default over MySql.Data because of better licensing -->
-    <PackageReference Include="MySqlConnector" Version="2.3.5" />
-    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All" />
-    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="3.3.4" PrivateAssets="All" Condition="$(Configuration) == 'Release'"/>
+    <PackageReference Include="MySqlConnector" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All" />
+    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" PrivateAssets="All" Condition="$(Configuration) == 'Release'"/>
   </ItemGroup>
 
   <ItemGroup>

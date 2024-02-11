@@ -45,19 +45,19 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="ZooKeeperNetEx" Version="3.4.12.4" />
-    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All" />
-    <PackageReference Include="Nullable" Version="1.3.1">
+    <PackageReference Include="ZooKeeperNetEx" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All" />
+    <PackageReference Include="Nullable" Condition="'$(TargetFramework)' != 'netstandard2.1'">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="IsExternalInit" Version="1.0.3">
+    <PackageReference Include="IsExternalInit">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\DistributedLock.Core\DistributedLock.Core.csproj" />
-    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="3.3.4" PrivateAssets="All" Condition="$(Configuration) == 'Release'"/>
+    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" PrivateAssets="All" Condition="$(Configuration) == 'Release'"/>
   </ItemGroup>
 
   <ItemGroup>
