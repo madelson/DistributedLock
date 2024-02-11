@@ -12,7 +12,7 @@ public sealed class TestingPostgresDb : TestingPrimaryClientDb
 {
     internal static readonly string DefaultConnectionString = PostgresCredentials.GetConnectionString(TestContext.CurrentContext.TestDirectory);
 
-    private readonly NpgsqlConnectionStringBuilder _connectionStringBuilder = new NpgsqlConnectionStringBuilder(DefaultConnectionString);
+    private readonly NpgsqlConnectionStringBuilder _connectionStringBuilder = new(DefaultConnectionString);
 
     public override DbConnectionStringBuilder ConnectionStringBuilder => this._connectionStringBuilder;
 

@@ -162,7 +162,7 @@ public class PostgresBehaviorTest
         killCommand.CommandText = $"SELECT pg_terminate_backend({pid})";
         await killCommand.ExecuteNonQueryAsync();
 
-        Assert.ThrowsAsync<PostgresException>(() => getPidCommand.ExecuteScalarAsync());
+        Assert.ThrowsAsync<PostgresException>(getPidCommand.ExecuteScalarAsync);
         Assert.AreNotEqual(ConnectionState.Open, connection.State);
 
         Assert.IsTrue(stateChangedEvent.Wait(TimeSpan.FromSeconds(5)));

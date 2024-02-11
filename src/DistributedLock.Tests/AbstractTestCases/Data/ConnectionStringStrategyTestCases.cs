@@ -69,7 +69,7 @@ public abstract class ConnectionStringStrategyTestCases<TLockProvider, TStrategy
         var handle = @lock.Acquire();
         using var idleSessionKiller = new IdleSessionKiller(this._lockProvider.Strategy.Db, applicationName, idleTimeout: TimeSpan.FromSeconds(.5));
         Thread.Sleep(TimeSpan.FromSeconds(2));
-        Assert.DoesNotThrow(() => handle.Dispose());
+        Assert.DoesNotThrow(handle.Dispose);
     }
 
     /// <summary>

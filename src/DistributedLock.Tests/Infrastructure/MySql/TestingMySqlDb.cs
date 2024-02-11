@@ -11,8 +11,8 @@ public class TestingMySqlDb : TestingPrimaryClientDb
     private readonly string _defaultConnectionString;
     private readonly MySqlConnectionStringBuilder _connectionStringBuilder;
 
-    public TestingMySqlDb() :
-        this(MySqlCredentials.GetConnectionString(TestContext.CurrentContext.TestDirectory))
+    public TestingMySqlDb()
+        : this(MySqlCredentials.GetConnectionString(TestContext.CurrentContext.TestDirectory))
     {
     }
 
