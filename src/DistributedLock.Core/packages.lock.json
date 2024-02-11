@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "dependencies": {
     ".NETFramework,Version=v4.6.1": {
       "Microsoft.Bcl.AsyncInterfaces": {
