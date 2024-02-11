@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "dependencies": {
     ".NETCoreApp,Version=v3.1": {
       "Microsoft.NET.Test.Sdk": {
