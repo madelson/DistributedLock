@@ -60,6 +60,4 @@
     <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All"/>
     <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" PrivateAssets="All" Condition="$(Configuration) == 'Release'"/>
   </ItemGroup>
-
-  <Import Project="..\CopyPackageToPublishDirectory.targets" />
 </Project>

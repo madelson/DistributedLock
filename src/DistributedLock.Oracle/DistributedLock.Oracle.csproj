@@ -59,6 +59,5 @@
     <Using Remove="System.Net.Http"/>
   </ItemGroup>
 
-  <Import Project="..\CopyPackageToPublishDirectory.targets" />
   <Import Project="..\FixDistributedLockCoreDependencyVersion.targets" />
 </Project>

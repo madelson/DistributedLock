@@ -51,6 +51,5 @@
     <ProjectReference Include="..\DistributedLock.Core\DistributedLock.Core.csproj" />
   </ItemGroup>
 
-  <Import Project="..\CopyPackageToPublishDirectory.targets" />
   <Import Project="..\FixDistributedLockCoreDependencyVersion.targets" />
 </Project>
