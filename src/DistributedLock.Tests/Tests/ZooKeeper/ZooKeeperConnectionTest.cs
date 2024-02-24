@@ -98,7 +98,7 @@ public class ZooKeeperConnectionTest
     }
 
     private static ZooKeeperConnectionInfo GetConnectionInfo(TimeoutValue? connectTimeout = null) =>
-        new ZooKeeperConnectionInfo(
+        new(
             ZooKeeperPorts.DefaultConnectionString,
             ConnectTimeout: connectTimeout ?? TimeSpan.FromSeconds(30),
             SessionTimeout: TimeSpan.FromSeconds(30),

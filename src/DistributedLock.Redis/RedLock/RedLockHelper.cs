@@ -44,15 +44,16 @@ internal static class RedLockHelper
     {
         if (ReturnedFalse(acquireOrRenewTask)) { return; }
 
-        acquireOrRenewTask.ContinueWith(async (t, state) =>
+        acquireOrRenewTask.ContinueWith(static async (t, state) =>
             {
                 // don't clean up if we know we failed
                 if (!ReturnedFalse(t))
                 {
-                    await primitive.ReleaseAsync((IDatabase) state, fireAndForget: true).ConfigureAwait(false);
+                    var (primitive, database) = (Tuple<IRedLockReleasableSynchronizationPrimitive, IDatabase>)state;
+                    await primitive.ReleaseAsync(database, fireAndForget: true).ConfigureAwait(false);
                 }
             },
-            state: database
+            state: Tuple.Create(primitive, database)
         );
     }
 

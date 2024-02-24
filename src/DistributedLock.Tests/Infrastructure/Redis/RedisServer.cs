@@ -62,11 +62,17 @@ internal class RedisServer
             var shutdownTasks = ActiveServersByPort.Values
                 .Select(async server =>
                 {
+                    // When testing the case of a server outage, we'll have manually shut down some servers.
+                    // In that case, we shouldn't attempt to connect to them since that will fail.
+                    var isConnected = server.Multiplexer.GetServers().Any(s => s.IsConnected);
                     server.Multiplexer.Dispose();
                     try
                     {
-                        using var adminMultiplexer = await ConnectionMultiplexer.ConnectAsync($"localhost:{server.Port},allowAdmin=true");
-                        adminMultiplexer.GetServer("localhost", server.Port).Shutdown(ShutdownMode.Never);
+                        if (isConnected)
+                        {
+                            using var adminMultiplexer = await ConnectionMultiplexer.ConnectAsync($"localhost:{server.Port},allowAdmin=true");
+                            adminMultiplexer.GetServer("localhost", server.Port).Shutdown(ShutdownMode.Never);
+                        }
                     }
                     finally
                     {

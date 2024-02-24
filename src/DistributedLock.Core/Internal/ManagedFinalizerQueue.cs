@@ -24,9 +24,9 @@ sealed class ManagedFinalizerQueue
 #endif
     );
 
-    public static readonly ManagedFinalizerQueue Instance = new ManagedFinalizerQueue();
+    public static readonly ManagedFinalizerQueue Instance = new();
 
-    private readonly ConcurrentDictionary<IAsyncDisposable, WeakReference> _items = new ConcurrentDictionary<IAsyncDisposable, WeakReference>();
+    private readonly ConcurrentDictionary<IAsyncDisposable, WeakReference> _items = new();
 
     // The state of this class can be described by 3 bits:
     // _count: >0 or ==0

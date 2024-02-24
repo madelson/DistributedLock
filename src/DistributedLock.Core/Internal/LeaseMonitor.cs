@@ -12,8 +12,8 @@ internal
 #endif
     sealed class LeaseMonitor : IDisposable, IAsyncDisposable
 {
-    private readonly CancellationTokenSource _disposalSource = new CancellationTokenSource(),
-        _handleLostSource = new CancellationTokenSource();
+    private readonly CancellationTokenSource _disposalSource = new(),
+        _handleLostSource = new();
 
     private readonly ILeaseHandle _leaseHandle;
     private readonly Task _monitoringTask;

@@ -12,8 +12,8 @@ internal
 {
     private readonly AsyncLock _lock = AsyncLock.Create();
 
-    private readonly Dictionary<string, Queue<MultiplexedConnectionLock>> _poolsByConnectionString =
-        new Dictionary<string, Queue<MultiplexedConnectionLock>>();
+    private readonly Dictionary<string, Queue<MultiplexedConnectionLock>> _poolsByConnectionString = [];
+
     /// <summary>
     /// The number of times we've called <see cref="StoreOrDisposeLockAsync(string, MultiplexedConnectionLock, bool)"/>
     /// since we last called <see cref="PrunePoolsNoLockAsync"/>

@@ -42,7 +42,7 @@ public class EventWaitHandleDistributedLockTest
     public void TestGarbageCollection()
     {
         var @lock = CreateLock("gc_test", NameStyle.AddPrefix);
-        WeakReference AbandonLock() => new WeakReference(@lock.Acquire());
+        WeakReference AbandonLock() => new(@lock.Acquire());
 
         var weakHandle = AbandonLock();
         GC.Collect();
@@ -73,7 +73,7 @@ public class EventWaitHandleDistributedLockTest
     }
 
     private static EventWaitHandleDistributedLock CreateLock(string name, NameStyle nameStyle) => 
-        new EventWaitHandleDistributedLock(
+        new(
             (nameStyle == NameStyle.AddPrefix ? DistributedWaitHandleHelpers.GlobalPrefix + name : name), 
             abandonmentCheckCadence: TimeSpan.FromSeconds(.3), 
             exactName: nameStyle != NameStyle.Safe

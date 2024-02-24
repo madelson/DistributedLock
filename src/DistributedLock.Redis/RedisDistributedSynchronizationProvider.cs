@@ -37,7 +37,7 @@ public sealed class RedisDistributedSynchronizationProvider : IDistributedLockPr
     /// <summary>
     /// Creates a <see cref="RedisDistributedLock"/> using the given <paramref name="key"/>.
     /// </summary>
-    public RedisDistributedLock CreateLock(RedisKey key) => new RedisDistributedLock(key, this._databases, this._options);
+    public RedisDistributedLock CreateLock(RedisKey key) => new(key, this._databases, this._options);
 
     IDistributedLock IDistributedLockProvider.CreateLock(string name) => this.CreateLock(name);
 
@@ -45,7 +45,7 @@ public sealed class RedisDistributedSynchronizationProvider : IDistributedLockPr
     /// Creates a <see cref="RedisDistributedReaderWriterLock"/> using the given <paramref name="name"/>.
     /// </summary>
     public RedisDistributedReaderWriterLock CreateReaderWriterLock(string name) => 
-        new RedisDistributedReaderWriterLock(name, this._databases, this._options);
+        new(name, this._databases, this._options);
 
     IDistributedReaderWriterLock IDistributedReaderWriterLockProvider.CreateReaderWriterLock(string name) =>
         this.CreateReaderWriterLock(name);
@@ -53,7 +53,7 @@ public sealed class RedisDistributedSynchronizationProvider : IDistributedLockPr
     /// <summary>
     /// Creates a <see cref="RedisDistributedSemaphore"/> using the provided <paramref name="key"/> and <paramref name="maxCount"/>.
     /// </summary>
-    public RedisDistributedSemaphore CreateSemaphore(RedisKey key, int maxCount) => new RedisDistributedSemaphore(key, maxCount, this._databases[0], this._options);
+    public RedisDistributedSemaphore CreateSemaphore(RedisKey key, int maxCount) => new(key, maxCount, this._databases[0], this._options);
 
     IDistributedSemaphore IDistributedSemaphoreProvider.CreateSemaphore(string name, int maxCount) =>
         this.CreateSemaphore(name, maxCount);

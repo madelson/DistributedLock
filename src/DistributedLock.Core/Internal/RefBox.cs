@@ -30,7 +30,7 @@ internal
 #endif
 sealed class RefBox
 {
-    public static RefBox<T> Create<T>(T value) where T : struct => new RefBox<T>(value);
+    public static RefBox<T> Create<T>(T value) where T : struct => new(value);
 
     /// <summary>
     /// Thread-safely checks if <paramref name="boxRef"/> is non-null and if so sets it to null and outputs

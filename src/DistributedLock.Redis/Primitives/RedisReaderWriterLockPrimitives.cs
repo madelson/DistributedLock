@@ -24,7 +24,7 @@ internal class RedisReadLockPrimitive : IRedLockAcquirableSynchronizationPrimiti
     /// 
     /// Just remove our ID from the reader set (noop if it wasn't there or the set DNE)
     /// </summary>
-    private static readonly RedisScript<RedisReadLockPrimitive> ReleaseReadScript = new RedisScript<RedisReadLockPrimitive>(
+    private static readonly RedisScript<RedisReadLockPrimitive> ReleaseReadScript = new(
         @"redis.call('srem', @readerKey, @lockId)",
         p => new { readerKey = p._readerKey, lockId = p._lockId }
     );
@@ -39,7 +39,7 @@ internal class RedisReadLockPrimitive : IRedLockAcquirableSynchronizationPrimiti
     /// 
     /// Then, extend the reader set TTL to be at least our expiry (at least because other readers might be operating with a longer expiry)
     /// </summary>
-    private static readonly RedisScript<RedisReadLockPrimitive> TryExtendReadScript = new RedisScript<RedisReadLockPrimitive>(@"
+    private static readonly RedisScript<RedisReadLockPrimitive> TryExtendReadScript = new(@"
             if redis.call('sismember', @readerKey, @lockId) == 0 then
                 return 0
             end
@@ -60,7 +60,7 @@ internal class RedisReadLockPrimitive : IRedLockAcquirableSynchronizationPrimiti
     /// Then, add our ID to the reader set, creating it if it does not exist. Then, extend the TTL
     /// of the reader set to be at least our expiry. Return success.
     /// </summary>
-    private static readonly RedisScript<RedisReadLockPrimitive> TryAcquireReadScript = new RedisScript<RedisReadLockPrimitive>($@"
+    private static readonly RedisScript<RedisReadLockPrimitive> TryAcquireReadScript = new($@"
             if redis.call('exists', @writerKey) == 1 then
                 return 0
             end
@@ -75,6 +75,8 @@ internal class RedisReadLockPrimitive : IRedLockAcquirableSynchronizationPrimiti
 
     public Task<bool> TryAcquireAsync(IDatabaseAsync database) => TryAcquireReadScript.ExecuteAsync(database, this).AsBooleanTask();
     public bool TryAcquire(IDatabase database) => (bool)TryAcquireReadScript.Execute(database, this);
+
+    public bool IsConnected(IDatabase database) => database.IsConnected(this._readerKey, CommandFlags.DemandMaster);
 }
 
 internal class RedisWriterWaitingPrimitive : RedisMutexPrimitive
@@ -122,7 +124,7 @@ internal class RedisWriteLockPrimitive : IRedLockAcquirableSynchronizationPrimit
     /// 
     /// Finally, return failure.
     /// </summary>
-    private static readonly RedisScript<RedisWriteLockPrimitive> TryAcquireWriteScript = new RedisScript<RedisWriteLockPrimitive>($@"
+    private static readonly RedisScript<RedisWriteLockPrimitive> TryAcquireWriteScript = new($@"
             local writerValue = redis.call('get', @writerKey)
             if writerValue == false or writerValue == @lockId .. '{RedisWriterWaitingPrimitive.LockIdSuffix}' then
                 if redis.call('scard', @readerKey) == 0 then
@@ -141,4 +143,6 @@ internal class RedisWriteLockPrimitive : IRedLockAcquirableSynchronizationPrimit
     public Task<bool> TryAcquireAsync(IDatabaseAsync database) => TryAcquireWriteScript.ExecuteAsync(database, this).AsBooleanTask();
 
     public Task<bool> TryExtendAsync(IDatabaseAsync database) => this._mutexPrimitive.TryExtendAsync(database);
+
+    public bool IsConnected(IDatabase database) => database.IsConnected(this._writerKey, CommandFlags.DemandMaster);
 }

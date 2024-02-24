@@ -13,10 +13,10 @@ internal class OracleDbmsLock : IDbSynchronizationStrategy<object>
     private const int MaxWaitSeconds = 32767;
     private const int MaxTimeoutSeconds = MaxWaitSeconds - 1;
 
-    public static readonly OracleDbmsLock SharedLock = new OracleDbmsLock(Mode.Shared),
-        UpdateLock = new OracleDbmsLock(Mode.Update),
-        ExclusiveLock = new OracleDbmsLock(Mode.Exclusive),
-        UpgradeLock = new OracleDbmsLock(Mode.Exclusive, isUpgrade: true);
+    public static readonly OracleDbmsLock SharedLock = new(Mode.Shared),
+        UpdateLock = new(Mode.Update),
+        ExclusiveLock = new(Mode.Exclusive),
+        UpgradeLock = new(Mode.Exclusive, isUpgrade: true);
 
     private static readonly object Cookie = new();
 

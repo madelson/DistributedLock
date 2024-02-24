@@ -6,9 +6,9 @@ public abstract class TestingSemaphoreAsMutexProvider<TSemaphoreProvider, TStrat
     where TSemaphoreProvider : TestingSemaphoreProvider<TStrategy>, new()
     where TStrategy : TestingSynchronizationStrategy, new()
 {
-    private readonly TSemaphoreProvider _semaphoreProvider = new TSemaphoreProvider();
-    private readonly DisposableCollection _disposables = new DisposableCollection();
-    private readonly HashSet<string> _mostlyDrainedSemaphoreNames = new HashSet<string>();
+    private readonly TSemaphoreProvider _semaphoreProvider = new();
+    private readonly DisposableCollection _disposables = new();
+    private readonly HashSet<string> _mostlyDrainedSemaphoreNames = new();
     private readonly int _maxCount;
 
     protected TestingSemaphoreAsMutexProvider(int maxCount)

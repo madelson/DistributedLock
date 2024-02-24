@@ -21,7 +21,7 @@ public sealed class WaitHandleDistributedSynchronizationProvider : IDistributedL
     /// <paramref name="exactName"/> is specified, invalid wait handle names will be escaped/hashed.
     /// </summary>
     public EventWaitHandleDistributedLock CreateLock(string name, bool exactName = false) =>
-        new EventWaitHandleDistributedLock(name, this._abandonmentCheckCadence, exactName);
+        new(name, this._abandonmentCheckCadence, exactName);
 
     IDistributedLock IDistributedLockProvider.CreateLock(string name) => this.CreateLock(name);
 
@@ -31,7 +31,7 @@ public sealed class WaitHandleDistributedSynchronizationProvider : IDistributedL
     /// handle names will be escaped/hashed.
     /// </summary>
     public WaitHandleDistributedSemaphore CreateSemaphore(string name, int maxCount, bool exactName = false) =>
-        new WaitHandleDistributedSemaphore(name, maxCount, this._abandonmentCheckCadence, exactName);
+        new(name, maxCount, this._abandonmentCheckCadence, exactName);
 
     IDistributedSemaphore IDistributedSemaphoreProvider.CreateSemaphore(string name, int maxCount) =>
         this.CreateSemaphore(name, maxCount);

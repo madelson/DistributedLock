@@ -11,7 +11,7 @@ public sealed class TestingReaderWriterLockAsMutexProvider<TReaderWriterLockProv
     where TReaderWriterLockProvider : TestingReaderWriterLockProvider<TStrategy>, new()
     where TStrategy : TestingSynchronizationStrategy, new()
 {
-    private readonly TReaderWriterLockProvider _readerWriterLockProvider = new TReaderWriterLockProvider();
+    private readonly TReaderWriterLockProvider _readerWriterLockProvider = new();
 
     public override TStrategy Strategy => this._readerWriterLockProvider.Strategy;
 

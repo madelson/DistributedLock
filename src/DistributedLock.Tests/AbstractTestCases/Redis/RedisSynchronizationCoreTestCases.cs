@@ -167,5 +167,7 @@ public abstract class RedisSynchronizationCoreTestCases<TLockProvider>
             .Returns(() => (bool)RedisResult.Create(returns()));
         mockDatabase.Setup(d => d.SortedSetRemoveAsync(It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<CommandFlags>()))
             .Returns(() => Task.Run(() => (bool)RedisResult.Create(returns())));
+        mockDatabase.Setup(d => d.IsConnected(It.IsAny<RedisKey>(), It.IsAny<CommandFlags>()))
+            .Returns(true);
     }
 }

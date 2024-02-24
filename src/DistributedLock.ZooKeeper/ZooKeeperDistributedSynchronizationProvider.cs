@@ -33,7 +33,7 @@ public sealed class ZooKeeperDistributedSynchronizationProvider : IDistributedLo
     /// Creates a <see cref="ZooKeeperDistributedLock"/> using the given <paramref name="name"/>.
     /// </summary>
     public ZooKeeperDistributedLock CreateLock(string name) => 
-        new ZooKeeperDistributedLock(this._directoryPath, name, this._connectionString, this._options);
+        new(this._directoryPath, name, this._connectionString, this._options);
 
     IDistributedLock IDistributedLockProvider.CreateLock(string name) => this.CreateLock(name);
 
@@ -41,7 +41,7 @@ public sealed class ZooKeeperDistributedSynchronizationProvider : IDistributedLo
     /// Creates a <see cref="ZooKeeperDistributedReaderWriterLock"/> using the given <paramref name="name"/>.
     /// </summary>
     public ZooKeeperDistributedReaderWriterLock CreateReaderWriterLock(string name) => 
-        new ZooKeeperDistributedReaderWriterLock(this._directoryPath, name, this._connectionString, this._options);
+        new(this._directoryPath, name, this._connectionString, this._options);
 
     IDistributedReaderWriterLock IDistributedReaderWriterLockProvider.CreateReaderWriterLock(string name) => this.CreateReaderWriterLock(name);
 
@@ -49,7 +49,7 @@ public sealed class ZooKeeperDistributedSynchronizationProvider : IDistributedLo
     /// Creates a <see cref="ZooKeeperDistributedSemaphore"/> using the given <paramref name="name"/> and <paramref name="maxCount"/>.
     /// </summary>
     public ZooKeeperDistributedSemaphore CreateSemaphore(string name, int maxCount) =>
-        new ZooKeeperDistributedSemaphore(this._directoryPath, name, maxCount, this._connectionString, this._options);
+        new(this._directoryPath, name, maxCount, this._connectionString, this._options);
 
     IDistributedSemaphore IDistributedSemaphoreProvider.CreateSemaphore(string name, int maxCount) => this.CreateSemaphore(name, maxCount);
 }

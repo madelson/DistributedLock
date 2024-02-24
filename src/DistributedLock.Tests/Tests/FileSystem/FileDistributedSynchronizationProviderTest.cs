@@ -6,7 +6,7 @@ namespace Medallion.Threading.Tests.FileSystem;
 public class FileDistributedSynchronizationProviderTest
 {
     private static readonly string LockFileDirectory = Path.Combine(Path.GetTempPath(), nameof(FileDistributedSynchronizationProviderTest), TargetFramework.Current);
-    private static DirectoryInfo LockFileDirectoryInfo => new DirectoryInfo(LockFileDirectory);
+    private static DirectoryInfo LockFileDirectoryInfo => new(LockFileDirectory);
 
     [OneTimeSetUp]
     public void OneTimeSetUp()

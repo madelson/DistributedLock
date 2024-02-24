@@ -3,7 +3,7 @@
 public abstract class TestingLockProvider<TStrategy> : ITestingNameProvider, IDisposable
     where TStrategy : TestingSynchronizationStrategy, new()
 {
-    private readonly Lazy<TStrategy> _lazyStrategy = new Lazy<TStrategy>(() => new TStrategy());
+    private readonly Lazy<TStrategy> _lazyStrategy = new(() => new TStrategy());
 
     public virtual TStrategy Strategy => this._lazyStrategy.Value;
 
