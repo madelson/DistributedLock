@@ -12,7 +12,7 @@
   <ItemGroup>
     <PackageReference Include="nunit" />
     <PackageReference Include="NUnit3TestAdapter" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" VersionOverride="16.2.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
   </ItemGroup>
   
   <ItemGroup>
