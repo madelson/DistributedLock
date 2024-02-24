@@ -51,7 +51,8 @@ public sealed class SqlConnectionOptionsBuilder
     /// a connection is essentially idle. Thus, rather than creating a new connection for each held lock it is 
     /// often possible to multiplex a shared connection so that that connection can hold multiple locks at the same time.
     /// 
-    /// Multiplexing is on by default.
+    /// Multiplexing is on by default, unless <see cref="UseTransaction(bool)"/> is set to TRUE in which case multiplexing is disabled
+    /// because it is not compatible with <see cref="UseTransaction(bool)"/>.
     /// 
     /// This is implemented in such a way that releasing a lock held on such a connection will never be blocked by an
     /// Acquire() call that is waiting to acquire a lock on that same connection. For this reason, the multiplexing
@@ -83,7 +84,7 @@ public sealed class SqlConnectionOptionsBuilder
 
         var keepaliveCadence = options?._keepaliveCadence ?? TimeSpan.FromMinutes(10);
         var useTransaction = options?._useTransaction ?? false;
-        var useMultiplexing = options?._useMultiplexing ?? true;
+        var useMultiplexing = options?._useMultiplexing ?? !options?._useTransaction ?? true;
 
         if (useMultiplexing && useTransaction)
         {
