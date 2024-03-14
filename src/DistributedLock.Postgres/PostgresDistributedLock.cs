@@ -49,7 +49,7 @@ public sealed partial class PostgresDistributedLock : IInternalDistributedLock<P
     {
         if (connectionString == null) { throw new ArgumentNullException(nameof(connectionString)); }
 
-        var (keepaliveCadence, useMultiplexing, useTransaction) = PostgresConnectionOptionsBuilder.GetOptions(options);
+        var (keepaliveCadence, useMultiplexing) = PostgresConnectionOptionsBuilder.GetOptions(options);
 
         if (useMultiplexing)
         {
