@@ -1,9 +1,10 @@
 version: 1.0.{build}
 
-image: 
-  - Visual Studio 2022
+image:
+  # Ubuntu2204 needed for .NET 8 for now (see https://www.appveyor.com/docs/linux-images-software/)
   - Ubuntu2204
-  
+  - Visual Studio 2022
+
 build_script:
   - dotnet build src/DistributedLock.sln -c Release
   
