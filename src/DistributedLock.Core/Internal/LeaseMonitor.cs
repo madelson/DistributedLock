@@ -46,7 +46,7 @@ internal
         {
             if (this._cancellationTask != null)
             {
-                _ = this._cancellationTask.ContinueWith((_, state) => ((CancellationTokenSource)state).Dispose(), state: this._handleLostSource);
+                _ = this._cancellationTask.ContinueWith((_, state) => ((CancellationTokenSource)state!).Dispose(), state: this._handleLostSource);
             }
             else
             {

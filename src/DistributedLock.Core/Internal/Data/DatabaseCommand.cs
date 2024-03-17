@@ -63,7 +63,7 @@ sealed class DatabaseCommand : IDisposable
     internal ValueTask<int> ExecuteNonQueryAsync(CancellationToken cancellationToken, bool disallowAsyncCancellation, bool isConnectionMonitoringQuery) =>
         this.ExecuteAsync((c, t) => c.ExecuteNonQueryAsync(t), c => c.ExecuteNonQuery(), cancellationToken, disallowAsyncCancellation, isConnectionMonitoringQuery);
 
-    public ValueTask<object> ExecuteScalarAsync(CancellationToken cancellationToken, bool disallowAsyncCancellation = false) =>
+    public ValueTask<object?> ExecuteScalarAsync(CancellationToken cancellationToken, bool disallowAsyncCancellation = false) =>
         this.ExecuteAsync((c, t) => c.ExecuteScalarAsync(t), c => c.ExecuteScalar(), cancellationToken, disallowAsyncCancellation, isConnectionMonitoringQuery: false);
 
     private async ValueTask<TResult> ExecuteAsync<TResult>(
@@ -113,7 +113,7 @@ sealed class DatabaseCommand : IDisposable
             // registrations fire synchronously if the token is already canceled
             using var registration = cancellationToken.Register(state => Task.Run(async () =>
             {
-                var commandBox = (StrongBox<IDbCommand?>)state;
+                var commandBox = (StrongBox<IDbCommand?>)state!;
                 IDbCommand? command;
                 while ((command = Volatile.Read(ref commandBox.Value)) != null)
                 {
@@ -178,7 +178,7 @@ sealed class DatabaseCommand : IDisposable
     {
         if (this._connection.ShouldPrepareCommands)
         {
-#if NETSTANDARD2_1
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1
             if (!SyncViaAsync.IsSynchronous && this._command is DbCommand dbCommand)
             {
                 return dbCommand.PrepareAsync(cancellationToken).AsValueTask();

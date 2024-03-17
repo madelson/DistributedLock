@@ -24,5 +24,8 @@ public sealed class DeadlockException
     /// </summary>
     public DeadlockException(string message, Exception innerException) : base(message, innerException) { }
 
+#if NET8_0_OR_GREATER
+    [Obsolete] // calls obsolete constructor
+#endif
     private DeadlockException(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
 }

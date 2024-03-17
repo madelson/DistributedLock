@@ -60,7 +60,7 @@ internal class PostgresAdvisoryLock : IDbSynchronizationStrategy<object>
 
         using var acquireCommand = this.CreateAcquireCommand(connection, key, timeout);
 
-        object acquireCommandResult;
+        object? acquireCommandResult;
         try
         {
             acquireCommandResult = await acquireCommand.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
@@ -150,7 +150,7 @@ internal class PostgresAdvisoryLock : IDbSynchronizationStrategy<object>
                     AND l.pid = pg_catalog.pg_backend_pid() 
                     AND d.datname = pg_catalog.current_database()"
         );
-        return (long)await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false) != 0;
+        return (long)(await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false))! != 0;
     }
 
     private DatabaseCommand CreateAcquireCommand(DatabaseConnection connection, PostgresAdvisoryLockKey key, TimeoutValue timeout)
@@ -211,7 +211,7 @@ internal class PostgresAdvisoryLock : IDbSynchronizationStrategy<object>
 
         using var command = connection.CreateCommand();
         command.SetCommandText($"SELECT pg_catalog.pg_advisory_unlock{(this._isShared ? "_shared" : string.Empty)}({AddKeyParametersAndGetKeyArguments(command, key)})");
-        var result = (bool)await command.ExecuteScalarAsync(CancellationToken.None).ConfigureAwait(false);
+        var result = (bool)(await command.ExecuteScalarAsync(CancellationToken.None).ConfigureAwait(false))!;
         if (!isTry && !result)
         {
             throw new InvalidOperationException("Attempted to release a lock that was not held");

@@ -74,7 +74,11 @@ static class Helpers
         public NonThrowingAwaitable(TTask task)
         {
             this._task = task;
+#if NET8_0_OR_GREATER
+            this._taskAwaiter = task.ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing).GetAwaiter();
+#else
             this._taskAwaiter = task.ConfigureAwait(false).GetAwaiter();
+#endif
         }
 
         public NonThrowingAwaitable<TTask> GetAwaiter() => this;
@@ -83,9 +87,16 @@ static class Helpers
 
         public TTask GetResult()
         {
-            // does NOT call _taskAwaiter.GetResult() since that could throw!
-
             Invariant.Require(this._task.IsCompleted);
+
+#if NET8_0_OR_GREATER
+            this._taskAwaiter.GetResult();
+#else
+            // Does NOT call _taskAwaiter.GetResult() since that could throw!
+            // We do, however, access the Exception property to avoid hitting UnobservedTaskException.
+            if (this._task.IsFaulted) { _ = this._task.Exception; }
+#endif
+
             return this._task;
         }
 

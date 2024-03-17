@@ -60,7 +60,7 @@ internal
         using var _ = await this.ConnectionMonitor.AcquireConnectionLockAsync(CancellationToken.None).ConfigureAwait(false);
 
         this._transaction =
-#if NETSTANDARD2_1
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1
          !SyncViaAsync.IsSynchronous && this.InnerConnection is DbConnection dbConnection
             ? await dbConnection.BeginTransactionAsync().ConfigureAwait(false)
             : 
@@ -105,7 +105,7 @@ internal
                 try { await this.DisposeTransactionAsync(isClosingOrDisposingConnection: true).ConfigureAwait(false); }
                 finally
                 {
-#if NETSTANDARD2_1
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1
                     if (!SyncViaAsync.IsSynchronous && this.InnerConnection is DbConnection dbConnection)
                     {
                         await (isDispose ? dbConnection.DisposeAsync() : dbConnection.CloseAsync().AsValueTask()).ConfigureAwait(false);
@@ -143,7 +143,7 @@ internal
             ? null 
             : await this.ConnectionMonitor.AcquireConnectionLockAsync(CancellationToken.None).ConfigureAwait(false);
 
-#if NETSTANDARD2_1
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1
         if (!SyncViaAsync.IsSynchronous && transaction is DbTransaction dbTransaction)
         {
             await dbTransaction.DisposeAsync().ConfigureAwait(false);

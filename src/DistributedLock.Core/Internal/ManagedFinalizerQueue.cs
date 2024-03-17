@@ -101,7 +101,7 @@ sealed class ManagedFinalizerQueue
             // necessarily exited yet (and may not for some time). Therefore, we queue a task to run as a
             // continuation so that we only have one finalizer loop at a time
             this._finalizerTask = this._finalizerTask.ContinueWith(
-                    (_, @this) => ((ManagedFinalizerQueue)@this).FinalizerLoop(),
+                    (_, @this) => ((ManagedFinalizerQueue)@this!).FinalizerLoop(),
                     state: this,
                     CancellationToken.None
                 )
