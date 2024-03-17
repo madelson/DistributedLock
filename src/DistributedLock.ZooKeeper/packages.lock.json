@@ -8,6 +8,21 @@
         "resolved": "1.0.3",
         "contentHash": "jcdN7vpDwjnV7U9KGCv/oNIWHJ/RIbyrpVsLQL2qbj6Cbi5U3iafKsaMn1rP+qCbkLbkB0v6oAwbVEkqrUnlyg=="
       },
+      "Microsoft.CodeAnalysis.PublicApiAnalyzers": {
+        "type": "Direct",
+        "requested": "[3.3.4, )",
+        "resolved": "3.3.4",
+        "contentHash": "kNLTfXtXUWDHVt5iaPkkiPuyHYlMgLI6SOFT4w88bfeI2vqSeGgHunFkdvlaCM8RDfcY0t2+jnesQtidRJJ/DA=="
+      },
+      "Microsoft.NETFramework.ReferenceAssemblies": {
+        "type": "Direct",
+        "requested": "[1.0.3, )",
+        "resolved": "1.0.3",
+        "contentHash": "vUc9Npcs14QsyOD01tnv/m8sQUnGTGOw1BCmKcv77LBJY7OxhJ+zJF7UD/sCL3lYNFuqmQEVlkfS4Quif6FyYg==",
+        "dependencies": {
+          "Microsoft.NETFramework.ReferenceAssemblies.net461": "1.0.3"
+        }
+      },
       "Microsoft.SourceLink.GitHub": {
         "type": "Direct",
         "requested": "[1.0.0, )",
@@ -34,6 +49,11 @@
         "type": "Transitive",
         "resolved": "1.0.0",
         "contentHash": "z2fpmmt+1Jfl+ZnBki9nSP08S1/tbEOxFdsK1rSR+LBehIJz1Xv9/6qOOoGNqlwnAGGVGis1Oj6S8Kt9COEYlQ=="
+      },
+      "Microsoft.NETFramework.ReferenceAssemblies.net461": {
+        "type": "Transitive",
+        "resolved": "1.0.3",
+        "contentHash": "AmOJZwCqnOCNp6PPcf9joyogScWLtwy0M1WkqfEQ0M9nYwyDD7EX9ZjscKS5iYnyvteX7kzSKFCKt9I9dXA6mA=="
       },
       "Microsoft.SourceLink.Common": {
         "type": "Transitive",
@@ -82,6 +102,12 @@
         "requested": "[1.0.3, )",
         "resolved": "1.0.3",
         "contentHash": "jcdN7vpDwjnV7U9KGCv/oNIWHJ/RIbyrpVsLQL2qbj6Cbi5U3iafKsaMn1rP+qCbkLbkB0v6oAwbVEkqrUnlyg=="
+      },
+      "Microsoft.CodeAnalysis.PublicApiAnalyzers": {
+        "type": "Direct",
+        "requested": "[3.3.4, )",
+        "resolved": "3.3.4",
+        "contentHash": "kNLTfXtXUWDHVt5iaPkkiPuyHYlMgLI6SOFT4w88bfeI2vqSeGgHunFkdvlaCM8RDfcY0t2+jnesQtidRJJ/DA=="
       },
       "Microsoft.SourceLink.GitHub": {
         "type": "Direct",
@@ -164,6 +190,12 @@
         "requested": "[1.0.3, )",
         "resolved": "1.0.3",
         "contentHash": "jcdN7vpDwjnV7U9KGCv/oNIWHJ/RIbyrpVsLQL2qbj6Cbi5U3iafKsaMn1rP+qCbkLbkB0v6oAwbVEkqrUnlyg=="
+      },
+      "Microsoft.CodeAnalysis.PublicApiAnalyzers": {
+        "type": "Direct",
+        "requested": "[3.3.4, )",
+        "resolved": "3.3.4",
+        "contentHash": "kNLTfXtXUWDHVt5iaPkkiPuyHYlMgLI6SOFT4w88bfeI2vqSeGgHunFkdvlaCM8RDfcY0t2+jnesQtidRJJ/DA=="
       },
       "Microsoft.SourceLink.GitHub": {
         "type": "Direct",

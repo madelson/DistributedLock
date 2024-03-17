@@ -2,6 +2,21 @@
   "version": 2,
   "dependencies": {
     ".NETFramework,Version=v4.6.1": {
+      "Microsoft.CodeAnalysis.PublicApiAnalyzers": {
+        "type": "Direct",
+        "requested": "[3.3.4, )",
+        "resolved": "3.3.4",
+        "contentHash": "kNLTfXtXUWDHVt5iaPkkiPuyHYlMgLI6SOFT4w88bfeI2vqSeGgHunFkdvlaCM8RDfcY0t2+jnesQtidRJJ/DA=="
+      },
+      "Microsoft.NETFramework.ReferenceAssemblies": {
+        "type": "Direct",
+        "requested": "[1.0.3, )",
+        "resolved": "1.0.3",
+        "contentHash": "vUc9Npcs14QsyOD01tnv/m8sQUnGTGOw1BCmKcv77LBJY7OxhJ+zJF7UD/sCL3lYNFuqmQEVlkfS4Quif6FyYg==",
+        "dependencies": {
+          "Microsoft.NETFramework.ReferenceAssemblies.net461": "1.0.3"
+        }
+      },
       "Microsoft.SourceLink.GitHub": {
         "type": "Direct",
         "requested": "[1.0.0, )",
@@ -45,6 +60,11 @@
           "System.Buffers": "4.5.1",
           "System.Memory": "4.5.4"
         }
+      },
+      "Microsoft.NETFramework.ReferenceAssemblies.net461": {
+        "type": "Transitive",
+        "resolved": "1.0.3",
+        "contentHash": "AmOJZwCqnOCNp6PPcf9joyogScWLtwy0M1WkqfEQ0M9nYwyDD7EX9ZjscKS5iYnyvteX7kzSKFCKt9I9dXA6mA=="
       },
       "Microsoft.SourceLink.Common": {
         "type": "Transitive",
@@ -144,6 +164,12 @@
       }
     },
     ".NETStandard,Version=v2.0": {
+      "Microsoft.CodeAnalysis.PublicApiAnalyzers": {
+        "type": "Direct",
+        "requested": "[3.3.4, )",
+        "resolved": "3.3.4",
+        "contentHash": "kNLTfXtXUWDHVt5iaPkkiPuyHYlMgLI6SOFT4w88bfeI2vqSeGgHunFkdvlaCM8RDfcY0t2+jnesQtidRJJ/DA=="
+      },
       "Microsoft.SourceLink.GitHub": {
         "type": "Direct",
         "requested": "[1.0.0, )",
@@ -281,6 +307,12 @@
       }
     },
     ".NETStandard,Version=v2.1": {
+      "Microsoft.CodeAnalysis.PublicApiAnalyzers": {
+        "type": "Direct",
+        "requested": "[3.3.4, )",
+        "resolved": "3.3.4",
+        "contentHash": "kNLTfXtXUWDHVt5iaPkkiPuyHYlMgLI6SOFT4w88bfeI2vqSeGgHunFkdvlaCM8RDfcY0t2+jnesQtidRJJ/DA=="
+      },
       "Microsoft.SourceLink.GitHub": {
         "type": "Direct",
         "requested": "[1.0.0, )",
