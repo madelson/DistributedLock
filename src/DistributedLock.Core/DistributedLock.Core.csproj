@@ -60,6 +60,4 @@
   <ItemGroup>
     <Using Remove="System.Net.Http"/>
   </ItemGroup>
-
-  <Import Project="..\CopyPackageToPublishDirectory.targets" />
 </Project>
