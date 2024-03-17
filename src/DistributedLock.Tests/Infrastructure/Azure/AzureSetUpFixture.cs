@@ -35,8 +35,10 @@ public class AzureSetUpFixture
             // Note: we used to hang on to this command to kill it later; we no longer do that because this process seems to naturally exit
             // by the end of the test and instead the emulator is running in another process. Therefore, we do a name-based lookup in teardown instead.
             var command = Command.Run(
-                    emulatorExePaths[0], 
-                    ["start"], 
+                    emulatorExePaths[0],
+                    // After updating to Azure.Storage.Blobs 12.19.1 I started getting an error saying that I had to update Azurite or pass this flag.
+                    // AFAIK the only way to update Azurite is to update VS, which did not fix the issue. Therefore, I am passing this flag instead.
+                    ["start", "--skipApiVersionCheck"], 
                     o => o.StartInfo(i => i.RedirectStandardInput = false)
                         .WorkingDirectory(Path.GetDirectoryName(this.GetType().Assembly.Location)!))
                 .RedirectTo(Console.Out)

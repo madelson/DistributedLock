@@ -15,11 +15,6 @@ using System.Collections.Generic;
 using Medallion.Threading.ZooKeeper;
 using Medallion.Threading.MySql;
 using Medallion.Threading.Oracle;
-#if NET471
-using System.Data.SqlClient;
-#elif NETCOREAPP3_1
-using Microsoft.Data.SqlClient;
-#endif
 
 namespace DistributedLockTaker;
 

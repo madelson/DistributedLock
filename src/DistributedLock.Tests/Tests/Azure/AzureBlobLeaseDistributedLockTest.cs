@@ -110,7 +110,10 @@ public class AzureBlobLeaseDistributedLockTest
             .ErrorCode.ShouldEqual(AzureErrors.LeaseIdMissing);
 
         Assert.DoesNotThrow(
-            () => client.UploadPages(new MemoryStream(new byte[BlobSize]), offset: 0, conditions: new PageBlobRequestConditions { LeaseId = handle.LeaseId })
+            () => client.UploadPages(new MemoryStream(new byte[BlobSize]), offset: 0, options: new()
+            {
+                Conditions = new PageBlobRequestConditions { LeaseId = handle.LeaseId }
+            })
         );
 
         handle.Dispose();

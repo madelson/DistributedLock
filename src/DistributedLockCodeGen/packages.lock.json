@@ -1,7 +1,7 @@
 {
   "version": 2,
   "dependencies": {
-    ".NETCoreApp,Version=v3.1": {
+    "net8.0": {
       "Microsoft.NET.Test.Sdk": {
         "type": "Direct",
         "requested": "[16.4.0, )",
