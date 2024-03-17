@@ -37,8 +37,10 @@ public sealed class SqlConnectionOptionsBuilder
     /// 
     /// Synchronizing based on a transaction is marginally less expensive than using a connection
     /// because releasing requires only disposing the underlying <see cref="IDbTransaction"/>.
+    /// 
     /// The disadvantage is that using this strategy may lead to long-running transactions, which can be
-    /// problematic for databases using the full recovery model.
+    /// problematic for databases using the full recovery model. Furthermore, this strategy prevents us from
+    /// taking advantage of <see cref="UseMultiplexing(bool)"/> and its performance advantages.
     /// </summary>
     public SqlConnectionOptionsBuilder UseTransaction(bool useTransaction = true)
     {

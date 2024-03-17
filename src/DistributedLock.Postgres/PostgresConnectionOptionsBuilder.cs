@@ -1,4 +1,5 @@
 ﻿using Medallion.Threading.Internal;
+using System.Data;
 
 namespace Medallion.Threading.Postgres;
 
@@ -8,7 +9,7 @@ namespace Medallion.Threading.Postgres;
 public sealed class PostgresConnectionOptionsBuilder
 {
     private TimeoutValue? _keepaliveCadence;
-    private bool? _useMultiplexing;
+    private bool? _useTransaction, _useMultiplexing;
 
     internal PostgresConnectionOptionsBuilder() { }
 
@@ -23,6 +24,23 @@ public sealed class PostgresConnectionOptionsBuilder
     public PostgresConnectionOptionsBuilder KeepaliveCadence(TimeSpan keepaliveCadence)
     {
         this._keepaliveCadence = new TimeoutValue(keepaliveCadence, nameof(keepaliveCadence));
+        return this;
+    }
+
+    /// <summary>
+    /// Whether the synchronization should use a transaction scope rather than a session scope. Defaults to false.
+    /// 
+    /// Synchronizing based on a transaction is necessary to do distributed locking with some pgbouncer configurations
+    /// (see https://github.com/madelson/DistributedLock/issues/168#issuecomment-1823277173). It may also be marginally less 
+    /// expensive than using a connection for a single lock because releasing requires only disposing the 
+    /// underlying <see cref="IDbTransaction"/>.
+    /// 
+    /// The disadvantage of this strategy is that it is incompatible with <see cref="UseMultiplexing(bool)"/> and therefore
+    /// gives up the advantages of that approach.
+    /// </summary>
+    public PostgresConnectionOptionsBuilder UseTransaction(bool useTransaction = true)
+    {
+        this._useTransaction = useTransaction;
         return this;
     }
 
@@ -48,7 +66,7 @@ public sealed class PostgresConnectionOptionsBuilder
         return this;
     }
 
-    internal static (TimeoutValue keepaliveCadence, bool useMultiplexing) GetOptions(Action<PostgresConnectionOptionsBuilder>? optionsBuilder)
+    internal static (TimeoutValue keepaliveCadence, bool useTransaction, bool useMultiplexing) GetOptions(Action<PostgresConnectionOptionsBuilder>? optionsBuilder)
     {
         PostgresConnectionOptionsBuilder? options;
         if (optionsBuilder != null)
@@ -62,8 +80,14 @@ public sealed class PostgresConnectionOptionsBuilder
         }
 
         var keepaliveCadence = options?._keepaliveCadence ?? Timeout.InfiniteTimeSpan;
-        var useMultiplexing = options?._useMultiplexing ?? true;
+        var useTransaction = options?._useTransaction ?? false;
+        var useMultiplexing = options?._useMultiplexing ?? !options?._useTransaction ?? true;
 
-        return (keepaliveCadence, useMultiplexing);
+        if (useMultiplexing && useTransaction)
+        {
+            throw new ArgumentException(nameof(UseTransaction) + ": is not compatible with " + nameof(UseMultiplexing));
+        }
+
+        return (keepaliveCadence, useTransaction, useMultiplexing);
     }
 }

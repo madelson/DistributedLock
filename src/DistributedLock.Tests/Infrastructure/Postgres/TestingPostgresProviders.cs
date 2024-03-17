@@ -1,4 +1,5 @@
-﻿using Medallion.Threading.Postgres;
+﻿using Medallion.Threading.Internal;
+using Medallion.Threading.Postgres;
 using Medallion.Threading.Tests.Data;
 
 namespace Medallion.Threading.Tests.Postgres;
@@ -23,6 +24,7 @@ public sealed class TestingPostgresDistributedLockProvider<TStrategy> : TestingL
     internal static Action<PostgresConnectionOptionsBuilder> ToPostgresOptions((bool useMultiplexing, bool useTransaction, TimeSpan? keepaliveCadence) options) => o =>
     {
         o.UseMultiplexing(options.useMultiplexing);
+        o.UseTransaction(options.useTransaction);
         if (options.keepaliveCadence is { } keepaliveCadence) { o.KeepaliveCadence(keepaliveCadence); }
     };
 }
