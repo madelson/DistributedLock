@@ -142,11 +142,13 @@ public sealed partial class FileDistributedLock : IInternalDistributedLock<FileD
                 System.IO.Directory.CreateDirectory(this.Directory);
                 return;
             }
-            // This can indicate either a transient failure during concurrent creation/deletion or a permissions issue.
-            // If we encounter it, assume it is transient unless it persists.
-            //catch (UnauthorizedAccessException) when (++retryCount <= MaxUnauthorizedAccessExceptionRetries) { }
             catch (Exception ex)
             {
+                // This can indicate either a transient failure during concurrent creation/deletion or a permissions issue.
+                // If we encounter it, assume it is transient unless it persists.
+                // For a long time, I just checked for UnauthorizedAccessException here. However, recent tests on Linux have
+                // shown that in race conditions we can see IOException as well, presumably because there is some period during
+                // directory creation where it presents as a file.
                 if (ex is UnauthorizedAccessException or IOException
                     && retryCount < MaxUnauthorizedAccessExceptionRetries)
                 {

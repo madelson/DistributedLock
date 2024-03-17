@@ -121,6 +121,16 @@ public class FileDistributedLockTest
     }
 
     [Test]
+    public void TestThrowsIfProvidedDirectoryIsAlreadyFile()
+    {
+        var tempFile = Path.GetTempFileName();
+
+        var @lock = new FileDistributedLock(lockFileDirectory: new(tempFile), "some name");
+        var exception = Assert.Throws<InvalidOperationException>(() => @lock.Acquire().Dispose());
+        Assert.That(exception.InnerException!.Message, Does.Match("file .* already exists"));
+    }
+
+    [Test]
     public void TestEmptyNameIsAllowed() => AssertCanUseName(string.Empty);
 
     [Test]
