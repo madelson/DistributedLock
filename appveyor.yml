@@ -4,6 +4,9 @@ image:
   - Visual Studio 2022
   - Ubuntu
 
+init:
+  - sh: >- sudo apt-get update && sudo apt-get install -y dotnet-sdk-8.0
+
 build_script:
   - dotnet build src/DistributedLock.sln -c Release
   
