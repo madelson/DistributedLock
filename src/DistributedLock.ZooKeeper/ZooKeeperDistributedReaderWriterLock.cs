@@ -98,7 +98,7 @@ public sealed partial class ZooKeeperDistributedReaderWriterLock : IInternalDist
     private static bool HasAcquiredWriteLock(ZooKeeperSynchronizationHelper.State state) =>
         state.SortedChildren[0].Path == state.EphemeralNodePath;
 
-    private async Task<bool> WaitForWriteLockAcquiredOrChange(ZooKeeper zooKeeper, ZooKeeperSynchronizationHelper.State state, Watcher watcher)
+    private static async Task<bool> WaitForWriteLockAcquiredOrChange(ZooKeeper zooKeeper, ZooKeeperSynchronizationHelper.State state, Watcher watcher)
     {
         var ephemeralNodeIndex = Array.FindIndex(state.SortedChildren, t => t.Path == state.EphemeralNodePath);
         var nextLowestChildNode = state.SortedChildren[ephemeralNodeIndex - 1].Path;

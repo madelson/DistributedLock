@@ -110,7 +110,7 @@ public sealed partial class FileDistributedLock : IInternalDistributedLock<FileD
 
                 // Frustratingly, this error can be thrown transiently due to concurrent creation/deletion. Initially assume
                 // that it is transient and just retry
-                if (++retryCount <= MaxUnauthorizedAccessExceptionRetries)
+                if (CanRetryTransientFileSystemError(ref retryCount))
                 {
                     continue;
                 }
@@ -150,15 +150,25 @@ public sealed partial class FileDistributedLock : IInternalDistributedLock<FileD
                 // shown that in race conditions we can see IOException as well, presumably because there is some period during
                 // directory creation where it presents as a file.
                 if (ex is UnauthorizedAccessException or IOException
-                    && retryCount < MaxUnauthorizedAccessExceptionRetries)
+                    && CanRetryTransientFileSystemError(ref retryCount))
                 {
-                    ++retryCount;
+                    continue;
                 }
-                else
-                {
-                    throw new InvalidOperationException($"Failed to ensure that lock file directory {this.Directory} exists", ex);
-                }
+
+                throw new InvalidOperationException($"Failed to ensure that lock file directory {this.Directory} exists", ex);
             }
         }
+    }
+
+    private static bool CanRetryTransientFileSystemError(ref int retryCount)
+    {
+        if (retryCount >= MaxUnauthorizedAccessExceptionRetries) { return false; }
+
+        ++retryCount;
+
+        // On the final try, pause for just 1ms to see if that helps escape the race condition
+        if (retryCount == MaxUnauthorizedAccessExceptionRetries) { Thread.Sleep(1); }
+
+        return true;
     }
 }
