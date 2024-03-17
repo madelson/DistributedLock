@@ -166,9 +166,6 @@ public sealed partial class FileDistributedLock : IInternalDistributedLock<FileD
 
         ++retryCount;
 
-        // On the final try, pause for just 1ms to see if that helps escape the race condition
-        if (retryCount == MaxUnauthorizedAccessExceptionRetries) { Thread.Sleep(1); }
-
         return true;
     }
 }
