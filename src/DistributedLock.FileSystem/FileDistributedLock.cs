@@ -144,10 +144,18 @@ public sealed partial class FileDistributedLock : IInternalDistributedLock<FileD
             }
             // This can indicate either a transient failure during concurrent creation/deletion or a permissions issue.
             // If we encounter it, assume it is transient unless it persists.
-            catch (UnauthorizedAccessException) when (++retryCount <= MaxUnauthorizedAccessExceptionRetries) { }
+            //catch (UnauthorizedAccessException) when (++retryCount <= MaxUnauthorizedAccessExceptionRetries) { }
             catch (Exception ex)
             {
-                throw new InvalidOperationException($"Failed to ensure that lock file directory {this.Directory} exists", ex);
+                if (ex is UnauthorizedAccessException or IOException
+                    && retryCount < MaxUnauthorizedAccessExceptionRetries)
+                {
+                    ++retryCount;
+                }
+                else
+                {
+                    throw new InvalidOperationException($"Failed to ensure that lock file directory {this.Directory} exists", ex);
+                }
             }
         }
     }
