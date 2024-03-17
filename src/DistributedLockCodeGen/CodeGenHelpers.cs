@@ -13,7 +13,7 @@ internal static class CodeGenHelpers
 
     public static IEnumerable<string> EnumerateSolutionFiles() => Directory.EnumerateFiles(SolutionDirectory, "*.csproj", SearchOption.AllDirectories)
         .Select(Path.GetDirectoryName)
-        .Where(d => !Regex.IsMatch(Path.GetFileName(d), "^(DistributedLock|DistributedLock.Tests|DistributedLockCodeGen)$", RegexOptions.IgnoreCase))
+        .Where(d => !Regex.IsMatch(Path.GetFileName(d)!, "^(DistributedLock|DistributedLock.Tests|DistributedLockCodeGen)$", RegexOptions.IgnoreCase))
         .SelectMany(d => Directory.EnumerateFiles(d, "*.cs", SearchOption.AllDirectories));
 
     public static string NormalizeCodeWhitespace(string code) => code.Trim().Replace("\r\n", "\n");

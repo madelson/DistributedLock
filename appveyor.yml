@@ -9,7 +9,7 @@ build_script:
   - dotnet build src/DistributedLock.sln -c Release
   
 test_script:
-  - dotnet test src/DistributedLock.sln -c Release -f netcoreapp3.1 --no-build --filter TestCategory=CI
+  - dotnet test src/DistributedLock.sln -c Release -f net8.0 --no-build --filter TestCategory=CI
 
 for: 
   - 
