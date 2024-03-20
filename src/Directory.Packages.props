@@ -11,7 +11,7 @@
     <PackageVersion Include="MySqlConnector" Version="2.3.5" />
     <PackageVersion Include="Oracle.ManagedDataAccess.Core" Version="3.21.100" Condition="'$(TargetFramework)' == 'netstandard2.1'" />
     <PackageVersion Include="Oracle.ManagedDataAccess" Version="21.10.0" Condition="'$(TargetFramework)' == 'net462'"/>
-    <PackageVersion Include="Npgsql" Version="5.0.4" />
+    <PackageVersion Include="Npgsql" Version="8.0.2" />
     <PackageVersion Include="StackExchange.Redis" Version="2.7.20" />
     <PackageVersion Include="Microsoft.Data.SqlClient" Version="2.1.7" />
     <PackageVersion Include="nunit" Version="3.12.0" />
@@ -23,7 +23,7 @@
     <PackageVersion Include="System.Threading.AccessControl" Version="5.0.0" Condition="'$(TargetFramework)' != 'net461'" />
     <PackageVersion Include="ZooKeeperNetEx" Version="3.4.12.4" />
     <PackageVersion Include="IsExternalInit" Version="1.0.3" />
-    <PackageVersion Include="Microsoft.Bcl.AsyncInterfaces" Version="5.0.0" Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'net461'" />
+    <PackageVersion Include="Microsoft.Bcl.AsyncInterfaces" Version="8.0.0" Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'net461'" />
     <PackageVersion Include="System.ValueTuple" Version="4.5.0" Condition="'$(TargetFramework)' == 'net461'" />
   </ItemGroup>
 </Project>
