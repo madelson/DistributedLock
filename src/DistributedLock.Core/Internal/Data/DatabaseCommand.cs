@@ -181,7 +181,7 @@ sealed class DatabaseCommand : IDisposable
             {
                 return dbCommand.PrepareAsync(cancellationToken).AsValueTask();
             }
-#elif !NETSTANDARD2_0 && !NET461
+#elif !NETSTANDARD2_0 && !NET462
             ERROR
 #endif
 

@@ -20,10 +20,10 @@
     <PackageVersion Include="MedallionShell.StrongName" Version="1.6.1" />
     <PackageVersion Include="System.Data.SqlClient" Version="4.8.6" />
     <PackageVersion Include="Moq" Version="4.13.1" />
-    <PackageVersion Include="System.Threading.AccessControl" Version="5.0.0" Condition="'$(TargetFramework)' != 'net461'" />
+    <PackageVersion Include="System.Threading.AccessControl" Version="5.0.0" Condition="'$(TargetFramework)' != 'net462'" />
     <PackageVersion Include="ZooKeeperNetEx" Version="3.4.12.4" />
     <PackageVersion Include="IsExternalInit" Version="1.0.3" />
-    <PackageVersion Include="Microsoft.Bcl.AsyncInterfaces" Version="8.0.0" Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'net461'" />
-    <PackageVersion Include="System.ValueTuple" Version="4.5.0" Condition="'$(TargetFramework)' == 'net461'" />
+    <PackageVersion Include="Microsoft.Bcl.AsyncInterfaces" Version="8.0.0" Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'net462'" />
+    <PackageVersion Include="System.ValueTuple" Version="4.5.0" Condition="'$(TargetFramework)' == 'net462'" />
   </ItemGroup>
 </Project>
