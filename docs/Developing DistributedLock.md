@@ -74,3 +74,5 @@ Download a ZooKeeper installation by going to [https://zookeeper.apache.org/](ht
 Extract the zip archive, and within it copy `zoo_sample.cfg` to `zoo.cfg`.
 
 Add the full path of the extracted directory (the one containing README.md, bin, conf, etc) to `DistributedLock.Tests/credentials/zookeeper.txt` as a single line.
+
+Also, install Java Development Kit (JDK) because ZooKeeper runs on Java.
