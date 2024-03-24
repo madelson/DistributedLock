@@ -12,7 +12,7 @@ public sealed partial class FileDistributedLock : IInternalDistributedLock<FileD
     /// before we assume that the issue is non-transient. Empirically I've found this value to be reliable both locally and on AppVeyor (if there 
     /// IS a problem there's little risk to trying more times because we'll eventually be failing hard).
     /// </summary>
-    private const int MaxUnauthorizedAccessExceptionRetries = 400;
+    private const int MaxUnauthorizedAccessExceptionRetries = 800;
 
     // These are not configurable currently because in the future we may want to change the implementation of FileDistributedLock
     // to leverage native methods which may allow for actual blocking. The values here reflect the idea that we expect file locks
