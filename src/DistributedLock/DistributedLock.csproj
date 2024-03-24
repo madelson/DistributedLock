@@ -53,11 +53,11 @@
     <ProjectReference Include="..\DistributedLock.Redis\DistributedLock.Redis.csproj" />
     <ProjectReference Include="..\DistributedLock.ZooKeeper\DistributedLock.ZooKeeper.csproj" />
     <ProjectReference Include="..\DistributedLock.MySql\DistributedLock.MySql.csproj" />
-    <ProjectReference Include="..\DistributedLock.Oracle\DistributedLock.Oracle.csproj" Condition="'$(TargetFramework)' != 'netstandard2.0' AND '$(TargetFramework)' != 'net461'" />
+    <ProjectReference Include="..\DistributedLock.Oracle\DistributedLock.Oracle.csproj" Condition="'$(TargetFramework)' != 'netstandard2.0'" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All"/>
-    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" PrivateAssets="All" Condition="$(Configuration) == 'Release'"/>
+    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" PrivateAssets="All" />
   </ItemGroup>
 </Project>

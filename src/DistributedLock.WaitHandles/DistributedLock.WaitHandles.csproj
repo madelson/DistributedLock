@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;netstandard2.1;net461</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;netstandard2.1;net462</TargetFrameworks>
     <RootNamespace>Medallion.Threading.WaitHandles</RootNamespace>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
     <WarningLevel>4</WarningLevel>
@@ -45,9 +45,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="System.Threading.AccessControl" Condition="'$(TargetFramework)' != 'net461'" />
+    <PackageReference Include="System.Threading.AccessControl" Condition="'$(TargetFramework)' != 'net462'" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All"/>
-    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" PrivateAssets="All" Condition="$(Configuration) == 'Release'"/>
+    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" PrivateAssets="All" />
   </ItemGroup>
 
   <ItemGroup>
