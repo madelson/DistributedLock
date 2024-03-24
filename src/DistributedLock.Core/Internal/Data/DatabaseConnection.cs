@@ -64,7 +64,7 @@ internal
          !SyncViaAsync.IsSynchronous && this.InnerConnection is DbConnection dbConnection
             ? await dbConnection.BeginTransactionAsync().ConfigureAwait(false)
             : 
-#elif NETSTANDARD2_0 || NET462
+#elif NETSTANDARD2_0 || NETFRAMEWORK
 #else
         ERROR
 #endif
@@ -114,7 +114,7 @@ internal
                     {
                         SyncDisposeConnection();
                     }
-#elif NETSTANDARD2_0 || NET462
+#elif NETSTANDARD2_0 || NETFRAMEWORK
                     SyncDisposeConnection();
 #else
                     ERROR
@@ -149,7 +149,7 @@ internal
             await dbTransaction.DisposeAsync().ConfigureAwait(false);
             return;
         }
-#elif NETSTANDARD2_0 || NET462
+#elif NETSTANDARD2_0 || NETFRAMEWORK
 #else
         ERROR
 #endif
