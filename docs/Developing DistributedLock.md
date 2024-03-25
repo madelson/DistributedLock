@@ -47,6 +47,8 @@ You can install Oracle from [here](https://www.oracle.com/database/technologies/
 
 Add your username (e.g. SYSTEM) and password to `DistributedLock.Tests/credentials/oracle.txt`, with the username on line 1 and the password on line 2.
 
+If the Oracle tests fail with `ORA-12541: TNS:no listener`, you may have to start the OracleOraDB21Home1TNSListener service in services.svc and/or restart the OracleServiceXE. After starting these it can take a few minutes for the DB to come online.
+
 ### Postgres
 
 You can install Postgres from [here](https://www.enterprisedb.com/downloads/postgres-postgresql-downloads).

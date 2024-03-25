@@ -81,7 +81,7 @@ public class AzureBlobLeaseDistributedLockTest
         if (client.GetType() == typeof(BlobBaseClient))
         {
             Assert.That(
-                Assert.ThrowsAsync<InvalidOperationException>(async () => await wrapper.CreateIfNotExistsAsync(metadata, CancellationToken.None)).ToString(),
+                Assert.ThrowsAsync<InvalidOperationException>(async () => await wrapper.CreateIfNotExistsAsync(metadata, CancellationToken.None))!.ToString(),
                 Does.Contain("Either ensure that the blob exists or use a non-base client type")
             );
             return;
@@ -106,7 +106,7 @@ public class AzureBlobLeaseDistributedLockTest
         var @lock = new AzureBlobLeaseDistributedLock(client);
 
         using var handle = @lock.Acquire();
-        Assert.Throws<RequestFailedException>(() => client.UploadPages(new MemoryStream(new byte[BlobSize]), offset: 0))
+        Assert.Throws<RequestFailedException>(() => client.UploadPages(new MemoryStream(new byte[BlobSize]), offset: 0))!
             .ErrorCode.ShouldEqual(AzureErrors.LeaseIdMissing);
 
         Assert.DoesNotThrow(
@@ -127,7 +127,7 @@ public class AzureBlobLeaseDistributedLockTest
         provider.Strategy.ContainerName = "does-not-exist";
         var @lock = provider.CreateLock(nameof(TestThrowsIfContainerDoesNotExist));
 
-        Assert.Throws<RequestFailedException>(() => @lock.TryAcquire()?.Dispose())
+        Assert.Throws<RequestFailedException>(() => @lock.TryAcquire()?.Dispose())!
             .ErrorCode.ShouldEqual("ContainerNotFound");
     }
 
@@ -183,7 +183,7 @@ public class AzureBlobLeaseDistributedLockTest
 
         Assert.IsTrue(@event.Wait(TimeSpan.FromSeconds(15.1)));
 
-        Assert.Throws<RequestFailedException>(handle.Dispose)
+        Assert.Throws<RequestFailedException>(handle.Dispose)!
             .ErrorCode.ShouldEqual("LeaseNotPresentWithBlobOperation");
     }
 

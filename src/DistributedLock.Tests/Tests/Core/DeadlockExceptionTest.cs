@@ -11,7 +11,7 @@ public class DeadlockExceptionTest
     public void TestDeadlockExceptionSerialization()
     {
         void ThrowDeadlockException() => throw new DeadlockException(nameof(TestDeadlockExceptionSerialization), new InvalidOperationException("foo"));
-        var deadlockException = Assert.Throws<DeadlockException>(ThrowDeadlockException);
+        var deadlockException = Assert.Throws<DeadlockException>(ThrowDeadlockException)!;
 
         var formatter = new BinaryFormatter();
         var stream = new MemoryStream();

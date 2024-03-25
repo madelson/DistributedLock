@@ -11,7 +11,7 @@ internal sealed class MultiplexedConnectionLock : IAsyncDisposable
     /// Protects access to <see cref="_heldLocksToKeepaliveCadences"/> and <see cref="_connection"/>
     /// </summary>
     private readonly AsyncLock _mutex = AsyncLock.Create();
-    private readonly Dictionary<string, TimeoutValue> _heldLocksToKeepaliveCadences = new();
+    private readonly Dictionary<string, TimeoutValue> _heldLocksToKeepaliveCadences = [];
     private readonly DatabaseConnection _connection;
     /// <summary>
     /// Tracks whether we've successfully opened the connection. We track this explicity instead of just looking at

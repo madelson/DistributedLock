@@ -21,7 +21,7 @@ public class WaitHandleDistributedSemaphoreTest
             this.TestWorkingName(name, NameStyle.Safe); // should always work
         }
 
-        return Assert.Catch(() => CreateAsLock(name!, nameStyle)).GetType();
+        return Assert.Catch(() => CreateAsLock(name!, nameStyle))!.GetType();
     }
 
     [TestCase(" \t", NameStyle.AddPrefix)]

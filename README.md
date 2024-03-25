@@ -139,11 +139,20 @@ Contributions are welcome! If you are interested in contributing towards a new o
 Setup steps for working with the repository locally are documented [here](docs/Developing%20DistributedLock.md).
 
 ## Release notes
+- 2.4
+	- Add support for transaction-scoped locking in Postgres using `pg_advisory_xact_lock` which is helpful when using PgBouncer ([#168](https://github.com/madelson/DistributedLock/issues/168), DistributedLock.Postgres 1.1.0)
+	- Improve support for newer versions of StackExchange.Redis, especially when using the default backlog policy ([#162](https://github.com/madelson/DistributedLock/issues/162), DistributedLock.Redis 1.0.3). Thanks @Bartleby2718 for helping with this!
+	- Reduce occurrence of `UnobservedTaskException`s thrown by the library ([#192](https://github.com/madelson/DistributedLock/issues/192), DistributedLock.Core 1.0.6)
+	- Update dependencies to modern versions without known issues/vulnerabilities ([#111](https://github.com/madelson/DistributedLock/issues/111)/[#177](https://github.com/madelson/DistributedLock/issues/177)/[#184](https://github.com/madelson/DistributedLock/issues/184)/[#185](https://github.com/madelson/DistributedLock/issues/185), all packages). Thanks @Bartleby2718 for helping with this!
+	- Improve directory creation concurrency handling for `FileDistributedLock` on Linux/.NET 8 ([#195](), DistributedLock.FileSystem 1.0.2)
+	- Allow using transaction-scoped locks in SQL Server without explicitly disabling multiplexing ([#189](https://github.com/madelson/DistributedLock/issues/189), DistributedLock.SqlServer 1.0.4)
+	- New API documentation on [dndocs](https://dndocs.com/). Thanks @NeuroXiq!
+	- New documentation for contributors to get the project running locally (see [Contributing](#contributing))
 - 2.3.4
 	- Support Npgsql 8.0's [ExecuteScalar breaking change](https://github.com/npgsql/npgsql/issues/5143) ([#174](https://github.com/madelson/DistributedLock/issues/174), DistributedLock.Postgres 1.0.5). Thanks [@Kaffeetasse](https://github.com/Kaffeetasse) for diagnosing and fixing!
 - 2.3.3
 	- Update Microsoft.Data.SqlClient due to vulnerabilities ([#149](https://github.com/madelson/DistributedLock/issues/149), DistributedLock.SqlServer 1.0.3)
-	- Update versions of Oracle.ManagedDataAccess and Oracle.ManagedDataAccess.Core due to vulnerabilities  (DistributedLock.Oracle 1.0.2)
+	- Update versions of Oracle.ManagedDataAccess and Oracle.ManagedDataAccess.Core due to vulnerabilities (DistributedLock.Oracle 1.0.2)
 - 2.3.2
 	- Work around underlying Postgres race condition when waiting on advisory locks with a short non-zero timeout ([#147](https://github.com/madelson/DistributedLock/issues/147), DistributedLock.Postgres 1.0.4). Thanks [@Tzachi009](https://github.com/Tzachi009) for reporting and isolating the issue!
 - 2.3.1

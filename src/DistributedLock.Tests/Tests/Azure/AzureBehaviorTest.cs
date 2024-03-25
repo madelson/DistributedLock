@@ -16,11 +16,11 @@ public class AzureBehaviorTest
     {
         var blobClient = new BlobClient(AzureCredentials.ConnectionString, AzureCredentials.DefaultBlobContainerName, Guid.NewGuid().ToString());
         
-        Assert.Throws<RequestFailedException>(() => blobClient.GetBlobLeaseClient().Acquire(TimeSpan.FromMinutes(1)))
+        Assert.Throws<RequestFailedException>(() => blobClient.GetBlobLeaseClient().Acquire(TimeSpan.FromMinutes(1)))!
             .ErrorCode.ShouldEqual(AzureErrors.BlobNotFound);
 
         blobClient = new BlobClient(AzureCredentials.ConnectionString, "dne-container", Guid.NewGuid().ToString());
-        Assert.Throws<RequestFailedException>(() => blobClient.GetBlobLeaseClient().Acquire(TimeSpan.FromMinutes(1)))
+        Assert.Throws<RequestFailedException>(() => blobClient.GetBlobLeaseClient().Acquire(TimeSpan.FromMinutes(1)))!
             .ErrorCode.ShouldEqual("ContainerNotFound");
     }
 
@@ -46,7 +46,7 @@ public class AzureBehaviorTest
         client1.Upload(Stream.Null);
         var client2 = new BlobClient(AzureCredentials.ConnectionString, AzureCredentials.DefaultBlobContainerName, name);
         Assert.DoesNotThrow(() => client1.GetBlobLeaseClient().Acquire(TimeSpan.FromSeconds(15)));
-        Assert.Throws<RequestFailedException>(() => client2.GetBlobLeaseClient().Acquire(TimeSpan.FromSeconds(15)))
+        Assert.Throws<RequestFailedException>(() => client2.GetBlobLeaseClient().Acquire(TimeSpan.FromSeconds(15)))!
             .ErrorCode.ShouldEqual("LeaseAlreadyPresent");
     }
 }

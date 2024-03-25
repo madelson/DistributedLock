@@ -116,7 +116,7 @@ public class FileDistributedLockTest
         var @lock = new FileDistributedLock(LockFileDirectoryInfo, nameof(TestThrowsIfProvidedFileNameIsAlreadyADirectory));
         Directory.CreateDirectory(@lock.Name);
 
-        var exception = Assert.Throws<InvalidOperationException>(() => @lock.Acquire().Dispose());
+        var exception = Assert.Throws<InvalidOperationException>(() => @lock.Acquire().Dispose())!;
         Assert.That(exception.Message, Does.Contain("because it is already the name of a directory"));
     }
 
@@ -126,7 +126,7 @@ public class FileDistributedLockTest
         var tempFile = Path.GetTempFileName();
 
         var @lock = new FileDistributedLock(lockFileDirectory: new(tempFile), "some name");
-        var exception = Assert.Throws<InvalidOperationException>(() => @lock.Acquire().Dispose());
+        var exception = Assert.Throws<InvalidOperationException>(() => @lock.Acquire().Dispose())!;
         Assert.That(exception.InnerException!.Message, Does.Match("file .* already exists"));
     }
 

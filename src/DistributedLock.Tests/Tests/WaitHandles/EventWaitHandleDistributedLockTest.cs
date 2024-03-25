@@ -20,7 +20,7 @@ public class EventWaitHandleDistributedLockTest
             this.TestWorkingName(name, NameStyle.Safe); // should always work
         }
 
-        return Assert.Catch(() => CreateLock(name!, nameStyle)).GetType();
+        return Assert.Catch(() => CreateLock(name!, nameStyle))!.GetType();
     }
 
     [TestCase(" \t", NameStyle.AddPrefix)]

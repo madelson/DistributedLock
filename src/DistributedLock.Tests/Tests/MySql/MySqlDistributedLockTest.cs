@@ -63,7 +63,7 @@ public class MySqlDistributedLockTest
 
         using var commandOutsideTransaction = connection.CreateCommand();
         commandOutsideTransaction.CommandText = "SELECT COUNT(*) FROM distributed_lock.temp";
-        var exception = Assert.ThrowsAsync<InvalidOperationException>(() => commandOutsideTransaction.ExecuteScalarAsync());
+        var exception = Assert.ThrowsAsync<InvalidOperationException>(commandOutsideTransaction.ExecuteScalarAsync)!;
         Assert.That(exception.Message, Does.Contain("The transaction associated with this command is not the connection's active transaction"));
 
         commandInTransaction.CommandText = "SELECT COUNT(*) FROM distributed_lock.temp";

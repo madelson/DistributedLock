@@ -109,7 +109,7 @@ public class PostgresBehaviorTest
 
         using var transaction = connection.BeginTransaction();
 
-        var ex = Assert.Throws<InvalidOperationException>(() => connection.BeginTransaction().Dispose());
+        var ex = Assert.Throws<InvalidOperationException>(() => connection.BeginTransaction().Dispose())!;
         Assert.That(ex.Message, Does.Contain("A transaction is already in progress"));
     }
 

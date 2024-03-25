@@ -31,7 +31,7 @@ internal readonly struct RedLockRelease(
             while (true)
             {
                 var releaseableDatabases = unreleasedTryAcquireOrRenewTasks.Where(kvp => kvp.Value.IsCompleted)
-                    // work through completed tasks first TODO necessary?
+                    // work through completed tasks first
                     .OrderByDescending(kvp => kvp.Value.IsCompleted)
                     // among those prioritize successful completions since faults are likely to be slow to process
                     .ThenByDescending(kvp => kvp.Value.Status == TaskStatus.RanToCompletion)

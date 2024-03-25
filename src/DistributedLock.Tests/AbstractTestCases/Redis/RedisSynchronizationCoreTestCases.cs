@@ -66,7 +66,7 @@ public abstract class RedisSynchronizationCoreTestCases<TLockProvider>
         using var handle = @lock.Acquire();
 
         new List<int> { 1, 2, 4 }.ForEach(i => MockDatabase(databases[i], () => throw new DataMisalignedException()));
-        var aggregateException = Assert.Throws<AggregateException>(() => handle.Dispose());
+        var aggregateException = Assert.Throws<AggregateException>(() => handle.Dispose())!;
         Assert.IsInstanceOf<DataMisalignedException>(aggregateException.InnerException);
     }
 

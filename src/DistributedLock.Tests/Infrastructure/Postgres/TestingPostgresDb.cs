@@ -63,7 +63,7 @@ public sealed class TestingPostgresDb : TestingPrimaryClientDb
                         OR (state = 'idle' AND state_change < @idleSince)
                     )";
         command.Parameters.AddWithValue("applicationName", applicationName);
-        command.Parameters.Add(new NpgsqlParameter("idleSince", idleSince ?? DBNull.Value.As<object>()) { NpgsqlDbType = NpgsqlDbType.TimestampTz });
+        command.Parameters.Add(new NpgsqlParameter("idleSince", idleSince?.ToUniversalTime() ?? DBNull.Value.As<object>()) { NpgsqlDbType = NpgsqlDbType.TimestampTz });
 
         await command.ExecuteNonQueryAsync();
     }

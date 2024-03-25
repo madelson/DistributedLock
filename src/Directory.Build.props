@@ -3,5 +3,11 @@
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
     <!-- Recommended in https://devblogs.microsoft.com/dotnet/creating-aot-compatible-libraries/ -->
     <IsAotCompatible Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net7.0'))">true</IsAotCompatible>
+    <PackageReadmeFile>package.readme.md</PackageReadmeFile>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- See https://learn.microsoft.com/en-us/nuget/reference/errors-and-warnings/nu5039#solution -->
+    <None Include="$(MSBuildThisFileDirectory)package.readme.md" Pack="true" PackagePath="" />
+  </ItemGroup>
 </Project>
