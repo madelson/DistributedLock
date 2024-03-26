@@ -144,6 +144,7 @@ Setup steps for working with the repository locally are documented [here](docs/D
 - 2.4
 	- Add support for transaction-scoped locking in Postgres using `pg_advisory_xact_lock` which is helpful when using PgBouncer ([#168](https://github.com/madelson/DistributedLock/issues/168), DistributedLock.Postgres 1.1.0)
 	- Improve support for newer versions of StackExchange.Redis, especially when using the default backlog policy ([#162](https://github.com/madelson/DistributedLock/issues/162), DistributedLock.Redis 1.0.3). Thanks [@Bartleby2718](https://github.com/Bartleby2718) for helping with this!
+        - Drop `net461` support (`net462` remains supported). Thanks [@Bartleby2718](https://github.com/Bartleby2718) for implementing! 
 	- Reduce occurrence of `UnobservedTaskException`s thrown by the library ([#192](https://github.com/madelson/DistributedLock/issues/192), DistributedLock.Core 1.0.6)
 	- Update dependencies to modern versions without known issues/vulnerabilities ([#111](https://github.com/madelson/DistributedLock/issues/111)/[#177](https://github.com/madelson/DistributedLock/issues/177)/[#184](https://github.com/madelson/DistributedLock/issues/184)/[#185](https://github.com/madelson/DistributedLock/issues/185), all packages). Thanks [@Bartleby2718](https://github.com/Bartleby2718) for helping with this!
 	- Improve directory creation concurrency handling for `FileDistributedLock` on Linux/.NET 8 ([#195](), DistributedLock.FileSystem 1.0.2)
