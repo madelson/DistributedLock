@@ -44,15 +44,15 @@ internal class PostgresAdvisoryLock : IDbSynchronizationStrategy<object>
             return null;
         }
 
-        var hasTransaction = await HasTransactionAsync(connection).ConfigureAwait(false);
-        if (hasTransaction)
+        // Our acquire command will use SET LOCAL to set up statement timeouts. This lasts until the end
+        // of the current transaction instead of just the current batch if we're in a transaction. To make sure
+        // we don't leak those settings, in the case of a transaction we first set up a save point which we can
+        // later roll back (taking the settings changes with it but NOT the lock). Because we can't confidently
+        // roll back a save point without knowing that it has been set up, we start the save point in its own
+        // query before we try-catch
+        var needsSavePoint = await HasTransactionAsync(connection).ConfigureAwait(false);
+        if (needsSavePoint)
         {
-            // Our acquire command will use SET LOCAL to set up statement timeouts. This lasts until the end
-            // of the current transaction instead of just the current batch if we're in a transaction. To make sure
-            // we don't leak those settings, in the case of a transaction we first set up a save point which we can
-            // later roll back (taking the settings changes with it but NOT the lock). Because we can't confidently
-            // roll back a save point without knowing that it has been set up, we start the save point in its own
-            // query before we try-catch
             using var setSavePointCommand = connection.CreateCommand();
             setSavePointCommand.SetCommandText("SAVEPOINT " + SavePointName);
             await setSavePointCommand.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
@@ -60,20 +60,20 @@ internal class PostgresAdvisoryLock : IDbSynchronizationStrategy<object>
 
         using var acquireCommand = this.CreateAcquireCommand(connection, key, timeout);
 
-        object acquireCommandResult;
+        object? acquireCommandResult;
         try
         {
             acquireCommandResult = await acquireCommand.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            await RollBackTransactionTimeoutVariablesIfNeededAsync().ConfigureAwait(false);
+            await RollBackTransactionTimeoutVariablesIfNeededAsync(acquired: false).ConfigureAwait(false);
 
             if (ex is PostgresException postgresException)
             {
                 switch (postgresException.SqlState)
                 {
-                    // lock_timeout error code from https://www.postgresql.org/docs/10/errcodes-appendix.html
+                    // lock_timeout error code from https://www.postgresql.org/docs/16/errcodes-appendix.html
                     case "55P03":
                         // Even though we hit a lock timeout, an underlying race condition in Postgres means that we might actually
                         // have acquired the lock right before timing out. To account for this, we simply re-check whether we are
@@ -83,13 +83,18 @@ internal class PostgresAdvisoryLock : IDbSynchronizationStrategy<object>
                         return await this.IsHoldingLockAsync(connection, key, CancellationToken.None).ConfigureAwait(false)
                             ? Cookie
                             : null;
-                    // deadlock_detected error code from https://www.postgresql.org/docs/10/errcodes-appendix.html
+                    // deadlock_detected error code from https://www.postgresql.org/docs/16/errcodes-appendix.html
                     case "40P01":
                         throw new DeadlockException($"The request for the distributed lock failed with exit code '{postgresException.SqlState}' (deadlock_detected)", ex);
                 }
             }
 
-            if (ex is OperationCanceledException && cancellationToken.IsCancellationRequested)
+            if (ex is OperationCanceledException 
+                && cancellationToken.IsCancellationRequested
+                // There's no way to explicitly release transaction-scoped locks other than a rollback; in our case
+                // RollBackTransactionTimeoutVariablesIfNeededAsync will have already released by rolling back the savepoint.
+                // Furthermore the caller will proceed to dispose the transaction.
+                && !UseTransactionScopedLock(connection))
             {
                 // if we bailed in the middle of an acquire, make sure we didn't leave a lock behind
                 await this.ReleaseAsync(connection, key, isTry: true).ConfigureAwait(false);
@@ -98,20 +103,31 @@ internal class PostgresAdvisoryLock : IDbSynchronizationStrategy<object>
             throw;
         }
 
-        await RollBackTransactionTimeoutVariablesIfNeededAsync().ConfigureAwait(false);
-
-        return acquireCommandResult switch
+        var acquired = acquireCommandResult switch
         {
-            DBNull _ => Cookie, // indicates we called pg_advisory_lock and not pg_try_advisory_lock
-            null => Cookie, // Npgsql 8 returns null instead of DBNull
-            false => null,
-            true => Cookie,
-            _ => throw new InvalidOperationException($"Unexpected value '{acquireCommandResult}' from acquire command")
+            DBNull _ => true, // indicates we called pg_advisory_lock and not pg_try_advisory_lock
+            null => true, // Npgsql 8 returns null instead of DBNull
+            false => false,
+            true => true,
+            _ => default(bool?)
         };
 
-        async ValueTask RollBackTransactionTimeoutVariablesIfNeededAsync()
+        await RollBackTransactionTimeoutVariablesIfNeededAsync(acquired: acquired == true).ConfigureAwait(false);
+
+        return acquired switch
         {
-            if (hasTransaction)
+            false => null,
+            true => Cookie,
+            null => throw new InvalidOperationException($"Unexpected value '{acquireCommandResult}' from acquire command")
+        };
+
+        async ValueTask RollBackTransactionTimeoutVariablesIfNeededAsync(bool acquired)
+        {
+            if (needsSavePoint 
+                // For transaction scoped locks, we can't roll back the save point on success because that will roll
+                // back our hold on the lock. It's ok to "leak" the savepoint in that case because it's an internally-owned
+                // transaction/connection and the savepoint will be cleaned up with the disposal of the transaction.
+                && !(acquired && UseTransactionScopedLock(connection)))
             {
                 // attempt to clear the timeout variables we set
                 using var rollBackSavePointCommand = connection.CreateCommand();
@@ -134,7 +150,7 @@ internal class PostgresAdvisoryLock : IDbSynchronizationStrategy<object>
                     AND l.pid = pg_catalog.pg_backend_pid() 
                     AND d.datname = pg_catalog.current_database()"
         );
-        return (long)await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false) != 0;
+        return (long)(await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false))! != 0;
     }
 
     private DatabaseCommand CreateAcquireCommand(DatabaseConnection connection, PostgresAdvisoryLockKey key, TimeoutValue timeout)
@@ -153,7 +169,9 @@ internal class PostgresAdvisoryLock : IDbSynchronizationStrategy<object>
         var isTry = timeout.IsZero;
         commandText.Append("pg_catalog.pg");
         if (isTry) { commandText.Append("_try"); }
-        commandText.Append("_advisory_lock");
+        commandText.Append("_advisory");
+        if (UseTransactionScopedLock(connection)) { commandText.Append("_xact"); }
+        commandText.Append("_lock");
         if (this._isShared) { commandText.Append("_shared"); }
         commandText.Append('(').Append(AddKeyParametersAndGetKeyArguments(command, key)).Append(')')
             .Append(" AS result");
@@ -189,9 +207,11 @@ internal class PostgresAdvisoryLock : IDbSynchronizationStrategy<object>
 
     private async ValueTask ReleaseAsync(DatabaseConnection connection, PostgresAdvisoryLockKey key, bool isTry)
     {
+        Invariant.Require(!UseTransactionScopedLock(connection));
+
         using var command = connection.CreateCommand();
         command.SetCommandText($"SELECT pg_catalog.pg_advisory_unlock{(this._isShared ? "_shared" : string.Empty)}({AddKeyParametersAndGetKeyArguments(command, key)})");
-        var result = (bool)await command.ExecuteScalarAsync(CancellationToken.None).ConfigureAwait(false);
+        var result = (bool)(await command.ExecuteScalarAsync(CancellationToken.None).ConfigureAwait(false))!;
         if (!isTry && !result)
         {
             throw new InvalidOperationException("Attempted to release a lock that was not held");
@@ -213,6 +233,12 @@ internal class PostgresAdvisoryLock : IDbSynchronizationStrategy<object>
             return "@key1, @key2";
         }
     }
+
+    private static bool UseTransactionScopedLock(DatabaseConnection connection) =>
+        // This implementation (similar to what we do for SQL Server) is based on the fact that we only create transactions on
+        // internally-owned connections when doing transaction-scoped locking, and we only support transaction-scoped locking on
+        // internally-owned connections (since there's no explicit release).
+        !connection.IsExernallyOwned && connection.HasTransaction;
 
     private static string AddPGLocksFilterParametersAndGetFilterExpression(DatabaseCommand command, PostgresAdvisoryLockKey key)
     {

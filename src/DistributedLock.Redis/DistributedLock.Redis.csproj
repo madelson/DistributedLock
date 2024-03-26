@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net461;netstandard2.0;netstandard2.1</TargetFrameworks>
+    <TargetFrameworks>net462;netstandard2.0;netstandard2.1</TargetFrameworks>
     <RootNamespace>Medallion.Threading.Redis</RootNamespace>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
     <WarningLevel>4</WarningLevel>
@@ -11,7 +11,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <Version>1.0.2</Version>
+    <Version>1.0.3</Version>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <Authors>Michael Adelson</Authors>
     <Description>Provides distributed locking primitives based on Redis</Description>
@@ -49,19 +49,17 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="StackExchange.Redis" Version="2.2.4" />
-    <PackageReference Include="Nullable" Version="1.2.1" Condition="'$(TargetFramework)' != 'netstandard2.1'">
+    <PackageReference Include="StackExchange.Redis" />
+    <PackageReference Include="Nullable" Condition="'$(TargetFramework)' != 'netstandard2.1'">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All"/>
-    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="3.3.3" PrivateAssets="All" Condition="$(Configuration) == 'Release'"/>
-    <Using Remove="System.Net.Http"/>
+    <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All"/>
+    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" PrivateAssets="All" />
   </ItemGroup>
 
   <ItemGroup>
     <Using Remove="System.Net.Http"/>
   </ItemGroup>
 
-  <Import Project="..\CopyPackageToPublishDirectory.targets" />
   <Import Project="..\FixDistributedLockCoreDependencyVersion.targets" />
 </Project>

@@ -50,7 +50,7 @@ public class SqlDistributedLockTest
 
         using var commandOutsideTransaction = connection.CreateCommand();
         commandOutsideTransaction.CommandText = "SELECT 2";
-        var exception = Assert.ThrowsAsync<InvalidOperationException>(() => commandOutsideTransaction.ExecuteScalarAsync());
+        var exception = Assert.ThrowsAsync<InvalidOperationException>(() => commandOutsideTransaction.ExecuteScalarAsync())!;
         Assert.That(exception.Message, Does.Contain("requires the command to have a transaction when the connection assigned to the command is in a pending local transaction"));
 
         commandInTransaction.CommandText = "SELECT COUNT(*) FROM foo";

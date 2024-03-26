@@ -310,7 +310,7 @@ internal sealed class ConnectionMonitor : IAsyncDisposable
         // one is spinning down. If we change states in rapid succession we could end up with multiple tasks queued up
         // but this shouldn't matter since when the active one ultimately stops all the others will follow in rapid succession
         this._monitoringWorkerTask = this._monitoringWorkerTask
-            .ContinueWith((_, state) => ((ConnectionMonitor)state).MonitorWorkerLoop(), state: this)
+            .ContinueWith((_, state) => ((ConnectionMonitor)state!).MonitorWorkerLoop(), state: this)
             .Unwrap();
         this._state = State.Active;
         return true;

@@ -21,7 +21,7 @@ internal static class PostgresCredentials
 
         return new NpgsqlConnectionStringBuilder
         {
-            Port = 5433,
+            Port = 5432,
             Host = "localhost",
             Database = "postgres",
             Username = username,

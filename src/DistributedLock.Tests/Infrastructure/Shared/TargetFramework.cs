@@ -3,9 +3,9 @@
 internal static class TargetFramework
 {
     public const string Current =
-#if NET471
-            "net471";
-#elif NETCOREAPP3_1
-            "netcoreapp3.1";
+#if NET472
+            "net472";
+#elif NET8_0
+            "net8.0";
 #endif
 }

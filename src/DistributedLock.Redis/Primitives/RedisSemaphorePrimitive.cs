@@ -51,7 +51,7 @@ internal class RedisSemaphorePrimitive : IRedLockAcquirableSynchronizationPrimit
     public Task ReleaseAsync(IDatabaseAsync database, bool fireAndForget) =>
         database.SortedSetRemoveAsync(this._key, this._lockId, RedLockHelper.GetCommandFlags(fireAndForget));
 
-    private static readonly RedisScript<RedisSemaphorePrimitive> AcquireScript = new RedisScript<RedisSemaphorePrimitive>($@"
+    private static readonly RedisScript<RedisSemaphorePrimitive> AcquireScript = new($@"
             {GetNowMillisScriptFragment}
             redis.call('zremrangebyscore', @key, '-inf', nowMillis)
             if redis.call('zcard', @key) < tonumber(@maxCount) then
@@ -67,7 +67,7 @@ internal class RedisSemaphorePrimitive : IRedLockAcquirableSynchronizationPrimit
 
     public Task<bool> TryAcquireAsync(IDatabaseAsync database) => AcquireScript.ExecuteAsync(database, this).AsBooleanTask();
 
-    private static readonly RedisScript<RedisSemaphorePrimitive> ExtendScript = new RedisScript<RedisSemaphorePrimitive>($@"
+    private static readonly RedisScript<RedisSemaphorePrimitive> ExtendScript = new($@"
             {GetNowMillisScriptFragment}
             local result = redis.call('zadd', @key, 'XX', 'CH', nowMillis + tonumber(@expiryMillis), @lockId)
             {RenewSetScriptFragment}
@@ -76,4 +76,6 @@ internal class RedisSemaphorePrimitive : IRedLockAcquirableSynchronizationPrimit
     );
 
     public Task<bool> TryExtendAsync(IDatabaseAsync database) => ExtendScript.ExecuteAsync(database, this).AsBooleanTask();
+
+    public bool IsConnected(IDatabase database) => database.IsConnected(this._key, CommandFlags.DemandMaster);
 }

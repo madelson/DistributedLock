@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;netstandard2.1;net461</TargetFrameworks>
+    <TargetFrameworks>net8.0;netstandard2.0;netstandard2.1;net462</TargetFrameworks>
     <RootNamespace>Medallion.Threading</RootNamespace>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
     <WarningLevel>4</WarningLevel>
@@ -11,7 +11,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <Version>1.0.5</Version>
+    <Version>1.0.6</Version>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <Authors>Michael Adelson</Authors>
     <Description>Core interfaces and utilities that support the DistributedLock.* family of packages</Description>
@@ -44,22 +44,20 @@
     <DefineConstants>TRACE;DEBUG</DefineConstants>
   </PropertyGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'net461'">
-    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="5.0.0" />
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'net462'">
+    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'net461'">
-    <PackageReference Include="System.ValueTuple" Version="4.5.0" />
+  <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
+    <PackageReference Include="System.ValueTuple" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All" />
-    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="3.3.3" PrivateAssets="All" Condition="$(Configuration) == 'Release'"/>
+    <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All" />
+    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" PrivateAssets="All" Condition="'$(Configuration)' == 'Release'"/>
   </ItemGroup>
 
   <ItemGroup>
     <Using Remove="System.Net.Http"/>
   </ItemGroup>
-
-  <Import Project="..\CopyPackageToPublishDirectory.targets" />
 </Project>

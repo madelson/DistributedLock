@@ -14,7 +14,7 @@ internal readonly struct AsyncLock
         this._semaphore = semaphore;
     }
 
-    public static AsyncLock Create() => new AsyncLock(new SemaphoreSlim(initialCount: 1, maxCount: 1));
+    public static AsyncLock Create() => new(new SemaphoreSlim(initialCount: 1, maxCount: 1));
 
     public async ValueTask<IDisposable> AcquireAsync(CancellationToken cancellationToken)
     {

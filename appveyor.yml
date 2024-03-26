@@ -1,14 +1,15 @@
 version: 1.0.{build}
 
-image: 
+image:
+  # Ubuntu2204 needed for .NET 8 for now (see https://www.appveyor.com/docs/linux-images-software/)
+  - Ubuntu2204
   - Visual Studio 2022
-  - Ubuntu
 
 build_script:
   - dotnet build src/DistributedLock.sln -c Release
   
 test_script:
-  - dotnet test src/DistributedLock.sln -c Release -f netcoreapp3.1 --no-build --filter TestCategory=CI
+  - dotnet test src/DistributedLock.sln -c Release -f net8.0 --no-build --filter TestCategory=CI
 
 for: 
   - 

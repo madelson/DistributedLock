@@ -11,7 +11,7 @@ internal sealed class MultiplexedConnectionLock : IAsyncDisposable
     /// Protects access to <see cref="_heldLocksToKeepaliveCadences"/> and <see cref="_connection"/>
     /// </summary>
     private readonly AsyncLock _mutex = AsyncLock.Create();
-    private readonly Dictionary<string, TimeoutValue> _heldLocksToKeepaliveCadences = new Dictionary<string, TimeoutValue>();
+    private readonly Dictionary<string, TimeoutValue> _heldLocksToKeepaliveCadences = [];
     private readonly DatabaseConnection _connection;
     /// <summary>
     /// Tracks whether we've successfully opened the connection. We track this explicity instead of just looking at
@@ -106,7 +106,7 @@ internal sealed class MultiplexedConnectionLock : IAsyncDisposable
     private Result GetAlreadyBrokenResultNoLock() => 
         // Retry on any already-broken connection to avoid "leaking" the killing or death of connections. We want there to be no observable
         // results (other than perf) of multiplexing vs. not.
-        new Result(MultiplexedConnectionLockRetry.Retry, canSafelyDispose: this._heldLocksToKeepaliveCadences.Count == 0);
+        new(MultiplexedConnectionLockRetry.Retry, canSafelyDispose: this._heldLocksToKeepaliveCadences.Count == 0);
 
     private Result GetFailureResultNoLock(bool isAlreadyHeld, bool opportunistic, TimeoutValue timeout)
     {

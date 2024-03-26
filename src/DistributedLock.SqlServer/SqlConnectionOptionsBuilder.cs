@@ -37,8 +37,10 @@ public sealed class SqlConnectionOptionsBuilder
     /// 
     /// Synchronizing based on a transaction is marginally less expensive than using a connection
     /// because releasing requires only disposing the underlying <see cref="IDbTransaction"/>.
+    /// 
     /// The disadvantage is that using this strategy may lead to long-running transactions, which can be
-    /// problematic for databases using the full recovery model.
+    /// problematic for databases using the full recovery model. Furthermore, this strategy prevents us from
+    /// taking advantage of <see cref="UseMultiplexing(bool)"/> and its performance advantages.
     /// </summary>
     public SqlConnectionOptionsBuilder UseTransaction(bool useTransaction = true)
     {
@@ -51,7 +53,8 @@ public sealed class SqlConnectionOptionsBuilder
     /// a connection is essentially idle. Thus, rather than creating a new connection for each held lock it is 
     /// often possible to multiplex a shared connection so that that connection can hold multiple locks at the same time.
     /// 
-    /// Multiplexing is on by default.
+    /// Multiplexing is on by default, unless <see cref="UseTransaction(bool)"/> is set to TRUE in which case multiplexing is disabled
+    /// because it is not compatible with <see cref="UseTransaction(bool)"/>.
     /// 
     /// This is implemented in such a way that releasing a lock held on such a connection will never be blocked by an
     /// Acquire() call that is waiting to acquire a lock on that same connection. For this reason, the multiplexing
@@ -83,7 +86,7 @@ public sealed class SqlConnectionOptionsBuilder
 
         var keepaliveCadence = options?._keepaliveCadence ?? TimeSpan.FromMinutes(10);
         var useTransaction = options?._useTransaction ?? false;
-        var useMultiplexing = options?._useMultiplexing ?? true;
+        var useMultiplexing = options?._useMultiplexing ?? !options?._useTransaction ?? true;
 
         if (useMultiplexing && useTransaction)
         {

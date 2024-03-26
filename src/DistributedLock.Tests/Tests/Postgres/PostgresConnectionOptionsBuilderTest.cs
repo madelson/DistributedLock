@@ -12,6 +12,8 @@ public class PostgresConnectionOptionsBuilderTest
         var builder = new PostgresConnectionOptionsBuilder();
         Assert.Throws<ArgumentOutOfRangeException>(() => builder.KeepaliveCadence(TimeSpan.FromMilliseconds(-2)));
         Assert.Throws<ArgumentOutOfRangeException>(() => builder.KeepaliveCadence(TimeSpan.MaxValue));
+
+        Assert.Throws<ArgumentException>(() => PostgresConnectionOptionsBuilder.GetOptions(o => o.UseMultiplexing().UseTransaction()));
     }
 
     [Test]
@@ -20,6 +22,15 @@ public class PostgresConnectionOptionsBuilderTest
         var options = PostgresConnectionOptionsBuilder.GetOptions(null);
         Assert.IsTrue(options.keepaliveCadence.IsInfinite);
         Assert.IsTrue(options.useMultiplexing);
+        Assert.IsFalse(options.useTransaction);
         options.ShouldEqual(PostgresConnectionOptionsBuilder.GetOptions(o => { }));
+    }
+
+    [Test]
+    public void TestUseTransactionDoesNotRequireDisablingMultiplexing()
+    {
+        var options = PostgresConnectionOptionsBuilder.GetOptions(o => o.UseTransaction());
+        Assert.IsTrue(options.useTransaction);
+        Assert.IsFalse(options.useMultiplexing);
     }
 }

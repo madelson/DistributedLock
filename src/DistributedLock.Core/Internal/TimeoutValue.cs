@@ -53,7 +53,7 @@ readonly struct TimeoutValue : IEquatable<TimeoutValue>, IComparable<TimeoutValu
     public static bool operator ==(TimeoutValue a, TimeoutValue b) => a.Equals(b);
     public static bool operator !=(TimeoutValue a, TimeoutValue b) => !(a == b);
 
-    public static implicit operator TimeoutValue(TimeSpan? timeout) => new TimeoutValue(timeout);
+    public static implicit operator TimeoutValue(TimeSpan? timeout) => new(timeout);
 
     public override string ToString() => 
         this.IsInfinite ? "∞" 

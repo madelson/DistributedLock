@@ -5,7 +5,7 @@ namespace Medallion.Threading.Tests.Azure;
 
 public sealed class TestingAzureBlobLeaseDistributedLockProvider : TestingLockProvider<TestingAzureBlobLeaseSynchronizationStrategy>
 {
-    private readonly HashSet<Uri> _createdBlobs = new HashSet<Uri>();
+    private readonly HashSet<Uri> _createdBlobs = [];
 
     public override IDistributedLock CreateLockWithExactName(string name)
     {
@@ -16,7 +16,8 @@ public sealed class TestingAzureBlobLeaseDistributedLockProvider : TestingLockPr
             {
                 if (this._createdBlobs.Add(client.Uri))
                 {
-                    client.Upload(Stream.Null);
+                    // Azurite blobs persist across runs, so we need overwrite: true
+                    client.Upload(Stream.Null, overwrite: true);
                 }
             }
         }

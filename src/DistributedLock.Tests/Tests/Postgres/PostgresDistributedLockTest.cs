@@ -69,7 +69,7 @@ public class PostgresDistributedLockTest
         static Task<object> GetTimeoutAsync(NpgsqlCommand command)
         {
             command.CommandText = "SHOW statement_timeout";
-            return command.ExecuteScalarAsync();
+            return command.ExecuteScalarAsync()!;
         }
     }
 }

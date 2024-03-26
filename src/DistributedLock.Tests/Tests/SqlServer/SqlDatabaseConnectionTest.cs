@@ -66,7 +66,7 @@ public class SqlDatabaseConnectionTest
     }
 
     private static SqlDatabaseConnection CreateConnection(bool isSystemDataSqlClient) =>
-        new SqlDatabaseConnection(
+        new(
             isSystemDataSqlClient
                 ? new System.Data.SqlClient.SqlConnection(TestingSqlServerDb.DefaultConnectionString).As<DbConnection>()
                 : new Microsoft.Data.SqlClient.SqlConnection(TestingSqlServerDb.DefaultConnectionString),

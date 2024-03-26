@@ -9,7 +9,7 @@ internal class RedisServer
     private static readonly int MinDynamicPort = RedisPorts.DefaultPorts.Max() + 1, MaxDynamicPort = MinDynamicPort + 100;
 
     // it's important for this to be lazy because it doesn't work when running on Linux
-    private static readonly Lazy<string> WslPath = new Lazy<string>(
+    private static readonly Lazy<string> WslPath = new(
         () => Directory.GetDirectories(@"C:\Windows\WinSxS")
             .Select(d => Path.Combine(d, "wsl.exe"))
             .Where(File.Exists)
@@ -17,7 +17,7 @@ internal class RedisServer
             .First()
     );
 
-    private static readonly Dictionary<int, RedisServer> ActiveServersByPort = new Dictionary<int, RedisServer>();
+    private static readonly Dictionary<int, RedisServer> ActiveServersByPort = [];
     private static readonly RedisServer[] DefaultServers = new RedisServer[RedisPorts.DefaultPorts.Count];
 
     private readonly Command _command;
@@ -30,12 +30,12 @@ internal class RedisServer
         {
             this.Port = port ?? Enumerable.Range(MinDynamicPort, count: MaxDynamicPort - MinDynamicPort + 1)
                 .First(p => !ActiveServersByPort.ContainsKey(p));
-            this._command = Command.Run(WslPath.Value, new object[] { "redis-server", "--port", this.Port }, options: o => o.StartInfo(si => si.RedirectStandardInput = false))
+            this._command = Command.Run(WslPath.Value, ["redis-server", "--port", this.Port], options: o => o.StartInfo(si => si.RedirectStandardInput = false))
                 .RedirectTo(Console.Out)
                 .RedirectStandardErrorTo(Console.Error);
             ActiveServersByPort.Add(this.Port, this);
         }
-        this.Multiplexer = ConnectionMultiplexer.Connect($"localhost:{this.Port}{(allowAdmin ? ",allowAdmin=true" : string.Empty)}");
+        this.Multiplexer = ConnectionMultiplexer.Connect($"localhost:{this.Port},abortConnect=false{(allowAdmin ? ",allowAdmin=true" : string.Empty)}");
         // Clean the db to ensure it is empty. Running an arbitrary command also ensures that 
         // the db successfully spun up before we proceed (Connect seemingly can complete before that happens). 
         // This is particularly important for cross-process locking where the lock taker process
@@ -62,15 +62,21 @@ internal class RedisServer
             var shutdownTasks = ActiveServersByPort.Values
                 .Select(async server =>
                 {
+                    // When testing the case of a server outage, we'll have manually shut down some servers.
+                    // In that case, we shouldn't attempt to connect to them since that will fail.
+                    var isConnected = server.Multiplexer.GetServers().Any(s => s.IsConnected);
                     server.Multiplexer.Dispose();
                     try
                     {
-                        using var adminMultiplexer = await ConnectionMultiplexer.ConnectAsync($"localhost:{server.Port},allowAdmin=true");
-                        adminMultiplexer.GetServer("localhost", server.Port).Shutdown(ShutdownMode.Never);
+                        if (isConnected)
+                        {
+                            using var adminMultiplexer = await ConnectionMultiplexer.ConnectAsync($"localhost:{server.Port},allowAdmin=true");
+                            adminMultiplexer.GetServer("localhost", server.Port).Shutdown(ShutdownMode.Never);
+                        }
                     }
                     finally
                     {
-                        if (!await server._command.Task.WaitAsync(TimeSpan.FromSeconds(5)))
+                        if (!await server._command.Task.TryWaitAsync(TimeSpan.FromSeconds(5)))
                         {
                             server._command.Kill();
                             throw new InvalidOperationException("Forced to kill Redis server");

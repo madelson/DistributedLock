@@ -35,6 +35,7 @@ In addition to specifying the `key`, Postgres-based locks allow you to specify e
 In addition to specifying the `key`, several tuning options are available for `connectionString`-based locks:
 
 - `KeepaliveCadence` allows you to have the implementation periodically issue a cheap query on a connection holding a lock. This helps in configurations which are set up to aggressively kill idle connections. Defaults to OFF (`Timeout.InfiniteTimeSpan`).
+- `UseTransaction` scopes the lock to an internally-managed transaction under the hood (otherwise it is connection-scoped). Defaults to FALSE because this mode is not compatible with multiplexing and thus consumes more connections.
 - `UseMultiplexing` allows the implementation to re-use connections under the hood to hold multiple locks under certain scenarios, leading to lower resource consumption. This behavior defaults to ON; you should not disable it unless you suspect that it is causing issues for you (please file an issue here if so!).
 
 

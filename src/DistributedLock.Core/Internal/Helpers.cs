@@ -30,9 +30,9 @@ static class Helpers
 
     internal static async ValueTask ConvertToVoid<TResult>(this ValueTask<TResult> task) => await task.ConfigureAwait(false);
 
-    public static ValueTask<T> AsValueTask<T>(this Task<T> task) => new ValueTask<T>(task);
-    public static ValueTask AsValueTask(this Task task) => new ValueTask(task);
-    public static ValueTask<T> AsValueTask<T>(this T value) => new ValueTask<T>(value);
+    public static ValueTask<T> AsValueTask<T>(this Task<T> task) => new(task);
+    public static ValueTask AsValueTask(this Task task) => new(task);
+    public static ValueTask<T> AsValueTask<T>(this T value) => new(value);
 
     public static Task<TResult> SafeCreateTask<TState, TResult>(Func<TState, Task<TResult>> taskFactory, TState state) =>
         InternalSafeCreateTask<TState, Task<TResult>, TResult>(taskFactory, state);
@@ -59,7 +59,7 @@ static class Helpers
         throw new ObjectDisposedException(typeof(T).ToString());
 
     public static NonThrowingAwaitable<TTask> TryAwait<TTask>(this TTask task) where TTask : Task =>
-        new NonThrowingAwaitable<TTask>(task);
+        new(task);
 
     /// <summary>
     /// Throwing exceptions is slow and our workflow has us canceling tasks in the common case. Using this special awaitable
@@ -74,7 +74,11 @@ static class Helpers
         public NonThrowingAwaitable(TTask task)
         {
             this._task = task;
+#if NET8_0_OR_GREATER
+            this._taskAwaiter = task.ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing).GetAwaiter();
+#else
             this._taskAwaiter = task.ConfigureAwait(false).GetAwaiter();
+#endif
         }
 
         public NonThrowingAwaitable<TTask> GetAwaiter() => this;
@@ -83,9 +87,16 @@ static class Helpers
 
         public TTask GetResult()
         {
-            // does NOT call _taskAwaiter.GetResult() since that could throw!
-
             Invariant.Require(this._task.IsCompleted);
+
+#if NET8_0_OR_GREATER
+            this._taskAwaiter.GetResult();
+#else
+            // Does NOT call _taskAwaiter.GetResult() since that could throw!
+            // We do, however, access the Exception property to avoid hitting UnobservedTaskException.
+            if (this._task.IsFaulted) { _ = this._task.Exception; }
+#endif
+
             return this._task;
         }
 

@@ -1,4 +1,5 @@
-﻿using Medallion.Threading.Postgres;
+﻿using Medallion.Threading.Internal;
+using Medallion.Threading.Postgres;
 using Medallion.Threading.Tests.Data;
 
 namespace Medallion.Threading.Tests.Postgres;
@@ -15,7 +16,7 @@ public sealed class TestingPostgresDistributedLockProvider<TStrategy> : TestingL
                     ToPostgresOptions(options)
                 ),
                 connection => new PostgresDistributedLock(new PostgresAdvisoryLockKey(name, allowHashing: false), connection),
-                transaction => new PostgresDistributedLock(new PostgresAdvisoryLockKey(name, allowHashing: false), transaction.Connection)
+                transaction => new PostgresDistributedLock(new PostgresAdvisoryLockKey(name, allowHashing: false), transaction.Connection!)
         );
 
     public override string GetSafeName(string name) => new PostgresAdvisoryLockKey(name, allowHashing: true).ToString();
@@ -23,6 +24,7 @@ public sealed class TestingPostgresDistributedLockProvider<TStrategy> : TestingL
     internal static Action<PostgresConnectionOptionsBuilder> ToPostgresOptions((bool useMultiplexing, bool useTransaction, TimeSpan? keepaliveCadence) options) => o =>
     {
         o.UseMultiplexing(options.useMultiplexing);
+        o.UseTransaction(options.useTransaction);
         if (options.keepaliveCadence is { } keepaliveCadence) { o.KeepaliveCadence(keepaliveCadence); }
     };
 }
@@ -40,7 +42,7 @@ public sealed class TestingPostgresDistributedReaderWriterLockProvider<TStrategy
                         TestingPostgresDistributedLockProvider<TStrategy>.ToPostgresOptions(options)
                     ),
                 connection => new PostgresDistributedReaderWriterLock(new PostgresAdvisoryLockKey(name, allowHashing: false), connection),
-                transaction => new PostgresDistributedReaderWriterLock(new PostgresAdvisoryLockKey(name, allowHashing: false), transaction.Connection)
+                transaction => new PostgresDistributedReaderWriterLock(new PostgresAdvisoryLockKey(name, allowHashing: false), transaction.Connection!)
             );
 
     public override string GetSafeName(string name) => new PostgresAdvisoryLockKey(name, allowHashing: true).ToString();

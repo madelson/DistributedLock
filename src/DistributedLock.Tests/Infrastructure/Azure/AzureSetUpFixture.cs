@@ -8,7 +8,8 @@ namespace Medallion.Threading.Tests.Azure;
 [SetUpFixture]
 public class AzureSetUpFixture
 {
-    private const string EmulatorProcessName = "AzureStorageEmulator";
+    // https://learn.microsoft.com/en-us/azure/storage/common/storage-use-azurite?tabs=visual-studio%2Cblob-storage
+    private const string EmulatorProcessName = "azurite";
 
     private bool _startedEmulator;
 
@@ -23,15 +24,23 @@ public class AzureSetUpFixture
         }
         else
         {
-            var emulatorExePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Microsoft SDKs", "Azure", "Storage Emulator", $"{EmulatorProcessName}.exe");
-            if (!File.Exists(emulatorExePath))
+            var emulatorExePaths = Directory.GetFiles(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Microsoft Visual Studio"), $"{EmulatorProcessName}.exe", SearchOption.AllDirectories)
+                .OrderByDescending(File.GetLastWriteTimeUtc)
+                .ToArray();
+            if (!emulatorExePaths.Any())
             {
-                throw new FileNotFoundException($"Could not locate the {EmulatorProcessName} at {emulatorExePath}. This is required to run Azure tests. See https://docs.microsoft.com/en-us/azure/storage/common/storage-use-emulator");
+                throw new FileNotFoundException($"Could not locate {EmulatorProcessName}. This is required to run Azure tests. See https://learn.microsoft.com/en-us/azure/storage/common/storage-use-azurite");
             }
 
             // Note: we used to hang on to this command to kill it later; we no longer do that because this process seems to naturally exit
             // by the end of the test and instead the emulator is running in another process. Therefore, we do a name-based lookup in teardown instead.
-            var command = Command.Run(emulatorExePath, new[] { "start" }, o => o.StartInfo(i => i.RedirectStandardInput = false))
+            var command = Command.Run(
+                    emulatorExePaths[0],
+                    // After updating to Azure.Storage.Blobs 12.19.1 I started getting an error saying that I had to update Azurite or pass this flag.
+                    // AFAIK the only way to update Azurite is to update VS, which did not fix the issue. Therefore, I am passing this flag instead.
+                    ["start", "--skipApiVersionCheck"], 
+                    o => o.StartInfo(i => i.RedirectStandardInput = false)
+                        .WorkingDirectory(Path.GetDirectoryName(this.GetType().Assembly.Location)!))
                 .RedirectTo(Console.Out)
                 .RedirectStandardErrorTo(Console.Error);
             Console.WriteLine($"Launched {EmulatorProcessName}");

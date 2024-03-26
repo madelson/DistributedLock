@@ -22,6 +22,8 @@ sealed class DedicatedConnectionOrTransactionDbDistributedLock : IDbDistributedL
     /// Constructs an instance using the given EXTERNALLY OWNED <paramref name="externalConnectionFactory"/>.
     /// </summary>
     public DedicatedConnectionOrTransactionDbDistributedLock(string name, Func<DatabaseConnection> externalConnectionFactory)
+        // MA: useTransaction:true here is a bit weird. However, in practice this value does not impact the external connection
+        // flow so it doesn't matter what the value is.
         : this(name, externalConnectionFactory, useTransaction: true, keepaliveCadence: Timeout.InfiniteTimeSpan)
     {
     }
@@ -52,7 +54,7 @@ sealed class DedicatedConnectionOrTransactionDbDistributedLock : IDbDistributedL
             DatabaseConnection connection;
             if (contextHandle != null)
             {
-                connection = GetContextHandleConnection<TLockCookie>(contextHandle);
+                connection = this.GetContextHandleConnection<TLockCookie>(contextHandle);
             }
             else
             {

@@ -24,7 +24,7 @@ public abstract class DbSemaphoreTestCases<TSemaphoreProvider, TStrategy, TDb>
         semaphore.Acquire();
         semaphore.Acquire();
         var ex = Assert.Catch<DeadlockException>(() => semaphore.Acquire());
-        ex.Message.Contains("Deadlock").ShouldEqual(true, ex.Message);
+        ex!.Message.Contains("Deadlock").ShouldEqual(true, ex.Message);
     }
 
     [Test]

@@ -14,15 +14,17 @@ await using (await myDistributedLock.AcquireAsync())
 
 DistributedLock contains implementations based on various technologies; you can install implementation packages individually or just install the [DistributedLock NuGet package](https://www.nuget.org/packages/DistributedLock) [![NuGet Status](http://img.shields.io/nuget/v/DistributedLock.svg?style=flat)](https://www.nuget.org/packages/DistributedLock/), a ["meta" package](https://endjin.com/blog/2020/09/streamline-dependency-management-with-nuget-meta-packages) which includes all implementations as dependencies. *Note that each package is versioned independently according to SemVer*.
 
-- **[DistributedLock.SqlServer](docs/DistributedLock.SqlServer.md)** [![NuGet Status](http://img.shields.io/nuget/v/DistributedLock.SqlServer.svg?style=flat)](https://www.nuget.org/packages/DistributedLock.SqlServer/): uses Microsoft SQL Server
-- **[DistributedLock.Postgres](docs/DistributedLock.Postgres.md)** [![NuGet Status](http://img.shields.io/nuget/v/DistributedLock.Postgres.svg?style=flat)](https://www.nuget.org/packages/DistributedLock.Postgres/): uses Postgresql
-- **[DistributedLock.MySql](docs/DistributedLock.MySql.md)** [![NuGet Status](http://img.shields.io/nuget/v/DistributedLock.MySql.svg?style=flat)](https://www.nuget.org/packages/DistributedLock.MySql/): uses MySQL or MariaDB
-- **[DistributedLock.Oracle](docs/DistributedLock.Oracle.md)** [![NuGet Status](http://img.shields.io/nuget/v/DistributedLock.Oracle.svg?style=flat)](https://www.nuget.org/packages/DistributedLock.Oracle/): uses Oracle
-- **[DistributedLock.Redis](docs/DistributedLock.Redis.md)** [![NuGet Status](http://img.shields.io/nuget/v/DistributedLock.Redis.svg?style=flat)](https://www.nuget.org/packages/DistributedLock.Redis/): uses Redis
-- **[DistributedLock.Azure](docs/DistributedLock.Azure.md)** [![NuGet Status](http://img.shields.io/nuget/v/DistributedLock.Azure.svg?style=flat)](https://www.nuget.org/packages/DistributedLock.Azure/): uses Azure blobs
-- **[DistributedLock.ZooKeeper](docs/DistributedLock.ZooKeeper.md)** [![NuGet Status](http://img.shields.io/nuget/v/DistributedLock.ZooKeeper.svg?style=flat)](https://www.nuget.org/packages/DistributedLock.ZooKeeper/): uses Apache ZooKeeper
-- **[DistributedLock.FileSystem](docs/DistributedLock.FileSystem.md)** [![NuGet Status](http://img.shields.io/nuget/v/DistributedLock.FileSystem.svg?style=flat)](https://www.nuget.org/packages/DistributedLock.FileSystem/): uses lock files
-- **[DistributedLock.WaitHandles](docs/DistributedLock.WaitHandles.md)** [![NuGet Status](http://img.shields.io/nuget/v/DistributedLock.WaitHandles.svg?style=flat)](https://www.nuget.org/packages/DistributedLock.WaitHandles/): uses operating system global `WaitHandle`s (Windows only)
+- **[DistributedLock.SqlServer](docs/DistributedLock.SqlServer.md)** [![NuGet Status](http://img.shields.io/nuget/v/DistributedLock.SqlServer.svg?style=flat)](https://www.nuget.org/packages/DistributedLock.SqlServer/) [![Static Badge](https://img.shields.io/badge/API%20Documentation-RobiniaDocs-43bc00?logo=readme&logoColor=white)](https://www.robiniadocs.com/d/distributedlock/api/Medallion.Threading.SqlServer.html)
+: uses Microsoft SQL Server
+- **[DistributedLock.Postgres](docs/DistributedLock.Postgres.md)** [![NuGet Status](http://img.shields.io/nuget/v/DistributedLock.Postgres.svg?style=flat)](https://www.nuget.org/packages/DistributedLock.Postgres/) [![Static Badge](https://img.shields.io/badge/API%20Documentation-RobiniaDocs-43bc00?logo=readme&logoColor=white)](https://www.robiniadocs.com/d/distributedlock/api/Medallion.Threading.Postgres.html)
+: uses Postgresql
+- **[DistributedLock.MySql](docs/DistributedLock.MySql.md)** [![NuGet Status](http://img.shields.io/nuget/v/DistributedLock.MySql.svg?style=flat)](https://www.nuget.org/packages/DistributedLock.MySql/) [![Static Badge](https://img.shields.io/badge/API%20Documentation-RobiniaDocs-43bc00?logo=readme&logoColor=white)](https://www.robiniadocs.com/d/distributedlock/api/Medallion.Threading.MySql.html): uses MySQL or MariaDB
+- **[DistributedLock.Oracle](docs/DistributedLock.Oracle.md)** [![NuGet Status](http://img.shields.io/nuget/v/DistributedLock.Oracle.svg?style=flat)](https://www.nuget.org/packages/DistributedLock.Oracle/) [![Static Badge](https://img.shields.io/badge/API%20Documentation-RobiniaDocs-43bc00?logo=readme&logoColor=white)](https://www.robiniadocs.com/d/distributedlock/api/Medallion.Threading.Oracle.html): uses Oracle
+- **[DistributedLock.Redis](docs/DistributedLock.Redis.md)** [![NuGet Status](http://img.shields.io/nuget/v/DistributedLock.Redis.svg?style=flat)](https://www.nuget.org/packages/DistributedLock.Redis/) [![Static Badge](https://img.shields.io/badge/API%20Documentation-RobiniaDocs-43bc00?logo=readme&logoColor=white)](https://www.robiniadocs.com/d/distributedlock/api/Medallion.Threading.Redis.html): uses Redis
+- **[DistributedLock.Azure](docs/DistributedLock.Azure.md)** [![NuGet Status](http://img.shields.io/nuget/v/DistributedLock.Azure.svg?style=flat)](https://www.nuget.org/packages/DistributedLock.Azure/) [![Static Badge](https://img.shields.io/badge/API%20Documentation-RobiniaDocs-43bc00?logo=readme&logoColor=white)](https://www.robiniadocs.com/d/distributedlock/api/Medallion.Threading.Azure.html): uses Azure blobs
+- **[DistributedLock.ZooKeeper](docs/DistributedLock.ZooKeeper.md)** [![NuGet Status](http://img.shields.io/nuget/v/DistributedLock.ZooKeeper.svg?style=flat)](https://www.nuget.org/packages/DistributedLock.ZooKeeper/) [![Static Badge](https://img.shields.io/badge/API%20Documentation-RobiniaDocs-43bc00?logo=readme&logoColor=white)](https://www.robiniadocs.com/d/distributedlock/api/Medallion.Threading.ZooKeeper.html): uses Apache ZooKeeper
+- **[DistributedLock.FileSystem](docs/DistributedLock.FileSystem.md)** [![NuGet Status](http://img.shields.io/nuget/v/DistributedLock.FileSystem.svg?style=flat)](https://www.nuget.org/packages/DistributedLock.FileSystem/) [![Static Badge](https://img.shields.io/badge/API%20Documentation-RobiniaDocs-43bc00?logo=readme&logoColor=white)](https://www.robiniadocs.com/d/distributedlock/api/Medallion.Threading.FileSystem.html): uses lock files
+- **[DistributedLock.WaitHandles](docs/DistributedLock.WaitHandles.md)** [![NuGet Status](http://img.shields.io/nuget/v/DistributedLock.WaitHandles.svg?style=flat)](https://www.nuget.org/packages/DistributedLock.WaitHandles/) [![Static Badge](https://img.shields.io/badge/API%20Documentation-RobiniaDocs-43bc00?logo=readme&logoColor=white)](https://www.robiniadocs.com/d/distributedlock/api/Medallion.Threading.WaitHandles.html): uses operating system global `WaitHandle`s (Windows only)
 
 **Click on the name** of any of the above packages to see the documentation specific to that implementation, or read on for general documentation that applies to all implementations.
 
@@ -136,12 +138,23 @@ public class SomeService
 
 Contributions are welcome! If you are interested in contributing towards a new or existing issue, please let me know via comments on the issue so that I can help you get started and avoid wasted effort on your part.
 
+Setup steps for working with the repository locally are documented [here](docs/Developing%20DistributedLock.md).
+
 ## Release notes
+- 2.4
+	- Add support for transaction-scoped locking in Postgres using `pg_advisory_xact_lock` which is helpful when using PgBouncer ([#168](https://github.com/madelson/DistributedLock/issues/168), DistributedLock.Postgres 1.1.0)
+	- Improve support for newer versions of StackExchange.Redis, especially when using the default backlog policy ([#162](https://github.com/madelson/DistributedLock/issues/162), DistributedLock.Redis 1.0.3). Thanks @Bartleby2718 for helping with this!
+	- Reduce occurrence of `UnobservedTaskException`s thrown by the library ([#192](https://github.com/madelson/DistributedLock/issues/192), DistributedLock.Core 1.0.6)
+	- Update dependencies to modern versions without known issues/vulnerabilities ([#111](https://github.com/madelson/DistributedLock/issues/111)/[#177](https://github.com/madelson/DistributedLock/issues/177)/[#184](https://github.com/madelson/DistributedLock/issues/184)/[#185](https://github.com/madelson/DistributedLock/issues/185), all packages). Thanks @Bartleby2718 for helping with this!
+	- Improve directory creation concurrency handling for `FileDistributedLock` on Linux/.NET 8 ([#195](), DistributedLock.FileSystem 1.0.2)
+	- Allow using transaction-scoped locks in SQL Server without explicitly disabling multiplexing ([#189](https://github.com/madelson/DistributedLock/issues/189), DistributedLock.SqlServer 1.0.4)
+	- New API documentation on [dndocs](https://dndocs.com/). Thanks @NeuroXiq!
+	- New documentation for contributors to get the project running locally (see [Contributing](#contributing))
 - 2.3.4
 	- Support Npgsql 8.0's [ExecuteScalar breaking change](https://github.com/npgsql/npgsql/issues/5143) ([#174](https://github.com/madelson/DistributedLock/issues/174), DistributedLock.Postgres 1.0.5). Thanks [@Kaffeetasse](https://github.com/Kaffeetasse) for diagnosing and fixing!
 - 2.3.3
 	- Update Microsoft.Data.SqlClient due to vulnerabilities ([#149](https://github.com/madelson/DistributedLock/issues/149), DistributedLock.SqlServer 1.0.3)
-	- Update versions of Oracle.ManagedDataAccess and Oracle.ManagedDataAccess.Core due to vulnerabilities  (DistributedLock.Oracle 1.0.2)
+	- Update versions of Oracle.ManagedDataAccess and Oracle.ManagedDataAccess.Core due to vulnerabilities (DistributedLock.Oracle 1.0.2)
 - 2.3.2
 	- Work around underlying Postgres race condition when waiting on advisory locks with a short non-zero timeout ([#147](https://github.com/madelson/DistributedLock/issues/147), DistributedLock.Postgres 1.0.4). Thanks [@Tzachi009](https://github.com/Tzachi009) for reporting and isolating the issue!
 - 2.3.1

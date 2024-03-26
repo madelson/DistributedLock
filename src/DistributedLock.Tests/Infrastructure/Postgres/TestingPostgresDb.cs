@@ -12,7 +12,7 @@ public sealed class TestingPostgresDb : TestingPrimaryClientDb
 {
     internal static readonly string DefaultConnectionString = PostgresCredentials.GetConnectionString(TestContext.CurrentContext.TestDirectory);
 
-    private readonly NpgsqlConnectionStringBuilder _connectionStringBuilder = new NpgsqlConnectionStringBuilder(DefaultConnectionString);
+    private readonly NpgsqlConnectionStringBuilder _connectionStringBuilder = new(DefaultConnectionString);
 
     public override DbConnectionStringBuilder ConnectionStringBuilder => this._connectionStringBuilder;
 
@@ -43,7 +43,7 @@ public sealed class TestingPostgresDb : TestingPrimaryClientDb
         using var command = connection.CreateCommand();
         // values based on https://www.postgresql.org/docs/12/transaction-iso.html
         command.CommandText = "SELECT REPLACE(current_setting('transaction_isolation'), ' ', '')";
-        return (IsolationLevel)Enum.Parse(typeof(IsolationLevel), (string)command.ExecuteScalar(), ignoreCase: true);
+        return (IsolationLevel)Enum.Parse(typeof(IsolationLevel), (string)command.ExecuteScalar()!, ignoreCase: true);
     }
 
     public override DbConnection CreateConnection() => new NpgsqlConnection(this.ConnectionStringBuilder.ConnectionString);
@@ -63,7 +63,7 @@ public sealed class TestingPostgresDb : TestingPrimaryClientDb
                         OR (state = 'idle' AND state_change < @idleSince)
                     )";
         command.Parameters.AddWithValue("applicationName", applicationName);
-        command.Parameters.Add(new NpgsqlParameter("idleSince", idleSince ?? DBNull.Value.As<object>()) { NpgsqlDbType = NpgsqlDbType.TimestampTz });
+        command.Parameters.Add(new NpgsqlParameter("idleSince", idleSince?.ToUniversalTime() ?? DBNull.Value.As<object>()) { NpgsqlDbType = NpgsqlDbType.TimestampTz });
 
         await command.ExecuteNonQueryAsync();
     }

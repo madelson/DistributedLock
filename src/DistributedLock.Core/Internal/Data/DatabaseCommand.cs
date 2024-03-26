@@ -63,7 +63,7 @@ sealed class DatabaseCommand : IDisposable
     internal ValueTask<int> ExecuteNonQueryAsync(CancellationToken cancellationToken, bool disallowAsyncCancellation, bool isConnectionMonitoringQuery) =>
         this.ExecuteAsync((c, t) => c.ExecuteNonQueryAsync(t), c => c.ExecuteNonQuery(), cancellationToken, disallowAsyncCancellation, isConnectionMonitoringQuery);
 
-    public ValueTask<object> ExecuteScalarAsync(CancellationToken cancellationToken, bool disallowAsyncCancellation = false) =>
+    public ValueTask<object?> ExecuteScalarAsync(CancellationToken cancellationToken, bool disallowAsyncCancellation = false) =>
         this.ExecuteAsync((c, t) => c.ExecuteScalarAsync(t), c => c.ExecuteScalar(), cancellationToken, disallowAsyncCancellation, isConnectionMonitoringQuery: false);
 
     private async ValueTask<TResult> ExecuteAsync<TResult>(
@@ -113,7 +113,7 @@ sealed class DatabaseCommand : IDisposable
             // registrations fire synchronously if the token is already canceled
             using var registration = cancellationToken.Register(state => Task.Run(async () =>
             {
-                var commandBox = (StrongBox<IDbCommand?>)state;
+                var commandBox = (StrongBox<IDbCommand?>)state!;
                 IDbCommand? command;
                 while ((command = Volatile.Read(ref commandBox.Value)) != null)
                 {
@@ -153,9 +153,7 @@ sealed class DatabaseCommand : IDisposable
         Invariant.Require(cancellationToken.CanBeCanceled);
 
         using var _ = await this.AcquireConnectionLockIfNeeded(isConnectionMonitoringQuery).ConfigureAwait(false);
-        // Note: for now we cannot pass cancellationToken to PrepareAsync() because this will break on Postgres which
-        // is the only db we currently support that needs Prepare currently. See https://github.com/npgsql/npgsql/issues/4209
-        await this.PrepareIfNeededAsync(CancellationToken.None).ConfigureAwait(false);
+        await this.PrepareIfNeededAsync(cancellationToken).ConfigureAwait(false);
         try
         {
             return await executeAsync(state, cancellationToken).ConfigureAwait(false);
@@ -178,12 +176,12 @@ sealed class DatabaseCommand : IDisposable
     {
         if (this._connection.ShouldPrepareCommands)
         {
-#if NETSTANDARD2_1
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1
             if (!SyncViaAsync.IsSynchronous && this._command is DbCommand dbCommand)
             {
                 return dbCommand.PrepareAsync(cancellationToken).AsValueTask();
             }
-#elif !NETSTANDARD2_0 && !NET461
+#elif !NETSTANDARD2_0 && !NETFRAMEWORK
             ERROR
 #endif
 

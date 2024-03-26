@@ -10,7 +10,7 @@ namespace Medallion.Threading.Tests.Azure;
 
 public sealed class TestingAzureBlobLeaseSynchronizationStrategy : TestingSynchronizationStrategy
 {
-    private readonly DisposableCollection _disposables = new DisposableCollection();
+    private readonly DisposableCollection _disposables = new();
 
     private static readonly Action<AzureBlobLeaseOptionsBuilder> DefaultTestingOptions = o => 
         // for test speed

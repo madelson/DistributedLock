@@ -13,12 +13,12 @@ internal sealed class SqlApplicationLock : IDbSynchronizationStrategy<object>
         AlreadyHeldExitCode = 103,
         InvalidUpgradeExitCode = 104;
 
-    public static readonly SqlApplicationLock SharedLock = new SqlApplicationLock(Mode.Shared),
-        UpdateLock = new SqlApplicationLock(Mode.Update),
-        ExclusiveLock = new SqlApplicationLock(Mode.Exclusive),
-        UpgradeLock = new SqlApplicationLock(Mode.Exclusive, isUpgrade: true);
+    public static readonly SqlApplicationLock SharedLock = new(Mode.Shared),
+        UpdateLock = new(Mode.Update),
+        ExclusiveLock = new(Mode.Exclusive),
+        UpgradeLock = new(Mode.Exclusive, isUpgrade: true);
 
-    private static readonly object Cookie = new object();
+    private static readonly object Cookie = new();
     private readonly Mode _mode;
     private readonly bool _isUpgrade;
 

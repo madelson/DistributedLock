@@ -53,18 +53,11 @@ public class AzureBlobLeaseDistributedLockTest
             var name = provider.GetUniqueSafeName();
             var client = CreateClient(type, name);
 
-            if (client is AppendBlobClient appendClient)
-            {
-                Assert.That(
-                    Assert.Throws<RequestFailedException>(() => appendClient.CreateIfNotExists()).ToString(),
-                    Does.Contain("This feature is not currently supported by the Storage Emulator")
-                );
-                return;
-            }
             if (client.GetType() == typeof(BlobBaseClient))
             {
                 // work around inability to do CreateIfNotExists for the base client
-                new BlobClient(AzureCredentials.ConnectionString, AzureCredentials.DefaultBlobContainerName, name).Upload(Stream.Null);
+                await new BlobClientWrapper(new BlobClient(AzureCredentials.ConnectionString, client.BlobContainerName, client.Name))
+                    .CreateIfNotExistsAsync(new Dictionary<string, string>(), CancellationToken.None);
             }
 
             var @lock = new AzureBlobLeaseDistributedLock(client);
@@ -85,18 +78,10 @@ public class AzureBlobLeaseDistributedLockTest
 
         var metadata = new Dictionary<string, string> { ["abc"] = "123" };
 
-        if (client is AppendBlobClient)
-        {
-            Assert.That(
-                Assert.ThrowsAsync<RequestFailedException>(async () => await wrapper.CreateIfNotExistsAsync(metadata, CancellationToken.None)).ToString(),
-                Does.Contain("This feature is not currently supported by the Storage Emulator")
-            );
-            return;
-        }
         if (client.GetType() == typeof(BlobBaseClient))
         {
             Assert.That(
-                Assert.ThrowsAsync<InvalidOperationException>(async () => await wrapper.CreateIfNotExistsAsync(metadata, CancellationToken.None)).ToString(),
+                Assert.ThrowsAsync<InvalidOperationException>(async () => await wrapper.CreateIfNotExistsAsync(metadata, CancellationToken.None))!.ToString(),
                 Does.Contain("Either ensure that the blob exists or use a non-base client type")
             );
             return;
@@ -121,11 +106,14 @@ public class AzureBlobLeaseDistributedLockTest
         var @lock = new AzureBlobLeaseDistributedLock(client);
 
         using var handle = @lock.Acquire();
-        Assert.Throws<RequestFailedException>(() => client.UploadPages(new MemoryStream(new byte[BlobSize]), offset: 0))
+        Assert.Throws<RequestFailedException>(() => client.UploadPages(new MemoryStream(new byte[BlobSize]), offset: 0))!
             .ErrorCode.ShouldEqual(AzureErrors.LeaseIdMissing);
 
         Assert.DoesNotThrow(
-            () => client.UploadPages(new MemoryStream(new byte[BlobSize]), offset: 0, conditions: new PageBlobRequestConditions { LeaseId = handle.LeaseId })
+            () => client.UploadPages(new MemoryStream(new byte[BlobSize]), offset: 0, options: new()
+            {
+                Conditions = new PageBlobRequestConditions { LeaseId = handle.LeaseId }
+            })
         );
 
         handle.Dispose();
@@ -139,7 +127,7 @@ public class AzureBlobLeaseDistributedLockTest
         provider.Strategy.ContainerName = "does-not-exist";
         var @lock = provider.CreateLock(nameof(TestThrowsIfContainerDoesNotExist));
 
-        Assert.Throws<RequestFailedException>(() => @lock.TryAcquire()?.Dispose())
+        Assert.Throws<RequestFailedException>(() => @lock.TryAcquire()?.Dispose())!
             .ErrorCode.ShouldEqual("ContainerNotFound");
     }
 
@@ -195,8 +183,8 @@ public class AzureBlobLeaseDistributedLockTest
 
         Assert.IsTrue(@event.Wait(TimeSpan.FromSeconds(15.1)));
 
-        Assert.Throws<RequestFailedException>(handle.Dispose)
-            .ErrorCode.ShouldEqual("LeaseLost");
+        Assert.Throws<RequestFailedException>(handle.Dispose)!
+            .ErrorCode.ShouldEqual("LeaseNotPresentWithBlobOperation");
     }
 
     [Test]
@@ -222,7 +210,7 @@ public class AzureBlobLeaseDistributedLockTest
         BlobClientType.Page => new PageBlobClient(AzureCredentials.ConnectionString, AzureCredentials.DefaultBlobContainerName, name),
         BlobClientType.Append => new AppendBlobClient(AzureCredentials.ConnectionString, AzureCredentials.DefaultBlobContainerName, name),
         BlobClientType.Base => new BlobBaseClient(AzureCredentials.ConnectionString, AzureCredentials.DefaultBlobContainerName, name),
-        _ => throw new ArgumentException(nameof(type)),
+        _ => throw new ArgumentException("Bad type", nameof(type)),
     };
 
     public enum BlobClientType

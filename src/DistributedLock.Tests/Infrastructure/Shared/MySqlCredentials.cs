@@ -21,7 +21,7 @@ internal static class MySqlCredentials
 
         return new MySqlConnectionStringBuilder
         {
-            Port = 3306,
+            Port = 3307,
             Server = "localhost",
             Database = "mysql",
             UserID = username,
@@ -29,6 +29,8 @@ internal static class MySqlCredentials
             PersistSecurityInfo = true,    
             // set a high pool size so that we don't empty the pool through things like lock abandonment tests
             MaximumPoolSize = 500,
+            // workaround for https://github.com/mysql-net/MySqlConnector/issues/1448
+            TlsVersion = "Tls12"
         }.ConnectionString;
     }
 }

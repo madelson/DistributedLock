@@ -25,4 +25,12 @@ public class SqlConnectionOptionsBuilderTest
         Assert.IsFalse(options.useTransaction);
         options.ShouldEqual(SqlConnectionOptionsBuilder.GetOptions(o => { }));
     }
+
+    [Test]
+    public void TestUseTransactionDoesNotRequireDisablingMultiplexing()
+    {
+        var options = SqlConnectionOptionsBuilder.GetOptions(o => o.UseTransaction());
+        Assert.IsTrue(options.useTransaction);
+        Assert.IsFalse(options.useMultiplexing);
+    }
 }

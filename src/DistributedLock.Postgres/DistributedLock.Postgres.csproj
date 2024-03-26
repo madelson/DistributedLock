@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;netstandard2.1;net461</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;netstandard2.1;net462</TargetFrameworks>
     <RootNamespace>Medallion.Threading.Postgres</RootNamespace>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
     <WarningLevel>4</WarningLevel>
@@ -11,7 +11,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <Version>1.0.5</Version>
+    <Version>1.1.0</Version>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <Authors>Michael Adelson</Authors>
     <Description>Provides a distributed lock implementation based on Postgresql</Description>
@@ -45,9 +45,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Npgsql" Version="5.0.4" />
-    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All"/>
-    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="3.3.3" PrivateAssets="All" Condition="$(Configuration) == 'Release'"/>
+    <PackageReference Include="Npgsql" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All"/>
+    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" PrivateAssets="All" />
   </ItemGroup>
   
   <ItemGroup>
@@ -58,6 +58,5 @@
     <Using Remove="System.Net.Http"/>
   </ItemGroup>
 
-  <Import Project="..\CopyPackageToPublishDirectory.targets" />
   <Import Project="..\FixDistributedLockCoreDependencyVersion.targets" />
 </Project>

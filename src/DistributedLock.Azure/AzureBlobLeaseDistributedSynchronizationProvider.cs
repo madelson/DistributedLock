@@ -22,7 +22,7 @@ public sealed class AzureBlobLeaseDistributedSynchronizationProvider : IDistribu
     /// <summary>
     /// Constructs an <see cref="AzureBlobLeaseDistributedLock"/> with the given <paramref name="name"/>.
     /// </summary>
-    public AzureBlobLeaseDistributedLock CreateLock(string name) => new AzureBlobLeaseDistributedLock(this._blobContainerClient, name, this._options);
+    public AzureBlobLeaseDistributedLock CreateLock(string name) => new(this._blobContainerClient, name, this._options);
 
     IDistributedLock IDistributedLockProvider.CreateLock(string name) => this.CreateLock(name);
 }

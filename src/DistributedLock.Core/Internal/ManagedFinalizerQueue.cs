@@ -24,9 +24,9 @@ sealed class ManagedFinalizerQueue
 #endif
     );
 
-    public static readonly ManagedFinalizerQueue Instance = new ManagedFinalizerQueue();
+    public static readonly ManagedFinalizerQueue Instance = new();
 
-    private readonly ConcurrentDictionary<IAsyncDisposable, WeakReference> _items = new ConcurrentDictionary<IAsyncDisposable, WeakReference>();
+    private readonly ConcurrentDictionary<IAsyncDisposable, WeakReference> _items = new();
 
     // The state of this class can be described by 3 bits:
     // _count: >0 or ==0
@@ -101,7 +101,7 @@ sealed class ManagedFinalizerQueue
             // necessarily exited yet (and may not for some time). Therefore, we queue a task to run as a
             // continuation so that we only have one finalizer loop at a time
             this._finalizerTask = this._finalizerTask.ContinueWith(
-                    (_, @this) => ((ManagedFinalizerQueue)@this).FinalizerLoop(),
+                    (_, @this) => ((ManagedFinalizerQueue)@this!).FinalizerLoop(),
                     state: this,
                     CancellationToken.None
                 )

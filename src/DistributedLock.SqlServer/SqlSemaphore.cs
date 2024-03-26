@@ -278,7 +278,7 @@ internal sealed class SqlSemaphore : IDbSynchronizationStrategy<SqlSemaphore.Coo
         AllTicketsHeldByCurrentSessionCode = SqlApplicationLock.AlreadyHeldExitCode;
 
     // when we don't have to deal with cancellation, we can put everything in one big query to save on round trips
-    private static readonly Lazy<string> AcquireNonCancelableQuery = new Lazy<string>(() => Merge(
+    private static readonly Lazy<string> AcquireNonCancelableQuery = new(() => Merge(
             CreateCommonVariableDeclarationsSql(includePreambleLock: true, includeBusyWaitLock: true, includeTryAcquireOnceVariables: true),
             CreateAcquirePreambleSql(willRetryInSeparateQueryAfterPreamble: null),
             CreateAcquireSql(cancelable: false),
@@ -286,22 +286,22 @@ internal sealed class SqlSemaphore : IDbSynchronizationStrategy<SqlSemaphore.Coo
         )),
         // for cancellation, we run the preamble first as non-cancellable followed by a cancelable busy wait. This 
         // ensures that we avoid the case where we create a marker table in the preamble and then cancel before returning it
-        AcquireCancelablePreambleQuery = new Lazy<string>(() => Merge(
+        AcquireCancelablePreambleQuery = new(() => Merge(
             CreateCommonVariableDeclarationsSql(includePreambleLock: true, includeBusyWaitLock: false, includeTryAcquireOnceVariables: true),
             CreateAcquirePreambleSql(willRetryInSeparateQueryAfterPreamble: true),
             CreateCodaSql(includePreambleLockRelease: true, includeBusyWaitLockRelease: false)
         )),
-        AcquireCancelableQuery = new Lazy<string>(() => Merge(
+        AcquireCancelableQuery = new(() => Merge(
             CreateCommonVariableDeclarationsSql(includePreambleLock: false, includeBusyWaitLock: true, includeTryAcquireOnceVariables: true),
             CreateAcquireSql(cancelable: true),
             CreateCodaSql(includePreambleLockRelease: false, includeBusyWaitLockRelease: true)
         )),
-        CancellationCleanupQuery = new Lazy<string>(() => Merge(
+        CancellationCleanupQuery = new(() => Merge(
             CreateCommonVariableDeclarationsSql(includePreambleLock: false, includeBusyWaitLock: true, includeTryAcquireOnceVariables: false),
             CreateCancellationCleanupSql(),
             CreateCodaSql(includePreambleLockRelease: false, includeBusyWaitLockRelease: true)
         )),
-        ReleaseQuery = new Lazy<string>(() => Merge(
+        ReleaseQuery = new(() => Merge(
             CreateCommonVariableDeclarationsSql(includePreambleLock: false, includeBusyWaitLock: false, includeTryAcquireOnceVariables: false),
             CreateReleaseSql()
         ));

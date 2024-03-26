@@ -12,7 +12,7 @@ public sealed partial class FileDistributedLock : IInternalDistributedLock<FileD
     /// before we assume that the issue is non-transient. Empirically I've found this value to be reliable both locally and on AppVeyor (if there 
     /// IS a problem there's little risk to trying more times because we'll eventually be failing hard).
     /// </summary>
-    private const int MaxUnauthorizedAccessExceptionRetries = 400;
+    private const int MaxUnauthorizedAccessExceptionRetries = 800;
 
     // These are not configurable currently because in the future we may want to change the implementation of FileDistributedLock
     // to leverage native methods which may allow for actual blocking. The values here reflect the idea that we expect file locks
@@ -110,7 +110,7 @@ public sealed partial class FileDistributedLock : IInternalDistributedLock<FileD
 
                 // Frustratingly, this error can be thrown transiently due to concurrent creation/deletion. Initially assume
                 // that it is transient and just retry
-                if (++retryCount <= MaxUnauthorizedAccessExceptionRetries)
+                if (CanRetryTransientFileSystemError(ref retryCount))
                 {
                     continue;
                 }
@@ -142,13 +142,30 @@ public sealed partial class FileDistributedLock : IInternalDistributedLock<FileD
                 System.IO.Directory.CreateDirectory(this.Directory);
                 return;
             }
-            // This can indicate either a transient failure during concurrent creation/deletion or a permissions issue.
-            // If we encounter it, assume it is transient unless it persists.
-            catch (UnauthorizedAccessException) when (++retryCount <= MaxUnauthorizedAccessExceptionRetries) { }
             catch (Exception ex)
             {
+                // This can indicate either a transient failure during concurrent creation/deletion or a permissions issue.
+                // If we encounter it, assume it is transient unless it persists.
+                // For a long time, I just checked for UnauthorizedAccessException here. However, recent tests on Linux have
+                // shown that in race conditions we can see IOException as well, presumably because there is some period during
+                // directory creation where it presents as a file.
+                if (ex is UnauthorizedAccessException or IOException
+                    && CanRetryTransientFileSystemError(ref retryCount))
+                {
+                    continue;
+                }
+
                 throw new InvalidOperationException($"Failed to ensure that lock file directory {this.Directory} exists", ex);
             }
         }
+    }
+
+    private static bool CanRetryTransientFileSystemError(ref int retryCount)
+    {
+        if (retryCount >= MaxUnauthorizedAccessExceptionRetries) { return false; }
+
+        ++retryCount;
+
+        return true;
     }
 }

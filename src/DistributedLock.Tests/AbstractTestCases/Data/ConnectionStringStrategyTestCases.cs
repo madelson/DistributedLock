@@ -69,7 +69,7 @@ public abstract class ConnectionStringStrategyTestCases<TLockProvider, TStrategy
         var handle = @lock.Acquire();
         using var idleSessionKiller = new IdleSessionKiller(this._lockProvider.Strategy.Db, applicationName, idleTimeout: TimeSpan.FromSeconds(.5));
         Thread.Sleep(TimeSpan.FromSeconds(2));
-        Assert.DoesNotThrow(() => handle.Dispose());
+        Assert.DoesNotThrow(handle.Dispose);
     }
 
     /// <summary>
@@ -110,7 +110,7 @@ public abstract class ConnectionStringStrategyTestCases<TLockProvider, TStrategy
                     handle.HandleLostToken.Register(() => { });
                 }
             });
-            Assert.IsTrue(await accessHandleLostTokenTask.WaitAsync(TimeSpan.FromSeconds(5)));
+            Assert.IsTrue(await accessHandleLostTokenTask.TryWaitAsync(TimeSpan.FromSeconds(5)));
 
             // do this only on success; on failure we're likely deadlocked and dispose will hang
             await handle.DisposeAsync();

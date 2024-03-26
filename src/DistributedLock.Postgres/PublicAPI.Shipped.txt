@@ -8,6 +8,7 @@ Medallion.Threading.Postgres.PostgresAdvisoryLockKey.PostgresAdvisoryLockKey(str
 Medallion.Threading.Postgres.PostgresConnectionOptionsBuilder
 Medallion.Threading.Postgres.PostgresConnectionOptionsBuilder.KeepaliveCadence(System.TimeSpan keepaliveCadence) -> Medallion.Threading.Postgres.PostgresConnectionOptionsBuilder!
 Medallion.Threading.Postgres.PostgresConnectionOptionsBuilder.UseMultiplexing(bool useMultiplexing = true) -> Medallion.Threading.Postgres.PostgresConnectionOptionsBuilder!
+Medallion.Threading.Postgres.PostgresConnectionOptionsBuilder.UseTransaction(bool useTransaction = true) -> Medallion.Threading.Postgres.PostgresConnectionOptionsBuilder!
 Medallion.Threading.Postgres.PostgresDistributedLock
 Medallion.Threading.Postgres.PostgresDistributedLock.Acquire(System.TimeSpan? timeout = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> Medallion.Threading.Postgres.PostgresDistributedLockHandle!
 Medallion.Threading.Postgres.PostgresDistributedLock.AcquireAsync(System.TimeSpan? timeout = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<Medallion.Threading.Postgres.PostgresDistributedLockHandle!>

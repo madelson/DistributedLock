@@ -50,7 +50,7 @@ public abstract class TestingConnectionStringSynchronizationStrategy<TDb> : Test
     public TimeSpan? KeepaliveCadence { get; set; }
 
     public sealed override TestingDbConnectionOptions GetConnectionOptions() =>
-        new TestingDbConnectionOptions 
+        new()
         { 
             ConnectionString = this.Db.ConnectionString, 
             ConnectionStringUseMultiplexing = this.UseMultiplexingNotTransaction == true,
@@ -136,7 +136,7 @@ public abstract class TestingExternalConnectionOrTransactionSynchronizationStrat
 public sealed class TestingExternalConnectionSynchronizationStrategy<TDb> : TestingExternalConnectionOrTransactionSynchronizationStrategy<TDb>
     where TDb : TestingDb, new()
 {
-    private readonly DisposableCollection _disposables = new DisposableCollection();
+    private readonly DisposableCollection _disposables = new();
     private DbConnection? _ambientConnection;
 
     public override DbConnection? AmbientConnection => this._ambientConnection;
@@ -177,7 +177,7 @@ public sealed class TestingExternalConnectionSynchronizationStrategy<TDb> : Test
 public sealed class TestingExternalTransactionSynchronizationStrategy<TDb> : TestingExternalConnectionOrTransactionSynchronizationStrategy<TDb>
     where TDb : TestingDb, new()
 {
-    private readonly DisposableCollection _disposables = new DisposableCollection();
+    private readonly DisposableCollection _disposables = new();
 
     public DbTransaction? AmbientTransaction { get; private set; }
     public override DbConnection? AmbientConnection => this.AmbientTransaction?.Connection;

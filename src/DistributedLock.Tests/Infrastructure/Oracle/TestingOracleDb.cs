@@ -12,7 +12,7 @@ public sealed class TestingOracleDb : TestingPrimaryClientDb
 {
     internal static readonly string DefaultConnectionString = OracleCredentials.GetConnectionString(TestContext.CurrentContext.TestDirectory);
 
-    private readonly OracleConnectionStringBuilder _connectionStringBuilder = new OracleConnectionStringBuilder(DefaultConnectionString);
+    private readonly OracleConnectionStringBuilder _connectionStringBuilder = new(DefaultConnectionString);
 
     public override DbConnectionStringBuilder ConnectionStringBuilder => this._connectionStringBuilder;
 
@@ -51,10 +51,10 @@ public sealed class TestingOracleDb : TestingPrimaryClientDb
 
     public override void PrepareForHighContention(ref int maxConcurrentAcquires)
     {
-        // The free Oracle Autonomous database has a fixed max session limit of 20. When concurrency approaches that, parellel
+        // Oracle XE has a default max session limit of 20. When concurrency approaches that, parellel
         // execution slows down greatly because often releases become queued behind competing aquires. When concurrency surpasses
         // that level we risk total deadlock where all active sessions are in use by acquires and as such no release can ever get
-        // through.
+        // through. It's possible that we could configure a higher limit but I'm not sure that's necessary.
         maxConcurrentAcquires = Math.Min(maxConcurrentAcquires, 15);
     }
 

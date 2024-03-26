@@ -10,7 +10,7 @@ namespace Medallion.Threading.Tests.FileSystem;
 public class FileDistributedLockTest
 {
     private static readonly string LockFileDirectory = Path.Combine(Path.GetTempPath(), nameof(FileDistributedLockTest), TargetFramework.Current);
-    private static DirectoryInfo LockFileDirectoryInfo => new DirectoryInfo(LockFileDirectory);
+    private static DirectoryInfo LockFileDirectoryInfo => new(LockFileDirectory);
 
     [OneTimeSetUp]
     public void OneTimeSetUp()
@@ -116,8 +116,18 @@ public class FileDistributedLockTest
         var @lock = new FileDistributedLock(LockFileDirectoryInfo, nameof(TestThrowsIfProvidedFileNameIsAlreadyADirectory));
         Directory.CreateDirectory(@lock.Name);
 
-        var exception = Assert.Throws<InvalidOperationException>(() => @lock.Acquire().Dispose());
+        var exception = Assert.Throws<InvalidOperationException>(() => @lock.Acquire().Dispose())!;
         Assert.That(exception.Message, Does.Contain("because it is already the name of a directory"));
+    }
+
+    [Test]
+    public void TestThrowsIfProvidedDirectoryIsAlreadyFile()
+    {
+        var tempFile = Path.GetTempFileName();
+
+        var @lock = new FileDistributedLock(lockFileDirectory: new(tempFile), "some name");
+        var exception = Assert.Throws<InvalidOperationException>(() => @lock.Acquire().Dispose())!;
+        Assert.That(exception.InnerException!.Message, Does.Match("file .* already exists"));
     }
 
     [Test]
@@ -238,7 +248,10 @@ public class FileDistributedLockTest
         {
             AssertCanUseName(variant);
 
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+                // Restrictions were alleviated in Win11: https://superuser.com/a/1742520/281669
+                // Win <= 10 detection: see https://stackoverflow.com/a/69038652/1142970
+                && Environment.OSVersion.Version.Build < 22000)
             {
                 Assert.IsFalse(CanCreateFileWithName(variant), variant);
                 Assert.AreNotEqual(name, Path.GetFileName(new FileDistributedLock(LockFileDirectoryInfo, name).Name), variant);

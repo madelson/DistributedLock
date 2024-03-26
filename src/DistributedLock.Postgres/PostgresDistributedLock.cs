@@ -49,14 +49,11 @@ public sealed partial class PostgresDistributedLock : IInternalDistributedLock<P
     {
         if (connectionString == null) { throw new ArgumentNullException(nameof(connectionString)); }
 
-        var (keepaliveCadence, useMultiplexing) = PostgresConnectionOptionsBuilder.GetOptions(options);
+        var (keepaliveCadence, useTransaction, useMultiplexing) = PostgresConnectionOptionsBuilder.GetOptions(options);
 
-        if (useMultiplexing)
-        {
-            return new OptimisticConnectionMultiplexingDbDistributedLock(key.ToString(), connectionString, PostgresMultiplexedConnectionLockPool.Instance, keepaliveCadence);
-        }
-
-        return new DedicatedConnectionOrTransactionDbDistributedLock(key.ToString(), () => new PostgresDatabaseConnection(connectionString), useTransaction: false, keepaliveCadence);
+        return useMultiplexing
+            ? new OptimisticConnectionMultiplexingDbDistributedLock(key.ToString(), connectionString, PostgresMultiplexedConnectionLockPool.Instance, keepaliveCadence)
+            : new DedicatedConnectionOrTransactionDbDistributedLock(key.ToString(), () => new PostgresDatabaseConnection(connectionString), useTransaction: useTransaction, keepaliveCadence);
     }
 
     internal static IDbDistributedLock CreateInternalLock(PostgresAdvisoryLockKey key, IDbConnection connection)

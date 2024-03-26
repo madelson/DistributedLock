@@ -88,7 +88,7 @@ public sealed class SqlDistributedSemaphoreTest
         );
         var handle2 = semaphore2.Acquire();
         semaphore2.TryAcquire().ShouldEqual(null);
-        var ex = Assert.Catch<InvalidOperationException>(() => semaphore2.Acquire());
+        var ex = Assert.Catch<InvalidOperationException>(() => semaphore2.Acquire())!;
         ex.Message.Contains("Deadlock").ShouldEqual(true, ex.ToString());
     }
 

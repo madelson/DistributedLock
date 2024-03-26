@@ -24,7 +24,7 @@ public class FileDistributedLockWindowsTest
     public void TestThrowsUnauthorizedAccessExceptionInCaseOfDirectoryPermissionViolation()
     {
         var @lock = new FileDistributedLock(new DirectoryInfo(@"C:\Windows\MedallionDistributedLock"), Guid.NewGuid().ToString());
-        var exception = Assert.Throws<InvalidOperationException>(() => @lock.TryAcquire()?.Dispose());
+        var exception = Assert.Throws<InvalidOperationException>(() => @lock.TryAcquire()?.Dispose())!;
         Assert.IsInstanceOf<UnauthorizedAccessException>(exception.InnerException);
         Assert.IsFalse(Directory.Exists(Path.GetDirectoryName(@lock.Name)));
     }

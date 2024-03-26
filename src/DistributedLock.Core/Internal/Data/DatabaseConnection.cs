@@ -60,11 +60,11 @@ internal
         using var _ = await this.ConnectionMonitor.AcquireConnectionLockAsync(CancellationToken.None).ConfigureAwait(false);
 
         this._transaction =
-#if NETSTANDARD2_1
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1
          !SyncViaAsync.IsSynchronous && this.InnerConnection is DbConnection dbConnection
             ? await dbConnection.BeginTransactionAsync().ConfigureAwait(false)
             : 
-#elif NETSTANDARD2_0 || NET461
+#elif NETSTANDARD2_0 || NETFRAMEWORK
 #else
         ERROR
 #endif
@@ -105,7 +105,7 @@ internal
                 try { await this.DisposeTransactionAsync(isClosingOrDisposingConnection: true).ConfigureAwait(false); }
                 finally
                 {
-#if NETSTANDARD2_1
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1
                     if (!SyncViaAsync.IsSynchronous && this.InnerConnection is DbConnection dbConnection)
                     {
                         await (isDispose ? dbConnection.DisposeAsync() : dbConnection.CloseAsync().AsValueTask()).ConfigureAwait(false);
@@ -114,7 +114,7 @@ internal
                     {
                         SyncDisposeConnection();
                     }
-#elif NETSTANDARD2_0 || NET461
+#elif NETSTANDARD2_0 || NETFRAMEWORK
                     SyncDisposeConnection();
 #else
                     ERROR
@@ -143,13 +143,13 @@ internal
             ? null 
             : await this.ConnectionMonitor.AcquireConnectionLockAsync(CancellationToken.None).ConfigureAwait(false);
 
-#if NETSTANDARD2_1
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1
         if (!SyncViaAsync.IsSynchronous && transaction is DbTransaction dbTransaction)
         {
             await dbTransaction.DisposeAsync().ConfigureAwait(false);
             return;
         }
-#elif NETSTANDARD2_0 || NET461
+#elif NETSTANDARD2_0 || NETFRAMEWORK
 #else
         ERROR
 #endif

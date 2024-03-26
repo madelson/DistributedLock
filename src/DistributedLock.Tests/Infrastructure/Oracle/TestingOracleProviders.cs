@@ -11,7 +11,7 @@ public sealed class TestingOracleDistributedLockProvider<TStrategy> : TestingLoc
             .Create(
                 (connectionString, options) => new OracleDistributedLock(name, connectionString, options: ToOracleOptions(options)),
                 connection => new OracleDistributedLock(name, connection),
-                transaction => new OracleDistributedLock(name, transaction.Connection)
+                transaction => new OracleDistributedLock(name, transaction.Connection!)
             );
 
     public override string GetSafeName(string name) => new OracleDistributedLock(name, TestingOracleDb.DefaultConnectionString).Name;
@@ -32,7 +32,7 @@ public sealed class TestingOracleDistributedReaderWriterLockProvider<TStrategy> 
                 (connectionString, options) =>
                     new OracleDistributedReaderWriterLock(name, connectionString, TestingOracleDistributedLockProvider<TStrategy>.ToOracleOptions(options), exactName: true),
                 connection => new OracleDistributedReaderWriterLock(name, connection, exactName: true),
-                transaction => new OracleDistributedReaderWriterLock(name, transaction.Connection, exactName: true));
+                transaction => new OracleDistributedReaderWriterLock(name, transaction.Connection!, exactName: true));
 
     public override string GetSafeName(string name) => new OracleDistributedReaderWriterLock(name, TestingOracleDb.DefaultConnectionString).Name;
 }

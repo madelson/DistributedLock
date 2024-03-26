@@ -18,7 +18,7 @@ public sealed class FileDistributedSynchronizationProvider : IDistributedLockPro
     /// <summary>
     /// Constructs a <see cref="FileDistributedLock"/> with the given <paramref name="name"/>.
     /// </summary>
-    public FileDistributedLock CreateLock(string name) => new FileDistributedLock(this._lockFileDirectory, name);
+    public FileDistributedLock CreateLock(string name) => new(this._lockFileDirectory, name);
 
     IDistributedLock IDistributedLockProvider.CreateLock(string name) => this.CreateLock(name);
 }

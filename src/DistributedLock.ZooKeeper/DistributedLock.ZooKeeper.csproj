@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;netstandard2.1;net461</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;netstandard2.1;net462</TargetFrameworks>
     <RootNamespace>Medallion.Threading.ZooKeeper</RootNamespace>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
     <WarningLevel>4</WarningLevel>
@@ -45,25 +45,24 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="ZooKeeperNetEx" Version="3.4.12.4" />
-    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All" />
-    <PackageReference Include="Nullable" Version="1.3.0">
+    <PackageReference Include="ZooKeeperNetEx" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All" />
+    <PackageReference Include="Nullable" Condition="'$(TargetFramework)' != 'netstandard2.1'">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="IsExternalInit" Version="1.0.3">
+    <PackageReference Include="IsExternalInit">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\DistributedLock.Core\DistributedLock.Core.csproj" />
-    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="3.3.3" PrivateAssets="All" Condition="$(Configuration) == 'Release'"/>
+    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" PrivateAssets="All" />
   </ItemGroup>
 
   <ItemGroup>
     <Using Remove="System.Net.Http"/>
   </ItemGroup>
 
-  <Import Project="..\CopyPackageToPublishDirectory.targets" />
   <Import Project="..\FixDistributedLockCoreDependencyVersion.targets" />
 </Project>

@@ -1,5 +1,7 @@
 ﻿using Medallion.Threading.Internal;
 using NUnit.Framework;
+using System.Collections.Concurrent;
+using System.Runtime.CompilerServices;
 
 namespace Medallion.Threading.Tests.Core;
 
@@ -29,5 +31,50 @@ public class HelpersTest
         safeNonGenericTask.Exception.InnerException!.Message.ShouldEqual("m2");
 
         static Task<string> GetTask(string message) => throw new TimeZoneNotFoundException(message);
+    }
+
+    /// <summary>
+    /// Based on https://github.com/madelson/DistributedLock/issues/192
+    /// </summary>
+    [Test]
+    public async Task TestTryAwaitShouldNotResultInUnobservedTaskException([Values] bool faulted)
+    {
+        AsyncLocal<bool> scope = new() { Value = true };
+        ConcurrentBag<Exception> unobservedTaskExceptions = [];
+        EventHandler<UnobservedTaskExceptionEventArgs> handler = (_, e) => unobservedTaskExceptions.Add(e.Exception);
+
+        TaskScheduler.UnobservedTaskException += handler;
+        try
+        {
+            await TryAwaitFailedTask();
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+        }
+        finally { TaskScheduler.UnobservedTaskException -= handler; }
+
+        foreach (var exception in unobservedTaskExceptions)
+        {
+            Assert.That(exception.ToString(), Does.Not.Contain(nameof(TimeZoneNotFoundException)));
+            Assert.That(exception.ToString(), Does.Not.Contain(nameof(OperationCanceledException)));
+            Assert.That(exception.ToString(), Does.Not.Contain(nameof(TaskCanceledException)));
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        async Task TryAwaitFailedTask()
+        {
+            Task task;
+            if (faulted)
+            {
+                task = Task.Run(() => throw new TimeZoneNotFoundException());
+            }
+            else
+            {
+                CancellationTokenSource cancellationSource = new();
+                task = Task.Delay(TimeSpan.FromSeconds(30), cancellationSource.Token);
+                cancellationSource.Cancel();
+            }
+
+            await task.TryAwait();
+        }
     }
 }

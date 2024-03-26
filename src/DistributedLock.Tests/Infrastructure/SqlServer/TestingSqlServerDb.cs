@@ -12,7 +12,7 @@ public sealed class TestingSqlServerDb : TestingPrimaryClientDb, ITestingSqlServ
     internal static readonly string DefaultConnectionString = SqlServerCredentials.ConnectionString;
 
     private readonly Microsoft.Data.SqlClient.SqlConnectionStringBuilder _connectionStringBuilder =
-        new Microsoft.Data.SqlClient.SqlConnectionStringBuilder(DefaultConnectionString);
+        new(DefaultConnectionString);
 
     public override DbConnectionStringBuilder ConnectionStringBuilder => this._connectionStringBuilder;
 
@@ -47,7 +47,7 @@ public sealed class TestingSqlServerDb : TestingPrimaryClientDb, ITestingSqlServ
                     ELSE 'Unknown' END AS isolationLevel
                 FROM sys.dm_exec_sessions
                 WHERE session_id = @@SPID";
-        return (IsolationLevel)Enum.Parse(typeof(IsolationLevel), (string)command.ExecuteScalar());
+        return (IsolationLevel)Enum.Parse(typeof(IsolationLevel), (string)command.ExecuteScalar()!);
     }
 
     public override DbConnection CreateConnection() => new Microsoft.Data.SqlClient.SqlConnection(this.ConnectionStringBuilder.ConnectionString);
@@ -94,7 +94,7 @@ public sealed class TestingSqlServerDb : TestingPrimaryClientDb, ITestingSqlServ
 public sealed class TestingSystemDataSqlServerDb : TestingDb, ITestingSqlServerDb
 {
     private readonly System.Data.SqlClient.SqlConnectionStringBuilder _connectionStringBuilder =
-        new System.Data.SqlClient.SqlConnectionStringBuilder(TestingSqlServerDb.DefaultConnectionString);
+        new(TestingSqlServerDb.DefaultConnectionString);
 
     public override DbConnectionStringBuilder ConnectionStringBuilder => this._connectionStringBuilder;
 

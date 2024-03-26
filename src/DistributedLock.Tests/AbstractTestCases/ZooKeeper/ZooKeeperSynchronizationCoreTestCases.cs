@@ -39,7 +39,7 @@ public abstract class ZooKeeperSynchronizationCoreTestCases<TLockProvider>
         var @lock = this._provider.CreateLockWithExactName(path.ToString());
 
         Assert.That(
-            Assert.ThrowsAsync<InvalidOperationException>(() => @lock.TryAcquireAsync().AsTask()).Message,
+            Assert.ThrowsAsync<InvalidOperationException>(() => @lock.TryAcquireAsync().AsTask())!.Message,
             Does.Contain("does not exist")
         );
 

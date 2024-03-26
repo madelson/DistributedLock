@@ -23,7 +23,7 @@ internal static class TestHelper
         return handle == null;
     }
 
-    public static async Task<bool> WaitAsync(this Task task, TimeoutValue timeout)
+    public static async Task<bool> TryWaitAsync(this Task task, TimeoutValue timeout)
     {
         if (!task.IsCompleted)
         {
@@ -47,7 +47,7 @@ internal static class TestHelper
         using var cancellationSource = new CancellationTokenSource();
         var waitForPredicateTask = WaitForPredicateAsync();
 
-        if (!await waitForPredicateTask.WaitAsync(timeout))
+        if (!await waitForPredicateTask.TryWaitAsync(timeout))
         {
             cancellationSource.Cancel();
             await waitForPredicateTask;

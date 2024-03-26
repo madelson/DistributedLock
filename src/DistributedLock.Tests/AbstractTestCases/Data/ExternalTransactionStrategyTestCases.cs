@@ -53,7 +53,7 @@ public abstract class ExternalTransactionStrategyTestCases<TLockProvider, TDb>
         public ExternalTransactionStrategyTestCases<TLockProvider, TDb>? Test { get; set; }
 
         public override TestingDbConnectionOptions GetConnectionOptions() =>
-            new TestingDbConnectionOptions { Connection = this.Test!._lockProvider.Strategy.AmbientTransaction!.Connection };
+            new() { Connection = this.Test!._lockProvider.Strategy.AmbientTransaction!.Connection };
     }
 
     public void TestCloseTransactionLockOnClosedConnectionOrTransaction([Values] bool closeConnection)
@@ -74,7 +74,7 @@ public abstract class ExternalTransactionStrategyTestCases<TLockProvider, TDb>
 
         if (closeConnection)
         {
-            this._lockProvider.Strategy.AmbientTransaction!.Connection.Dispose();
+            this._lockProvider.Strategy.AmbientTransaction!.Connection!.Dispose();
         }
         else
         {

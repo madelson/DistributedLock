@@ -19,42 +19,23 @@ internal static class OracleCredentials
     public static string GetConnectionString(string baseDirectory)
     {
         var credentialDirectory = Path.GetFullPath(Path.Combine(baseDirectory, "..", "..", "..", "credentials"));
-        ConfigureWallet(credentialDirectory);
-        var (datasource, username, password) = GetCredentials(credentialDirectory);
+        var (username, password) = GetCredentials(credentialDirectory);
 
         return new OracleConnectionStringBuilder
         {
-            DataSource = datasource,
+            DataSource = "(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=localhost)(PORT=1521))(CONNECT_DATA=(SERVICE_NAME=XE)))",
             UserID = username,
             Password = password,
             PersistSecurityInfo = true,
-            // The free-tier autonomous database only allows 20 connections maximum (presumably across all clients) so this limit
-            // should help keep us below this limit. Running up against the limit throws errors on Connection.Open()
-            MaxPoolSize = 15,
         }.ConnectionString;
     }
 
-    private static void ConfigureWallet(string credentialDirectory)
-    {
-        var walletDirectory = Directory.GetDirectories(credentialDirectory, "Wallet_*").Single();
-        if (OracleConfiguration.TnsAdmin != walletDirectory)
-        {
-            // directory containing tnsnames.ora and sqlnet.ora
-            OracleConfiguration.TnsAdmin = walletDirectory;
-        }
-        if (OracleConfiguration.WalletLocation != walletDirectory)
-        {
-            // directory containing cwallet.sso
-            OracleConfiguration.WalletLocation = walletDirectory;
-        }
-    }
-
-    private static (string DataSource, string Username, string Password) GetCredentials(string credentialDirectory)
+    private static (string Username, string Password) GetCredentials(string credentialDirectory)
     {
         var file = Path.Combine(credentialDirectory, "oracle.txt");
         if (!File.Exists(file)) { throw new InvalidOperationException($"Unable to find Oracle credentials file {file}"); }
         var lines = File.ReadAllLines(file);
-        if (lines.Length != 3) { throw new FormatException($"{file} must contain exactly 2 lines of text"); }
-        return (lines[0], lines[1], lines[2]);
+        if (lines.Length != 2) { throw new FormatException($"{file} must contain exactly 2 lines of text"); }
+        return (lines[0], lines[1]);
     }
 }

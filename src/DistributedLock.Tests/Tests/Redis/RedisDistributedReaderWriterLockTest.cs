@@ -44,11 +44,11 @@ public class RedisDistributedReaderWriterLockTest
 
         var writeHandleTask = @lock.AcquireWriteLockAsync().AsTask();
         _ = writeHandleTask.ContinueWith(t => t.Result.Dispose()); // ensure cleanup
-        Assert.IsFalse(await writeHandleTask.WaitAsync(TimeSpan.FromSeconds(.5)));
+        Assert.IsFalse(await writeHandleTask.TryWaitAsync(TimeSpan.FromSeconds(.5)));
 
         await readHandle.DisposeAsync();
 
-        Assert.IsTrue(await writeHandleTask.WaitAsync(TimeSpan.FromSeconds(5)));
+        Assert.IsTrue(await writeHandleTask.TryWaitAsync(TimeSpan.FromSeconds(5)));
     }
 
     [Test]
