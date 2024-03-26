@@ -25,7 +25,7 @@ public abstract class ExternalConnectionOrTransactionStrategyTestCases<TLockProv
         const string LockName1 = nameof(TestDeadlockDetection) + "_1",
             LockName2 = nameof(TestDeadlockDetection) + "_2";
 
-        Task RunDeadlock(bool isFirst)
+        Task RunDeadlockAsync(bool isFirst)
         {
             this._lockProvider.Strategy.StartAmbient();
             var lock1 = this._lockProvider.CreateLock(isFirst ? LockName1 : LockName2);
@@ -40,7 +40,7 @@ public abstract class ExternalConnectionOrTransactionStrategyTestCases<TLockProv
             });
         }
 
-        var tasks = new[] { RunDeadlock(isFirst: true), RunDeadlock(isFirst: false) };
+        var tasks = new[] { RunDeadlockAsync(isFirst: true), RunDeadlockAsync(isFirst: false) };
 
         Task.WhenAll(tasks).ContinueWith(_ => { }).Wait(TimeSpan.FromSeconds(15)).ShouldEqual(true, this.GetType().Name);
 
