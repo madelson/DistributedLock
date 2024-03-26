@@ -149,7 +149,7 @@ Setup steps for working with the repository locally are documented [here](docs/D
 	- Update dependencies to modern versions without known issues/vulnerabilities ([#111](https://github.com/madelson/DistributedLock/issues/111)/[#177](https://github.com/madelson/DistributedLock/issues/177)/[#184](https://github.com/madelson/DistributedLock/issues/184)/[#185](https://github.com/madelson/DistributedLock/issues/185), all packages). Thanks [@Bartleby2718](https://github.com/Bartleby2718) for helping with this!
 	- Improve directory creation concurrency handling for `FileDistributedLock` on Linux/.NET 8 ([#195](), DistributedLock.FileSystem 1.0.2)
 	- Allow using transaction-scoped locks in SQL Server without explicitly disabling multiplexing ([#189](https://github.com/madelson/DistributedLock/issues/189), DistributedLock.SqlServer 1.0.4)
-	- New API documentation on [dndocs](https://dndocs.com/). Thanks @NeuroXiq!
+	- New API documentation on [dndocs](https://dndocs.com/). Thanks [@NeuroXiq](https://github.com/NeuroXiq)!
 	- New documentation for contributors to get the project running locally (see [Contributing](#contributing))
 - 2.3.4
 	- Support Npgsql 8.0's [ExecuteScalar breaking change](https://github.com/npgsql/npgsql/issues/5143) ([#174](https://github.com/madelson/DistributedLock/issues/174), DistributedLock.Postgres 1.0.5). Thanks [@Kaffeetasse](https://github.com/Kaffeetasse) for diagnosing and fixing!
