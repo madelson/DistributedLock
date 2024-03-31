@@ -37,8 +37,8 @@ public class ApiTest
             {
                 Assert.That(
                     type.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
-                        .Where(c => c.IsPublic || c.Attributes.HasFlag(MethodAttributes.Family))
-, Is.Empty);
+                        .Where(c => c.IsPublic || c.Attributes.HasFlag(MethodAttributes.Family)),
+                    Is.Empty);
             }
         }
     }
@@ -58,7 +58,8 @@ public class ApiTest
             var providers = types.Where(t => !t.IsInterface && kvp.Key.IsAssignableFrom(t)).ToArray();
             var provided = types.Where(t => !t.IsInterface && kvp.Value.IsAssignableFrom(t)).ToArray();
             Assert.That(
-                providers.Select(t => t.GetMethods().Single(m => m.Name.StartsWith("Create") && kvp.Value.IsAssignableFrom(m.ReturnType)).ReturnType), Is.EquivalentTo(provided));
+                providers.Select(t => t.GetMethods().Single(m => m.Name.StartsWith("Create") && kvp.Value.IsAssignableFrom(m.ReturnType)).ReturnType),
+                Is.EquivalentTo(provided));
 
             foreach (var provider in providers)
             {
@@ -79,8 +80,8 @@ public class ApiTest
         {
             Assert.That(
                 publicHandleType.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
-                    .Where(c => c.IsPublic || c.IsFamily || c.IsFamilyOrAssembly)
-, Is.Empty);
+                    .Where(c => c.IsPublic || c.IsFamily || c.IsFamilyOrAssembly),
+                Is.Empty);
         }
     }
 
@@ -111,8 +112,8 @@ public class ApiTest
             .Where(f => new[] { ".Tests", "CodeGen", "DistributedLockTaker" }.All(s => f.IndexOf(s, StringComparison.OrdinalIgnoreCase) < 0));
         Assert.That(
             libraryCsFiles.Where(f => File.ReadAllText(f).Contains("Console."))
-                .Select(Path.GetFileName)
-, Is.Empty);
+                .Select(Path.GetFileName),
+            Is.Empty);
     }
 
     [TestCaseSource(nameof(DistributedLockAssemblies))]
@@ -124,8 +125,8 @@ public class ApiTest
         {
             Assert.That(
                 publicType.GetMembers(BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance)
-                    .Where(m => m.Name.Contains("Internal"))
-, Is.Empty);
+                    .Where(m => m.Name.Contains("Internal")),
+                Is.Empty);
         }
     }
 

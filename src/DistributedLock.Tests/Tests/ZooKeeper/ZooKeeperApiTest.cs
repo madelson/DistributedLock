@@ -12,8 +12,8 @@ public class ZooKeeperApiTest
     {
         Assert.That(
             GetPublicTypes().SelectMany(t => t.GetMethods(BindingFlags.Public | BindingFlags.Instance))
-                .Where(m => m.Name == "Dispose" || (m.Name.Contains("Acquire") && !m.Name.EndsWith("Async")))
-, Is.Empty);
+                .Where(m => m.Name == "Dispose" || (m.Name.Contains("Acquire") && !m.Name.EndsWith("Async"))),
+            Is.Empty);
     }
 
     [Test]
