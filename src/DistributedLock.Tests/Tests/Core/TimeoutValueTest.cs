@@ -18,33 +18,33 @@ public class TimeoutValueTest
     {
         Assert.IsTrue(default(TimeoutValue).IsZero);
         Assert.IsFalse(default(TimeoutValue).IsInfinite);
-        Assert.AreEqual(0, default(TimeoutValue).InMilliseconds);
-        Assert.AreEqual(0, default(TimeoutValue).InSeconds);
+        Assert.That(default(TimeoutValue).InMilliseconds, Is.EqualTo(0));
+        Assert.That(default(TimeoutValue).InSeconds, Is.EqualTo(0));
 
         TimeoutValue infinite = Timeout.InfiniteTimeSpan;
         Assert.IsFalse(infinite.IsZero);
         Assert.IsTrue(infinite.IsInfinite);
-        Assert.AreEqual(-1, infinite.InMilliseconds);
+        Assert.That(infinite.InMilliseconds, Is.EqualTo(-1));
         Assert.Throws<InvalidOperationException>(() => infinite.InSeconds.ToString());
 
         TimeoutValue normal = TimeSpan.FromSeconds(10.4);
         Assert.IsFalse(normal.IsZero);
         Assert.IsFalse(normal.IsInfinite);
-        Assert.AreEqual(10400, normal.InMilliseconds);
-        Assert.AreEqual(10, normal.InSeconds);
+        Assert.That(normal.InMilliseconds, Is.EqualTo(10400));
+        Assert.That(normal.InSeconds, Is.EqualTo(10));
     }
 
     [Test]
     public void TestConversion()
     {
-        Assert.AreEqual((TimeoutValue)default(TimeSpan?), new TimeoutValue(Timeout.InfiniteTimeSpan));
+        Assert.That(new TimeoutValue(Timeout.InfiniteTimeSpan), Is.EqualTo((TimeoutValue)default(TimeSpan?)));
 
         CheckEquality(Timeout.InfiniteTimeSpan);
         CheckEquality(TimeSpan.FromSeconds(101.3));
         CheckEquality(TimeSpan.FromTicks(1));
         CheckEquality(TimeSpan.Zero);
 
-        static void CheckEquality(TimeSpan value) => Assert.AreEqual((int)value.TotalMilliseconds, ((TimeoutValue)value).InMilliseconds);
+        static void CheckEquality(TimeSpan value) => Assert.That(((TimeoutValue)value).InMilliseconds, Is.EqualTo((int)value.TotalMilliseconds));
     }
 
     [Test]
@@ -66,7 +66,7 @@ public class TimeoutValueTest
                     Assert.IsTrue(aValue.Equals(bValue));
                     Assert.IsTrue(aValue.Equals((object)bValue));
                     Assert.IsTrue(Equals(aValue, bValue));
-                    Assert.AreEqual(aValue.GetHashCode(), bValue.GetHashCode());
+                    Assert.That(bValue.GetHashCode(), Is.EqualTo(aValue.GetHashCode()));
                 }
                 else
                 {
@@ -75,7 +75,7 @@ public class TimeoutValueTest
                     Assert.IsFalse(aValue.Equals(bValue));
                     Assert.IsFalse(aValue.Equals((object)bValue));
                     Assert.IsFalse(Equals(aValue, bValue));
-                    Assert.AreNotEqual(aValue.GetHashCode(), bValue.GetHashCode());
+                    Assert.That(bValue.GetHashCode(), Is.Not.EqualTo(aValue.GetHashCode()));
                 }
             }
         }

@@ -13,10 +13,10 @@ public class HelpersTest
     {
         var tasks = new[] { Task.FromResult(14), Task.FromResult(24) };
         var safeTask = Helpers.SafeCreateTask(state => tasks[state], 1);
-        Assert.AreSame(tasks[1], safeTask);
+        Assert.That(safeTask, Is.SameAs(tasks[1]));
 
         var safeNonGenericTask = Helpers.SafeCreateTask<int>(state => tasks[state], 1);
-        Assert.AreSame(safeNonGenericTask, tasks[1]);
+        Assert.That(tasks[1], Is.SameAs(safeNonGenericTask));
     }
 
     [Test]

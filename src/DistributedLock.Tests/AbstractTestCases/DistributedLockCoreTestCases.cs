@@ -202,8 +202,8 @@ public abstract class DistributedLockCoreTestCases<TLockProvider, TStrategy>
         var timeout = Task.Delay(TimeSpan.FromSeconds(30));
 
         var completed = await Task.WhenAny(Task.WhenAll(tasks), failure.Task, timeout);
-        Assert.AreNotSame(failure.Task, completed, $"Failed with {(failure.Task.IsFaulted ? failure.Task.Exception!.ToString() : null)}");
-        Assert.AreNotSame(timeout, completed, $"Timed out! (only {tasks.Count(t => t.IsCompleted)}/{taskCount} completed)");
+        Assert.That(completed, Is.Not.SameAs(failure.Task), $"Failed with {(failure.Task.IsFaulted ? failure.Task.Exception!.ToString() : null)}");
+        Assert.That(completed, Is.Not.SameAs(timeout), $"Timed out! (only {tasks.Count(t => t.IsCompleted)}/{taskCount} completed)");
 
         tasks.ForEach(t => t.Result.ShouldEqual(0));
     }
@@ -228,7 +228,7 @@ public abstract class DistributedLockCoreTestCases<TLockProvider, TStrategy>
         var longName2 = new string('a', longName1.Length - 1) + "A";
         StringComparer.OrdinalIgnoreCase.Equals(longName1, longName2).ShouldEqual(true, "sanity check");
 
-        Assert.AreNotEqual(this._lockProvider.GetSafeName(longName1), this._lockProvider.GetSafeName(longName2));
+        Assert.That(this._lockProvider.GetSafeName(longName2), Is.Not.EqualTo(this._lockProvider.GetSafeName(longName1)));
     }
 
     [Test]
@@ -248,7 +248,7 @@ public abstract class DistributedLockCoreTestCases<TLockProvider, TStrategy>
         var upperBaseName = $"{uniqueHashName.Substring(0, 6)}_A";
         var upperName = this._lockProvider.GetSafeName(upperBaseName);
         // make sure we succeeded in generating what we set out to generate
-        Assert.AreNotEqual(lowerName, upperName);
+        Assert.That(upperName, Is.Not.EqualTo(lowerName));
         if (StringComparer.OrdinalIgnoreCase.Equals(lowerName, upperName))
         {
             // if the names vary only by case, test that they are different locks

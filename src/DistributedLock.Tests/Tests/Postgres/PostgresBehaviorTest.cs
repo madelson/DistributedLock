@@ -153,7 +153,7 @@ public class PostgresBehaviorTest
         getPidCommand.CommandText = "SELECT pg_backend_pid()";
         var pid = (int)(await getPidCommand.ExecuteScalarAsync())!;
 
-        Assert.AreEqual(ConnectionState.Open, connection.State);
+        Assert.That(connection.State, Is.EqualTo(ConnectionState.Open));
 
         // kill the connection from the back end
         using var killingConnection = new NpgsqlConnection(TestingPostgresDb.DefaultConnectionString);
@@ -163,7 +163,7 @@ public class PostgresBehaviorTest
         await killCommand.ExecuteNonQueryAsync();
 
         Assert.ThrowsAsync<PostgresException>(getPidCommand.ExecuteScalarAsync);
-        Assert.AreNotEqual(ConnectionState.Open, connection.State);
+        Assert.That(connection.State, Is.Not.EqualTo(ConnectionState.Open));
 
         Assert.IsTrue(stateChangedEvent.Wait(TimeSpan.FromSeconds(5)));
     }

@@ -254,7 +254,7 @@ public class FileDistributedLockTest
                 && Environment.OSVersion.Version.Build < 22000)
             {
                 Assert.IsFalse(CanCreateFileWithName(variant), variant);
-                Assert.AreNotEqual(name, Path.GetFileName(new FileDistributedLock(LockFileDirectoryInfo, name).Name), variant);
+                Assert.That(Path.GetFileName(new FileDistributedLock(LockFileDirectoryInfo, name).Name), Is.Not.EqualTo(name), variant);
             }
         }
     }
@@ -364,7 +364,7 @@ public class FileDistributedLockTest
         {
             if ((@char >= '2' && @char <= '7') || (@char >= 'A' && @char <= 'Z'))
             {
-                Assert.AreEqual(actual: charCounts[@char], expected: expectedCount, delta: .1 * expectedCount);
+                Assert.That(charCounts[@char], Is.EqualTo(expectedCount).Within(.1 * expectedCount));
             }
             else
             {

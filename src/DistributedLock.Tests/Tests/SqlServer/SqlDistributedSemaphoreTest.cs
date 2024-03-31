@@ -43,7 +43,7 @@ public sealed class SqlDistributedSemaphoreTest
         ToSafeNameChecked(new string('a', 1000));
         ToSafeNameChecked(string.Join(string.Empty, Enumerable.Range(0, byte.MaxValue).Select(i => (char)i)));
 
-        Assert.AreNotEqual(ToSafeNameChecked(new string('b', 500)), ToSafeNameChecked(new string('b', 499) + "B"));
+        Assert.That(ToSafeNameChecked(new string('b', 499) + "B"), Is.Not.EqualTo(ToSafeNameChecked(new string('b', 500))));
 
         ToSafeNameChecked(new string('x', 200)).Length.ShouldEqual(115 - 30);
 

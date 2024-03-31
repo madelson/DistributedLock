@@ -9,8 +9,9 @@
     <PackageVersion Include="Azure.Storage.Blobs" Version="12.19.1" />
     <PackageVersion Include="Nullable" Version="1.3.1" Condition="'$(TargetFramework)' != 'netstandard2.1'" />
     <PackageVersion Include="MySqlConnector" Version="2.3.5" />
+    <PackageVersion Include="NUnit.Analyzers" Version="4.1.0" />
     <PackageVersion Include="Oracle.ManagedDataAccess.Core" Version="3.21.130" Condition="'$(TargetFramework)' == 'netstandard2.1'" />
-    <PackageVersion Include="Oracle.ManagedDataAccess" Version="21.13.0" Condition="'$(TargetFramework)' == 'net462'"/>
+    <PackageVersion Include="Oracle.ManagedDataAccess" Version="21.13.0" Condition="'$(TargetFramework)' == 'net462'" />
     <PackageVersion Include="Npgsql" Version="8.0.2" />
     <PackageVersion Include="StackExchange.Redis" Version="2.7.27" />
     <PackageVersion Include="Microsoft.Data.SqlClient" Version="5.2.0" />

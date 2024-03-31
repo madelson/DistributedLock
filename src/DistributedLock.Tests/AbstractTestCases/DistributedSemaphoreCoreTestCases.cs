@@ -52,7 +52,7 @@ public abstract class DistributedSemaphoreCoreTestCases<TSemaphoreProvider, TStr
             .ToArray();
         Task.WaitAll(threads);
 
-        CollectionAssert.AreEquivalent(new[] { 1, 2, 3 }, seenCounterValues.ToArray());
+        Assert.That(seenCounterValues.ToArray(), Is.EquivalentTo(new[] { 1, 2, 3 }));
     }
 
     [Test]

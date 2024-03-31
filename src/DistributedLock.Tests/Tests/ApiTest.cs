@@ -57,9 +57,8 @@ public class ApiTest
         {
             var providers = types.Where(t => !t.IsInterface && kvp.Key.IsAssignableFrom(t)).ToArray();
             var provided = types.Where(t => !t.IsInterface && kvp.Value.IsAssignableFrom(t)).ToArray();
-            CollectionAssert.AreEquivalent(
-                provided, 
-                providers.Select(t => t.GetMethods().Single(m => m.Name.StartsWith("Create") && kvp.Value.IsAssignableFrom(m.ReturnType)).ReturnType));
+            Assert.That(
+                providers.Select(t => t.GetMethods().Single(m => m.Name.StartsWith("Create") && kvp.Value.IsAssignableFrom(m.ReturnType)).ReturnType), Is.EquivalentTo(provided));
 
             foreach (var provider in providers)
             {

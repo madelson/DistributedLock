@@ -16,9 +16,9 @@ public class PostgresAdvisoryLockKeyTest
     [Test]
     public void TestDefault()
     {
-        Assert.AreEqual(new string('0', 16), default(PostgresAdvisoryLockKey).ToString());
+        Assert.That(default(PostgresAdvisoryLockKey).ToString(), Is.EqualTo(new string('0', 16)));
         Assert.IsTrue(default(PostgresAdvisoryLockKey).HasSingleKey);
-        Assert.AreEqual(0, default(PostgresAdvisoryLockKey).Key);
+        Assert.That(default(PostgresAdvisoryLockKey).Key, Is.EqualTo(0));
         AssertEquality(new PostgresAdvisoryLockKey(0), default);
     }
 
@@ -45,8 +45,8 @@ public class PostgresAdvisoryLockKeyTest
     {
         var key = new PostgresAdvisoryLockKey(1);
         Assert.IsTrue(key.HasSingleKey);
-        Assert.AreEqual(1L, key.Key);
-        Assert.AreEqual("0000000000000001", key.ToString());
+        Assert.That(key.Key, Is.EqualTo(1L));
+        Assert.That(key.ToString(), Is.EqualTo("0000000000000001"));
         AssertEquality(key, new PostgresAdvisoryLockKey(key.ToString()));
     }
 
@@ -55,8 +55,8 @@ public class PostgresAdvisoryLockKeyTest
     {
         var key = new PostgresAdvisoryLockKey(3, -1);
         Assert.IsFalse(key.HasSingleKey);
-        Assert.AreEqual((3, -1), key.Keys);
-        Assert.AreEqual("00000003,ffffffff", key.ToString());
+        Assert.That(key.Keys, Is.EqualTo((3, -1)));
+        Assert.That(key.ToString(), Is.EqualTo("00000003,ffffffff"));
         AssertEquality(key, new PostgresAdvisoryLockKey(key.ToString()));
     }
 
@@ -65,7 +65,7 @@ public class PostgresAdvisoryLockKeyTest
     {
         var key = new PostgresAdvisoryLockKey(new string('漢', 2 * PostgresAdvisoryLockKey.MaxAsciiLength), allowHashing: true);
         Assert.IsTrue(key.HasSingleKey);
-        Assert.AreEqual(-5707277204051710361, key.Key);
+        Assert.That(key.Key, Is.EqualTo(-5707277204051710361));
         AssertEquality(key, new PostgresAdvisoryLockKey(key.ToString()));
     }
 
@@ -105,33 +105,33 @@ public class PostgresAdvisoryLockKeyTest
 
     private static void AssertInequality(PostgresAdvisoryLockKey a, PostgresAdvisoryLockKey b)
     {
-        Assert.AreNotEqual(a, b);
+        Assert.That(b, Is.Not.EqualTo(a));
         Assert.IsFalse(a == b);
         Assert.IsTrue(a != b);
-        Assert.AreNotEqual(a.GetHashCode(), b.GetHashCode());
+        Assert.That(b.GetHashCode(), Is.Not.EqualTo(a.GetHashCode()));
         if (a.HasSingleKey && b.HasSingleKey)
         {
-            Assert.AreNotEqual(a.Key, b.Key);
+            Assert.That(b.Key, Is.Not.EqualTo(a.Key));
         }
         else if (!a.HasSingleKey && !b.HasSingleKey)
         {
-            Assert.AreNotEqual(a.Keys, b.Keys);
+            Assert.That(b.Keys, Is.Not.EqualTo(a.Keys));
         }
     }
 
     private static void AssertEquality(PostgresAdvisoryLockKey a, PostgresAdvisoryLockKey b)
     {
-        Assert.AreEqual(a, b);
+        Assert.That(b, Is.EqualTo(a));
         Assert.IsTrue(a == b);
         Assert.IsFalse(a != b);
-        Assert.AreEqual(a.GetHashCode(), b.GetHashCode());
+        Assert.That(b.GetHashCode(), Is.EqualTo(a.GetHashCode()));
         if (a.HasSingleKey)
         {
-            Assert.AreEqual(a.Key, b.Key);
+            Assert.That(b.Key, Is.EqualTo(a.Key));
         }
         else
         {
-            Assert.AreEqual(a.Keys, b.Keys);
+            Assert.That(b.Keys, Is.EqualTo(a.Keys));
         }
     }
 
@@ -142,8 +142,8 @@ public class PostgresAdvisoryLockKeyTest
         var key3 = new PostgresAdvisoryLockKey(name, allowHashing: true);
         AssertEquality(key1, key2);
         AssertEquality(key1, key3);
-        Assert.AreEqual(key1.ToString(), key2.ToString());
-        Assert.AreEqual(key1.ToString(), key3.ToString());
+        Assert.That(key2.ToString(), Is.EqualTo(key1.ToString()));
+        Assert.That(key3.ToString(), Is.EqualTo(key1.ToString()));
         return key1;
     }
 }

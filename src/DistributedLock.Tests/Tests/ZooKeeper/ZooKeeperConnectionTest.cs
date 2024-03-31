@@ -15,8 +15,8 @@ public class ZooKeeperConnectionTest
         using var connection1 = await pool.ConnectAsync(GetConnectionInfo(), CancellationToken.None);
         using var connection2 = await pool.ConnectAsync(GetConnectionInfo(), CancellationToken.None);
 
-        Assert.AreNotSame(connection1, connection2);
-        Assert.AreSame(connection1.ZooKeeper, connection2.ZooKeeper);
+        Assert.That(connection2, Is.Not.SameAs(connection1));
+        Assert.That(connection2.ZooKeeper, Is.SameAs(connection1.ZooKeeper));
 
         connection1.Dispose();
         connection2.ZooKeeper.getState().ShouldEqual(ZooKeeper.States.CONNECTED);
@@ -29,8 +29,8 @@ public class ZooKeeperConnectionTest
         using var connection1 = await pool.ConnectAsync(GetConnectionInfo(connectTimeout: TimeSpan.FromSeconds(30)), CancellationToken.None);
         using var connection2 = await pool.ConnectAsync(GetConnectionInfo(connectTimeout: TimeSpan.FromSeconds(20)), CancellationToken.None);
 
-        Assert.AreNotSame(connection1, connection2);
-        Assert.AreNotSame(connection1.ZooKeeper, connection2.ZooKeeper);
+        Assert.That(connection2, Is.Not.SameAs(connection1));
+        Assert.That(connection2.ZooKeeper, Is.Not.SameAs(connection1.ZooKeeper));
     }
 
     [Test]
@@ -46,7 +46,7 @@ public class ZooKeeperConnectionTest
         Assert.IsTrue(await TestHelper.WaitForAsync(() => (zooKeeper1.getState() == ZooKeeper.States.CLOSED).AsValueTask(), TimeSpan.FromSeconds(3)));
 
         using var connection2 = await pool.ConnectAsync(GetConnectionInfo(), CancellationToken.None);
-        Assert.AreNotSame(zooKeeper1, connection2.ZooKeeper);
+        Assert.That(connection2.ZooKeeper, Is.Not.SameAs(zooKeeper1));
     }
 
     [Test]
