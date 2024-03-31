@@ -30,12 +30,12 @@ public class AzureBehaviorTest
         var name = Guid.NewGuid() + "/a";
 
         var blobClient1 = new BlobClient(AzureCredentials.ConnectionString, AzureCredentials.DefaultBlobContainerName, name);
-        Assert.IsFalse(blobClient1.Exists());
+        Assert.That((bool)blobClient1.Exists(), Is.False);
         blobClient1.Upload(Stream.Null);
-        Assert.IsTrue(blobClient1.Exists());
+        Assert.That((bool)blobClient1.Exists(), Is.True);
 
         var blobClient2 = new BlobClient(AzureCredentials.ConnectionString, AzureCredentials.DefaultBlobContainerName, name.Replace('/', '\\'));
-        Assert.IsTrue(blobClient2.Exists());
+        Assert.That((bool)blobClient2.Exists(), Is.True);
     }
 
     [Test]

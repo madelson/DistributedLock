@@ -34,7 +34,7 @@ public abstract class ConnectionStringStrategyTestCases<TLockProvider, TStrategy
                 this._lockProvider.Strategy.Db.CountActiveSessions(applicationName).ShouldEqual(1, this.GetType().Name);
             }
             // still alive due to pooling, except in Oracle where the application name (client info) is not part of the pool key
-            Assert.LessOrEqual(this._lockProvider.Strategy.Db.CountActiveSessions(applicationName), 1, this.GetType().Name);
+            Assert.That(this._lockProvider.Strategy.Db.CountActiveSessions(applicationName), Is.LessThanOrEqualTo(1), this.GetType().Name);
         }
 
         using (var connection = this._lockProvider.Strategy.Db.CreateConnection())
@@ -110,7 +110,7 @@ public abstract class ConnectionStringStrategyTestCases<TLockProvider, TStrategy
                     handle.HandleLostToken.Register(() => { });
                 }
             });
-            Assert.IsTrue(await accessHandleLostTokenTask.TryWaitAsync(TimeSpan.FromSeconds(5)));
+            Assert.That(await accessHandleLostTokenTask.TryWaitAsync(TimeSpan.FromSeconds(5)), Is.True);
 
             // do this only on success; on failure we're likely deadlocked and dispose will hang
             await handle.DisposeAsync();

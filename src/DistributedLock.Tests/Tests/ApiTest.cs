@@ -31,14 +31,14 @@ public class ApiTest
         {
             if (!type.IsAbstract)
             {
-                Assert.IsTrue(type.IsSealed, $"{type} should be sealed");
+                Assert.That(type.IsSealed, Is.True, $"{type} should be sealed");
             }
             else
             {
-                Assert.IsEmpty(
+                Assert.That(
                     type.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
                         .Where(c => c.IsPublic || c.Attributes.HasFlag(MethodAttributes.Family))
-                );
+, Is.Empty);
             }
         }
     }
@@ -73,14 +73,14 @@ public class ApiTest
         var publicHandleTypes = GetPublicTypes(Assembly.Load(assemblyName))
             .Where(t => typeof(IDistributedSynchronizationHandle).IsAssignableFrom(t))
             .ToArray();
-        Assert.IsNotEmpty(publicHandleTypes); // sanity check
+        Assert.That(publicHandleTypes, Is.Not.Empty); // sanity check
 
         foreach (var publicHandleType in publicHandleTypes)
         {
-            Assert.IsEmpty(
+            Assert.That(
                 publicHandleType.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
                     .Where(c => c.IsPublic || c.IsFamily || c.IsFamilyOrAssembly)
-            );
+, Is.Empty);
         }
     }
 
@@ -89,7 +89,7 @@ public class ApiTest
     {
         var projectDirectory = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(CurrentFilePath())!, "..", "..", assemblyName.Name!));
         var codeFiles = Directory.GetFiles(projectDirectory, "*.cs", SearchOption.AllDirectories);
-        Assert.IsNotEmpty(codeFiles);
+        Assert.That(codeFiles, Is.Not.Empty);
 
         var awaitRegex = new Regex(@"//.*|(?<await>\bawait\s)");
         var configureAwaitRegex = new Regex(@"\.ConfigureAwait\(false\)|\.TryAwait\(\)");
@@ -98,7 +98,7 @@ public class ApiTest
             var code = File.ReadAllText(codeFile);
             var awaitCount = awaitRegex.Matches(code).Cast<Match>().Count(m => m.Groups["await"].Success);
             var configureAwaitCount = configureAwaitRegex.Matches(code).Count;
-            Assert.IsTrue(configureAwaitCount >= awaitCount, $"ConfigureAwait(false) count ({configureAwaitCount}) < await count ({awaitCount}) in {codeFile}");
+            Assert.That(configureAwaitCount >= awaitCount, Is.True, $"ConfigureAwait(false) count ({configureAwaitCount}) < await count ({awaitCount}) in {codeFile}");
         }
     }
 
@@ -109,10 +109,10 @@ public class ApiTest
         var solutionDirectory = Path.GetDirectoryName(projectDirectory!);
         var libraryCsFiles = Directory.GetFiles(solutionDirectory!, "*.cs", SearchOption.AllDirectories)
             .Where(f => new[] { ".Tests", "CodeGen", "DistributedLockTaker" }.All(s => f.IndexOf(s, StringComparison.OrdinalIgnoreCase) < 0));
-        Assert.IsEmpty(
+        Assert.That(
             libraryCsFiles.Where(f => File.ReadAllText(f).Contains("Console."))
                 .Select(Path.GetFileName)
-        );
+, Is.Empty);
     }
 
     [TestCaseSource(nameof(DistributedLockAssemblies))]
@@ -122,10 +122,10 @@ public class ApiTest
         var publicTypes = GetPublicTypes(assembly);
         foreach (var publicType in publicTypes)
         {
-            Assert.IsEmpty(
+            Assert.That(
                 publicType.GetMembers(BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance)
                     .Where(m => m.Name.Contains("Internal"))
-            );
+, Is.Empty);
         }
     }
 
@@ -136,8 +136,8 @@ public class ApiTest
         var publicTypes = GetPublicTypes(assembly);
         foreach (var publicType in publicTypes)
         {
-            Assert.IsNull(publicType.GetMethod("GetSafeName", BindingFlags.Public | BindingFlags.Static));
-            Assert.IsNull(publicType.GetProperty("MaxNameLength", BindingFlags.Public | BindingFlags.Static));
+            Assert.That(publicType.GetMethod("GetSafeName", BindingFlags.Public | BindingFlags.Static), Is.Null);
+            Assert.That(publicType.GetProperty("MaxNameLength", BindingFlags.Public | BindingFlags.Static), Is.Null);
         }
     }
 
@@ -145,7 +145,7 @@ public class ApiTest
     public void TestAssemblyVersioning(AssemblyName assemblyName)
     {
         var assembly = Assembly.Load(assemblyName);
-        Assert.IsNotNull(assembly.GetName().GetPublicKeyToken(), "Should be signed");
+        Assert.That(assembly.GetName().GetPublicKeyToken(), Is.Not.Null, "Should be signed");
 
         // scheme based on https://codingforsmarties.wordpress.com/2016/01/21/how-to-version-assemblies-destined-for-nuget/
         var version = assembly.GetName().Version;

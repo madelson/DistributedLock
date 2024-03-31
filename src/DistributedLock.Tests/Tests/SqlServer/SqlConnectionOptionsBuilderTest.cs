@@ -21,8 +21,8 @@ public class SqlConnectionOptionsBuilderTest
     {
         var options = SqlConnectionOptionsBuilder.GetOptions(null);
         options.keepaliveCadence.ShouldEqual(TimeSpan.FromMinutes(10));
-        Assert.IsTrue(options.useMultiplexing);
-        Assert.IsFalse(options.useTransaction);
+        Assert.That(options.useMultiplexing, Is.True);
+        Assert.That(options.useTransaction, Is.False);
         options.ShouldEqual(SqlConnectionOptionsBuilder.GetOptions(o => { }));
     }
 
@@ -30,7 +30,7 @@ public class SqlConnectionOptionsBuilderTest
     public void TestUseTransactionDoesNotRequireDisablingMultiplexing()
     {
         var options = SqlConnectionOptionsBuilder.GetOptions(o => o.UseTransaction());
-        Assert.IsTrue(options.useTransaction);
-        Assert.IsFalse(options.useMultiplexing);
+        Assert.That(options.useTransaction, Is.True);
+        Assert.That(options.useMultiplexing, Is.False);
     }
 }

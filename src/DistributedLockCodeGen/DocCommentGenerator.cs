@@ -19,7 +19,7 @@ public class DocCommentGenerator
             .Where(t => CodeGenHelpers.NormalizeCodeWhitespace(t.updatedCode) != CodeGenHelpers.NormalizeCodeWhitespace(t.code))
             .ToList();
         changes.ForEach(t => File.WriteAllText(t.file, t.updatedCode));
-        Assert.IsEmpty(changes.Select(t => t.file));
+        Assert.That(changes.Select(t => t.file), Is.Empty);
     }
 
     internal static string AddDocComments(string code)

@@ -22,7 +22,7 @@ public class AzureBlobLeaseDistributedSynchronizationProviderTest
         await using (await provider.AcquireLockAsync(LockName))
         {
             await using var handle = await provider.TryAcquireLockAsync(LockName);
-            Assert.IsNull(handle);
+            Assert.That(handle, Is.Null);
         }
     }
 }

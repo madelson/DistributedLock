@@ -58,10 +58,10 @@ public class SqlDatabaseConnectionTest
             if (isAsync) { await command.ExecuteNonQueryAsync(cancellationTokenSource.Token, disallowAsyncCancellation: true); }
             else { SyncViaAsync.Run(_ => command.ExecuteNonQueryAsync(cancellationTokenSource.Token), 0); }
         });
-        Assert.IsFalse(task.Wait(TimeSpan.FromSeconds(.1)));
+        Assert.That(task.Wait(TimeSpan.FromSeconds(.1)), Is.False);
 
         cancellationTokenSource.Cancel();
-        Assert.IsTrue(task.ContinueWith(_ => { }).Wait(TimeSpan.FromSeconds(5)));
+        Assert.That(task.ContinueWith(_ => { }).Wait(TimeSpan.FromSeconds(5)), Is.True);
         task.Status.ShouldEqual(TaskStatus.Canceled);
     }
 

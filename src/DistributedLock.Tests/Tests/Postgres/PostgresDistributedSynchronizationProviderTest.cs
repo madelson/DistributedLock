@@ -22,14 +22,14 @@ public class PostgresDistributedSynchronizationProviderTest
         await using (await provider.AcquireLockAsync(LockName))
         {
             await using var handle = await provider.TryAcquireLockAsync(LockName);
-            Assert.IsNull(handle);
+            Assert.That(handle, Is.Null);
         }
 
         const string ReaderWriterLockName = TargetFramework.Current + "ProviderBasicTest_ReaderWriter";
         await using (await provider.AcquireReadLockAsync(ReaderWriterLockName))
         {
             await using var handle = await provider.TryAcquireWriteLockAsync(ReaderWriterLockName);
-            Assert.IsNull(handle);
+            Assert.That(handle, Is.Null);
         }
     }
 }

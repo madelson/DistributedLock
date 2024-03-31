@@ -21,7 +21,7 @@ public abstract class ExternalTransactionStrategyTestCases<TLockProvider, TDb>
         var ambientTransactionLock = this._lockProvider.CreateLock(nameof(TestScopedToTransactionOnly));
         using (ambientTransactionLock.Acquire())
         {
-            Assert.IsTrue(this._lockProvider.CreateLock(nameof(TestScopedToTransactionOnly)).IsHeld());
+            Assert.That(this._lockProvider.CreateLock(nameof(TestScopedToTransactionOnly)).IsHeld(), Is.True);
 
             // create a lock of the same type on the underlying connection of the ambient transaction
             using dynamic specificConnectionProvider = Activator.CreateInstance(
@@ -70,7 +70,7 @@ public abstract class ExternalTransactionStrategyTestCases<TLockProvider, TDb>
         var ambientTransactionLock = this._lockProvider.CreateLock(lockName);
 
         using var handle = ambientTransactionLock.Acquire();
-        Assert.IsTrue(nonAmbientTransactionLock.IsHeld());
+        Assert.That(nonAmbientTransactionLock.IsHeld(), Is.True);
 
         if (closeConnection)
         {
@@ -83,7 +83,7 @@ public abstract class ExternalTransactionStrategyTestCases<TLockProvider, TDb>
         Assert.DoesNotThrow(handle.Dispose);
 
         // now lock can be re-acquired
-        Assert.IsFalse(nonAmbientTransactionLock.IsHeld());
+        Assert.That(nonAmbientTransactionLock.IsHeld(), Is.False);
     }
 
     [Test]
@@ -107,7 +107,7 @@ public abstract class ExternalTransactionStrategyTestCases<TLockProvider, TDb>
         var ambientTransactionLock = this._lockProvider.CreateLock(lockName);
 
         using var handle = ambientTransactionLock.Acquire();
-        Assert.IsTrue(nonAmbientTransactionLock.IsHeld());
+        Assert.That(nonAmbientTransactionLock.IsHeld(), Is.True);
 
         complete(this._lockProvider.Strategy.AmbientTransaction!);
 

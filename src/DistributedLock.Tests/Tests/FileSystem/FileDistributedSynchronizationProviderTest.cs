@@ -30,7 +30,7 @@ public class FileDistributedSynchronizationProviderTest
         await using (await provider.AcquireLockAsync("ProviderBasicTest"))
         {
             await using var handle = await provider.TryAcquireLockAsync("ProviderBasicTest");
-            Assert.IsNull(handle);
+            Assert.That(handle, Is.Null);
         }
     }
 }

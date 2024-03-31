@@ -49,7 +49,7 @@ public abstract class MultiplexingConnectionStrategyTestCases<TLockProvider, TDb
     {
         var handle = lock1.Acquire();
 
-        Assert.IsNull(lock2.TryAcquireAsync().Result);
+        Assert.That(lock2.TryAcquireAsync().Result, Is.Null);
 
         return new WeakReference(handle);
     }
@@ -114,7 +114,7 @@ public abstract class MultiplexingConnectionStrategyTestCases<TLockProvider, TDb
             }
         };
 
-        Assert.IsTrue(Task.Run(Test).Wait(Debugger.IsAttached ? TimeSpan.FromMinutes(10) : TimeSpan.FromSeconds(10)));
+        Assert.That(Task.Run(Test).Wait(Debugger.IsAttached ? TimeSpan.FromMinutes(10) : TimeSpan.FromSeconds(10)), Is.True);
 
         string MakeLockName(int i) => $"{nameof(TestHighConcurrencyWithSmallPool)}_{i}";
     }

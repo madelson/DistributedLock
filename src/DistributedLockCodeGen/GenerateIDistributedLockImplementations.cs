@@ -86,7 +86,7 @@ public partial class {lockType}
             string IfSyncApis(string value) => supportsSyncApis ? value : string.Empty;
         }
 
-        Assert.IsEmpty(errors);
+        Assert.That(errors, Is.Empty);
     }
 
     [Test]
@@ -185,7 +185,7 @@ public partial class {lockType}
             }
         }
 
-        Assert.IsEmpty(errors);
+        Assert.That(errors, Is.Empty);
     }
 
     private static void AppendExplicitInterfaceMethod(StringBuilder code, string @interface, string method, string returnType, string? @as = null)

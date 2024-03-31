@@ -19,7 +19,7 @@ public class MySqlConnectionOptionsBuilderTest
     {
         var options = MySqlConnectionOptionsBuilder.GetOptions(null);
         options.keepaliveCadence.ShouldEqual(TimeSpan.FromHours(3.5));
-        Assert.IsTrue(options.useMultiplexing);
+        Assert.That(options.useMultiplexing, Is.True);
         options.ShouldEqual(MySqlConnectionOptionsBuilder.GetOptions(o => { }));
     }
 }

@@ -23,22 +23,22 @@ public class OracleDistributedSynchronizationProviderTest
         await using (await provider.AcquireLockAsync(LockName))
         {
             await using var handle = await provider.TryAcquireLockAsync(LockName);
-            Assert.IsNull(handle);
+            Assert.That(handle, Is.Null);
         }
 
         await using (await provider.AcquireReadLockAsync(LockName))
         {
             await using var readHandle = await provider.TryAcquireReadLockAsync(LockName);
-            Assert.IsNotNull(readHandle);
+            Assert.That(readHandle, Is.Not.Null);
 
             await using (var upgradeHandle = await provider.TryAcquireUpgradeableReadLockAsync(LockName))
             {
-                Assert.IsNotNull(upgradeHandle);
-                Assert.IsFalse(await upgradeHandle!.TryUpgradeToWriteLockAsync());
+                Assert.That(upgradeHandle, Is.Not.Null);
+                Assert.That(await upgradeHandle!.TryUpgradeToWriteLockAsync(), Is.False);
             }
 
             await using var writeHandle = await provider.TryAcquireWriteLockAsync(LockName);
-            Assert.IsNull(writeHandle);
+            Assert.That(writeHandle, Is.Null);
         }
     }
 }

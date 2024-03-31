@@ -24,10 +24,10 @@ public class PostgresDistributedLockTest
         var @lock2 = new PostgresDistributedLock(key2, connectionString);
 
         using var handle1 = await lock1.TryAcquireAsync();
-        Assert.IsNotNull(handle1);
+        Assert.That(handle1, Is.Not.Null);
 
         using var handle2 = await lock2.TryAcquireAsync();
-        Assert.IsNotNull(handle2);
+        Assert.That(handle2, Is.Not.Null);
     }
 
     [Test]
@@ -50,7 +50,7 @@ public class PostgresDistributedLockTest
 
             using (var timedOutHandle = await connectionLock.TryAcquireAsync(TimeSpan.FromSeconds(.2)))
             {
-                Assert.IsNull(timedOutHandle);
+                Assert.That(timedOutHandle, Is.Null);
             }
 
             (await GetTimeoutAsync(transactionCommand)).ShouldEqual("1010ms");

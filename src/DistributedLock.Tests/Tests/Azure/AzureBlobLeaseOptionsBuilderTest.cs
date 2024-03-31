@@ -55,6 +55,6 @@ public class AzureBlobLeaseOptionsBuilderTest
     public void TestDisablesAutoRenewalIfDurationIsInfinite()
     {
         var options = AzureBlobLeaseOptionsBuilder.GetOptions(b => b.Duration(Timeout.InfiniteTimeSpan));
-        Assert.IsTrue(options.renewalCadence.IsInfinite);
+        Assert.That(options.renewalCadence.IsInfinite, Is.True);
     }
 }

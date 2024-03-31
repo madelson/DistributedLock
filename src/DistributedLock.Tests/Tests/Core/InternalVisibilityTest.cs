@@ -11,10 +11,10 @@ public class InternalVisibilityTest
         var internalNamespaceTypes = typeof(IDistributedLock).Assembly.GetTypes()
             .Where(t => t.Namespace?.Contains(".Internal") ?? false)
             .ToList();
-        Assert.IsNotEmpty(internalNamespaceTypes);
+        Assert.That(internalNamespaceTypes, Is.Not.Empty);
 
 #if !DEBUG
-        Assert.IsEmpty(internalNamespaceTypes.Where(t => t.IsPublic));
+        Assert.That(internalNamespaceTypes.Where(t => t.IsPublic), Is.Empty);
 #endif
     }
 }

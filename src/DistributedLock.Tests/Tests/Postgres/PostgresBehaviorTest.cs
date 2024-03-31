@@ -34,7 +34,7 @@ public class PostgresBehaviorTest
         (await commandInTransaction.ExecuteScalarAsync()).ShouldEqual("0");
 
         using var commandOutsideTransaction = connection.CreateCommand();
-        Assert.IsNull(commandOutsideTransaction.Transaction);
+        Assert.That(commandOutsideTransaction.Transaction, Is.Null);
         commandOutsideTransaction.CommandText = "SELECT COUNT(*) FROM foo";
         (await commandOutsideTransaction.ExecuteScalarAsync()).ShouldEqual(0);
 
@@ -85,7 +85,7 @@ public class PostgresBehaviorTest
                 else { cancellationTokenSource.CancelAfter(TimeSpan.FromSeconds(.5)); }
 
                 var exception = Assert.CatchAsync(() => command.ExecuteNonQueryAsync(cancellationTokenSource.Token));
-                Assert.IsInstanceOf(useTimeout ? typeof(PostgresException) : typeof(OperationCanceledException), exception);
+                Assert.That(exception, Is.InstanceOf(useTimeout ? typeof(PostgresException) : typeof(OperationCanceledException)));
 
                 if (useSavePoint)
                 {
@@ -133,10 +133,10 @@ public class PostgresBehaviorTest
         killCommand.CommandText = $"SELECT pg_terminate_backend({pid})";
         await killCommand.ExecuteNonQueryAsync();
 
-        Assert.IsFalse(stateChangedEvent.Wait(TimeSpan.FromSeconds(.1)));
+        Assert.That(stateChangedEvent.Wait(TimeSpan.FromSeconds(.1)), Is.False);
 
         Assert.Throws<NpgsqlException>(() => getPidCommand.ExecuteScalar());
-        Assert.IsTrue(stateChangedEvent.Wait(TimeSpan.FromSeconds(5)));
+        Assert.That(stateChangedEvent.Wait(TimeSpan.FromSeconds(5)), Is.True);
     }
 
     // Effective test for https://github.com/npgsql/npgsql/issues/3442, which broke monitoring
@@ -165,6 +165,6 @@ public class PostgresBehaviorTest
         Assert.ThrowsAsync<PostgresException>(getPidCommand.ExecuteScalarAsync);
         Assert.That(connection.State, Is.Not.EqualTo(ConnectionState.Open));
 
-        Assert.IsTrue(stateChangedEvent.Wait(TimeSpan.FromSeconds(5)));
+        Assert.That(stateChangedEvent.Wait(TimeSpan.FromSeconds(5)), Is.True);
     }
 }

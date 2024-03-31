@@ -23,11 +23,11 @@ public class HelpersTest
     public void TestSafeCreateTaskReturnsCaughtExceptionAsFaultedTask()
     {
         var safeTask = Helpers.SafeCreateTask(state => GetTask(state), "m1");
-        Assert.IsInstanceOf<TimeZoneNotFoundException>(safeTask.Exception!.InnerException);
+        Assert.That(safeTask.Exception!.InnerException, Is.InstanceOf<TimeZoneNotFoundException>());
         safeTask.Exception.InnerException!.Message.ShouldEqual("m1");
 
         var safeNonGenericTask = Helpers.SafeCreateTask<string>(state => GetTask(state), "m2");
-        Assert.IsInstanceOf<TimeZoneNotFoundException>(safeNonGenericTask.Exception!.InnerException);
+        Assert.That(safeNonGenericTask.Exception!.InnerException, Is.InstanceOf<TimeZoneNotFoundException>());
         safeNonGenericTask.Exception.InnerException!.Message.ShouldEqual("m2");
 
         static Task<string> GetTask(string message) => throw new TimeZoneNotFoundException(message);
