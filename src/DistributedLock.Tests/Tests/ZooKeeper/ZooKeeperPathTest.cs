@@ -94,7 +94,7 @@ public class ZooKeeperPathTest
         var publicMembers = typeof(ZooKeeperPath).GetMembers()
             .Where(m => m.DeclaringType == typeof(ZooKeeperPath));
         Assert.That(
-            publicMembers.Select(m => m.Name)
-, Is.EquivalentTo(new[] { "ToString", "Equals", "Equals", "GetHashCode", "op_Equality", "op_Inequality", ".ctor" }));
+            publicMembers.Select(m => m.Name),
+            Is.EquivalentTo(new[] { "ToString", "Equals", "Equals", "GetHashCode", "op_Equality", "op_Inequality", ".ctor" }));
     }
 }
