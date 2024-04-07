@@ -79,7 +79,7 @@ public static class {providerExtensionsName}
             .Where(t => CodeGenHelpers.NormalizeCodeWhitespace(t.code) != CodeGenHelpers.NormalizeCodeWhitespace(t.originalCode))
             .ToList();
         changes.ForEach(t => File.WriteAllText(t.file, t.code));
-        Assert.IsEmpty(changes.Select(t => t.file));
+        Assert.That(changes.Select(t => t.file), Is.Empty);
 
         string GetExtensionMethodName(string interfaceMethodName) =>
             Regex.IsMatch(interfaceMethodName, "^(Try)?Acquire(Async)?$")

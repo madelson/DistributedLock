@@ -25,7 +25,7 @@ public class MySqlDistributedSynchronizationProviderTest
         await using (await provider.AcquireLockAsync(LockName))
         {
             await using var handle = await provider.TryAcquireLockAsync(LockName);
-            Assert.IsNull(handle, db.GetType().Name);
+            Assert.That(handle, Is.Null, db.GetType().Name);
         }
     }
 }

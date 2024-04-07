@@ -24,19 +24,19 @@ public class SyncViaAsyncTest
             async ((int a, int b, Thread startingThread, bool expectAsync) state) => await AddAsync(state.a, state.b, state.startingThread, state.expectAsync),
             (1, 2, currentThread, false)
         );
-        Assert.AreEqual(3, result);
+        Assert.That(result, Is.EqualTo(3));
     }
 
-    private async ValueTask<int> AddAsync(int a, int b, Thread startingThread, bool expectAsync)
+    private static async ValueTask<int> AddAsync(int a, int b, Thread startingThread, bool expectAsync)
     {
         var result = await AddHelperAsync(a, expectAsync) + await AddHelperAsync(b, expectAsync);
-        Assert.AreEqual(expectAsync, Thread.CurrentThread != startingThread);
+        Assert.That(Thread.CurrentThread != startingThread, Is.EqualTo(expectAsync));
         return result;
     }
 
-    private async ValueTask<int> AddHelperAsync(int a, bool expectAsync)
+    private static async ValueTask<int> AddHelperAsync(int a, bool expectAsync)
     {
-        Assert.AreNotEqual(expectAsync, SyncViaAsync.IsSynchronous);
+        Assert.That(SyncViaAsync.IsSynchronous, Is.Not.EqualTo(expectAsync));
 
         if (expectAsync) { await Task.Delay(1); }
         else { Thread.Sleep(1); }

@@ -62,9 +62,9 @@ public class AzureBlobLeaseDistributedLockTest
 
             var @lock = new AzureBlobLeaseDistributedLock(client);
             await using var handle = await @lock.TryAcquireAsync();
-            Assert.IsNotNull(handle);
+            Assert.That(handle, Is.Not.Null);
             await using var nestedHandle = await @lock.TryAcquireAsync();
-            Assert.IsNull(nestedHandle);
+            Assert.That(nestedHandle, Is.Null);
         }
     }
 
@@ -88,11 +88,11 @@ public class AzureBlobLeaseDistributedLockTest
         }
 
         await wrapper.CreateIfNotExistsAsync(metadata, CancellationToken.None);
-        Assert.IsTrue((await client.ExistsAsync()).Value);
-        CollectionAssert.AreEqual(metadata, (await client.GetPropertiesAsync()).Value.Metadata);
+        Assert.That((await client.ExistsAsync()).Value, Is.True);
+        Assert.That((await client.GetPropertiesAsync()).Value.Metadata, Is.EqualTo(metadata).AsCollection);
 
         Assert.DoesNotThrowAsync(async () => await wrapper.CreateIfNotExistsAsync(metadata, CancellationToken.None));
-        Assert.IsTrue((await client.ExistsAsync()).Value);
+        Assert.That((await client.ExistsAsync()).Value, Is.True);
     }
 
     [Test]
@@ -147,7 +147,7 @@ public class AzureBlobLeaseDistributedLockTest
             var @lock = provider.CreateLock(nameof(TestCanAcquireIfContainerLeased));
 
             using var handle = @lock.TryAcquire();
-            Assert.IsNotNull(handle);
+            Assert.That(handle, Is.Not.Null);
         }
         finally
         {
@@ -181,7 +181,7 @@ public class AzureBlobLeaseDistributedLockTest
         using var registration = handle.HandleLostToken.Register(@event.Set);
         using var faultingRegistration = handle.HandleLostToken.Register(() => throw new TimeZoneNotFoundException());
 
-        Assert.IsTrue(@event.Wait(TimeSpan.FromSeconds(15.1)));
+        Assert.That(@event.Wait(TimeSpan.FromSeconds(15.1)), Is.True);
 
         Assert.Throws<RequestFailedException>(handle.Dispose)!
             .ErrorCode.ShouldEqual("LeaseNotPresentWithBlobOperation");
@@ -197,10 +197,10 @@ public class AzureBlobLeaseDistributedLockTest
         using var handle1 = @lock.Acquire();
 
         var handle2Task = @lock.TryAcquireAsync(TimeSpan.FromSeconds(2)).AsTask();
-        Assert.IsFalse(handle2Task.Wait(TimeSpan.FromSeconds(.05)));
+        Assert.That(handle2Task.Wait(TimeSpan.FromSeconds(.05)), Is.False);
 
         handle1.Dispose();
-        Assert.IsTrue(handle2Task.Wait(TimeSpan.FromSeconds(5)));
+        Assert.That(handle2Task.Wait(TimeSpan.FromSeconds(5)), Is.True);
     }
 
     private static BlobBaseClient CreateClient([Values] BlobClientType type, string name) => type switch

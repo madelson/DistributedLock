@@ -18,30 +18,30 @@ public abstract class DistributedReaderWriterLockCoreTestCases<TLockProvider, TS
             this._lockProvider.CreateReaderWriterLock(nameof(TestMultipleReadersSingleWriter));
 
         using var readHandle1 = await Lock().TryAcquireReadLockAsync();
-        Assert.IsNotNull(readHandle1, this.GetType().ToString());
+        Assert.That(readHandle1, Is.Not.Null, this.GetType().ToString());
         using var readHandle2 = Lock().TryAcquireReadLock();
-        Assert.IsNotNull(readHandle2, this.GetType().ToString());
+        Assert.That(readHandle2, Is.Not.Null, this.GetType().ToString());
 
         using var writeHandle1 = Lock().TryAcquireWriteLock();
-        Assert.IsNull(writeHandle1);
+        Assert.That(writeHandle1, Is.Null);
 
         var writeHandleTask = Task.Run(() => Lock().AcquireWriteLockAsync().AsTask());
-        Assert.IsFalse(writeHandleTask.Wait(TimeSpan.FromSeconds(.05)));
+        Assert.That(writeHandleTask.Wait(TimeSpan.FromSeconds(.05)), Is.False);
 
         readHandle1!.Dispose();
-        Assert.IsFalse(writeHandleTask.Wait(TimeSpan.FromSeconds(.05)));
+        Assert.That(writeHandleTask.Wait(TimeSpan.FromSeconds(.05)), Is.False);
 
         readHandle2!.Dispose();
-        Assert.IsTrue(writeHandleTask.Wait(TimeSpan.FromSeconds(10)));
+        Assert.That(writeHandleTask.Wait(TimeSpan.FromSeconds(10)), Is.True);
         using var writeHandle2 = writeHandleTask.Result;
 
         using var writeHandle3 = Lock().TryAcquireWriteLock();
-        Assert.IsNull(writeHandle3);
+        Assert.That(writeHandle3, Is.Null);
 
         writeHandle2.Dispose();
 
         using var writeHandle4 = Lock().TryAcquireWriteLock();
-        Assert.IsNotNull(writeHandle4);
+        Assert.That(writeHandle4, Is.Not.Null);
     }
 
     [Test]
@@ -53,15 +53,15 @@ public abstract class DistributedReaderWriterLockCoreTestCases<TLockProvider, TS
         await using var readerHandle = await Lock().AcquireReadLockAsync();
 
         var writerHandleTask = Task.Run(() => Lock().AcquireWriteLockAsync().AsTask());
-        Assert.IsFalse(await writerHandleTask.TryWaitAsync(TimeSpan.FromSeconds(0.2)));
+        Assert.That(await writerHandleTask.TryWaitAsync(TimeSpan.FromSeconds(0.2)), Is.False);
 
         // trying to take a read lock here fails because there is a writer waiting
         await using var readerHandle2 = await Lock().TryAcquireReadLockAsync();
-        Assert.IsNull(readerHandle2);
+        Assert.That(readerHandle2, Is.Null);
 
         await readerHandle.DisposeAsync();
 
-        Assert.IsTrue(await writerHandleTask.TryWaitAsync(TimeSpan.FromSeconds(5)));
+        Assert.That(await writerHandleTask.TryWaitAsync(TimeSpan.FromSeconds(5)), Is.True);
         await writerHandleTask.Result.DisposeAsync();
     }
 

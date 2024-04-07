@@ -29,9 +29,9 @@ public class ZooKeeperConnectionInfoTest
             })
         };
 
-        Assert.IsTrue(connectionA == connectionB);
+        Assert.That(connectionA == connectionB, Is.True);
         connectionA.GetHashCode().ShouldEqual(connectionB.GetHashCode());
-        Assert.IsFalse(connectionA == connectionC);
-        Assert.AreNotEqual(connectionA.GetHashCode(), connectionC.GetHashCode());
+        Assert.That(connectionA == connectionC, Is.False);
+        Assert.That(connectionC.GetHashCode(), Is.Not.EqualTo(connectionA.GetHashCode()));
     }
 }

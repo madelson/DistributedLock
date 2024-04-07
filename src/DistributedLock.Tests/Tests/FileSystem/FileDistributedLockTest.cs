@@ -72,12 +72,12 @@ public class FileDistributedLockTest
 
         using (@lock.Acquire())
         {
-            Assert.IsTrue(Directory.Exists(directoryName));
-            Assert.IsTrue(File.Exists(@lock.Name));
+            Assert.That(Directory.Exists(directoryName), Is.True);
+            Assert.That(File.Exists(@lock.Name), Is.True);
         }
 
-        Assert.IsTrue(Directory.Exists(directoryName));
-        Assert.IsFalse(File.Exists(@lock.Name));
+        Assert.That(Directory.Exists(directoryName), Is.True);
+        Assert.That(File.Exists(@lock.Name), Is.False);
 
         static string Hash(string text)
         {
@@ -105,7 +105,7 @@ public class FileDistributedLockTest
                 // https://stackoverflow.com/questions/2028874/what-happens-to-an-open-file-handle-on-linux-if-the-pointed-file-gets-moved-or-d
                 Assert.DoesNotThrow(() => File.Delete(@lock.Name));
                 using var reaquireHandle = @lock.TryAcquire();
-                Assert.IsNotNull(reaquireHandle);
+                Assert.That(reaquireHandle, Is.Not.Null);
             }
         }
     }
@@ -208,7 +208,7 @@ public class FileDistributedLockTest
         using (@lock.Acquire())
         {
             using var handle = new FileDistributedLock(LockFileDirectoryInfo, name.Trim('.').Trim(' ')).TryAcquire();
-            Assert.IsNotNull(handle);
+            Assert.That(handle, Is.Not.Null);
         }
     }
 
@@ -253,8 +253,8 @@ public class FileDistributedLockTest
                 // Win <= 10 detection: see https://stackoverflow.com/a/69038652/1142970
                 && Environment.OSVersion.Version.Build < 22000)
             {
-                Assert.IsFalse(CanCreateFileWithName(variant), variant);
-                Assert.AreNotEqual(name, Path.GetFileName(new FileDistributedLock(LockFileDirectoryInfo, name).Name), variant);
+                Assert.That(CanCreateFileWithName(variant), Is.False, variant);
+                Assert.That(Path.GetFileName(new FileDistributedLock(LockFileDirectoryInfo, name).Name), Is.Not.EqualTo(name), variant);
             }
         }
     }
@@ -364,7 +364,7 @@ public class FileDistributedLockTest
         {
             if ((@char >= '2' && @char <= '7') || (@char >= 'A' && @char <= 'Z'))
             {
-                Assert.AreEqual(actual: charCounts[@char], expected: expectedCount, delta: .1 * expectedCount);
+                Assert.That(charCounts[@char], Is.EqualTo(expectedCount).Within(.1 * expectedCount));
             }
             else
             {
@@ -498,7 +498,7 @@ public class FileDistributedLockTest
         var @lock = new FileDistributedLock(directory ?? LockFileDirectoryInfo, name);
         IDistributedSynchronizationHandle? handle = null;
         Assert.DoesNotThrow(() => handle = @lock.TryAcquire(), name);
-        Assert.IsNotNull(handle, name);
+        Assert.That(handle, Is.Not.Null, name);
         handle!.Dispose();
     }
 

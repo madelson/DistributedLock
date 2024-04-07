@@ -195,7 +195,7 @@ public class ZooKeeperSequentialPathHelperTest
             alternatePrefix: "b"
         );
 
-        CollectionAssert.AreEqual(expectedSequenceNumbers, result.Select(t => t.SequenceNumber));
+        Assert.That(result.Select(t => t.SequenceNumber), Is.EqualTo(expectedSequenceNumbers).AsCollection);
         foreach (var info in result)
         {
             info.Path.ShouldEqual($"{parentNode}/{MakeName(info.Prefix, info.SequenceNumber)}");

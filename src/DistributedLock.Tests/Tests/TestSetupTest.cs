@@ -60,7 +60,7 @@ $@"namespace {g.Key}
     {
         // these can be auto-added by VS but they can mess up our SetUpFixtures
         var badNamespaceSegments = new[] { "Tests.Tests", "AbstractTestCases", "Infrastructure" };
-        Assert.IsEmpty(this.GetType().Assembly.GetTypes().Where(t => t.Namespace != null && badNamespaceSegments.Any(s => t.Namespace.Contains(s))));
+        Assert.That(this.GetType().Assembly.GetTypes().Where(t => t.Namespace != null && badNamespaceSegments.Any(s => t.Namespace.Contains(s))), Is.Empty);
     }
 
     private static (string declaration, string @namespace) GetTestClassDeclaration(Type testClassType)

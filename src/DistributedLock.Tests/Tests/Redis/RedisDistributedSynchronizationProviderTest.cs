@@ -24,24 +24,24 @@ public class RedisDistributedSynchronizationProviderTest
         await using (await provider.AcquireLockAsync(LockName))
         {
             await using var handle = await provider.TryAcquireLockAsync(LockName);
-            Assert.IsNull(handle);
+            Assert.That(handle, Is.Null);
         }
 
         const string ReaderWriterLockName = TargetFramework.Current + "ProviderBasicTest_ReaderWriter";
         await using (await provider.AcquireReadLockAsync(ReaderWriterLockName))
         {
             await using var handle = await provider.TryAcquireWriteLockAsync(ReaderWriterLockName);
-            Assert.IsNull(handle);
+            Assert.That(handle, Is.Null);
         }
 
         const string SemaphoreName = TargetFramework.Current + "ProviderBasicTest_Semaphore";
         await using (await provider.AcquireSemaphoreAsync(SemaphoreName, 2))
         {
             await using var handle = await provider.TryAcquireSemaphoreAsync(SemaphoreName, 2);
-            Assert.IsNotNull(handle);
+            Assert.That(handle, Is.Not.Null);
 
             await using var failedHandle = await provider.TryAcquireSemaphoreAsync(SemaphoreName, 2);
-            Assert.IsNull(failedHandle);
+            Assert.That(failedHandle, Is.Null);
         }
     }
 }

@@ -21,24 +21,24 @@ public class ZooKeeperDistributedSynchronizationProviderTest
         await using (await provider.AcquireLockAsync(lockName))
         {
             await using var handle = await provider.TryAcquireLockAsync(lockName);
-            Assert.IsNull(handle);
+            Assert.That(handle, Is.Null);
         }
 
         var readerWriterLockName = TestHelper.UniqueName + "ReaderWriterLock";
         await using (await provider.AcquireReadLockAsync(readerWriterLockName))
         {
             await using var handle = await provider.TryAcquireWriteLockAsync(readerWriterLockName);
-            Assert.IsNull(handle);
+            Assert.That(handle, Is.Null);
         }
 
         var semaphoreName = TestHelper.UniqueName + "Semaphore";
         await using (await provider.AcquireSemaphoreAsync(semaphoreName, 2))
         {
             await using var handle = await provider.TryAcquireSemaphoreAsync(semaphoreName, 2);
-            Assert.IsNotNull(handle);
+            Assert.That(handle, Is.Not.Null);
 
             await using var failedHandle = await provider.TryAcquireSemaphoreAsync(semaphoreName, 2);
-            Assert.IsNull(failedHandle);
+            Assert.That(failedHandle, Is.Null);
         }
     }
 
@@ -56,15 +56,15 @@ public class ZooKeeperDistributedSynchronizationProviderTest
         @lock.Path.ShouldEqual(semaphore.Path);
 
         await using var lockHandle = await @lock.TryAcquireAsync();
-        Assert.IsNotNull(lockHandle);
+        Assert.That(lockHandle, Is.Not.Null);
         await using var readLockHandle = await readerWriterLock.TryAcquireReadLockAsync();
-        Assert.IsNotNull(readLockHandle);
+        Assert.That(readLockHandle, Is.Not.Null);
         await using var semaphoreHandle = await semaphore.TryAcquireAsync();
-        Assert.IsNotNull(semaphoreHandle);
+        Assert.That(semaphoreHandle, Is.Not.Null);
 
         await readLockHandle!.DisposeAsync();
         await using var writeLockHandle = await readerWriterLock.TryAcquireWriteLockAsync();
-        Assert.IsNotNull(writeLockHandle);
+        Assert.That(writeLockHandle, Is.Not.Null);
     }
 
     [Test, Category("CI")]

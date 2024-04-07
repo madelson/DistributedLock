@@ -71,18 +71,18 @@ public class ZooKeeperPathTest
             {
                 if (i == j)
                 {
-                    Assert.IsTrue(paths[i] == paths[j]);
-                    Assert.IsFalse(paths[i] != paths[j]);
-                    Assert.IsTrue(paths[i].Equals(paths[j]));
-                    Assert.IsTrue(Equals(paths[i], paths[j]));
+                    Assert.That(paths[i] == paths[j], Is.True);
+                    Assert.That(paths[i] != paths[j], Is.False);
+                    Assert.That(paths[i].Equals(paths[j]), Is.True);
+                    Assert.That(Equals(paths[i], paths[j]), Is.True);
                 }
                 else
                 {
-                    Assert.IsFalse(paths[i] == paths[j]);
-                    Assert.IsTrue(paths[i] != paths[j]);
-                    Assert.IsFalse(paths[i].Equals(paths[j]));
-                    Assert.IsFalse(Equals(paths[i], paths[j]));
-                    Assert.AreNotEqual(paths[i].GetHashCode(), paths[j].GetHashCode());
+                    Assert.That(paths[i] == paths[j], Is.False);
+                    Assert.That(paths[i] != paths[j], Is.True);
+                    Assert.That(paths[i].Equals(paths[j]), Is.False);
+                    Assert.That(Equals(paths[i], paths[j]), Is.False);
+                    Assert.That(paths[j].GetHashCode(), Is.Not.EqualTo(paths[i].GetHashCode()));
                 }
             }
         }
@@ -93,9 +93,8 @@ public class ZooKeeperPathTest
     {
         var publicMembers = typeof(ZooKeeperPath).GetMembers()
             .Where(m => m.DeclaringType == typeof(ZooKeeperPath));
-        CollectionAssert.AreEquivalent(
-            new[] { "ToString", "Equals", "Equals", "GetHashCode", "op_Equality", "op_Inequality", ".ctor" },
-            publicMembers.Select(m => m.Name)
-        );
+        Assert.That(
+            publicMembers.Select(m => m.Name),
+            Is.EquivalentTo(new[] { "ToString", "Equals", "Equals", "GetHashCode", "op_Equality", "op_Inequality", ".ctor" }));
     }
 }

@@ -50,7 +50,7 @@ public class EventWaitHandleDistributedLockTest
 
         weakHandle.IsAlive.ShouldEqual(false);
         using var handle = @lock.TryAcquire();
-        Assert.IsNotNull(handle);
+        Assert.That(handle, Is.Not.Null);
     }
 
     [Test]

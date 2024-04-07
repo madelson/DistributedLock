@@ -44,11 +44,11 @@ public class RedisDistributedReaderWriterLockTest
 
         var writeHandleTask = @lock.AcquireWriteLockAsync().AsTask();
         _ = writeHandleTask.ContinueWith(t => t.Result.Dispose()); // ensure cleanup
-        Assert.IsFalse(await writeHandleTask.TryWaitAsync(TimeSpan.FromSeconds(.5)));
+        Assert.That(await writeHandleTask.TryWaitAsync(TimeSpan.FromSeconds(.5)), Is.False);
 
         await readHandle.DisposeAsync();
 
-        Assert.IsTrue(await writeHandleTask.TryWaitAsync(TimeSpan.FromSeconds(5)));
+        Assert.That(await writeHandleTask.TryWaitAsync(TimeSpan.FromSeconds(5)), Is.True);
     }
 
     [Test]
@@ -69,7 +69,7 @@ public class RedisDistributedReaderWriterLockTest
         GC.WaitForPendingFinalizers();
 
         await using var writeHandle = await @lock.TryAcquireWriteLockAsync(TimeSpan.FromSeconds(10));
-        Assert.IsNotNull(writeHandle); // indicates read lock was released
+        Assert.That(writeHandle, Is.Not.Null); // indicates read lock was released
 
         async Task AcquireReadLockAsync() => await @lock.AcquireReadLockAsync();
     }

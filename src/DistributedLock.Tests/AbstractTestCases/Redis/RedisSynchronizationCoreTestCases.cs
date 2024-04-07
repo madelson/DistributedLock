@@ -52,7 +52,7 @@ public abstract class RedisSynchronizationCoreTestCases<TLockProvider>
         this._provider.Strategy.SetOptions(o => o.MinValidityTime(RedisDistributedSynchronizationOptionsBuilder.DefaultExpiry.TimeSpan - TimeSpan.FromSeconds(.2)));
         var @lock = this._provider.CreateLock("lock");
 
-        Assert.IsNull(await @lock.TryAcquireAsync());
+        Assert.That(await @lock.TryAcquireAsync(), Is.Null);
 
         @event.Set(); // just to free the waiting threads
     }
@@ -67,7 +67,7 @@ public abstract class RedisSynchronizationCoreTestCases<TLockProvider>
 
         new List<int> { 1, 2, 4 }.ForEach(i => MockDatabase(databases[i], () => throw new DataMisalignedException()));
         var aggregateException = Assert.Throws<AggregateException>(() => handle.Dispose())!;
-        Assert.IsInstanceOf<DataMisalignedException>(aggregateException.InnerException);
+        Assert.That(aggregateException.InnerException, Is.InstanceOf<DataMisalignedException>());
     }
 
     [Test]
@@ -93,7 +93,7 @@ public abstract class RedisSynchronizationCoreTestCases<TLockProvider>
         var @lock = this._provider.CreateLock("lock");
 
         // single sync acquire has different timeout logic, so we test it separately
-        Assert.IsNull(synchronous ? @lock.TryAcquire() : await @lock.TryAcquireAsync());
+        Assert.That(synchronous ? @lock.TryAcquire() : await @lock.TryAcquireAsync(), Is.Null);
     }
 
     [Test]
@@ -108,14 +108,14 @@ public abstract class RedisSynchronizationCoreTestCases<TLockProvider>
         var @lock = this._provider.CreateLock("lock");
 
         var acquireTask = @lock.TryAcquireAsync().AsTask();
-        Assert.IsFalse(acquireTask.Wait(TimeSpan.FromMilliseconds(50)));
+        Assert.That(acquireTask.Wait(TimeSpan.FromMilliseconds(50)), Is.False);
         @event.Set();
-        Assert.IsNull(await acquireTask);
+        Assert.That(await acquireTask, Is.Null);
 
         this._provider.Strategy.DatabaseProvider.Databases = new[] { RedisServer.GetDefaultServer(0).Multiplexer.GetDatabase() };
         var singleDatabaseLock = this._provider.CreateLock("lock");
         using var handle = await singleDatabaseLock.TryAcquireAsync();
-        Assert.IsNotNull(handle);
+        Assert.That(handle, Is.Not.Null);
     }
 
     [Test]
@@ -129,11 +129,11 @@ public abstract class RedisSynchronizationCoreTestCases<TLockProvider>
         var explicitPrefixLock = this._provider.CreateLock("PN");
 
         using var implicitPrefixHandle = implicitPrefixLock.TryAcquire();
-        Assert.IsNotNull(implicitPrefixHandle);
+        Assert.That(implicitPrefixHandle, Is.Not.Null);
         using var noPrefixHandle = noPrefixLock.TryAcquire();
-        Assert.IsNotNull(noPrefixHandle);
+        Assert.That(noPrefixHandle, Is.Not.Null);
         using var explicitPrefixHandle = explicitPrefixLock.TryAcquire();
-        Assert.IsNull(explicitPrefixHandle);
+        Assert.That(explicitPrefixHandle, Is.Null);
 
         static IDatabase CreateDatabase(string? keyPrefix = null)
         {

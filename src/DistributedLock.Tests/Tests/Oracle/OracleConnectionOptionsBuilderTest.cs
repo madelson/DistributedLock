@@ -19,7 +19,7 @@ public class OracleConnectionOptionsBuilderTest
     {
         var options = OracleConnectionOptionsBuilder.GetOptions(null);
         options.keepaliveCadence.ShouldEqual(Timeout.InfiniteTimeSpan);
-        Assert.IsTrue(options.useMultiplexing);
+        Assert.That(options.useMultiplexing, Is.True);
         options.ShouldEqual(OracleConnectionOptionsBuilder.GetOptions(o => { }));
     }
 }

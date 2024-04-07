@@ -52,7 +52,7 @@ public class WaitHandleDistributedSemaphoreTest
 
         weakHandle.IsAlive.ShouldEqual(false);
         using var handle = @lock.TryAcquire();
-        Assert.IsNotNull(handle);
+        Assert.That(handle, Is.Not.Null);
     }
 
     [Test]
@@ -90,7 +90,7 @@ public class WaitHandleDistributedSemaphoreTest
         for (var i = 0; i < 50; ++i)
         {
             using var blockingHandle = semaphore.TryAcquire(TimeSpan.Zero); // claim the last slot on the semaphore
-            Assert.IsNotNull(blockingHandle);
+            Assert.That(blockingHandle, Is.Not.Null);
 
             using CancellationTokenSource source = new();
 
@@ -114,7 +114,7 @@ public class WaitHandleDistributedSemaphoreTest
                 catch (OperationCanceledException) { }
             });
             await acquiringEvent.WaitAsync();
-            Assert.IsFalse(acquireTask.IsCompleted);
+            Assert.That(acquireTask.IsCompleted, Is.False);
 
             using Barrier barrier = new(participantCount: 2);
             var releaseTask = Task.Run(() =>
@@ -133,7 +133,7 @@ public class WaitHandleDistributedSemaphoreTest
         }
 
         await using var handle = await semaphore.TryAcquireAsync();
-        Assert.IsNotNull(handle); // if we lost even a single signal due to cancellation in the loop above, this will fail
+        Assert.That(handle, Is.Not.Null); // if we lost even a single signal due to cancellation in the loop above, this will fail
     }
 
     private static WaitHandleDistributedSemaphore CreateAsLock(string name, NameStyle nameStyle) =>

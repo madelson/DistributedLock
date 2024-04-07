@@ -18,16 +18,16 @@ public abstract class DistributedUpgradeableReaderWriterLockCoreTestCases<TLockP
             this._lockProvider.CreateUpgradeableReaderWriterLock(nameof(TestMultipleReadersSingleWriter));
 
         using var readHandle1 = Lock().TryAcquireReadLockAsync().AsTask().Result;
-        Assert.IsNotNull(readHandle1, this.GetType().ToString());
+        Assert.That(readHandle1, Is.Not.Null, this.GetType().ToString());
         using var readHandle2 = Lock().TryAcquireReadLock();
-        Assert.IsNotNull(readHandle2, this.GetType().ToString());
+        Assert.That(readHandle2, Is.Not.Null, this.GetType().ToString());
 
         using (var handle = Lock().TryAcquireUpgradeableReadLock())
         {
-            Assert.IsNotNull(handle);
+            Assert.That(handle, Is.Not.Null);
 
             using var readHandle3 = Lock().TryAcquireReadLock();
-            Assert.IsNotNull(readHandle3);
+            Assert.That(readHandle3, Is.Not.Null);
 
             Lock().TryAcquireUpgradeableReadLock().ShouldEqual(null);
             Lock().TryAcquireWriteLock().ShouldEqual(null);
@@ -39,7 +39,7 @@ public abstract class DistributedUpgradeableReaderWriterLockCoreTestCases<TLockP
         readHandle2!.Dispose();
 
         using var upgradeHandle = Lock().TryAcquireUpgradeableReadLock();
-        Assert.IsNotNull(upgradeHandle);
+        Assert.That(upgradeHandle, Is.Not.Null);
     }
 
     [Test]
@@ -127,16 +127,16 @@ public abstract class DistributedUpgradeableReaderWriterLockCoreTestCases<TLockP
         // start monitoring
         using var canceledEvent = new ManualResetEventSlim(initialState: false);
         using var registration = handle.HandleLostToken.Register(canceledEvent.Set);
-        Assert.IsFalse(canceledEvent.Wait(TimeSpan.FromSeconds(.05)));
+        Assert.That(canceledEvent.Wait(TimeSpan.FromSeconds(.05)), Is.False);
 
         Assert.DoesNotThrowAsync(() => handle.UpgradeToWriteLockAsync().AsTask());
 
-        Assert.IsFalse(canceledEvent.Wait(TimeSpan.FromSeconds(.05)));
+        Assert.That(canceledEvent.Wait(TimeSpan.FromSeconds(.05)), Is.False);
 
         if (handleLostHelper != null)
         {
             handleLostHelper.Dispose();
-            Assert.IsTrue(canceledEvent.Wait(TimeSpan.FromSeconds(10)));
+            Assert.That(canceledEvent.Wait(TimeSpan.FromSeconds(10)), Is.True);
         }
 
         // when the handle is lost, Dispose() may throw

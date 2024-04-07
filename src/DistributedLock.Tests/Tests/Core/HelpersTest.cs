@@ -13,21 +13,21 @@ public class HelpersTest
     {
         var tasks = new[] { Task.FromResult(14), Task.FromResult(24) };
         var safeTask = Helpers.SafeCreateTask(state => tasks[state], 1);
-        Assert.AreSame(tasks[1], safeTask);
+        Assert.That(safeTask, Is.SameAs(tasks[1]));
 
         var safeNonGenericTask = Helpers.SafeCreateTask<int>(state => tasks[state], 1);
-        Assert.AreSame(safeNonGenericTask, tasks[1]);
+        Assert.That(tasks[1], Is.SameAs(safeNonGenericTask));
     }
 
     [Test]
     public void TestSafeCreateTaskReturnsCaughtExceptionAsFaultedTask()
     {
         var safeTask = Helpers.SafeCreateTask(state => GetTask(state), "m1");
-        Assert.IsInstanceOf<TimeZoneNotFoundException>(safeTask.Exception!.InnerException);
+        Assert.That(safeTask.Exception!.InnerException, Is.InstanceOf<TimeZoneNotFoundException>());
         safeTask.Exception.InnerException!.Message.ShouldEqual("m1");
 
         var safeNonGenericTask = Helpers.SafeCreateTask<string>(state => GetTask(state), "m2");
-        Assert.IsInstanceOf<TimeZoneNotFoundException>(safeNonGenericTask.Exception!.InnerException);
+        Assert.That(safeNonGenericTask.Exception!.InnerException, Is.InstanceOf<TimeZoneNotFoundException>());
         safeNonGenericTask.Exception.InnerException!.Message.ShouldEqual("m2");
 
         static Task<string> GetTask(string message) => throw new TimeZoneNotFoundException(message);

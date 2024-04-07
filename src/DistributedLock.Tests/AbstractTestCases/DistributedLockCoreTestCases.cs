@@ -32,20 +32,20 @@ public abstract class DistributedLockCoreTestCases<TLockProvider, TStrategy>
 
         using (var handle = @lock.TryAcquire())
         {
-            Assert.IsNotNull(handle, this.GetType() + ": should be able to acquire new lock");
+            Assert.That(handle, Is.Not.Null, this.GetType() + ": should be able to acquire new lock");
 
             using (var nestedHandle = @lock.TryAcquire())
             {
-                Assert.IsNull(nestedHandle, "should not be reentrant");
+                Assert.That(nestedHandle, Is.Null, "should not be reentrant");
             }
 
             using var nestedHandle2 = lock2.TryAcquire();
-            Assert.IsNotNull(nestedHandle2, this.GetType() + ": should be able to acquire a different lock");
+            Assert.That(nestedHandle2, Is.Not.Null, this.GetType() + ": should be able to acquire a different lock");
         }
 
         using (var handle = @lock.TryAcquire())
         {
-            Assert.IsNotNull(handle, this.GetType() + ": should be able to re-acquire after releasing");
+            Assert.That(handle, Is.Not.Null, this.GetType() + ": should be able to re-acquire after releasing");
         }
     }
 
@@ -60,20 +60,20 @@ public abstract class DistributedLockCoreTestCases<TLockProvider, TStrategy>
 
         await using (var handle = await @lock.TryAcquireAsync())
         {
-            Assert.IsNotNull(handle, this.GetType().Name);
+            Assert.That(handle, Is.Not.Null, this.GetType().Name);
 
             using (var nestedHandle = await @lock.TryAcquireAsync())
             {
-                Assert.IsNull(nestedHandle, this.GetType().Name);
+                Assert.That(nestedHandle, Is.Null, this.GetType().Name);
             }
 
             await using var nestedHandle2 = lock2.TryAcquireAsync().AsTask().Result;
-            Assert.IsNotNull(nestedHandle2, this.GetType().Name);
+            Assert.That(nestedHandle2, Is.Not.Null, this.GetType().Name);
         }
 
         await using (var handle = await @lock.TryAcquireAsync())
         {
-            Assert.IsNotNull(handle, this.GetType().Name);
+            Assert.That(handle, Is.Not.Null, this.GetType().Name);
         }
     }
 
@@ -96,7 +96,7 @@ public abstract class DistributedLockCoreTestCases<TLockProvider, TStrategy>
     {
         var @lock = this._lockProvider.CreateLock(nameof(TestDisposeHandleIsIdempotent));
         var handle = @lock.Acquire(TimeSpan.FromSeconds(30));
-        Assert.IsNotNull(handle);
+        Assert.That(handle, Is.Not.Null);
         handle.Dispose();
         var handle2 = @lock.Acquire(TimeSpan.FromSeconds(30));
         Assert.DoesNotThrow(handle.Dispose);
@@ -119,11 +119,11 @@ public abstract class DistributedLockCoreTestCases<TLockProvider, TStrategy>
 
             var syncAcquireTask = Task.Run(() => @lock.Acquire(timeout));
             syncAcquireTask.ContinueWith(_ => { }).Wait(waitTime).ShouldEqual(true, "sync acquire");
-            Assert.IsInstanceOf<TimeoutException>(syncAcquireTask.Exception?.InnerException, "sync acquire");
+            Assert.That(syncAcquireTask.Exception?.InnerException, Is.InstanceOf<TimeoutException>(), "sync acquire");
 
             var asyncAcquireTask = @lock.AcquireAsync(timeout).AsTask();
             asyncAcquireTask.ContinueWith(_ => { }).Wait(waitTime).ShouldEqual(true, "async acquire");
-            Assert.IsInstanceOf<TimeoutException>(asyncAcquireTask.Exception!.InnerException, "async acquire");
+            Assert.That(asyncAcquireTask.Exception!.InnerException, Is.InstanceOf<TimeoutException>(), "async acquire");
 
             var syncTryAcquireTask = Task.Run(() => @lock.TryAcquire(timeout));
             syncTryAcquireTask.Wait(waitTime).ShouldEqual(true, "sync tryAcquire");
@@ -202,8 +202,8 @@ public abstract class DistributedLockCoreTestCases<TLockProvider, TStrategy>
         var timeout = Task.Delay(TimeSpan.FromSeconds(30));
 
         var completed = await Task.WhenAny(Task.WhenAll(tasks), failure.Task, timeout);
-        Assert.AreNotSame(failure.Task, completed, $"Failed with {(failure.Task.IsFaulted ? failure.Task.Exception!.ToString() : null)}");
-        Assert.AreNotSame(timeout, completed, $"Timed out! (only {tasks.Count(t => t.IsCompleted)}/{taskCount} completed)");
+        Assert.That(completed, Is.Not.SameAs(failure.Task), $"Failed with {(failure.Task.IsFaulted ? failure.Task.Exception!.ToString() : null)}");
+        Assert.That(completed, Is.Not.SameAs(timeout), $"Timed out! (only {tasks.Count(t => t.IsCompleted)}/{taskCount} completed)");
 
         tasks.ForEach(t => t.Result.ShouldEqual(0));
     }
@@ -228,7 +228,7 @@ public abstract class DistributedLockCoreTestCases<TLockProvider, TStrategy>
         var longName2 = new string('a', longName1.Length - 1) + "A";
         StringComparer.OrdinalIgnoreCase.Equals(longName1, longName2).ShouldEqual(true, "sanity check");
 
-        Assert.AreNotEqual(this._lockProvider.GetSafeName(longName1), this._lockProvider.GetSafeName(longName2));
+        Assert.That(this._lockProvider.GetSafeName(longName2), Is.Not.EqualTo(this._lockProvider.GetSafeName(longName1)));
     }
 
     [Test]
@@ -248,21 +248,21 @@ public abstract class DistributedLockCoreTestCases<TLockProvider, TStrategy>
         var upperBaseName = $"{uniqueHashName.Substring(0, 6)}_A";
         var upperName = this._lockProvider.GetSafeName(upperBaseName);
         // make sure we succeeded in generating what we set out to generate
-        Assert.AreNotEqual(lowerName, upperName);
+        Assert.That(upperName, Is.Not.EqualTo(lowerName));
         if (StringComparer.OrdinalIgnoreCase.Equals(lowerName, upperName))
         {
             // if the names vary only by case, test that they are different locks
             await using (await this._lockProvider.CreateLockWithExactName(lowerName).AcquireAsync())
             await using (var handle = await this._lockProvider.CreateLockWithExactName(upperName).TryAcquireAsync())
             {
-                Assert.IsNotNull(handle);
+                Assert.That(handle, Is.Not.Null);
             }
         }
         else
         {
             // otherwise, check that the names still contain the suffixes we added
-            Assert.IsTrue(lowerName.IndexOf(lowerBaseName, StringComparison.OrdinalIgnoreCase) >= 0);
-            Assert.IsTrue(upperName.IndexOf(upperBaseName, StringComparison.OrdinalIgnoreCase) >= 0);
+            Assert.That(lowerName.IndexOf(lowerBaseName, StringComparison.OrdinalIgnoreCase) >= 0, Is.True);
+            Assert.That(upperName.IndexOf(upperBaseName, StringComparison.OrdinalIgnoreCase) >= 0, Is.True);
         }
     }
 
@@ -301,19 +301,19 @@ public abstract class DistributedLockCoreTestCases<TLockProvider, TStrategy>
         try
         {
             handle.HandleLostToken.CanBeCanceled.ShouldEqual(handleLostHelper != null);
-            Assert.IsFalse(handle.HandleLostToken.IsCancellationRequested);
+            Assert.That(handle.HandleLostToken.IsCancellationRequested, Is.False);
 
             if (handleLostHelper != null)
             {
                 using var canceledEvent = new ManualResetEventSlim(initialState: false);
                 using var registration = handle.HandleLostToken.Register(canceledEvent.Set);
 
-                Assert.IsFalse(canceledEvent.Wait(TimeSpan.FromSeconds(.05)));
+                Assert.That(canceledEvent.Wait(TimeSpan.FromSeconds(.05)), Is.False);
 
                 handleLostHelper.Dispose();
 
-                Assert.IsTrue(canceledEvent.Wait(TimeSpan.FromSeconds(10)));
-                Assert.IsTrue(handle.HandleLostToken.IsCancellationRequested);
+                Assert.That(canceledEvent.Wait(TimeSpan.FromSeconds(10)), Is.True);
+                Assert.That(handle.HandleLostToken.IsCancellationRequested, Is.True);
             }
         }
         finally
@@ -344,7 +344,7 @@ public abstract class DistributedLockCoreTestCases<TLockProvider, TStrategy>
 
         using var canceledEvent = new ManualResetEventSlim(initialState: false);
         handle.HandleLostToken.Register(canceledEvent.Set);
-        Assert.IsTrue(canceledEvent.Wait(TimeSpan.FromSeconds(5)));
+        Assert.That(canceledEvent.Wait(TimeSpan.FromSeconds(5)), Is.True);
 
         // when the handle is lost, Dispose() may throw
         try { handle.Dispose(); }
@@ -361,7 +361,7 @@ public abstract class DistributedLockCoreTestCases<TLockProvider, TStrategy>
         // force monitoring to happen
         using var canceledEvent = new ManualResetEventSlim(initialState: false);
         using var registration = handle.HandleLostToken.Register(canceledEvent.Set);
-        Assert.IsFalse(canceledEvent.Wait(TimeSpan.FromSeconds(.05)));
+        Assert.That(canceledEvent.Wait(TimeSpan.FromSeconds(.05)), Is.False);
 
         Assert.DoesNotThrow(handle.Dispose);
     }
@@ -383,7 +383,7 @@ public abstract class DistributedLockCoreTestCases<TLockProvider, TStrategy>
         this._lockProvider.Strategy.PerformAdditionalCleanupForHandleAbandonment();
 
         using var handle = this._lockProvider.CreateLock(LockName).TryAcquire();
-        Assert.IsNotNull(handle, this.GetType().Name);
+        Assert.That(handle, Is.Not.Null, this.GetType().Name);
     }
 
     [Test]
@@ -391,8 +391,8 @@ public abstract class DistributedLockCoreTestCases<TLockProvider, TStrategy>
     {
         var lockName = this._lockProvider.GetUniqueSafeName();
         var command = this.RunLockTaker(this._lockProvider, this._lockProvider.GetCrossProcessLockType(), lockName);
-        Assert.IsTrue(command.StandardOutput.ReadLineAsync().Wait(TimeSpan.FromSeconds(10)));
-        Assert.IsFalse(command.Task.Wait(TimeSpan.FromSeconds(.1)));
+        Assert.That(command.StandardOutput.ReadLineAsync().Wait(TimeSpan.FromSeconds(10)), Is.True);
+        Assert.That(command.Task.Wait(TimeSpan.FromSeconds(.1)), Is.False);
 
         var @lock = this._lockProvider.CreateLockWithExactName(lockName);
         @lock.TryAcquire().ShouldEqual(null, this.GetType().Name);
@@ -401,9 +401,9 @@ public abstract class DistributedLockCoreTestCases<TLockProvider, TStrategy>
         command.StandardInput.Flush();
         
         using var handle = @lock.TryAcquire(TimeSpan.FromSeconds(10));
-        Assert.IsNotNull(handle, this.GetType().Name);
+        Assert.That(handle, Is.Not.Null, this.GetType().Name);
 
-        Assert.IsTrue(command.Task.Wait(TimeSpan.FromSeconds(10)));
+        Assert.That(command.Task.Wait(TimeSpan.FromSeconds(10)), Is.True);
     }
 
     [Test]
@@ -422,8 +422,8 @@ public abstract class DistributedLockCoreTestCases<TLockProvider, TStrategy>
     {
         var name = this._lockProvider.GetUniqueSafeName($"cpl-{asyncWait}-{kill}");
         var command = this.RunLockTaker(this._lockProvider, this._lockProvider.GetCrossProcessLockType(), name);
-        Assert.IsTrue(command.StandardOutput.ReadLineAsync().Wait(TimeSpan.FromSeconds(10)));
-        Assert.IsFalse(command.Task.IsCompleted);
+        Assert.That(command.StandardOutput.ReadLineAsync().Wait(TimeSpan.FromSeconds(10)), Is.True);
+        Assert.That(command.Task.IsCompleted, Is.False);
 
         var @lock = this._lockProvider.CreateLockWithExactName(name);
 
@@ -443,16 +443,16 @@ public abstract class DistributedLockCoreTestCases<TLockProvider, TStrategy>
             command.StandardInput.Flush();
         }
         // make sure it actually exits
-        Assert.IsTrue(command.Task.ContinueWith(_ => { }).Wait(TimeSpan.FromSeconds(5)), "lock taker should exit");
+        Assert.That(command.Task.ContinueWith(_ => { }).Wait(TimeSpan.FromSeconds(5)), Is.True, "lock taker should exit");
 
         if (this._lockProvider.SupportsCrossProcessAbandonment)
         {
             using var handle = acquireTask.Result;
-            Assert.IsNotNull(handle, this.GetType().Name);
+            Assert.That(handle, Is.Not.Null, this.GetType().Name);
         }
         else
         {
-            Assert.IsFalse(acquireTask.Wait(TimeSpan.FromSeconds(1)));
+            Assert.That(acquireTask.Wait(TimeSpan.FromSeconds(1)), Is.False);
         }
     }
 

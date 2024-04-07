@@ -10,23 +10,23 @@ public class ZooKeeperApiTest
     [Test]
     public void TestSynchronousAcquireAndDisposeMethodsAreImplementedExplicitly()
     {
-        Assert.IsEmpty(
+        Assert.That(
             GetPublicTypes().SelectMany(t => t.GetMethods(BindingFlags.Public | BindingFlags.Instance))
-                .Where(m => m.Name == "Dispose" || (m.Name.Contains("Acquire") && !m.Name.EndsWith("Async")))
-        );
+                .Where(m => m.Name == "Dispose" || (m.Name.Contains("Acquire") && !m.Name.EndsWith("Async"))),
+            Is.Empty);
     }
 
     [Test]
     public void TestNamePropertyIsImplementedExplicitlyInFavorOfPath()
     {
-        Assert.IsEmpty(GetPublicTypes().Select(t => t.GetProperty("Name")).Where(p => p != null));
+        Assert.That(GetPublicTypes().Select(t => t.GetProperty("Name")).Where(p => p != null), Is.Empty);
         foreach (var lockType in GetPublicTypes()
             .Where(t => t.GetInterfaces().Any(i => i.GetProperty("Name") != null)))
         {
             var pathProperty = lockType.GetProperty("Path");
-            Assert.IsNotNull(pathProperty, $"{lockType} missing Path");
+            Assert.That(pathProperty, Is.Not.Null, $"{lockType} missing Path");
             pathProperty!.PropertyType.ShouldEqual(typeof(ZooKeeperPath));
-            Assert.IsNull(lockType.GetProperty("Name"));
+            Assert.That(lockType.GetProperty("Name"), Is.Null);
         }
     }
 

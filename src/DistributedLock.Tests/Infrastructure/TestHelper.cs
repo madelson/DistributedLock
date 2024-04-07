@@ -13,7 +13,7 @@ internal static class TestHelper
 
     public static T ShouldEqual<T>(this T @this, T that, string? message = null)
     {
-        Assert.AreEqual(actual: @this, expected: that, message: message);
+        Assert.That(that, Is.EqualTo(@this), message: message);
         return @this;
     }
 

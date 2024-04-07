@@ -19,7 +19,7 @@ public class RedisLibraryTest
             .Where(f => f.FieldType.IsGenericType && f.FieldType.GetGenericTypeDefinition() == typeof(RedisScript<>));
         foreach (var field in redisScriptFields)
         {
-            Assert.IsTrue(field.IsStatic, field.ToString());
+            Assert.That(field.IsStatic, Is.True, field.ToString());
         }
     }
 }
