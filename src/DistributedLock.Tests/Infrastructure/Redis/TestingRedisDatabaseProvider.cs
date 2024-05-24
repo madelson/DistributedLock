@@ -49,9 +49,8 @@ public sealed class TestingRedis2x1DatabaseProvider : TestingRedisDatabaseProvid
     {
         var server = new RedisServer(allowAdmin: true);
         DeadDatabase = server.Multiplexer.GetDatabase();
-        using var process = Process.GetProcessById(server.ProcessId);
         server.Multiplexer.GetServer($"localhost:{server.Port}").Shutdown(ShutdownMode.Never);
-        Assert.That(process.WaitForExit(5000), Is.True);
+        server.Dispose();
     }
 
     public TestingRedis2x1DatabaseProvider()

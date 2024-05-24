@@ -5,9 +5,6 @@ namespace Medallion.Threading.Tests.Redis;
 [SetUpFixture]
 public class RedisSetUpFixture
 {
-    [OneTimeSetUp]
-    public void OneTimeSetUp() { }
-
     [OneTimeTearDown]
-    public void OneTimeTearDown() => RedisServer.DisposeAll();
+    public Task OneTimeTearDown() => RedisServer.DisposeAsync();
 }

@@ -22,6 +22,7 @@
     <PackageVersion Include="System.Data.SqlClient" Version="4.8.6" />
     <PackageVersion Include="Moq" Version="4.20.70" />
     <PackageVersion Include="System.Threading.AccessControl" Version="8.0.0" Condition="'$(TargetFramework)' != 'net462'" />
+    <PackageVersion Include="Testcontainers.Redis" Version="3.8.0" />
     <PackageVersion Include="ZooKeeperNetEx" Version="3.4.12.4" />
     <PackageVersion Include="IsExternalInit" Version="1.0.3" />
     <PackageVersion Include="Microsoft.Bcl.AsyncInterfaces" Version="8.0.0" Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'net462'" />
