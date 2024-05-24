@@ -471,7 +471,7 @@
         "type": "Project",
         "dependencies": {
           "DistributedLock.Core": "[1.0.6, )",
-          "Npgsql": "[8.0.2, )"
+          "Npgsql": "[8.0.3, )"
         }
       },
       "distributedlock.redis": {
@@ -541,9 +541,9 @@
       },
       "Npgsql": {
         "type": "CentralTransitive",
-        "requested": "[8.0.2, )",
-        "resolved": "8.0.2",
-        "contentHash": "MuJzLoWCaQhQAR3oh66YR0Ir6mxuezncGX3f8wxvAc21g0+9HICktJQlqMoODhxztZKXE5k9GxRxqUAN+vPb4g==",
+        "requested": "[8.0.3, )",
+        "resolved": "8.0.3",
+        "contentHash": "6WEmzsQJCZAlUG1pThKg/RmeF6V+I0DmBBBE/8YzpRtEzhyZzKcK7ulMANDm5CkxrALBEC8H+5plxHWtIL7xnA==",
         "dependencies": {
           "Microsoft.Bcl.HashCode": "1.1.1",
           "Microsoft.Extensions.Logging.Abstractions": "8.0.0",
@@ -1118,7 +1118,7 @@
         "type": "Project",
         "dependencies": {
           "DistributedLock.Core": "[1.0.6, )",
-          "Npgsql": "[8.0.2, )"
+          "Npgsql": "[8.0.3, )"
         }
       },
       "distributedlock.redis": {
@@ -1186,9 +1186,9 @@
       },
       "Npgsql": {
         "type": "CentralTransitive",
-        "requested": "[8.0.2, )",
-        "resolved": "8.0.2",
-        "contentHash": "MuJzLoWCaQhQAR3oh66YR0Ir6mxuezncGX3f8wxvAc21g0+9HICktJQlqMoODhxztZKXE5k9GxRxqUAN+vPb4g==",
+        "requested": "[8.0.3, )",
+        "resolved": "8.0.3",
+        "contentHash": "6WEmzsQJCZAlUG1pThKg/RmeF6V+I0DmBBBE/8YzpRtEzhyZzKcK7ulMANDm5CkxrALBEC8H+5plxHWtIL7xnA==",
         "dependencies": {
           "Microsoft.Extensions.Logging.Abstractions": "8.0.0"
         }
