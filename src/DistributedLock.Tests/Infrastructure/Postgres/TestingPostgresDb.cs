@@ -10,7 +10,7 @@ namespace Medallion.Threading.Tests.Postgres;
 
 public sealed class TestingPostgresDb : TestingPrimaryClientDb
 {
-    internal static readonly string DefaultConnectionString = PostgresCredentials.GetConnectionString(TestContext.CurrentContext.TestDirectory);
+    internal static readonly string DefaultConnectionString = PostgresDb.Container.GetConnectionString();
 
     private readonly NpgsqlConnectionStringBuilder _connectionStringBuilder = new(DefaultConnectionString);
 
