@@ -24,6 +24,7 @@ internal static class Program
     {
         var type = args[0];
         var name = args[1];
+        var connectionString = args[2];
         IDisposable? handle;
         switch (type)
         {
@@ -40,10 +41,10 @@ internal static class Program
                 handle = new SqlDistributedSemaphore(name, maxCount: 5, connectionString: SqlServerCredentials.ConnectionString).Acquire();
                 break;
             case nameof(PostgresDistributedLock):
-                handle = new PostgresDistributedLock(new PostgresAdvisoryLockKey(name), PostgresCredentials.GetConnectionString(Environment.CurrentDirectory)).Acquire();
+                handle = new PostgresDistributedLock(new PostgresAdvisoryLockKey(name), connectionString).Acquire();
                 break;
             case "Write" + nameof(PostgresDistributedReaderWriterLock):
-                handle = new PostgresDistributedReaderWriterLock(new PostgresAdvisoryLockKey(name), PostgresCredentials.GetConnectionString(Environment.CurrentDirectory)).AcquireWriteLock();
+                handle = new PostgresDistributedReaderWriterLock(new PostgresAdvisoryLockKey(name), connectionString).AcquireWriteLock();
                 break;
             case nameof(MySqlDistributedLock):
                 handle = new MySqlDistributedLock(name, MySqlCredentials.GetConnectionString(Environment.CurrentDirectory)).Acquire();

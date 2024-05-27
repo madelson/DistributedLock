@@ -15,6 +15,8 @@ public abstract class TestingLockProvider<TStrategy> : ITestingNameProvider, IDi
     public virtual string GetCrossProcessLockType() => this.CreateLock(string.Empty).GetType().Name;
     public virtual void Dispose() => this.Strategy.Dispose();
 
+    public virtual string GetConnectionStringForCrossProcessTest() => "<connection-string>";
+
     /// <summary>
     /// Returns a lock whose name is based on <see cref="TestingNameProviderExtensions.GetUniqueSafeName(ITestingNameProvider, string)"/>
     /// </summary>

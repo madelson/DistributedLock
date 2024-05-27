@@ -21,6 +21,8 @@ public sealed class TestingPostgresDistributedLockProvider<TStrategy> : TestingL
 
     public override string GetSafeName(string name) => new PostgresAdvisoryLockKey(name, allowHashing: true).ToString();
 
+    public override string GetConnectionStringForCrossProcessTest() => TestingPostgresDb.DefaultConnectionString;
+
     internal static Action<PostgresConnectionOptionsBuilder> ToPostgresOptions((bool useMultiplexing, bool useTransaction, TimeSpan? keepaliveCadence) options) => o =>
     {
         o.UseMultiplexing(options.useMultiplexing);

@@ -390,7 +390,7 @@ public abstract class DistributedLockCoreTestCases<TLockProvider, TStrategy>
     public void TestCrossProcess()
     {
         var lockName = this._lockProvider.GetUniqueSafeName();
-        var command = this.RunLockTaker(this._lockProvider, this._lockProvider.GetCrossProcessLockType(), lockName);
+        var command = this.RunLockTaker(this._lockProvider, this._lockProvider.GetCrossProcessLockType(), lockName, this._lockProvider.GetConnectionStringForCrossProcessTest());
         Assert.That(command.StandardOutput.ReadLineAsync().Wait(TimeSpan.FromSeconds(10)), Is.True);
         Assert.That(command.Task.Wait(TimeSpan.FromSeconds(.1)), Is.False);
 
@@ -421,7 +421,7 @@ public abstract class DistributedLockCoreTestCases<TLockProvider, TStrategy>
     private void CrossProcessAbandonmentHelper(bool asyncWait, bool kill)
     {
         var name = this._lockProvider.GetUniqueSafeName($"cpl-{asyncWait}-{kill}");
-        var command = this.RunLockTaker(this._lockProvider, this._lockProvider.GetCrossProcessLockType(), name);
+        var command = this.RunLockTaker(this._lockProvider, this._lockProvider.GetCrossProcessLockType(), name, this._lockProvider.GetConnectionStringForCrossProcessTest());
         Assert.That(command.StandardOutput.ReadLineAsync().Wait(TimeSpan.FromSeconds(10)), Is.True);
         Assert.That(command.Task.IsCompleted, Is.False);
 
