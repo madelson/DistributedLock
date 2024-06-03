@@ -4,7 +4,11 @@ on: [push]
 
 jobs:
     build:
-        runs-on: ubuntu-latest
+        strategy:
+          matrix:
+            os: [ubuntu-latest, windows-latest]
+            categort: [Redis, Postgres]
+        runs-on: ${{ matrix.os }}
 
         steps:
         - uses: actions/checkout@v4
@@ -18,4 +22,4 @@ jobs:
           run: dotnet build src
 
         - name: Redis Tests
-          run: dotnet test src --filter Name~Redis
+          run: dotnet test src --filter Name~${{ matrix.categort }}

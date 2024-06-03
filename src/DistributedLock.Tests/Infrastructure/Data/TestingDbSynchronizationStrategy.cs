@@ -18,6 +18,9 @@ public abstract class TestingDbSynchronizationStrategy : TestingSynchronizationS
 
     public override void PrepareForHighContention(ref int maxConcurrentAcquires) =>
         this.Db.PrepareForHighContention(ref maxConcurrentAcquires);
+
+    public override ValueTask SetupAsync() => this.Db.SetupAsync();
+    public override ValueTask DisposeAsync() => this.Db.DisposeAsync();
 }
 
 public abstract class TestingDbSynchronizationStrategy<TDb> : TestingDbSynchronizationStrategy
@@ -26,19 +29,6 @@ public abstract class TestingDbSynchronizationStrategy<TDb> : TestingDbSynchroni
     protected TestingDbSynchronizationStrategy() : base(new TDb()) { }
 
     public new TDb Db => (TDb)base.Db;
-
-    public override ValueTask DisposeAsync()
-    {
-        // if we have a uniquely-named connection, clear it's pool to avoid "leaking" connections into pools we'll never
-        // use again
-        if (!Equals(this.Db.ApplicationName, new TDb().ApplicationName))
-        {
-            using var connection = this.Db.CreateConnection();
-            this.Db.ClearPool(connection);
-        }
-
-        return base.DisposeAsync();
-    }
 }
 
 public abstract class TestingConnectionStringSynchronizationStrategy<TDb> : TestingDbSynchronizationStrategy<TDb>

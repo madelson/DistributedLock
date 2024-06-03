@@ -18,7 +18,7 @@ public class PostgresBehaviorTest
     [Test]
     public async Task TestPostgresCommandAutomaticallyParticipatesInTransaction()
     {
-        using var connection = new NpgsqlConnection(TestingPostgresDb.DefaultConnectionString);
+        using var connection = new NpgsqlConnection(PostgresSetUpFixture.PostgreSql.GetConnectionString());
         await connection.OpenAsync();
 
         using var transaction =
@@ -66,7 +66,7 @@ public class PostgresBehaviorTest
 
         async Task RunTransactionWithAbortAsync(bool useSavePoint)
         {
-            using var connection = new NpgsqlConnection(TestingPostgresDb.DefaultConnectionString);
+            using var connection = new NpgsqlConnection(PostgresSetUpFixture.PostgreSql.GetConnectionString());
             await connection.OpenAsync();
 
             using (connection.BeginTransaction())
@@ -102,7 +102,7 @@ public class PostgresBehaviorTest
     [Test]
     public async Task TestCanDetectTransactionWithBeginTransactionException()
     {
-        using var connection = new NpgsqlConnection(TestingPostgresDb.DefaultConnectionString);
+        using var connection = new NpgsqlConnection(PostgresSetUpFixture.PostgreSql.GetConnectionString());
         await connection.OpenAsync();
 
         Assert.DoesNotThrow(() => connection.BeginTransaction().Dispose());
@@ -116,7 +116,7 @@ public class PostgresBehaviorTest
     [Test]
     public async Task TestDoesNotDetectConnectionBreakViaState()
     {
-        using var connection = new NpgsqlConnection(TestingPostgresDb.DefaultConnectionString);
+        using var connection = new NpgsqlConnection(PostgresSetUpFixture.PostgreSql.GetConnectionString());
         await connection.OpenAsync();
 
         using var getPidCommand = connection.CreateCommand();
@@ -127,7 +127,7 @@ public class PostgresBehaviorTest
         connection.StateChange += (_, _2) => stateChangedEvent.Set();
 
         // kill the connection from the back end
-        using var killingConnection = new NpgsqlConnection(TestingPostgresDb.DefaultConnectionString);
+        using var killingConnection = new NpgsqlConnection(PostgresSetUpFixture.PostgreSql.GetConnectionString());
         await killingConnection.OpenAsync();
         using var killCommand = killingConnection.CreateCommand();
         killCommand.CommandText = $"SELECT pg_terminate_backend({pid})";
@@ -145,7 +145,7 @@ public class PostgresBehaviorTest
     {
         using var stateChangedEvent = new ManualResetEventSlim(initialState: false);
 
-        using var connection = new NpgsqlConnection(TestingPostgresDb.DefaultConnectionString);
+        using var connection = new NpgsqlConnection(PostgresSetUpFixture.PostgreSql.GetConnectionString());
         await connection.OpenAsync();
         connection.StateChange += (o, e) => stateChangedEvent.Set();
 
@@ -156,7 +156,7 @@ public class PostgresBehaviorTest
         Assert.That(connection.State, Is.EqualTo(ConnectionState.Open));
 
         // kill the connection from the back end
-        using var killingConnection = new NpgsqlConnection(TestingPostgresDb.DefaultConnectionString);
+        using var killingConnection = new NpgsqlConnection(PostgresSetUpFixture.PostgreSql.GetConnectionString());
         await killingConnection.OpenAsync();
         using var killCommand = killingConnection.CreateCommand();
         killCommand.CommandText = $"SELECT pg_terminate_backend({pid})";

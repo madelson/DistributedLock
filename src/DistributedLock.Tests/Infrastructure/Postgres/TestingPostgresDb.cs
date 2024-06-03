@@ -2,17 +2,17 @@
 using Medallion.Threading.Tests.Data;
 using Npgsql;
 using NpgsqlTypes;
-using NUnit.Framework;
 using System.Data;
 using System.Data.Common;
+using Testcontainers.PostgreSql;
 
 namespace Medallion.Threading.Tests.Postgres;
 
 public sealed class TestingPostgresDb : TestingPrimaryClientDb
 {
-    internal static readonly string DefaultConnectionString = PostgresDb.Container.GetConnectionString();
+    private readonly PostgreSqlContainer _container = new PostgreSqlBuilder().Build();
 
-    private readonly NpgsqlConnectionStringBuilder _connectionStringBuilder = new(DefaultConnectionString);
+    private NpgsqlConnectionStringBuilder _connectionStringBuilder;
 
     public override DbConnectionStringBuilder ConnectionStringBuilder => this._connectionStringBuilder;
 
@@ -30,7 +30,7 @@ public sealed class TestingPostgresDb : TestingPrimaryClientDb
     {
         Invariant.Require(applicationName.Length <= this.MaxApplicationNameLength);
 
-        using var connection = new NpgsqlConnection(DefaultConnectionString);
+        using var connection = new NpgsqlConnection(_container.GetConnectionString());
         connection.Open();
         using var command = connection.CreateCommand();
         command.CommandText = "SELECT COUNT(*)::int FROM pg_stat_activity WHERE application_name = @applicationName";
@@ -50,7 +50,7 @@ public sealed class TestingPostgresDb : TestingPrimaryClientDb
 
     public override async Task KillSessionsAsync(string applicationName, DateTimeOffset? idleSince)
     {
-        using var connection = new NpgsqlConnection(DefaultConnectionString);
+        using var connection = new NpgsqlConnection(_container.GetConnectionString());
         await connection.OpenAsync();
         using var command = connection.CreateCommand();
         // based on https://stackoverflow.com/questions/13236160/is-there-a-timeout-for-idle-postgresql-connections
@@ -67,4 +67,12 @@ public sealed class TestingPostgresDb : TestingPrimaryClientDb
 
         await command.ExecuteNonQueryAsync();
     }
+
+    public override async ValueTask SetupAsync()
+    {
+        await _container.StartAsync();
+        this._connectionStringBuilder = new NpgsqlConnectionStringBuilder(_container.GetConnectionString());
+    }
+
+    public override async ValueTask DisposeAsync() => await _container.DisposeAsync();
 }
