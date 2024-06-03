@@ -25,7 +25,7 @@ internal static class Program
         var type = args[0];
         var name = args[1];
         var connectionString = args[2];
-        var connectionStrings = connectionString.Split("||", StringSplitOptions.None);
+        var connectionStrings = connectionString.Split(new[] { "||" }, StringSplitOptions.None);
         IDisposable? handle;
         switch (type)
         {
