@@ -59,6 +59,15 @@
           "runtime.native.System.Data.SqlClient.sni": "4.7.0"
         }
       },
+      "Testcontainers.MsSql": {
+        "type": "Direct",
+        "requested": "[3.8.0, )",
+        "resolved": "3.8.0",
+        "contentHash": "4SUnPddk4VbXDZkeSxyCSQA1pFlvlMh5KA0iYXiRykG71F2+F0fyweogoTnD/dVU2NDMVwxJSzqz6SN1wzPAZw==",
+        "dependencies": {
+          "Testcontainers": "3.8.0"
+        }
+      },
       "Testcontainers.PostgreSql": {
         "type": "Direct",
         "requested": "[3.8.0, )",
