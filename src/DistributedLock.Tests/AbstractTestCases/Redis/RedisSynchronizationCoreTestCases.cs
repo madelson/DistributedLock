@@ -161,11 +161,11 @@ public abstract class RedisSynchronizationCoreTestCases<TLockProvider>
         mockDatabase.Setup(d => d.ScriptEvaluate(It.IsAny<string>(), It.IsAny<RedisKey[]>(), It.IsAny<RedisValue[]>(), It.IsAny<CommandFlags>()))
             .Returns(() => RedisResult.Create(returns()));
         mockDatabase.Setup(d => d.ScriptEvaluateAsync(It.IsAny<string>(), It.IsAny<RedisKey[]>(), It.IsAny<RedisValue[]>(), It.IsAny<CommandFlags>()))
-            .Returns(() => Task.Run(() => RedisResult.Create(returns())));
+            .ReturnsAsync(() => RedisResult.Create(returns()));
         mockDatabase.Setup(d => d.ScriptEvaluate(It.IsAny<LuaScript>(), It.IsAny<object>(), It.IsAny<CommandFlags>()))
             .Returns(() => RedisResult.Create(returns()));
         mockDatabase.Setup(d => d.ScriptEvaluateAsync(It.IsAny<LuaScript>(), It.IsAny<object>(), It.IsAny<CommandFlags>()))
-            .Returns(() => Task.Run(() => RedisResult.Create(returns())));
+            .ReturnsAsync(() => RedisResult.Create(returns()));
         mockDatabase.Setup(d => d.SortedSetRemove(It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<CommandFlags>()))
             .Returns(() => (bool)RedisResult.Create(returns()));
         mockDatabase.Setup(d => d.SortedSetRemoveAsync(It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<CommandFlags>()))
