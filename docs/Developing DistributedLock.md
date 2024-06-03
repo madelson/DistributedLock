@@ -55,15 +55,11 @@ Have docker installed, we are using https://testcontainers.com/modules/postgresq
 
 ### SQL Server
 
-Download SQL developer edition from [here](https://www.microsoft.com/en-us/sql-server/sql-server-downloads).
-
-The tests connect via integrated security.
+Have docker installed, we are using https://testcontainers.com/modules/mssql/
 
 ### Redis
 
-Install Redis locally. On Windows, install it via WSL as described [here](https://developer.redis.com/create/windows/).
-
-You do not need it running as a service: the tests will start and stop instances automatically.
+Have docker installed, we are using https://testcontainers.com/modules/redis/
 
 ### ZooKeeper
 
