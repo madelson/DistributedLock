@@ -30,16 +30,16 @@ internal static class Program
         switch (type)
         {
             case nameof(SqlDistributedLock):
-                handle = new SqlDistributedLock(name, SqlServerCredentials.ConnectionString).Acquire();
+                handle = new SqlDistributedLock(name, connectionString).Acquire();
                 break;
             case "Write" + nameof(SqlDistributedReaderWriterLock):
-                handle = new SqlDistributedReaderWriterLock(name, SqlServerCredentials.ConnectionString).AcquireWriteLock();
+                handle = new SqlDistributedReaderWriterLock(name, connectionString).AcquireWriteLock();
                 break;
             case nameof(SqlDistributedSemaphore) + "1AsMutex":
-                handle = new SqlDistributedSemaphore(name, maxCount: 1, connectionString: SqlServerCredentials.ConnectionString).Acquire();
+                handle = new SqlDistributedSemaphore(name, maxCount: 1, connectionString: connectionString).Acquire();
                 break;
             case nameof(SqlDistributedSemaphore) + "5AsMutex":
-                handle = new SqlDistributedSemaphore(name, maxCount: 5, connectionString: SqlServerCredentials.ConnectionString).Acquire();
+                handle = new SqlDistributedSemaphore(name, maxCount: 5, connectionString: connectionString).Acquire();
                 break;
             case nameof(PostgresDistributedLock):
                 handle = new PostgresDistributedLock(new PostgresAdvisoryLockKey(name), connectionString).Acquire();
