@@ -27,7 +27,7 @@ public abstract class TestingDbSynchronizationStrategy<TDb> : TestingDbSynchroni
 
     public new TDb Db => (TDb)base.Db;
 
-    public override void Dispose()
+    public override ValueTask DisposeAsync()
     {
         // if we have a uniquely-named connection, clear it's pool to avoid "leaking" connections into pools we'll never
         // use again
@@ -37,7 +37,7 @@ public abstract class TestingDbSynchronizationStrategy<TDb> : TestingDbSynchroni
             this.Db.ClearPool(connection);
         }
 
-        base.Dispose();
+        return base.DisposeAsync();
     }
 }
 
@@ -167,10 +167,10 @@ public sealed class TestingExternalConnectionSynchronizationStrategy<TDb> : Test
         return new TestingDbConnectionOptions { Connection = connection };
     }
 
-    public override void Dispose()
+    public override ValueTask DisposeAsync()
     {
         this._disposables.Dispose();
-        base.Dispose();
+        return base.DisposeAsync();
     }
 }
 
@@ -211,9 +211,9 @@ public sealed class TestingExternalTransactionSynchronizationStrategy<TDb> : Tes
         return new TestingDbConnectionOptions { Transaction = transaction };
     }
 
-    public override void Dispose()
+    public override ValueTask DisposeAsync()
     {
         this._disposables.Dispose();
-        base.Dispose();
+        return base.DisposeAsync();
     }
 }

@@ -3,6 +3,7 @@ using Moq;
 using NUnit.Framework;
 using StackExchange.Redis;
 using System.Globalization;
+using Testcontainers.Redis;
 
 namespace Medallion.Threading.Tests.Redis;
 
@@ -47,7 +48,7 @@ public class RedisDistributedLockTest
             CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("tr-TR");
             var @lock = new RedisDistributedLock(
                 TestHelper.UniqueName,
-                RedisServer.GetDefaultServer(0).Multiplexer.GetDatabase()
+                RedisServer.CreateDatabase(RedisSetUpFixture.Redis)
             );
             await (await @lock.AcquireAsync()).DisposeAsync();
         }

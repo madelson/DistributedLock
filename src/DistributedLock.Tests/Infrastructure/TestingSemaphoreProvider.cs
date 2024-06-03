@@ -1,6 +1,6 @@
 ﻿namespace Medallion.Threading.Tests;
 
-public abstract class TestingSemaphoreProvider<TStrategy> : ITestingNameProvider, IDisposable
+public abstract class TestingSemaphoreProvider<TStrategy> : ITestingNameProvider, IAsyncDisposable
     where TStrategy : TestingSynchronizationStrategy, new()
 {
     public TStrategy Strategy { get; } = new TStrategy();
@@ -17,5 +17,6 @@ public abstract class TestingSemaphoreProvider<TStrategy> : ITestingNameProvider
     public IDistributedSemaphore CreateSemaphore(string baseName, int maxCount) =>
         this.CreateSemaphoreWithExactName(this.GetUniqueSafeName(baseName), maxCount);
 
-    public void Dispose() => this.Strategy.Dispose();
+    public ValueTask DisposeAsync() => this.Strategy.DisposeAsync();
+    public ValueTask SetupAsync() => this.Strategy.SetupAsync();
 }

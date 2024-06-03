@@ -10,8 +10,14 @@ public abstract class DistributedSemaphoreCoreTestCases<TSemaphoreProvider, TStr
 
     private TSemaphoreProvider _semaphoreProvider = default!;
 
-    [SetUp] public void SetUp() => this._semaphoreProvider = new TSemaphoreProvider();
-    [TearDown] public void TearDown() => this._semaphoreProvider.Dispose();
+    [SetUp]
+    public async Task SetUp()
+    {
+        this._semaphoreProvider = new TSemaphoreProvider();
+        await this._semaphoreProvider.SetupAsync();
+    }
+    [TearDown]
+    public async Task TearDown() => await this._semaphoreProvider.DisposeAsync();
 
     [Test]
     public void TestMaxCount()
@@ -46,7 +52,7 @@ public abstract class DistributedSemaphoreCoreTestCases<TSemaphoreProvider, TStr
                         Thread.Sleep(10);
                         Interlocked.Decrement(ref counter);
                     }
-                }, 
+                },
                 TaskCreationOptions.LongRunning // dedicated thread
             ))
             .ToArray();

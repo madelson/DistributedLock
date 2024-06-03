@@ -8,6 +8,11 @@ public class PostgresDb
 
     static PostgresDb()
     {
-        Container.StartAsync().Wait();
+        Initialize().Wait();
+    }
+
+    private static async Task Initialize()
+    {
+        await Container.StartAsync();
     }
 }

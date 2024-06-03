@@ -19,6 +19,8 @@ public sealed class TestingRedisDistributedLockProvider<TDatabaseProvider> : Tes
     public override string GetSafeName(string name) => new RedisDistributedLock(name, this.Strategy.DatabaseProvider.Databases).Name;
 
     public override string GetCrossProcessLockType() => $"{nameof(RedisDistributedLock)}{this.Strategy.DatabaseProvider.CrossProcessLockTypeSuffix}";
+
+    public override string GetConnectionStringForCrossProcessTest() => this.Strategy.DatabaseProvider.ConnectionStrings;
 }
 
 public sealed class TestingRedisDistributedReaderWriterLockProvider<TDatabaseProvider> : TestingReaderWriterLockProvider<TestingRedisSynchronizationStrategy<TDatabaseProvider>>

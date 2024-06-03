@@ -43,10 +43,11 @@ public sealed class TestingAzureBlobLeaseSynchronizationStrategy : TestingSynchr
         this.CreateBlobBeforeLockIsCreated = true;
     }
 
-    public override void Dispose()
+    public override ValueTask DisposeAsync()
     {
         try { this._disposables.Dispose(); }
-        finally { base.Dispose(); }
+        finally { base.DisposeAsync(); }
+        return ValueTask.CompletedTask;
     }
 
     private class HandleLostScope : IDisposable

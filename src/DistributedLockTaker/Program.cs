@@ -25,6 +25,7 @@ internal static class Program
         var type = args[0];
         var name = args[1];
         var connectionString = args[2];
+        var connectionStrings = connectionString.Split("||", StringSplitOptions.None);
         IDisposable? handle;
         switch (type)
         {
@@ -78,38 +79,47 @@ internal static class Program
                 handle = new FileDistributedLock(new FileInfo(name)).Acquire();
                 break;
             case nameof(RedisDistributedLock) + "1":
-                handle = AcquireRedisLock(name, serverCount: 1);
+                ValidateConnectionStringCount(connectionStrings, 1);
+                handle = AcquireRedisLock(name, serverCount: 1, connectionStrings);
                 break;
             case nameof(RedisDistributedLock) + "3":
-                handle = AcquireRedisLock(name, serverCount: 3);
+                ValidateConnectionStringCount(connectionStrings, 3);
+                handle = AcquireRedisLock(name, serverCount: 3, connectionStrings);
                 break;
             case nameof(RedisDistributedLock) + "2x1":
-                handle = AcquireRedisLock(name, serverCount: 2); // we know the last will fail; don't bother (we also don't know its port)
+                ValidateConnectionStringCount(connectionStrings, 2);
+                handle = AcquireRedisLock(name, serverCount: 2, connectionStrings); // we know the last will fail; don't bother (we also don't know its port)
                 break;
             case nameof(RedisDistributedLock) + "1WithPrefix":
-                handle = AcquireRedisLock("distributed_locks:" + name, serverCount: 1);
+                ValidateConnectionStringCount(connectionStrings, 1);
+                handle = AcquireRedisLock("distributed_locks:" + name, serverCount: 1, connectionStrings);
                 break;
             case "Write" + nameof(RedisDistributedReaderWriterLock) + "1":
-                handle = AcquireRedisWriteLock(name, serverCount: 1);
+                ValidateConnectionStringCount(connectionStrings, 1);
+                handle = AcquireRedisWriteLock(name, serverCount: 1, connectionStrings);
                 break;
             case "Write" + nameof(RedisDistributedReaderWriterLock) + "3":
-                handle = AcquireRedisWriteLock(name, serverCount: 3);
+                ValidateConnectionStringCount(connectionStrings, 3);
+                handle = AcquireRedisWriteLock(name, serverCount: 3, connectionStrings);
                 break;
             case "Write" + nameof(RedisDistributedReaderWriterLock) + "2x1":
-                handle = AcquireRedisWriteLock(name, serverCount: 2); // we know the last will fail; don't bother (we also don't know its port)
+                ValidateConnectionStringCount(connectionStrings, 2);
+                handle = AcquireRedisWriteLock(name, serverCount: 2, connectionStrings); // we know the last will fail; don't bother (we also don't know its port)
                 break;
             case "Write" + nameof(RedisDistributedReaderWriterLock) + "1WithPrefix":
-                handle = AcquireRedisWriteLock("distributed_locks:" + name, serverCount: 1);
+                ValidateConnectionStringCount(connectionStrings, 1);
+                handle = AcquireRedisWriteLock("distributed_locks:" + name, serverCount: 1,connectionStrings);
                 break;
             case string _ when type.StartsWith(nameof(RedisDistributedSemaphore)):
                 {
+                    ValidateConnectionStringCount(connectionStrings, 1);
                     var maxCount = type.EndsWith("1AsMutex") ? 1
                         : type.EndsWith("5AsMutex") ? 5
                         : throw new ArgumentException(type);
                     handle = new RedisDistributedSemaphore(
                         name, 
                         maxCount, 
-                        GetRedisDatabases(serverCount: 1).Single(),
+                        GetRedisDatabases(serverCount: 1, connectionStrings).Single(),
                         // in order to see abandonment work in a reasonable timeframe, use very short expiry
                         options => options.Expiry(TimeSpan.FromSeconds(1))
                             .BusyWaitSleepTime(TimeSpan.FromSeconds(.1), TimeSpan.FromSeconds(.3))
@@ -151,14 +161,19 @@ internal static class Program
         return 0;
     }
 
-    private static IDistributedSynchronizationHandle AcquireRedisLock(string name, int serverCount) => 
-        new RedisDistributedLock(name, GetRedisDatabases(serverCount), RedisOptions).Acquire();
+    private static void ValidateConnectionStringCount(string[] connectionStrings, int expectedCount)
+    {
+        if (connectionStrings.Length != expectedCount) throw new ArgumentOutOfRangeException("Invalid connection strings count");
+    }
 
-    private static IDistributedSynchronizationHandle AcquireRedisWriteLock(string name, int serverCount) =>
-        new RedisDistributedReaderWriterLock(name, GetRedisDatabases(serverCount), RedisOptions).AcquireWriteLock();
+    private static IDistributedSynchronizationHandle AcquireRedisLock(string name, int serverCount, string[] connectionStrings) => 
+        new RedisDistributedLock(name, GetRedisDatabases(serverCount, connectionStrings), RedisOptions).Acquire();
 
-    private static IEnumerable<IDatabase> GetRedisDatabases(int serverCount) => RedisPorts.DefaultPorts.Take(serverCount)
-        .Select(port => ConnectionMultiplexer.Connect($"localhost:{port}").GetDatabase());
+    private static IDistributedSynchronizationHandle AcquireRedisWriteLock(string name, int serverCount, string[] connectionStrings) =>
+        new RedisDistributedReaderWriterLock(name, GetRedisDatabases(serverCount, connectionStrings), RedisOptions).AcquireWriteLock();
+
+    private static IEnumerable<IDatabase> GetRedisDatabases(int serverCount, string[] connectionStrings) => Enumerable.Range(0, serverCount)
+        .Select(i => ConnectionMultiplexer.Connect(connectionStrings[i]).GetDatabase());
 
     private static void RedisOptions(RedisDistributedSynchronizationOptionsBuilder options) => 
         options.Expiry(TimeSpan.FromSeconds(.5)) // short expiry for abandonment testing

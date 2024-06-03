@@ -1,6 +1,6 @@
 ﻿namespace Medallion.Threading.Tests;
 
-public abstract class TestingReaderWriterLockProvider<TStrategy> : ITestingNameProvider, IDisposable
+public abstract class TestingReaderWriterLockProvider<TStrategy> : ITestingNameProvider, IAsyncDisposable
     where TStrategy : TestingSynchronizationStrategy, new()
 {
     public TStrategy Strategy { get; } = new TStrategy();
@@ -17,7 +17,8 @@ public abstract class TestingReaderWriterLockProvider<TStrategy> : ITestingNameP
     public IDistributedReaderWriterLock CreateReaderWriterLock(string baseName) =>
         this.CreateReaderWriterLockWithExactName(this.GetUniqueSafeName(baseName));
 
-    public void Dispose() => this.Strategy.Dispose();
+    public ValueTask DisposeAsync() => this.Strategy.DisposeAsync();
+    public ValueTask SetupAsync() => this.Strategy.SetupAsync();
 }
 
 public abstract class TestingUpgradeableReaderWriterLockProvider<TStrategy> : TestingReaderWriterLockProvider<TStrategy>

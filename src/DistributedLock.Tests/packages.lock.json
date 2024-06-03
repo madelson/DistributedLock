@@ -68,6 +68,15 @@
           "Testcontainers": "3.8.0"
         }
       },
+      "Testcontainers.Redis": {
+        "type": "Direct",
+        "requested": "[3.8.0, )",
+        "resolved": "3.8.0",
+        "contentHash": "sPPSCuxLH/7ycjJUOLkIqspwFiU1eVZhxWAJ2JROZlYDscOP94Lm4IgNg/sMeSQI4VJ7ptcW/B/Sjw5tAnG6Ww==",
+        "dependencies": {
+          "Testcontainers": "3.8.0"
+        }
+      },
       "Azure.Core": {
         "type": "Transitive",
         "resolved": "1.36.0",

@@ -14,14 +14,19 @@ public abstract class DistributedLockCoreTestCases<TLockProvider, TStrategy>
     private TLockProvider _lockProvider = default!;
     private readonly List<Action> _cleanupActions = [];
 
-    [SetUp] public void SetUp() => this._lockProvider = new TLockProvider();
+    [SetUp] 
+    public async Task SetUp()
+    {
+        this._lockProvider = new TLockProvider();
+        await this._lockProvider.SetupAsync();
+    }
 
     [TearDown] 
-    public void TearDown()
+    public async Task TearDown()
     {
         this._cleanupActions.ForEach(a => a());
         this._cleanupActions.Clear();
-        this._lockProvider.Dispose();
+        await this._lockProvider.DisposeAsync();
     }
 
     [Test]

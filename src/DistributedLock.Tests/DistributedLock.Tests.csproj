@@ -28,6 +28,7 @@
     <PackageReference Include="System.Data.SqlClient" />
     <PackageReference Include="Moq" />
     <PackageReference Include="Testcontainers.PostgreSql" />
+    <PackageReference Include="Testcontainers.Redis" />
   </ItemGroup>
 
   <ItemGroup>
