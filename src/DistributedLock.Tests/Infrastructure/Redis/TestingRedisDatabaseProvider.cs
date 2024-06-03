@@ -7,8 +7,8 @@ namespace Medallion.Threading.Tests.Redis;
 public abstract class TestingRedisDatabaseProvider
 {
     // publicly settable so that callers can alter the dbs in use
-    public IReadOnlyList<IDatabase> Databases { get; set; }
-    public RedisContainer Redis { get; protected set; }
+    public IReadOnlyList<IDatabase> Databases { get; set; } = default!;
+    public RedisContainer Redis { get; protected set; } = default!;
     public abstract string ConnectionStrings { get; }
 
     public virtual string CrossProcessLockTypeSuffix => this.Databases.Count.ToString();
@@ -19,7 +19,7 @@ public abstract class TestingRedisDatabaseProvider
 
 public sealed class TestingRedisSingleDatabaseProvider : TestingRedisDatabaseProvider
 {
-    public override string ConnectionStrings => Redis.GetConnectionString();
+    public override string ConnectionStrings => this.Redis.GetConnectionString();
     public override async ValueTask SetupAsync()
     {
         this.Redis = new RedisBuilder().Build();
@@ -33,7 +33,7 @@ public sealed class TestingRedisSingleDatabaseProvider : TestingRedisDatabasePro
 
 public sealed class TestingRedisWithKeyPrefixSingleDatabaseProvider : TestingRedisDatabaseProvider
 {
-    public override string ConnectionStrings => Redis.GetConnectionString();
+    public override string ConnectionStrings => this.Redis.GetConnectionString();
     public override string CrossProcessLockTypeSuffix => "1WithPrefix";
 
     public override async ValueTask SetupAsync()
@@ -74,21 +74,23 @@ public sealed class TestingRedis3DatabaseProvider : TestingRedisDatabaseProvider
 
 public sealed class TestingRedis2x1DatabaseProvider : TestingRedisDatabaseProvider
 {
-    private IDatabase DeadDatabase;
+    private static IDatabase DeadDatabase;
     private RedisContainer[] _redises = default!;
 
     public override string ConnectionStrings => string.Join("||", _redises.Select(x => x.GetConnectionString()));
 
-    public override async ValueTask SetupAsync()
+    static TestingRedis2x1DatabaseProvider()
     {
         var redis = new RedisBuilder().Build();
-        await redis.StartAsync();
-
+        redis.StartAsync().GetAwaiter().GetResult();
         var server = RedisServer.Create(redis, allowAdmin: true);
         DeadDatabase = server.Multiplexer.GetDatabase();
         server.Multiplexer.GetServer($"localhost:{server.Port}").Shutdown(ShutdownMode.Never);
-        await redis.StopAsync();
+        redis.StopAsync().GetAwaiter().GetResult();
+    }
 
+    public override async ValueTask SetupAsync()
+    {
         this._redises = Enumerable.Range(0, 2).Select(_ => new RedisBuilder().Build()).ToArray();
         await Task.WhenAll(this._redises.Select(redis => redis.StartAsync()));
 
