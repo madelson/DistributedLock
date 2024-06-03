@@ -16,5 +16,5 @@ public class RedisSetUpFixture
     }
 
     [OneTimeTearDown]
-    public async Task OneTimeTearDown() => await Redis.DisposeAsync();
+    public static async Task OneTimeTearDown() => await Redis.DisposeAsync();
 }

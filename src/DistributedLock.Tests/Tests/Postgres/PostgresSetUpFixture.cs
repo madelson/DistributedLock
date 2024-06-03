@@ -3,6 +3,7 @@ using Testcontainers.PostgreSql;
 
 namespace Medallion.Threading.Tests.Postgres;
 
+[SetUpFixture]
 public class PostgresSetUpFixture
 {
     public static PostgreSqlContainer PostgreSql;
@@ -15,5 +16,5 @@ public class PostgresSetUpFixture
     }
 
     [OneTimeTearDown]
-    public async Task OneTimeTearDown() => await PostgreSql.DisposeAsync();
+    public static async Task OneTimeTearDown() => await PostgreSql.DisposeAsync();
 }

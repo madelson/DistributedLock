@@ -135,7 +135,7 @@ public class PostgresBehaviorTest
 
         Assert.That(stateChangedEvent.Wait(TimeSpan.FromSeconds(.1)), Is.False);
 
-        Assert.Throws<NpgsqlException>(() => getPidCommand.ExecuteScalar());
+        Assert.Throws<PostgresException>(() => getPidCommand.ExecuteScalar());
         Assert.That(stateChangedEvent.Wait(TimeSpan.FromSeconds(5)), Is.True);
     }
 
