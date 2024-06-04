@@ -21,6 +21,8 @@ public abstract class TestingDbSynchronizationStrategy : TestingSynchronizationS
 
     public override ValueTask SetupAsync() => this.Db.SetupAsync();
     public override ValueTask DisposeAsync() => this.Db.DisposeAsync();
+
+    public override string GetConnectionStringForCrossProcessTest() => this.Db.ConnectionString;
 }
 
 public abstract class TestingDbSynchronizationStrategy<TDb> : TestingDbSynchronizationStrategy
@@ -50,8 +52,6 @@ public abstract class TestingConnectionStringSynchronizationStrategy<TDb> : Test
 
     public sealed override IDisposable? PrepareForHandleLost() => 
         new HandleLostScope(this.Db.SetUniqueApplicationName(nameof(this.PrepareForHandleLost)), this.Db);
-
-    public override string GetConnectionStringForCrossProcessTest() => this.Db.ConnectionString;
 
     private class HandleLostScope : IDisposable
     {

@@ -16,7 +16,7 @@ public abstract class TestingSynchronizationStrategy : IAsyncDisposable
     public virtual void PerformAdditionalCleanupForHandleAbandonment() { }
     public virtual IDisposable? PrepareForHandleLost() => null;
     public virtual void PrepareForHighContention(ref int maxConcurrentAcquires) { }
-    public virtual string GetConnectionStringForCrossProcessTest() => "<connection-string>";
+    public virtual string GetConnectionStringForCrossProcessTest() => throw new NotSupportedException("<connection-string>");
     public virtual ValueTask SetupAsync() => ValueTask.CompletedTask;
     public virtual ValueTask DisposeAsync() => ValueTask.CompletedTask;
 }
