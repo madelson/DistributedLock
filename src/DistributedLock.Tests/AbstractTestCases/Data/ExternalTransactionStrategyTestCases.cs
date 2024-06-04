@@ -31,7 +31,7 @@ public abstract class ExternalTransactionStrategyTestCases<TLockProvider, TDb>
 
             // create a lock of the same type on the underlying connection of the ambient transaction
             await using dynamic specificConnectionProvider = Activator.CreateInstance(
-                ReplaceType(typeof(TLockProvider), this._lockProvider.Strategy.GetType(), typeof(SpecificConnectionStrategy))
+                ReplaceGenericParameter(typeof(TLockProvider), this._lockProvider.Strategy.GetType(), typeof(SpecificConnectionStrategy))
             )!;
             specificConnectionProvider.Strategy.Test = this;
             Assert.Catch<InvalidOperationException>(() => ((IDistributedLock)specificConnectionProvider.CreateLock(nameof(TestScopedToTransactionOnly))).Acquire());
@@ -45,29 +45,8 @@ public abstract class ExternalTransactionStrategyTestCases<TLockProvider, TDb>
             var newGenericArguments = type.GetGenericArguments()
                 .Select(a => ReplaceGenericParameter(a, old, @new))
                 .ToArray();
-            var result = type.GetGenericTypeDefinition()
+            return type.GetGenericTypeDefinition()
                 .MakeGenericType(newGenericArguments);
-
-            return result;
-        }
-
-        static Type ReplaceType(Type type, Type targetType, Type replaceType)
-        {
-            if (!type.IsGenericType)
-            {
-                return type; // Not a generic type, return as is
-            }
-
-            var genericTypeDefinition = type.GetGenericTypeDefinition();
-            var typeArguments = type.GetGenericArguments();
-
-            var replacedArguments = new Type[typeArguments.Length];
-            for (int i = 0; i < typeArguments.Length; i++)
-            {
-                replacedArguments[i] = ReplaceType(typeArguments[i], targetType, replaceType);
-            }
-
-            return genericTypeDefinition.MakeGenericType(replacedArguments);
         }
     }
 
