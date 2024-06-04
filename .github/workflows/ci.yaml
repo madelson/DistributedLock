@@ -6,7 +6,7 @@ jobs:
     build:
         strategy:
           matrix:
-            categort: [Redis, Postgres, SqlServer]
+            category: [Redis, Postgres, SqlServer]
         runs-on: ubuntu-latest
 
         steps:
@@ -20,5 +20,5 @@ jobs:
         - name: Build
           run: dotnet build src
 
-        - name: Redis Tests
-          run: dotnet test src --filter Name~${{ matrix.categort }}
+        - name: Run Tests
+          run: dotnet test src --filter Name~${{ matrix.category }}
