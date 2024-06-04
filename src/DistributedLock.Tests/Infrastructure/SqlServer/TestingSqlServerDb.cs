@@ -10,8 +10,6 @@ public interface ITestingSqlServerDb { }
 
 public sealed class TestingSqlServerDb : TestingPrimaryClientDb, ITestingSqlServerDb
 {
-    private MsSqlContainer _container = new MsSqlBuilder().Build();
-
     private Microsoft.Data.SqlClient.SqlConnectionStringBuilder _connectionStringBuilder;
 
     public override DbConnectionStringBuilder ConnectionStringBuilder => this._connectionStringBuilder;
@@ -25,7 +23,7 @@ public sealed class TestingSqlServerDb : TestingPrimaryClientDb, ITestingSqlServ
     {
         Invariant.Require(applicationName.Length <= this.MaxApplicationNameLength);
 
-        using var connection = new Microsoft.Data.SqlClient.SqlConnection(_container.GetConnectionString());
+        using var connection = new Microsoft.Data.SqlClient.SqlConnection(SqlServerSetUpFixture.SqlServer.GetConnectionString());
         connection.Open();
         using var command = connection.CreateCommand();
         command.CommandText = $@"SELECT COUNT(*) FROM sys.dm_exec_sessions WHERE program_name = @applicationName";
@@ -54,7 +52,7 @@ public sealed class TestingSqlServerDb : TestingPrimaryClientDb, ITestingSqlServ
 
     public override async Task KillSessionsAsync(string applicationName, DateTimeOffset? idleSince)
     {
-        using var connection = new Microsoft.Data.SqlClient.SqlConnection(_container.GetConnectionString());
+        using var connection = new Microsoft.Data.SqlClient.SqlConnection(SqlServerSetUpFixture.SqlServer.GetConnectionString());
         await connection.OpenAsync();
 
         var findIdleSessionsCommand = connection.CreateCommand();
@@ -90,20 +88,15 @@ public sealed class TestingSqlServerDb : TestingPrimaryClientDb, ITestingSqlServ
         }
     }
 
-    public override async ValueTask SetupAsync()
+    public override ValueTask SetupAsync()
     {
-        await _container.StartAsync();
-        _connectionStringBuilder = new(_container.GetConnectionString());
-
+        _connectionStringBuilder = new(SqlServerSetUpFixture.SqlServer.GetConnectionString());
+        return ValueTask.CompletedTask;
     }
-
-    public override async ValueTask DisposeAsync() => await _container.StopAsync();
 }
 
 public sealed class TestingSystemDataSqlServerDb : TestingDb, ITestingSqlServerDb
 {
-    private MsSqlContainer _container = new MsSqlBuilder().Build();
-
     private System.Data.SqlClient.SqlConnectionStringBuilder _connectionStringBuilder;
 
     public override DbConnectionStringBuilder ConnectionStringBuilder => this._connectionStringBuilder;
@@ -118,11 +111,9 @@ public sealed class TestingSystemDataSqlServerDb : TestingDb, ITestingSqlServerD
 
     public override DbConnection CreateConnection() => new System.Data.SqlClient.SqlConnection(this.ConnectionStringBuilder.ConnectionString);
 
-    public override async ValueTask SetupAsync()
+    public override ValueTask SetupAsync()
     {
-        await _container.StartAsync();
-        _connectionStringBuilder = new(_container.GetConnectionString());
+        _connectionStringBuilder = new(SqlServerSetUpFixture.SqlServer.GetConnectionString());
+        return ValueTask.CompletedTask;
     }
-
-    public override async ValueTask DisposeAsync() => await _container.StopAsync();
 }
