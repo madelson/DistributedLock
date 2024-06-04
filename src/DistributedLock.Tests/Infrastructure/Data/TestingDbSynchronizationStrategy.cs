@@ -51,6 +51,8 @@ public abstract class TestingConnectionStringSynchronizationStrategy<TDb> : Test
     public sealed override IDisposable? PrepareForHandleLost() => 
         new HandleLostScope(this.Db.SetUniqueApplicationName(nameof(this.PrepareForHandleLost)), this.Db);
 
+    public override string GetConnectionStringForCrossProcessTest() => this.Db.ConnectionString;
+
     private class HandleLostScope : IDisposable
     {
         private string? _applicationName;
