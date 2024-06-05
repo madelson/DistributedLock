@@ -157,19 +157,19 @@ public abstract class RedisSynchronizationCoreTestCases<TLockProvider>
         mockDatabase.Setup(d => d.StringSet(It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<TimeSpan?>(), It.IsAny<When>(), It.IsAny<CommandFlags>()))
             .Returns(returns);
         mockDatabase.Setup(d => d.StringSetAsync(It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<TimeSpan?>(), It.IsAny<When>(), It.IsAny<CommandFlags>()))
-            .ReturnsAsync(() => returns());
+            .Returns(() => Task.Run(returns));
         mockDatabase.Setup(d => d.ScriptEvaluate(It.IsAny<string>(), It.IsAny<RedisKey[]>(), It.IsAny<RedisValue[]>(), It.IsAny<CommandFlags>()))
             .Returns(() => RedisResult.Create(returns()));
         mockDatabase.Setup(d => d.ScriptEvaluateAsync(It.IsAny<string>(), It.IsAny<RedisKey[]>(), It.IsAny<RedisValue[]>(), It.IsAny<CommandFlags>()))
-            .ReturnsAsync(() => RedisResult.Create(returns()));
+            .Returns(() => Task.Run(() => RedisResult.Create(returns())));
         mockDatabase.Setup(d => d.ScriptEvaluate(It.IsAny<LuaScript>(), It.IsAny<object>(), It.IsAny<CommandFlags>()))
             .Returns(() => RedisResult.Create(returns()));
         mockDatabase.Setup(d => d.ScriptEvaluateAsync(It.IsAny<LuaScript>(), It.IsAny<object>(), It.IsAny<CommandFlags>()))
-            .ReturnsAsync(() => RedisResult.Create(returns()));
+            .Returns(() => Task.Run(() => RedisResult.Create(returns())));
         mockDatabase.Setup(d => d.SortedSetRemove(It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<CommandFlags>()))
             .Returns(() => (bool)RedisResult.Create(returns()));
         mockDatabase.Setup(d => d.SortedSetRemoveAsync(It.IsAny<RedisKey>(), It.IsAny<RedisValue>(), It.IsAny<CommandFlags>()))
-            .ReturnsAsync(() => (bool)RedisResult.Create(returns()));
+            .Returns(() => Task.Run(() => (bool)RedisResult.Create(returns())));
         mockDatabase.Setup(d => d.IsConnected(It.IsAny<RedisKey>(), It.IsAny<CommandFlags>()))
             .Returns(true);
     }
