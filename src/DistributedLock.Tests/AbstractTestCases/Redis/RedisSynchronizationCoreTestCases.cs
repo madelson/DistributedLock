@@ -23,7 +23,7 @@ public abstract class RedisSynchronizationCoreTestCases<TLockProvider>
     public async Task TearDown() => await this._provider.DisposeAsync();
 
     [Test]
-    [NonParallelizable, Retry(tryCount: 3)] // unstable in CI
+    [Retry(tryCount: 3)] // unstable in CI
     public void TestMajorityFaultingDatabasesCauseAcquireToThrow()
     {
         var databases = Enumerable.Range(0, 3).Select(_ => CreateDatabaseMock()).ToArray();
