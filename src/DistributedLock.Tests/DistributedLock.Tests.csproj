@@ -27,7 +27,9 @@
     <PackageReference Include="MedallionShell.StrongName" />
     <PackageReference Include="System.Data.SqlClient" />
     <PackageReference Include="Moq" />
+    <PackageReference Include="Testcontainers.MariaDb" />
     <PackageReference Include="Testcontainers.MsSql" />
+    <PackageReference Include="Testcontainers.MySql" />
     <PackageReference Include="Testcontainers.PostgreSql" />
     <PackageReference Include="Testcontainers.Redis" />
   </ItemGroup>

@@ -6,7 +6,7 @@ jobs:
     build:
         strategy:
           matrix:
-            category: [Redis, Postgres, SqlServer]
+            category: [Redis, Postgres, SqlServer, MySql]
         runs-on: ubuntu-latest
 
         steps:

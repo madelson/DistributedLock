@@ -48,10 +48,10 @@ internal static class Program
                 handle = new PostgresDistributedReaderWriterLock(new PostgresAdvisoryLockKey(name), connectionString).AcquireWriteLock();
                 break;
             case nameof(MySqlDistributedLock):
-                handle = new MySqlDistributedLock(name, MySqlCredentials.GetConnectionString(Environment.CurrentDirectory)).Acquire();
+                handle = new MySqlDistributedLock(name, connectionString).Acquire();
                 break;
             case "MariaDB" + nameof(MySqlDistributedLock):
-                handle = new MySqlDistributedLock(name, MariaDbCredentials.GetConnectionString(Environment.CurrentDirectory)).Acquire();
+                handle = new MySqlDistributedLock(name, connectionString).Acquire();
                 break;
             case nameof(OracleDistributedLock):
                 handle = new OracleDistributedLock(name, OracleCredentials.GetConnectionString(Environment.CurrentDirectory)).Acquire();

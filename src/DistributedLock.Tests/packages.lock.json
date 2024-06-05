@@ -59,11 +59,29 @@
           "runtime.native.System.Data.SqlClient.sni": "4.7.0"
         }
       },
+      "Testcontainers.MariaDb": {
+        "type": "Direct",
+        "requested": "[3.8.0, )",
+        "resolved": "3.8.0",
+        "contentHash": "RBmpBaN1kzOxcFfUVxKcWc5Z2IkBoPNKQglRHScT5dTT05YtjEqL8b0T9GBBfSa0WNLXkgAGiN2mkqijwsMz/g==",
+        "dependencies": {
+          "Testcontainers": "3.8.0"
+        }
+      },
       "Testcontainers.MsSql": {
         "type": "Direct",
         "requested": "[3.8.0, )",
         "resolved": "3.8.0",
         "contentHash": "4SUnPddk4VbXDZkeSxyCSQA1pFlvlMh5KA0iYXiRykG71F2+F0fyweogoTnD/dVU2NDMVwxJSzqz6SN1wzPAZw==",
+        "dependencies": {
+          "Testcontainers": "3.8.0"
+        }
+      },
+      "Testcontainers.MySql": {
+        "type": "Direct",
+        "requested": "[3.8.0, )",
+        "resolved": "3.8.0",
+        "contentHash": "q72RjwMoivYhGjTlf0Id48IwXfR1Hx/NqwKN+b3WVoseA5tHxMnZV3tjb6vEyEwzwKAaUeWDEauyvqqptaDWSw==",
         "dependencies": {
           "Testcontainers": "3.8.0"
         }
