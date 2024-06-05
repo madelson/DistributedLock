@@ -70,7 +70,8 @@ public abstract class RedisSynchronizationCoreTestCases<TLockProvider>
 
         new List<int> { 1, 2, 4 }.ForEach(i => MockDatabase(databases[i], () => throw new DataMisalignedException()));
         var aggregateException = Assert.Throws<AggregateException>(() => handle.Dispose())!;
-        Assert.That(aggregateException.InnerException, Is.InstanceOf<DataMisalignedException>());
+        Assert.That(aggregateException.InnerExceptions, Has.Count.EqualTo(3));
+        Assert.That(aggregateException.InnerExceptions, Is.All.InstanceOf<DataMisalignedException>());
     }
 
     [Test]
