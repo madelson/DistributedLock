@@ -14,14 +14,19 @@ public abstract class DistributedLockCoreTestCases<TLockProvider, TStrategy>
     private TLockProvider _lockProvider = default!;
     private readonly List<Action> _cleanupActions = [];
 
-    [SetUp] public void SetUp() => this._lockProvider = new TLockProvider();
+    [SetUp] 
+    public async Task SetUp()
+    {
+        this._lockProvider = new TLockProvider();
+        await this._lockProvider.SetupAsync();
+    }
 
     [TearDown] 
-    public void TearDown()
+    public async Task TearDown()
     {
         this._cleanupActions.ForEach(a => a());
         this._cleanupActions.Clear();
-        this._lockProvider.Dispose();
+        await this._lockProvider.DisposeAsync();
     }
 
     [Test]
@@ -390,7 +395,7 @@ public abstract class DistributedLockCoreTestCases<TLockProvider, TStrategy>
     public void TestCrossProcess()
     {
         var lockName = this._lockProvider.GetUniqueSafeName();
-        var command = this.RunLockTaker(this._lockProvider, this._lockProvider.GetCrossProcessLockType(), lockName);
+        var command = this.RunLockTaker(this._lockProvider, this._lockProvider.GetCrossProcessLockType(), lockName, this._lockProvider.GetConnectionStringForCrossProcessTest());
         Assert.That(command.StandardOutput.ReadLineAsync().Wait(TimeSpan.FromSeconds(10)), Is.True);
         Assert.That(command.Task.Wait(TimeSpan.FromSeconds(.1)), Is.False);
 
@@ -421,7 +426,7 @@ public abstract class DistributedLockCoreTestCases<TLockProvider, TStrategy>
     private void CrossProcessAbandonmentHelper(bool asyncWait, bool kill)
     {
         var name = this._lockProvider.GetUniqueSafeName($"cpl-{asyncWait}-{kill}");
-        var command = this.RunLockTaker(this._lockProvider, this._lockProvider.GetCrossProcessLockType(), name);
+        var command = this.RunLockTaker(this._lockProvider, this._lockProvider.GetCrossProcessLockType(), name, this._lockProvider.GetConnectionStringForCrossProcessTest());
         Assert.That(command.StandardOutput.ReadLineAsync().Wait(TimeSpan.FromSeconds(10)), Is.True);
         Assert.That(command.Task.IsCompleted, Is.False);
 

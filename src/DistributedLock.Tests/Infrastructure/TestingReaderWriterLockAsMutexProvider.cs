@@ -25,10 +25,10 @@ public sealed class TestingReaderWriterLockAsMutexProvider<TReaderWriterLockProv
     public override string GetCrossProcessLockType() => 
         this._readerWriterLockProvider.GetCrossProcessLockType(ReaderWriterLockType.Write);
 
-    public override void Dispose()
+    public override async ValueTask DisposeAsync()
     {
-        this._readerWriterLockProvider.Dispose();
-        base.Dispose();
+        await this._readerWriterLockProvider.DisposeAsync();
+        await base.DisposeAsync();
     }
 
     private bool GetShouldUseUpgradeLock()

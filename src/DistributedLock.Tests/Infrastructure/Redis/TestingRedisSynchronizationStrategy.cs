@@ -57,6 +57,10 @@ public sealed class TestingRedisSynchronizationStrategy<TDatabaseProvider> : Tes
         }
     }
 
+    public override string GetConnectionStringForCrossProcessTest() => this.DatabaseProvider.ConnectionStrings;
+
+    public override ValueTask SetupAsync() => this.DatabaseProvider.SetupAsync();
+
     private class HandleLostScope : IDisposable
     {
         private TestingRedisSynchronizationStrategy<TDatabaseProvider>? _strategy;

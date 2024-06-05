@@ -58,6 +58,9 @@ public abstract class TestingDb
     public abstract IsolationLevel GetIsolationLevel(DbConnection connection);
 
     public virtual void PrepareForHighContention(ref int maxConcurrentAcquires) { }
+
+    public virtual ValueTask SetupAsync() => ValueTask.CompletedTask;
+    public virtual ValueTask DisposeAsync() => ValueTask.CompletedTask;
 }
 
 public enum TransactionSupport

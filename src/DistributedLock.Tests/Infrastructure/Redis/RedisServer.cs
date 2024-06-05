@@ -1,40 +1,13 @@
-﻿using Medallion.Shell;
-using StackExchange.Redis;
+﻿using StackExchange.Redis;
+using Testcontainers.Redis;
 
 namespace Medallion.Threading.Tests.Redis;
 
 internal class RedisServer
 {
-    // redis default is 6379, so go one above that
-    private static readonly int MinDynamicPort = RedisPorts.DefaultPorts.Max() + 1, MaxDynamicPort = MinDynamicPort + 100;
-
-    // it's important for this to be lazy because it doesn't work when running on Linux
-    private static readonly Lazy<string> WslPath = new(
-        () => Directory.GetDirectories(@"C:\Windows\WinSxS")
-            .Select(d => Path.Combine(d, "wsl.exe"))
-            .Where(File.Exists)
-            .OrderByDescending(File.GetCreationTimeUtc)
-            .First()
-    );
-
-    private static readonly Dictionary<int, RedisServer> ActiveServersByPort = [];
-    private static readonly RedisServer[] DefaultServers = new RedisServer[RedisPorts.DefaultPorts.Count];
-
-    private readonly Command _command;
-
-    public RedisServer(bool allowAdmin = false) : this(null, allowAdmin) { }
-
-    private RedisServer(int? port, bool allowAdmin)
+    public RedisServer(int port, bool allowAdmin)
     {
-        lock (ActiveServersByPort)
-        {
-            this.Port = port ?? Enumerable.Range(MinDynamicPort, count: MaxDynamicPort - MinDynamicPort + 1)
-                .First(p => !ActiveServersByPort.ContainsKey(p));
-            this._command = Command.Run(WslPath.Value, ["redis-server", "--port", this.Port], options: o => o.StartInfo(si => si.RedirectStandardInput = false))
-                .RedirectTo(Console.Out)
-                .RedirectStandardErrorTo(Console.Error);
-            ActiveServersByPort.Add(this.Port, this);
-        }
+        this.Port = port;
         this.Multiplexer = ConnectionMultiplexer.Connect($"localhost:{this.Port},abortConnect=false{(allowAdmin ? ",allowAdmin=true" : string.Empty)}");
         // Clean the db to ensure it is empty. Running an arbitrary command also ensures that 
         // the db successfully spun up before we proceed (Connect seemingly can complete before that happens). 
@@ -43,49 +16,11 @@ internal class RedisServer
         this.Multiplexer.GetDatabase().Execute("flushall", Array.Empty<object>(), CommandFlags.DemandMaster);
     }
 
-    public int ProcessId => this._command.ProcessId;
     public int Port { get; }
     public ConnectionMultiplexer Multiplexer { get; }
-
-    public static RedisServer GetDefaultServer(int index)
-    {
-        lock (DefaultServers)
-        {
-            return DefaultServers[index] ??= new RedisServer(RedisPorts.DefaultPorts[index], allowAdmin: false);
-        }
-    }
-
-    public static void DisposeAll()
-    {
-        lock (ActiveServersByPort)
-        {
-            var shutdownTasks = ActiveServersByPort.Values
-                .Select(async server =>
-                {
-                    // When testing the case of a server outage, we'll have manually shut down some servers.
-                    // In that case, we shouldn't attempt to connect to them since that will fail.
-                    var isConnected = server.Multiplexer.GetServers().Any(s => s.IsConnected);
-                    server.Multiplexer.Dispose();
-                    try
-                    {
-                        if (isConnected)
-                        {
-                            using var adminMultiplexer = await ConnectionMultiplexer.ConnectAsync($"localhost:{server.Port},allowAdmin=true");
-                            adminMultiplexer.GetServer("localhost", server.Port).Shutdown(ShutdownMode.Never);
-                        }
-                    }
-                    finally
-                    {
-                        if (!await server._command.Task.TryWaitAsync(TimeSpan.FromSeconds(5)))
-                        {
-                            server._command.Kill();
-                            throw new InvalidOperationException("Forced to kill Redis server");
-                        }
-                    }
-                })
-                .ToArray();
-            ActiveServersByPort.Clear();
-            Task.WaitAll(shutdownTasks);
-        }
-    }
+    
+    public static RedisServer Create(RedisContainer container, bool allowAdmin = false) 
+        => new RedisServer(container.GetMappedPublicPort(RedisBuilder.RedisPort), allowAdmin);
+    public static IDatabase CreateDatabase(RedisContainer container, bool allowAdmin = false) 
+        => Create(container, allowAdmin).Multiplexer.GetDatabase();
 }

@@ -1,6 +1,7 @@
 ﻿using Medallion.Threading.Redis;
 using NUnit.Framework;
 using StackExchange.Redis;
+using Testcontainers.Redis;
 
 namespace Medallion.Threading.Tests.Redis;
 
@@ -18,7 +19,7 @@ public class RedisDistributedSynchronizationProviderTest
     [Test]
     public async Task BasicTest()
     {
-        var provider = new RedisDistributedSynchronizationProvider(RedisServer.GetDefaultServer(0).Multiplexer.GetDatabase());
+        var provider = new RedisDistributedSynchronizationProvider(RedisServer.CreateDatabase(RedisSetUpFixture.Redis));
 
         const string LockName = TargetFramework.Current + "ProviderBasicTest";
         await using (await provider.AcquireLockAsync(LockName))

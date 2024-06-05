@@ -49,7 +49,7 @@ public class AzureBlobLeaseDistributedLockTest
 
         async ValueTask TestAsync()
         {
-            using var provider = new TestingAzureBlobLeaseDistributedLockProvider();
+            await using var provider = new TestingAzureBlobLeaseDistributedLockProvider();
             var name = provider.GetUniqueSafeName();
             var client = CreateClient(type, name);
 
@@ -71,7 +71,7 @@ public class AzureBlobLeaseDistributedLockTest
     [Test]
     public async Task TestWrapperCreateIfNotExists([Values] BlobClientType type)
     {
-        using var provider = new TestingAzureBlobLeaseDistributedLockProvider();
+        await using var provider = new TestingAzureBlobLeaseDistributedLockProvider();
         var name = provider.GetUniqueSafeName();
         var client = CreateClient(type, name);
         var wrapper = new BlobClientWrapper(client);
@@ -96,9 +96,9 @@ public class AzureBlobLeaseDistributedLockTest
     }
 
     [Test]
-    public void TestCanUseLeaseIdForBlobOperations()
+    public async Task TestCanUseLeaseIdForBlobOperations()
     {
-        using var provider = new TestingAzureBlobLeaseDistributedLockProvider();
+        await using var provider = new TestingAzureBlobLeaseDistributedLockProvider();
         var name = provider.GetUniqueSafeName();
         var client = new PageBlobClient(AzureCredentials.ConnectionString, AzureCredentials.DefaultBlobContainerName, name);
         const int BlobSize = 512;
@@ -121,9 +121,9 @@ public class AzureBlobLeaseDistributedLockTest
     }
 
     [Test]
-    public void TestThrowsIfContainerDoesNotExist()
+    public async Task TestThrowsIfContainerDoesNotExist()
     {
-        using var provider = new TestingAzureBlobLeaseDistributedLockProvider();
+        await using var provider = new TestingAzureBlobLeaseDistributedLockProvider();
         provider.Strategy.ContainerName = "does-not-exist";
         var @lock = provider.CreateLock(nameof(TestThrowsIfContainerDoesNotExist));
 
@@ -132,9 +132,9 @@ public class AzureBlobLeaseDistributedLockTest
     }
 
     [Test]
-    public void TestCanAcquireIfContainerLeased()
+    public async Task TestCanAcquireIfContainerLeased()
     {
-        using var provider = new TestingAzureBlobLeaseDistributedLockProvider();
+        await using var provider = new TestingAzureBlobLeaseDistributedLockProvider();
         provider.Strategy.ContainerName = "leased-container" + TargetFramework.Current.Replace('.', '-');
 
         var containerClient = new BlobContainerClient(AzureCredentials.ConnectionString, provider.Strategy.ContainerName);
@@ -159,7 +159,7 @@ public class AzureBlobLeaseDistributedLockTest
     [Test]
     public async Task TestSuccessfulRenewal()
     {
-        using var provider = new TestingAzureBlobLeaseDistributedLockProvider();
+        await using var provider = new TestingAzureBlobLeaseDistributedLockProvider();
         provider.Strategy.Options = o => o.RenewalCadence(TimeSpan.FromSeconds(.05));
         var @lock = provider.CreateLock(nameof(TestSuccessfulRenewal));
 
@@ -170,9 +170,9 @@ public class AzureBlobLeaseDistributedLockTest
 
     [Test]
     [NonParallelizable, Retry(tryCount: 3)] // timing-sensitive
-    public void TestTriggersHandleLostIfLeaseExpiresNaturally()
+    public async Task TestTriggersHandleLostIfLeaseExpiresNaturally()
     {
-        using var provider = new TestingAzureBlobLeaseDistributedLockProvider();
+        await using var provider = new TestingAzureBlobLeaseDistributedLockProvider();
         provider.Strategy.Options = o => o.RenewalCadence(Timeout.InfiniteTimeSpan).Duration(TimeSpan.FromSeconds(15));
         var @lock = provider.CreateLock(nameof(TestTriggersHandleLostIfLeaseExpiresNaturally));
 
@@ -188,9 +188,9 @@ public class AzureBlobLeaseDistributedLockTest
     }
 
     [Test]
-    public void TestExitsDespiteLongSleepTime()
+    public async Task TestExitsDespiteLongSleepTime()
     {
-        using var provider = new TestingAzureBlobLeaseDistributedLockProvider();
+        await using var provider = new TestingAzureBlobLeaseDistributedLockProvider();
         provider.Strategy.Options = o => o.BusyWaitSleepTime(TimeSpan.FromSeconds(30), TimeSpan.FromMinutes(1));
         var @lock = provider.CreateLock(nameof(TestExitsDespiteLongSleepTime));
 

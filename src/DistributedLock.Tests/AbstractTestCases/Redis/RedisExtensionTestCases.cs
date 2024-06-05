@@ -9,10 +9,13 @@ public abstract class RedisExtensionTestCases<TLockProvider, TDatabaseProvider>
     private TLockProvider _provider = default!;
 
     [SetUp]
-    public void SetUp() => this._provider = new TLockProvider();
-
+    public async Task SetUp()
+    {
+        this._provider = new TLockProvider();
+        await this._provider.SetupAsync();
+    }
     [TearDown]
-    public void TearDown() => this._provider.Dispose();
+    public async Task TearDown() => await this._provider.DisposeAsync();
 
     [Test]
     [NonParallelizable, Retry(tryCount: 3)] // timing-sensitive

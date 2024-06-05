@@ -9,13 +9,13 @@ public sealed class SqlDistributedReaderWriterLockTest
     [Test]
     public void TestBadConstructorArguments()
     {
-        Assert.Catch<ArgumentNullException>(() => new SqlDistributedReaderWriterLock(null!, TestingSqlServerDb.DefaultConnectionString));
-        Assert.Catch<ArgumentNullException>(() => new SqlDistributedReaderWriterLock(null!, TestingSqlServerDb.DefaultConnectionString, exactName: true));
+        Assert.Catch<ArgumentNullException>(() => new SqlDistributedReaderWriterLock(null!, SqlServerSetUpFixture.SqlServer.GetConnectionString()));
+        Assert.Catch<ArgumentNullException>(() => new SqlDistributedReaderWriterLock(null!, SqlServerSetUpFixture.SqlServer.GetConnectionString(), exactName: true));
         Assert.Catch<ArgumentNullException>(() => new SqlDistributedReaderWriterLock("a", default(string)!));
         Assert.Catch<ArgumentNullException>(() => new SqlDistributedReaderWriterLock("a", default(DbTransaction)!));
         Assert.Catch<ArgumentNullException>(() => new SqlDistributedReaderWriterLock("a", default(DbConnection)!));
-        Assert.Catch<FormatException>(() => new SqlDistributedReaderWriterLock(new string('a', SqlDistributedReaderWriterLock.MaxNameLength + 1), TestingSqlServerDb.DefaultConnectionString, exactName: true));
-        Assert.DoesNotThrow(() => new SqlDistributedReaderWriterLock(new string('a', SqlDistributedReaderWriterLock.MaxNameLength), TestingSqlServerDb.DefaultConnectionString, exactName: true));
+        Assert.Catch<FormatException>(() => new SqlDistributedReaderWriterLock(new string('a', SqlDistributedReaderWriterLock.MaxNameLength + 1), SqlServerSetUpFixture.SqlServer.GetConnectionString(), exactName: true));
+        Assert.DoesNotThrow(() => new SqlDistributedReaderWriterLock(new string('a', SqlDistributedReaderWriterLock.MaxNameLength), SqlServerSetUpFixture.SqlServer.GetConnectionString(), exactName: true));
     }
 
     [Test]

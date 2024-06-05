@@ -1,6 +1,6 @@
 ﻿namespace Medallion.Threading.Tests;
 
-public abstract class TestingLockProvider<TStrategy> : ITestingNameProvider, IDisposable
+public abstract class TestingLockProvider<TStrategy> : ITestingNameProvider, IAsyncDisposable
     where TStrategy : TestingSynchronizationStrategy, new()
 {
     private readonly Lazy<TStrategy> _lazyStrategy = new(() => new TStrategy());
@@ -13,7 +13,11 @@ public abstract class TestingLockProvider<TStrategy> : ITestingNameProvider, IDi
     public abstract string GetSafeName(string name);
 
     public virtual string GetCrossProcessLockType() => this.CreateLock(string.Empty).GetType().Name;
-    public virtual void Dispose() => this.Strategy.Dispose();
+
+    public virtual ValueTask SetupAsync() => this.Strategy.SetupAsync();
+    public virtual ValueTask DisposeAsync() => this.Strategy.DisposeAsync();
+
+    public virtual string GetConnectionStringForCrossProcessTest() => this.Strategy.GetConnectionStringForCrossProcessTest();
 
     /// <summary>
     /// Returns a lock whose name is based on <see cref="TestingNameProviderExtensions.GetUniqueSafeName(ITestingNameProvider, string)"/>

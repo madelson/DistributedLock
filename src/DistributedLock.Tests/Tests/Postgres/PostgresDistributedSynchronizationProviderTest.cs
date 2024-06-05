@@ -16,7 +16,7 @@ public class PostgresDistributedSynchronizationProviderTest
     [Test]
     public async Task BasicTest()
     {
-        var provider = new PostgresDistributedSynchronizationProvider(TestingPostgresDb.DefaultConnectionString);
+        var provider = new PostgresDistributedSynchronizationProvider(PostgresSetUpFixture.PostgreSql.GetConnectionString());
 
         const string LockName = TargetFramework.Current + "ProviderBasicTest";
         await using (await provider.AcquireLockAsync(LockName))

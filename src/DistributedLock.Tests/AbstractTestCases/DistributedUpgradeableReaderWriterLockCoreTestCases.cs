@@ -8,8 +8,14 @@ public abstract class DistributedUpgradeableReaderWriterLockCoreTestCases<TLockP
 {
     private TLockProvider _lockProvider = default!;
 
-    [SetUp] public void SetUp() => this._lockProvider = new TLockProvider();
-    [TearDown] public void TearDown() => this._lockProvider.Dispose();
+    [SetUp]
+    public async Task SetUp()
+    {
+        this._lockProvider = new TLockProvider();
+        await this._lockProvider.SetupAsync();
+    }
+    [TearDown]
+    public async Task TearDown() => await this._lockProvider.DisposeAsync();
 
     [Test]
     public void TestMultipleReadersSingleWriter()

@@ -1,6 +1,5 @@
 ﻿using Medallion.Threading.Tests.Data;
 using MySqlConnector;
-using NUnit.Framework;
 using System.Data;
 using System.Data.Common;
 
@@ -12,7 +11,7 @@ public class TestingMySqlDb : TestingPrimaryClientDb
     private readonly MySqlConnectionStringBuilder _connectionStringBuilder;
 
     public TestingMySqlDb()
-        : this(MySqlCredentials.GetConnectionString(TestContext.CurrentContext.TestDirectory))
+        : this(MySqlSetUpFixture.MySql.GetConnectionString())
     {
     }
 
@@ -88,7 +87,7 @@ public class TestingMySqlDb : TestingPrimaryClientDb
 
 public sealed class TestingMariaDbDb : TestingMySqlDb
 {
-    public TestingMariaDbDb() : base(MariaDbCredentials.GetConnectionString(TestContext.CurrentContext.TestDirectory)) { }
+    public TestingMariaDbDb() : base(MySqlSetUpFixture.MariaDb.GetConnectionString()) { }
 
     protected override string IsolationLevelVariableName => "tx_isolation";
 }
