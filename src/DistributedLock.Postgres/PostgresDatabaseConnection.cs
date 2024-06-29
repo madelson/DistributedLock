@@ -2,6 +2,9 @@
 using Medallion.Threading.Internal.Data;
 using Npgsql;
 using System.Data;
+#if NET8_0_OR_GREATER
+using System.Data.Common;
+#endif
 
 namespace Medallion.Threading.Postgres;
 
@@ -16,6 +19,13 @@ internal sealed class PostgresDatabaseConnection : DatabaseConnection
         : base(transaction, isExternallyOwned: true)
     {
     }
+
+#if NET8_0_OR_GREATER
+    public PostgresDatabaseConnection(DbDataSource dbDataSource)
+        : base(dbDataSource.CreateConnection(), isExternallyOwned: false)
+    {
+    }
+#endif
 
     public PostgresDatabaseConnection(string connectionString)
         : base(new NpgsqlConnection(connectionString), isExternallyOwned: false)

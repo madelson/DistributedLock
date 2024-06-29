@@ -1,6 +1,9 @@
 ﻿using Medallion.Threading.Postgres;
 using NUnit.Framework;
 using System.Data;
+#if NET8_0_OR_GREATER
+using System.Data.Common;
+#endif
 
 namespace Medallion.Threading.Tests.Postgres;
 
@@ -11,6 +14,9 @@ public class PostgresDistributedSynchronizationProviderTest
     {
         Assert.Throws<ArgumentNullException>(() => new PostgresDistributedSynchronizationProvider(default(string)!));
         Assert.Throws<ArgumentNullException>(() => new PostgresDistributedSynchronizationProvider(default(IDbConnection)!));
+#if NET8_0_OR_GREATER
+        Assert.Throws<ArgumentNullException>(() => new PostgresDistributedSynchronizationProvider(default(DbDataSource)!));
+#endif
     }
 
     [Test]

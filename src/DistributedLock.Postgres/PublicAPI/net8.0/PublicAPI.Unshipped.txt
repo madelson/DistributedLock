@@ -1,0 +1,4 @@
+#nullable enable
+Medallion.Threading.Postgres.PostgresDistributedLock.PostgresDistributedLock(Medallion.Threading.Postgres.PostgresAdvisoryLockKey key, System.Data.Common.DbDataSource! dbDataSource, System.Action<Medallion.Threading.Postgres.PostgresConnectionOptionsBuilder!>? options = null) -> void
+Medallion.Threading.Postgres.PostgresDistributedReaderWriterLock.PostgresDistributedReaderWriterLock(Medallion.Threading.Postgres.PostgresAdvisoryLockKey key, System.Data.Common.DbDataSource! dbDataSource, System.Action<Medallion.Threading.Postgres.PostgresConnectionOptionsBuilder!>? options = null) -> void
+Medallion.Threading.Postgres.PostgresDistributedSynchronizationProvider.PostgresDistributedSynchronizationProvider(System.Data.Common.DbDataSource! dbDataSource, System.Action<Medallion.Threading.Postgres.PostgresConnectionOptionsBuilder!>? options = null) -> void
