@@ -67,12 +67,12 @@ public sealed class PostgresConnectionOptionsBuilder
     }
 
     internal static (TimeoutValue keepaliveCadence, bool useTransaction, bool useMultiplexing) GetOptions(
-        Action<PostgresConnectionOptionsBuilder>? optionsBuilder,
-        PostgresConnectionOptionsBuilder? options = null)
+        Action<PostgresConnectionOptionsBuilder>? optionsBuilder)
     {
+        PostgresConnectionOptionsBuilder? options;
         if (optionsBuilder != null)
         {
-            options ??= new PostgresConnectionOptionsBuilder();
+            options = new();
             optionsBuilder(options);
         }
         else

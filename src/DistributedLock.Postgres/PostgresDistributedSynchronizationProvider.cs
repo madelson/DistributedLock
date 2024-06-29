@@ -1,5 +1,5 @@
 ﻿using System.Data;
-#if NET8_0_OR_GREATER
+#if NET7_0_OR_GREATER
 using System.Data.Common;
 #endif
 
@@ -36,7 +36,7 @@ public sealed class PostgresDistributedSynchronizationProvider : IDistributedLoc
         this._readerWriterLockFactory = key => new PostgresDistributedReaderWriterLock(key, connection);
     }
 
-#if NET8_0_OR_GREATER
+#if NET7_0_OR_GREATER
     /// <summary>
     /// Constructs a provider which connects to Postgres using the provided <paramref name="dbDataSource"/>  and <paramref name="options"/>.
     /// </summary>

@@ -2,7 +2,7 @@
 using Medallion.Threading.Internal.Data;
 using Npgsql;
 using System.Data;
-#if NET8_0_OR_GREATER
+#if NET7_0_OR_GREATER
 using System.Data.Common;
 #endif
 
@@ -20,7 +20,7 @@ internal sealed class PostgresDatabaseConnection : DatabaseConnection
     {
     }
 
-#if NET8_0_OR_GREATER
+#if NET7_0_OR_GREATER
     public PostgresDatabaseConnection(DbDataSource dbDataSource)
         : base(dbDataSource.CreateConnection(), isExternallyOwned: false)
     {
