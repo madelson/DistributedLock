@@ -94,12 +94,12 @@ public readonly struct PostgresAdvisoryLockKey : IEquatable<PostgresAdvisoryLock
     public bool Equals(PostgresAdvisoryLockKey that) => this.ToTuple().Equals(that.ToTuple());
 
     /// <summary>
-    /// Implements <see cref="Object.Equals(object)"/>
+    /// Implements <see cref="object.Equals(object)"/>
     /// </summary>
-    public override bool Equals(object obj) => obj is PostgresAdvisoryLockKey that && this.Equals(that);
+    public override bool Equals(object? obj) => obj is PostgresAdvisoryLockKey that && this.Equals(that);
 
     /// <summary>
-    /// Implements <see cref="Object.GetHashCode"/>
+    /// Implements <see cref="object.GetHashCode"/>
     /// </summary>
     public override int GetHashCode() => this.ToTuple().GetHashCode();
 
@@ -116,7 +116,7 @@ public readonly struct PostgresAdvisoryLockKey : IEquatable<PostgresAdvisoryLock
 
     /// <summary>
     /// Returns a string representation of the key that can be round-tripped through
-    /// <see cref="PostgresAdvisoryLockKey(String, Boolean)"/>
+    /// <see cref="PostgresAdvisoryLockKey(string, bool)"/>
     /// </summary>
     public override string ToString() => this._keyEncoding switch
     {
