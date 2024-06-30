@@ -1,6 +1,9 @@
 using Medallion.Threading.Internal;
 using Medallion.Threading.Internal.Data;
 using System.Data;
+#if NET7_0_OR_GREATER
+using System.Data.Common;
+#endif
 
 namespace Medallion.Threading.Postgres;
 
@@ -28,6 +31,19 @@ public sealed partial class PostgresDistributedLock : IInternalDistributedLock<P
         : this(key, CreateInternalLock(key, connection))
     {
     }
+
+#if NET7_0_OR_GREATER
+    /// <summary>
+    /// Constructs a lock with the given <paramref name="key"/> (effectively the lock name) and <paramref name="dbDataSource"/>,
+    /// and <paramref name="options"/>.
+    /// 
+    /// Not compatible with connection multiplexing.
+    /// </summary>
+    public PostgresDistributedLock(PostgresAdvisoryLockKey key, DbDataSource dbDataSource, Action<PostgresConnectionOptionsBuilder>? options = null)
+        : this(key, CreateInternalLock(key, dbDataSource, options))
+    {
+    }
+#endif
 
     private PostgresDistributedLock(PostgresAdvisoryLockKey key, IDbDistributedLock internalLock)
     {
@@ -61,4 +77,21 @@ public sealed partial class PostgresDistributedLock : IInternalDistributedLock<P
         if (connection == null) { throw new ArgumentNullException(nameof(connection)); }
         return new DedicatedConnectionOrTransactionDbDistributedLock(key.ToString(), () => new PostgresDatabaseConnection(connection));
     }
+
+#if NET7_0_OR_GREATER
+    internal static IDbDistributedLock CreateInternalLock(PostgresAdvisoryLockKey key, DbDataSource dbDataSource, Action<PostgresConnectionOptionsBuilder>? options)
+    {
+        if (dbDataSource == null) { throw new ArgumentNullException(nameof(dbDataSource)); }
+
+        // Multiplexing is currently incompatible with DbDataSource, so default it to false
+        var originalOptions = options;
+        options = o => { o.UseMultiplexing(false); originalOptions?.Invoke(o); };
+
+        var (keepaliveCadence, useTransaction, useMultiplexing) = PostgresConnectionOptionsBuilder.GetOptions(options);
+
+        return useMultiplexing
+            ? throw new NotSupportedException("Multiplexing is current incompatible with DbDataSource.")
+            : new DedicatedConnectionOrTransactionDbDistributedLock(key.ToString(), () => new PostgresDatabaseConnection(dbDataSource), useTransaction: useTransaction, keepaliveCadence);
+    }
+#endif
 }

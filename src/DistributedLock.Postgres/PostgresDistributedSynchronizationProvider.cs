@@ -1,4 +1,7 @@
 ﻿using System.Data;
+#if NET7_0_OR_GREATER
+using System.Data.Common;
+#endif
 
 namespace Medallion.Threading.Postgres;
 
@@ -33,12 +36,27 @@ public sealed class PostgresDistributedSynchronizationProvider : IDistributedLoc
         this._readerWriterLockFactory = key => new PostgresDistributedReaderWriterLock(key, connection);
     }
 
+#if NET7_0_OR_GREATER
+    /// <summary>
+    /// Constructs a provider which connects to Postgres using the provided <paramref name="dbDataSource"/>  and <paramref name="options"/>.
+    /// 
+    /// Not compatible with connection multiplexing.
+    /// </summary>
+    public PostgresDistributedSynchronizationProvider(DbDataSource dbDataSource, Action<PostgresConnectionOptionsBuilder>? options = null)
+    {
+        if (dbDataSource == null) { throw new ArgumentNullException(nameof(dbDataSource)); }
+
+        this._lockFactory = key => new PostgresDistributedLock(key, dbDataSource, options);
+        this._readerWriterLockFactory = key => new PostgresDistributedReaderWriterLock(key, dbDataSource, options);
+    }
+#endif
+
     /// <summary>
     /// Creates a <see cref="PostgresDistributedLock"/> with the provided <paramref name="key"/>.
     /// </summary>
     public PostgresDistributedLock CreateLock(PostgresAdvisoryLockKey key) => this._lockFactory(key);
 
-    IDistributedLock IDistributedLockProvider.CreateLock(string name) => 
+    IDistributedLock IDistributedLockProvider.CreateLock(string name) =>
         this.CreateLock(new PostgresAdvisoryLockKey(name, allowHashing: true));
 
     /// <summary>

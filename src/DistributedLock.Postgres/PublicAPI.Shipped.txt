@@ -42,7 +42,7 @@ Medallion.Threading.Postgres.PostgresDistributedSynchronizationProvider.CreateLo
 Medallion.Threading.Postgres.PostgresDistributedSynchronizationProvider.CreateReaderWriterLock(Medallion.Threading.Postgres.PostgresAdvisoryLockKey key) -> Medallion.Threading.Postgres.PostgresDistributedReaderWriterLock!
 Medallion.Threading.Postgres.PostgresDistributedSynchronizationProvider.PostgresDistributedSynchronizationProvider(string! connectionString, System.Action<Medallion.Threading.Postgres.PostgresConnectionOptionsBuilder!>? options = null) -> void
 Medallion.Threading.Postgres.PostgresDistributedSynchronizationProvider.PostgresDistributedSynchronizationProvider(System.Data.IDbConnection! connection) -> void
-override Medallion.Threading.Postgres.PostgresAdvisoryLockKey.Equals(object! obj) -> bool
+override Medallion.Threading.Postgres.PostgresAdvisoryLockKey.Equals(object? obj) -> bool
 override Medallion.Threading.Postgres.PostgresAdvisoryLockKey.GetHashCode() -> int
 override Medallion.Threading.Postgres.PostgresAdvisoryLockKey.ToString() -> string!
 static Medallion.Threading.Postgres.PostgresAdvisoryLockKey.operator !=(Medallion.Threading.Postgres.PostgresAdvisoryLockKey a, Medallion.Threading.Postgres.PostgresAdvisoryLockKey b) -> bool

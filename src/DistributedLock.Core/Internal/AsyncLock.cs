@@ -31,14 +31,9 @@ internal readonly struct AsyncLock
         return acquired ? new Handle(this._semaphore) : null;
     }
 
-    private sealed class Handle : IDisposable
+    private sealed class Handle(SemaphoreSlim semaphore) : IDisposable
     {
-        private SemaphoreSlim? _semaphore;
-
-        public Handle(SemaphoreSlim semaphore)
-        {
-            this._semaphore = semaphore;
-        }
+        private SemaphoreSlim? _semaphore = semaphore;
 
         public void Dispose() => Interlocked.Exchange(ref this._semaphore, null)?.Release();
     }
