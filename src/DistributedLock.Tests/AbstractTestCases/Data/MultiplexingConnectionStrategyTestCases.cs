@@ -49,7 +49,7 @@ public abstract class MultiplexingConnectionStrategyTestCases<TLockProvider, TDb
     {
         var handle = lock1.Acquire();
 
-        Assert.That(lock2.TryAcquireAsync().Result, Is.Null);
+        Assert.That(lock2.TryAcquireAsync().AsTask().Result, Is.Null);
 
         return new WeakReference(handle);
     }

@@ -142,7 +142,7 @@ sealed class ManagedFinalizerQueue
                 var itemFinalizerTask = this.TryRemove(kvp.Key, disposeKey: true);
                 if (waitForItemFinalization)
                 {
-                    (itemFinalizerTasks ??= new List<Task>()).Add(itemFinalizerTask);
+                    (itemFinalizerTasks ??= []).Add(itemFinalizerTask);
                 }
             }
         }
@@ -171,16 +171,10 @@ sealed class ManagedFinalizerQueue
         return Task.CompletedTask;
     }
 
-    private sealed class Registration : IDisposable
+    private sealed class Registration(ManagedFinalizerQueue queue, IAsyncDisposable key) : IDisposable
     {
-        private readonly ManagedFinalizerQueue _queue;
-        private IAsyncDisposable? _key;
-
-        public Registration(ManagedFinalizerQueue queue, IAsyncDisposable key)
-        {
-            this._queue = queue;
-            this._key = key;
-        }
+        private readonly ManagedFinalizerQueue _queue = queue;
+        private IAsyncDisposable? _key = key;
 
         public void Dispose()
         {

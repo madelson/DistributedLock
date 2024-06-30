@@ -138,7 +138,7 @@ internal sealed class ConnectionMonitor : IAsyncDisposable
 
             var connectionLostTokenSource = new CancellationTokenSource();
             var handle = new MonitoringHandle(this, connectionLostTokenSource.Token);
-            (this._monitoringHandleRegistrations ??= new Dictionary<MonitoringHandle, CancellationTokenSource>())
+            (this._monitoringHandleRegistrations ??= [])
                 .Add(handle, connectionLostTokenSource);
 
             if (!this.StartMonitorWorkerIfNeededNoLock() 
@@ -403,16 +403,10 @@ internal sealed class ConnectionMonitor : IAsyncDisposable
         return true;
     }
 
-    private sealed class MonitoringHandle : IDatabaseConnectionMonitoringHandle
+    private sealed class MonitoringHandle(ConnectionMonitor keepaliveHelper, CancellationToken cancellationToken) : IDatabaseConnectionMonitoringHandle
     {
-        private ConnectionMonitor? _monitor;
-        private readonly CancellationToken _connectionLostToken;
-
-        public MonitoringHandle(ConnectionMonitor keepaliveHelper, CancellationToken cancellationToken)
-        {
-            this._monitor = keepaliveHelper;
-            this._connectionLostToken = cancellationToken;
-        }
+        private ConnectionMonitor? _monitor = keepaliveHelper;
+        private readonly CancellationToken _connectionLostToken = cancellationToken;
 
         public CancellationToken ConnectionLostToken => Volatile.Read(ref this._monitor) != null ? this._connectionLostToken : throw new ObjectDisposedException("handle");
 
