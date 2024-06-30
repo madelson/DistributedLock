@@ -39,6 +39,8 @@ public sealed class PostgresDistributedSynchronizationProvider : IDistributedLoc
 #if NET7_0_OR_GREATER
     /// <summary>
     /// Constructs a provider which connects to Postgres using the provided <paramref name="dbDataSource"/>  and <paramref name="options"/>.
+    /// 
+    /// Not compatible with connection multiplexing.
     /// </summary>
     public PostgresDistributedSynchronizationProvider(DbDataSource dbDataSource, Action<PostgresConnectionOptionsBuilder>? options = null)
     {
