@@ -118,20 +118,20 @@ public abstract class DistributedLockCoreTestCases<TLockProvider, TStrategy>
             var waitTime = TimeSpan.FromSeconds(.5);
 
             var syncAcquireTask = Task.Run(() => @lock.Acquire(timeout));
-            syncAcquireTask.ContinueWith(_ => { }).Wait(waitTime).ShouldEqual(true, "sync acquire");
-            Assert.That(syncAcquireTask.Exception?.InnerException, Is.InstanceOf<TimeoutException>(), "sync acquire");
+            syncAcquireTask.ContinueWith(_ => { }).Wait(waitTime).ShouldEqual(true, "sync acquire " + this.GetType().Name);
+            Assert.That(syncAcquireTask.Exception?.InnerException, Is.InstanceOf<TimeoutException>(), "sync acquire " + this.GetType().Name);
 
             var asyncAcquireTask = @lock.AcquireAsync(timeout).AsTask();
-            asyncAcquireTask.ContinueWith(_ => { }).Wait(waitTime).ShouldEqual(true, "async acquire");
-            Assert.That(asyncAcquireTask.Exception!.InnerException, Is.InstanceOf<TimeoutException>(), "async acquire");
+            asyncAcquireTask.ContinueWith(_ => { }).Wait(waitTime).ShouldEqual(true, "async acquire " + this.GetType().Name);
+            Assert.That(asyncAcquireTask.Exception!.InnerException, Is.InstanceOf<TimeoutException>(), "async acquire " + this.GetType().Name);
 
             var syncTryAcquireTask = Task.Run(() => @lock.TryAcquire(timeout));
-            syncTryAcquireTask.Wait(waitTime).ShouldEqual(true, "sync tryAcquire");
-            syncTryAcquireTask.Result.ShouldEqual(null, "sync tryAcquire");
+            syncTryAcquireTask.Wait(waitTime).ShouldEqual(true, "sync tryAcquire " + this.GetType().Name);
+            syncTryAcquireTask.Result.ShouldEqual(null, "sync tryAcquire " + this.GetType().Name);
 
             var asyncTryAcquireTask = @lock.TryAcquireAsync(timeout).AsTask();
-            asyncTryAcquireTask.Wait(waitTime).ShouldEqual(true, "async tryAcquire");
-            asyncTryAcquireTask.Result.ShouldEqual(null, "async tryAcquire");
+            asyncTryAcquireTask.Wait(waitTime).ShouldEqual(true, "async tryAcquire " + this.GetType().Name);
+            asyncTryAcquireTask.Result.ShouldEqual(null, "async tryAcquire " + this.GetType().Name);
         }
     }
 
