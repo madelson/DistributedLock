@@ -1,6 +1,9 @@
 ﻿using Medallion.Threading.Internal;
 using Medallion.Threading.Internal.Data;
 using System.Data;
+#if NET7_0_OR_GREATER
+using System.Data.Common;
+#endif
 
 namespace Medallion.Threading.Postgres;
 
@@ -28,6 +31,17 @@ public sealed partial class PostgresDistributedReaderWriterLock : IInternalDistr
         : this(key, PostgresDistributedLock.CreateInternalLock(key, connection))
     {
     }
+
+#if NET7_0_OR_GREATER
+    /// <summary>
+    /// Constructs a lock with the given <paramref name="key"/> (effectively the lock name) and <paramref name="dbDataSource"/>,
+    /// and <paramref name="options"/>
+    /// </summary>
+    public PostgresDistributedReaderWriterLock(PostgresAdvisoryLockKey key, DbDataSource dbDataSource, Action<PostgresConnectionOptionsBuilder>? options = null)
+        : this(key, PostgresDistributedLock.CreateInternalLock(key, dbDataSource, options))
+    {
+    }
+#endif
 
     private PostgresDistributedReaderWriterLock(PostgresAdvisoryLockKey key, IDbDistributedLock internalLock)
     {

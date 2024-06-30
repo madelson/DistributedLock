@@ -46,7 +46,13 @@ internal
 
     public DatabaseCommand CreateCommand()
     {
-        var command = this.InnerConnection.CreateCommand();
+        IDbCommand command;
+        // Because of Npgsql's command recycling (https://github.com/npgsql/npgsql/blob/main/src/Npgsql/NpgsqlConnection.cs#L566),
+        // CreateCommand() is not actually thread-safe. Ideally this would use this.ConnectionMonitor.AcquireConnectionLockAsync
+        // like other operations, but that requires a change to the Core internal API so I'm leaving it for #217. For the current
+        // issue with Npgsql, merely synchronizing access to this method should be good enough, and ConnectionMonitor makes a
+        // fine lock object that isn't being used elsewhere (#216)
+        lock (this.ConnectionMonitor) { command = this.InnerConnection.CreateCommand(); }
         command.Transaction = this._transaction;
         return new DatabaseCommand(command, this);
     }
