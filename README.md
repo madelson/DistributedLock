@@ -142,7 +142,7 @@ Setup steps for working with the repository locally are documented [here](docs/D
 
 ## Release notes
 - 2.5
-	- Add support for creating Postgres locks off `DbDataSource` which is helpful for apps using `NpgsqlMultiHostDataSource`. Thanks [davidngjy](https://github.com/@davidngjy) for implementing! ([#153](https://github.com/madelson/DistributedLock/issues/153), DistributedLock.Postgres 1.2.0)
+	- Add support for creating Postgres locks off `DbDataSource` which is helpful for apps using `NpgsqlMultiHostDataSource`. Thanks [davidngjy](https://github.com/davidngjy) for implementing! ([#153](https://github.com/madelson/DistributedLock/issues/153), DistributedLock.Postgres 1.2.0)
 	- Upgrade Npgsql to 8.0.3 to avoid vulnerability. Thanks [@Meir017](https://github.com/Meir017)/[@davidngjy](https://github.com/davidngjy) for implementing! ([#218](https://github.com/madelson/DistributedLock/issues/218), DistributedLock.Postgres 1.2.0)
 	- Fix Postgres race condition with connection keepalive enabled ([#216](https://github.com/madelson/DistributedLock/issues/216), DistributedLock.Core 1.0.7)
 	- Upgrade Microsoft.Data.SqlClient to 5.2.1 to avoid vulnerability ([#210](https://github.com/madelson/DistributedLock/issues/210), DistributedLock.SqlServer 1.0.5)
