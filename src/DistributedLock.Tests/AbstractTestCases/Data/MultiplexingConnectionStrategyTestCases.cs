@@ -140,7 +140,7 @@ public abstract class MultiplexingConnectionStrategyTestCases<TLockProvider, TDb
         await using var handle2 = await lock2.AcquireAsync();
         Assert.DoesNotThrow(() => lock2.TryAcquire()?.Dispose());
 
-        Assert.Catch(() => handle1.Dispose());
+        Assert.Catch(handle1.Dispose);
 
         Assert.DoesNotThrowAsync(async () => await (await lock1.AcquireAsync()).DisposeAsync());
     }
