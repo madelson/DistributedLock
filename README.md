@@ -141,6 +141,11 @@ Contributions are welcome! If you are interested in contributing towards a new o
 Setup steps for working with the repository locally are documented [here](docs/Developing%20DistributedLock.md).
 
 ## Release notes
+- 2.5
+	- Add support for creating Postgres locks off `DbDataSource` which is helpful for apps using `NpgsqlMultiHostDataSource`. Thanks @davidngjy for implementing! ([#153](https://github.com/madelson/DistributedLock/issues/153), DistributedLock.Postgres 1.2.0)
+	- Upgrade Npgsql to 8.0.3 to avoid vulnerability. Thanks @Meir017/@davidngjy for implementing! ([#218](https://github.com/madelson/DistributedLock/issues/218), DistributedLock.Postgres 1.2.0)
+	- Fix Postgres race condition with connection keepalive enabled ([#216](https://github.com/madelson/DistributedLock/issues/216), DistributedLock.Postgres 1.2.0)
+	- Upgrade Microsoft.Data.SqlClient to 5.2.1 to avoid vulnerability ([#210](https://github.com/madelson/DistributedLock/issues/210), DistributedLock.SqlServer 1.0.5)
 - 2.4
 	- Add support for transaction-scoped locking in Postgres using `pg_advisory_xact_lock` which is helpful when using PgBouncer ([#168](https://github.com/madelson/DistributedLock/issues/168), DistributedLock.Postgres 1.1.0)
 	- Improve support for newer versions of StackExchange.Redis, especially when using the default backlog policy ([#162](https://github.com/madelson/DistributedLock/issues/162), DistributedLock.Redis 1.0.3). Thanks [@Bartleby2718](https://github.com/Bartleby2718) for helping with this!
