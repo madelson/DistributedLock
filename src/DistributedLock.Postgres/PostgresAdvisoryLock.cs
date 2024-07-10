@@ -46,11 +46,12 @@ internal class PostgresAdvisoryLock : IDbSynchronizationStrategy<object>
 
         // Our acquire command will use SET LOCAL to set up statement timeouts. This lasts until the end
         // of the current transaction instead of just the current batch if we're in a transaction. To make sure
-        // we don't leak those settings, in the case of a transaction we first set up a save point which we can
+        // we don't leak those settings, in the case of a transaction, we first set up a save point which we can
         // later roll back (taking the settings changes with it but NOT the lock). Because we can't confidently
         // roll back a save point without knowing that it has been set up, we start the save point in its own
-        // query before we try-catch
-        var needsSavePoint = await HasTransactionAsync(connection).ConfigureAwait(false);
+        // query before we try-catch.
+        var needsSavePoint = await ShouldDefineSavePoint(connection).ConfigureAwait(false);
+
         if (needsSavePoint)
         {
             using var setSavePointCommand = connection.CreateCommand();
@@ -124,9 +125,7 @@ internal class PostgresAdvisoryLock : IDbSynchronizationStrategy<object>
         async ValueTask RollBackTransactionTimeoutVariablesIfNeededAsync(bool acquired)
         {
             if (needsSavePoint 
-                // For transaction scoped locks, we can't roll back the save point on success because that will roll
-                // back our hold on the lock. It's ok to "leak" the savepoint in that case because it's an internally-owned
-                // transaction/connection and the savepoint will be cleaned up with the disposal of the transaction.
+                // For transaction scoped locks, we can't roll back the save point on success because that will roll back our hold on the lock.
                 && !(acquired && UseTransactionScopedLock(connection)))
             {
                 // attempt to clear the timeout variables we set
@@ -182,13 +181,17 @@ internal class PostgresAdvisoryLock : IDbSynchronizationStrategy<object>
         return command;
     }
 
-    private static async ValueTask<bool> HasTransactionAsync(DatabaseConnection connection)
+    private static async ValueTask<bool> ShouldDefineSavePoint(DatabaseConnection connection)
     {
-        if (connection.HasTransaction) { return true; }
-        if (!connection.IsExernallyOwned) { return false; }
+        // If the connection is internally-owned, we only define a save point if a transaction has been opened.
+        if (!connection.IsExernallyOwned) { return connection.HasTransaction; }
 
-        // If the connection is externally owned, then it might be part of a transaction that we can't
-        // see. In that case, the only real way to detect it is to begin a new one
+        // If the connection is externally-owned with an established transaction, we don't want to pollute it with a save point 
+        // which we won't be able to release in case the lock will be acquired.
+        if (connection.HasTransaction) { return false; }
+
+        // The externally-owned connection might still be part of a transaction that we can't see.
+        // In that case, the only real way to detect it is to begin a new one.
         try
         {
             await connection.BeginTransactionAsync().ConfigureAwait(false);
@@ -199,6 +202,7 @@ internal class PostgresAdvisoryLock : IDbSynchronizationStrategy<object>
         }
 
         await connection.DisposeTransactionAsync().ConfigureAwait(false);
+
         return false;
     }
 
@@ -207,7 +211,13 @@ internal class PostgresAdvisoryLock : IDbSynchronizationStrategy<object>
 
     private async ValueTask ReleaseAsync(DatabaseConnection connection, PostgresAdvisoryLockKey key, bool isTry)
     {
-        Invariant.Require(!UseTransactionScopedLock(connection));
+        // For transaction scoped advisory locks, the lock can only be released by ending the transaction.
+        // If the transaction is internally-owned, then the lock will be released when the transaction is disposed as part of the internal connection management.
+        // If the transaction is externally-owned, then the lock will have to be released explicitly by the transaction initiator.
+        if (UseTransactionScopedLock(connection))
+        {
+            return;
+        }
 
         using var command = connection.CreateCommand();
         command.SetCommandText($"SELECT pg_catalog.pg_advisory_unlock{(this._isShared ? "_shared" : string.Empty)}({AddKeyParametersAndGetKeyArguments(command, key)})");
@@ -235,10 +245,9 @@ internal class PostgresAdvisoryLock : IDbSynchronizationStrategy<object>
     }
 
     private static bool UseTransactionScopedLock(DatabaseConnection connection) =>
-        // This implementation (similar to what we do for SQL Server) is based on the fact that we only create transactions on
-        // internally-owned connections when doing transaction-scoped locking, and we only support transaction-scoped locking on
-        // internally-owned connections (since there's no explicit release).
-        !connection.IsExernallyOwned && connection.HasTransaction;
+        // Transaction-scoped locking is supported on both externally-owned and internally-owned connections,
+        // as long as the connection has a transaction.
+        connection.HasTransaction;
 
     private static string AddPGLocksFilterParametersAndGetFilterExpression(DatabaseCommand command, PostgresAdvisoryLockKey key)
     {
