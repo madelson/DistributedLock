@@ -36,6 +36,20 @@ public sealed class PostgresDistributedSynchronizationProvider : IDistributedLoc
         this._readerWriterLockFactory = key => new PostgresDistributedReaderWriterLock(key, connection);
     }
 
+    /// <summary>
+    /// Constructs a provider which connects to Postgres using the provided <paramref name="transaction"/>.
+    /// 
+    /// The provided <paramref name="transaction"/> will be used to connect to the database and will provide lock scope. It is assumed to be externally managed and
+    /// will not be committed or rolled back.
+    /// </summary>
+    public PostgresDistributedSynchronizationProvider(IDbTransaction transaction)
+    {
+        if (transaction == null) { throw new ArgumentNullException(nameof(transaction)); }
+
+        this._lockFactory = key => new PostgresDistributedLock(key, transaction);
+        this._readerWriterLockFactory = key => new PostgresDistributedReaderWriterLock(key, transaction);
+    }
+
 #if NET7_0_OR_GREATER
     /// <summary>
     /// Constructs a provider which connects to Postgres using the provided <paramref name="dbDataSource"/>  and <paramref name="options"/>.

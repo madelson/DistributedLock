@@ -1,0 +1,3 @@
+Medallion.Threading.Postgres.PostgresDistributedLock.PostgresDistributedLock(Medallion.Threading.Postgres.PostgresAdvisoryLockKey key, System.Data.IDbTransaction! transaction) -> void
+Medallion.Threading.Postgres.PostgresDistributedReaderWriterLock.PostgresDistributedReaderWriterLock(Medallion.Threading.Postgres.PostgresAdvisoryLockKey key, System.Data.IDbTransaction! transaction) -> void
+Medallion.Threading.Postgres.PostgresDistributedSynchronizationProvider.PostgresDistributedSynchronizationProvider(System.Data.IDbTransaction! transaction) -> void
