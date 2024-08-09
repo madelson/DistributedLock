@@ -2,6 +2,7 @@
 using Moq;
 using NUnit.Framework;
 using StackExchange.Redis;
+using Testcontainers.Redis;
 
 namespace Medallion.Threading.Tests.Redis;
 
@@ -36,7 +37,7 @@ public class RedisDistributedReaderWriterLockTest
     {
         var @lock = new RedisDistributedReaderWriterLock(
             TestHelper.UniqueName,
-            RedisServer.GetDefaultServer(0).Multiplexer.GetDatabase(),
+            RedisServer.CreateDatabase(RedisSetUpFixture.Redis),
             o => o.Expiry(TimeSpan.FromSeconds(0.3)).BusyWaitSleepTime(TimeSpan.FromMilliseconds(1), TimeSpan.FromMilliseconds(5))
         );
 
@@ -57,7 +58,7 @@ public class RedisDistributedReaderWriterLockTest
     {
         var @lock = new RedisDistributedReaderWriterLock(
             TestHelper.UniqueName,
-            RedisServer.GetDefaultServer(0).Multiplexer.GetDatabase(),
+            RedisServer.CreateDatabase(RedisSetUpFixture.Redis),
             o => o.Expiry(TimeSpan.FromSeconds(1))
                 .ExtensionCadence(TimeSpan.FromSeconds(0.1))
                 .BusyWaitSleepTime(TimeSpan.FromMilliseconds(10), TimeSpan.FromMilliseconds(50))

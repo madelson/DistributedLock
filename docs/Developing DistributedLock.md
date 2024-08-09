@@ -51,23 +51,15 @@ If the Oracle tests fail with `ORA-12541: TNS:no listener`, you may have to star
 
 ### Postgres
 
-You can install Postgres from [here](https://www.enterprisedb.com/downloads/postgres-postgresql-downloads).
-
-In `C:\Program Files\PostgreSQL\<version>\data\postgresql.conf`, update `max_connections` to 200.
-
-Add your username (e.g. postgres) and password to `DistributedLock.Tests/credentials/postgres.txt`, with the username on line 1 and the password on line 2.
+Have docker installed, we are using https://testcontainers.com/modules/postgresql/
 
 ### SQL Server
 
-Download SQL developer edition from [here](https://www.microsoft.com/en-us/sql-server/sql-server-downloads).
-
-The tests connect via integrated security.
+Have docker installed, we are using https://testcontainers.com/modules/mssql/
 
 ### Redis
 
-Install Redis locally. On Windows, install it via WSL as described [here](https://developer.redis.com/create/windows/).
-
-You do not need it running as a service: the tests will start and stop instances automatically.
+Have docker installed, we are using https://testcontainers.com/modules/redis/
 
 ### ZooKeeper
 

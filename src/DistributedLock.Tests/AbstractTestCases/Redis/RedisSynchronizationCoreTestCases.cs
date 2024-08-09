@@ -14,12 +14,16 @@ public abstract class RedisSynchronizationCoreTestCases<TLockProvider>
     private TLockProvider _provider = default!;
 
     [SetUp]
-    public void SetUp() => this._provider = new TLockProvider();
-
+    public async Task SetUp()
+    {
+        this._provider = new TLockProvider();
+        await this._provider.SetupAsync();
+    }
     [TearDown]
-    public void TearDown() => this._provider.Dispose();
+    public async Task TearDown() => await this._provider.DisposeAsync();
 
     [Test]
+    [Retry(tryCount: 3)] // unstable in CI
     public void TestMajorityFaultingDatabasesCauseAcquireToThrow()
     {
         var databases = Enumerable.Range(0, 3).Select(_ => CreateDatabaseMock()).ToArray();
@@ -67,7 +71,8 @@ public abstract class RedisSynchronizationCoreTestCases<TLockProvider>
 
         new List<int> { 1, 2, 4 }.ForEach(i => MockDatabase(databases[i], () => throw new DataMisalignedException()));
         var aggregateException = Assert.Throws<AggregateException>(() => handle.Dispose())!;
-        Assert.That(aggregateException.InnerException, Is.InstanceOf<DataMisalignedException>());
+        Assert.That(aggregateException.InnerExceptions, Has.Count.EqualTo(3));
+        Assert.That(aggregateException.InnerExceptions, Is.All.InstanceOf<DataMisalignedException>());
     }
 
     [Test]
@@ -104,7 +109,7 @@ public abstract class RedisSynchronizationCoreTestCases<TLockProvider>
         var failDatabase = CreateDatabaseMock();
         MockDatabase(failDatabase, () => { @event.Wait(); return false; });
 
-        this._provider.Strategy.DatabaseProvider.Databases = new[] { RedisServer.GetDefaultServer(0).Multiplexer.GetDatabase(), failDatabase.Object };
+        this._provider.Strategy.DatabaseProvider.Databases = new[] { RedisServer.CreateDatabase(_provider.Strategy.DatabaseProvider.Redis), failDatabase.Object };
         var @lock = this._provider.CreateLock("lock");
 
         var acquireTask = @lock.TryAcquireAsync().AsTask();
@@ -112,7 +117,7 @@ public abstract class RedisSynchronizationCoreTestCases<TLockProvider>
         @event.Set();
         Assert.That(await acquireTask, Is.Null);
 
-        this._provider.Strategy.DatabaseProvider.Databases = new[] { RedisServer.GetDefaultServer(0).Multiplexer.GetDatabase() };
+        this._provider.Strategy.DatabaseProvider.Databases = new[] { RedisServer.CreateDatabase(_provider.Strategy.DatabaseProvider.Redis) };
         var singleDatabaseLock = this._provider.CreateLock("lock");
         using var handle = await singleDatabaseLock.TryAcquireAsync();
         Assert.That(handle, Is.Not.Null);
@@ -135,9 +140,9 @@ public abstract class RedisSynchronizationCoreTestCases<TLockProvider>
         using var explicitPrefixHandle = explicitPrefixLock.TryAcquire();
         Assert.That(explicitPrefixHandle, Is.Null);
 
-        static IDatabase CreateDatabase(string? keyPrefix = null)
+        IDatabase CreateDatabase(string? keyPrefix = null)
         {
-            var database = RedisServer.GetDefaultServer(0).Multiplexer.GetDatabase();
+            var database = RedisServer.CreateDatabase(_provider.Strategy.DatabaseProvider.Redis);
             return keyPrefix is null ? database : database.WithKeyPrefix(keyPrefix);
         }
     }

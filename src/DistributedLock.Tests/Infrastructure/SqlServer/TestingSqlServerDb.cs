@@ -2,6 +2,7 @@
 using Medallion.Threading.Tests.Data;
 using System.Data;
 using System.Data.Common;
+using Testcontainers.MsSql;
 
 namespace Medallion.Threading.Tests.SqlServer;
 
@@ -9,10 +10,7 @@ public interface ITestingSqlServerDb { }
 
 public sealed class TestingSqlServerDb : TestingPrimaryClientDb, ITestingSqlServerDb
 {
-    internal static readonly string DefaultConnectionString = SqlServerCredentials.ConnectionString;
-
-    private readonly Microsoft.Data.SqlClient.SqlConnectionStringBuilder _connectionStringBuilder =
-        new(DefaultConnectionString);
+    private Microsoft.Data.SqlClient.SqlConnectionStringBuilder _connectionStringBuilder;
 
     public override DbConnectionStringBuilder ConnectionStringBuilder => this._connectionStringBuilder;
 
@@ -25,7 +23,7 @@ public sealed class TestingSqlServerDb : TestingPrimaryClientDb, ITestingSqlServ
     {
         Invariant.Require(applicationName.Length <= this.MaxApplicationNameLength);
 
-        using var connection = new Microsoft.Data.SqlClient.SqlConnection(DefaultConnectionString);
+        using var connection = new Microsoft.Data.SqlClient.SqlConnection(SqlServerSetUpFixture.SqlServer.GetConnectionString());
         connection.Open();
         using var command = connection.CreateCommand();
         command.CommandText = $@"SELECT COUNT(*) FROM sys.dm_exec_sessions WHERE program_name = @applicationName";
@@ -54,7 +52,7 @@ public sealed class TestingSqlServerDb : TestingPrimaryClientDb, ITestingSqlServ
 
     public override async Task KillSessionsAsync(string applicationName, DateTimeOffset? idleSince)
     {
-        using var connection = new Microsoft.Data.SqlClient.SqlConnection(DefaultConnectionString);
+        using var connection = new Microsoft.Data.SqlClient.SqlConnection(SqlServerSetUpFixture.SqlServer.GetConnectionString());
         await connection.OpenAsync();
 
         var findIdleSessionsCommand = connection.CreateCommand();
@@ -89,12 +87,17 @@ public sealed class TestingSqlServerDb : TestingPrimaryClientDb, ITestingSqlServ
             catch (Exception ex) { Console.WriteLine($"Failed to kill {spid}: {ex}"); }
         }
     }
+
+    public override ValueTask SetupAsync()
+    {
+        _connectionStringBuilder = new(SqlServerSetUpFixture.SqlServer.GetConnectionString());
+        return ValueTask.CompletedTask;
+    }
 }
 
 public sealed class TestingSystemDataSqlServerDb : TestingDb, ITestingSqlServerDb
 {
-    private readonly System.Data.SqlClient.SqlConnectionStringBuilder _connectionStringBuilder =
-        new(TestingSqlServerDb.DefaultConnectionString);
+    private System.Data.SqlClient.SqlConnectionStringBuilder _connectionStringBuilder;
 
     public override DbConnectionStringBuilder ConnectionStringBuilder => this._connectionStringBuilder;
 
@@ -107,4 +110,10 @@ public sealed class TestingSystemDataSqlServerDb : TestingDb, ITestingSqlServerD
     public override IsolationLevel GetIsolationLevel(DbConnection connection) => new TestingSqlServerDb().GetIsolationLevel(connection);
 
     public override DbConnection CreateConnection() => new System.Data.SqlClient.SqlConnection(this.ConnectionStringBuilder.ConnectionString);
+
+    public override ValueTask SetupAsync()
+    {
+        _connectionStringBuilder = new(SqlServerSetUpFixture.SqlServer.GetConnectionString());
+        return ValueTask.CompletedTask;
+    }
 }

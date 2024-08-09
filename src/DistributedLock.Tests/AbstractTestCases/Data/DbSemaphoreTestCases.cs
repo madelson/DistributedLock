@@ -9,8 +9,14 @@ public abstract class DbSemaphoreTestCases<TSemaphoreProvider, TStrategy, TDb>
 {
     private TSemaphoreProvider _semaphoreProvider = default!;
 
-    [SetUp] public void SetUp() => this._semaphoreProvider = new TSemaphoreProvider();
-    [TearDown] public void TearDown() => this._semaphoreProvider.Dispose();
+    [SetUp]
+    public async Task SetUp()
+    {
+        this._semaphoreProvider = new TSemaphoreProvider();
+        await this._semaphoreProvider.SetupAsync();
+    }
+    [TearDown] 
+    public async Task TearDown() => await this._semaphoreProvider.DisposeAsync();
 
     /// <summary>
     /// This case and several that follow test "self-deadlock", where a semaphore acquire cannot possibly succeed because 

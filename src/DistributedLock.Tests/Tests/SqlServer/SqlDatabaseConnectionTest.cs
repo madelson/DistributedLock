@@ -68,8 +68,8 @@ public class SqlDatabaseConnectionTest
     private static SqlDatabaseConnection CreateConnection(bool isSystemDataSqlClient) =>
         new(
             isSystemDataSqlClient
-                ? new System.Data.SqlClient.SqlConnection(TestingSqlServerDb.DefaultConnectionString).As<DbConnection>()
-                : new Microsoft.Data.SqlClient.SqlConnection(TestingSqlServerDb.DefaultConnectionString),
+                ? new System.Data.SqlClient.SqlConnection(SqlServerSetUpFixture.SqlServer.GetConnectionString()).As<DbConnection>()
+                : new Microsoft.Data.SqlClient.SqlConnection(SqlServerSetUpFixture.SqlServer.GetConnectionString()),
             isExternallyOwned: false
         );
 }

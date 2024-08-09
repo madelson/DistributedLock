@@ -12,9 +12,9 @@ public sealed class SqlDistributedSemaphoreTest
     [Test]
     public void TestBadConstructorArguments()
     {
-        Assert.Catch<ArgumentNullException>(() => new SqlDistributedSemaphore(null!, 1, TestingSqlServerDb.DefaultConnectionString));
-        Assert.Catch<ArgumentOutOfRangeException>(() => new SqlDistributedSemaphore("a", -1, TestingSqlServerDb.DefaultConnectionString));
-        Assert.Catch<ArgumentOutOfRangeException>(() => new SqlDistributedSemaphore("a", 0, TestingSqlServerDb.DefaultConnectionString));
+        Assert.Catch<ArgumentNullException>(() => new SqlDistributedSemaphore(null!, 1, SqlServerSetUpFixture.SqlServer.GetConnectionString()));
+        Assert.Catch<ArgumentOutOfRangeException>(() => new SqlDistributedSemaphore("a", -1, SqlServerSetUpFixture.SqlServer.GetConnectionString()));
+        Assert.Catch<ArgumentOutOfRangeException>(() => new SqlDistributedSemaphore("a", 0, SqlServerSetUpFixture.SqlServer.GetConnectionString()));
         Assert.Catch<ArgumentNullException>(() => new SqlDistributedSemaphore("a", 1, default(string)!));
         Assert.Catch<ArgumentNullException>(() => new SqlDistributedSemaphore("a", 1, default(IDbConnection)!));
         Assert.Catch<ArgumentNullException>(() => new SqlDistributedSemaphore("a", 1, default(IDbTransaction)!));
@@ -22,7 +22,7 @@ public sealed class SqlDistributedSemaphoreTest
         var random = new Random(1234);
         var bytes = new byte[10000];
         random.NextBytes(bytes);
-        Assert.DoesNotThrow(() => new SqlDistributedSemaphore(Encoding.UTF8.GetString(bytes), int.MaxValue, TestingSqlServerDb.DefaultConnectionString));
+        Assert.DoesNotThrow(() => new SqlDistributedSemaphore(Encoding.UTF8.GetString(bytes), int.MaxValue, SqlServerSetUpFixture.SqlServer.GetConnectionString()));
     }
 
     [Test]
@@ -70,7 +70,7 @@ public sealed class SqlDistributedSemaphoreTest
     [Test]
     public void TestTicketsTakenOnBothConnectionAndTransactionForThatConnection()
     {
-        using var connection = new SqlConnection(TestingSqlServerDb.DefaultConnectionString);
+        using var connection = new SqlConnection(SqlServerSetUpFixture.SqlServer.GetConnectionString());
         connection.Open();
 
         var semaphore1 = new SqlDistributedSemaphore(

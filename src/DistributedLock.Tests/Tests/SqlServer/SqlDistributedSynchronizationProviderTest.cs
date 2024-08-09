@@ -17,7 +17,7 @@ public class SqlDistributedSynchronizationProviderTest
     [Test]
     public async Task BasicTest()
     {
-        var provider = new SqlDistributedSynchronizationProvider(TestingSqlServerDb.DefaultConnectionString);
+        var provider = new SqlDistributedSynchronizationProvider(SqlServerSetUpFixture.SqlServer.GetConnectionString());
 
         const string LockName = TargetFramework.Current + "ProviderBasicTest";
         await using (await provider.AcquireLockAsync(LockName))

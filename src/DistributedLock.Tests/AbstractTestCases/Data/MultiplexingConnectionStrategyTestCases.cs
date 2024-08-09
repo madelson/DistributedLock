@@ -11,8 +11,14 @@ public abstract class MultiplexingConnectionStrategyTestCases<TLockProvider, TDb
 {
     private TLockProvider _lockProvider = default!;
 
-    [SetUp] public void SetUp() => this._lockProvider = new TLockProvider();
-    [TearDown] public void TearDown() => this._lockProvider.Dispose();
+    [SetUp]
+    public async Task SetUp()
+    {
+        this._lockProvider = new TLockProvider();
+        await this._lockProvider.SetupAsync();
+    }
+    [TearDown]
+    public async Task TearDown() => await this._lockProvider.DisposeAsync();
 
     /// <summary>
     /// Similar to <see cref="DistributedLockCoreTestCases{TLockProvider, TStrategy}.TestLockAbandonment"/> but demonstrates 

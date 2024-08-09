@@ -10,11 +10,17 @@ public abstract class ExternalTransactionStrategyTestCases<TLockProvider, TDb>
 {
     private TLockProvider _lockProvider = default!;
 
-    [SetUp] public void SetUp() => this._lockProvider = new TLockProvider();
-    [TearDown] public void TearDown() => this._lockProvider.Dispose();
+    [SetUp]
+    public async Task SetUp()
+    {
+        this._lockProvider = new TLockProvider();
+        await this._lockProvider.SetupAsync();
+    }
+    [TearDown]
+    public async Task TearDown() => await this._lockProvider.DisposeAsync();
 
     [Test]
-    public void TestScopedToTransactionOnly()
+    public async Task TestScopedToTransactionOnly()
     {
         this._lockProvider.Strategy.StartAmbient();
 
@@ -24,7 +30,7 @@ public abstract class ExternalTransactionStrategyTestCases<TLockProvider, TDb>
             Assert.That(this._lockProvider.CreateLock(nameof(TestScopedToTransactionOnly)).IsHeld(), Is.True);
 
             // create a lock of the same type on the underlying connection of the ambient transaction
-            using dynamic specificConnectionProvider = Activator.CreateInstance(
+            await using dynamic specificConnectionProvider = Activator.CreateInstance(
                 ReplaceGenericParameter(typeof(TLockProvider), this._lockProvider.Strategy.GetType(), typeof(SpecificConnectionStrategy))
             )!;
             specificConnectionProvider.Strategy.Test = this;
@@ -50,6 +56,11 @@ public abstract class ExternalTransactionStrategyTestCases<TLockProvider, TDb>
     /// </summary>
     private class SpecificConnectionStrategy : TestingDbSynchronizationStrategy<TDb>
     {
+        public SpecificConnectionStrategy()
+        {
+            Console.WriteLine("SpecificConnectionStrategy created");
+        }
+
         public ExternalTransactionStrategyTestCases<TLockProvider, TDb>? Test { get; set; }
 
         public override TestingDbConnectionOptions GetConnectionOptions() =>

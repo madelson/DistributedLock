@@ -18,6 +18,11 @@ public abstract class TestingDbSynchronizationStrategy : TestingSynchronizationS
 
     public override void PrepareForHighContention(ref int maxConcurrentAcquires) =>
         this.Db.PrepareForHighContention(ref maxConcurrentAcquires);
+
+    public override ValueTask SetupAsync() => this.Db.SetupAsync();
+    public override ValueTask DisposeAsync() => this.Db.DisposeAsync();
+
+    public override string GetConnectionStringForCrossProcessTest() => this.Db.ConnectionString;
 }
 
 public abstract class TestingDbSynchronizationStrategy<TDb> : TestingDbSynchronizationStrategy
@@ -26,19 +31,6 @@ public abstract class TestingDbSynchronizationStrategy<TDb> : TestingDbSynchroni
     protected TestingDbSynchronizationStrategy() : base(new TDb()) { }
 
     public new TDb Db => (TDb)base.Db;
-
-    public override void Dispose()
-    {
-        // if we have a uniquely-named connection, clear it's pool to avoid "leaking" connections into pools we'll never
-        // use again
-        if (!Equals(this.Db.ApplicationName, new TDb().ApplicationName))
-        {
-            using var connection = this.Db.CreateConnection();
-            this.Db.ClearPool(connection);
-        }
-
-        base.Dispose();
-    }
 }
 
 public abstract class TestingConnectionStringSynchronizationStrategy<TDb> : TestingDbSynchronizationStrategy<TDb>
@@ -167,10 +159,10 @@ public sealed class TestingExternalConnectionSynchronizationStrategy<TDb> : Test
         return new TestingDbConnectionOptions { Connection = connection };
     }
 
-    public override void Dispose()
+    public override ValueTask DisposeAsync()
     {
         this._disposables.Dispose();
-        base.Dispose();
+        return base.DisposeAsync();
     }
 }
 
@@ -211,9 +203,9 @@ public sealed class TestingExternalTransactionSynchronizationStrategy<TDb> : Tes
         return new TestingDbConnectionOptions { Transaction = transaction };
     }
 
-    public override void Dispose()
+    public override ValueTask DisposeAsync()
     {
         this._disposables.Dispose();
-        base.Dispose();
+        return base.DisposeAsync();
     }
 }

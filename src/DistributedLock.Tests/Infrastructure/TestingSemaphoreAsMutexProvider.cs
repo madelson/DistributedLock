@@ -14,7 +14,6 @@ public abstract class TestingSemaphoreAsMutexProvider<TSemaphoreProvider, TStrat
     protected TestingSemaphoreAsMutexProvider(int maxCount)
     {
         this._maxCount = maxCount;
-        this._disposables.Add(this._semaphoreProvider);
     }
 
     public override TStrategy Strategy => this._semaphoreProvider.Strategy;
@@ -47,10 +46,11 @@ public abstract class TestingSemaphoreAsMutexProvider<TSemaphoreProvider, TStrat
 
     public override string GetSafeName(string name) => this._semaphoreProvider.GetSafeName(name);
 
-    public override void Dispose()
+    public override async ValueTask DisposeAsync()
     {
         this._disposables.Dispose();
-        base.Dispose();
+        await this._semaphoreProvider.DisposeAsync();
+        await base.DisposeAsync();
     }
 
     private class SemaphoreAsMutex : IDistributedLock

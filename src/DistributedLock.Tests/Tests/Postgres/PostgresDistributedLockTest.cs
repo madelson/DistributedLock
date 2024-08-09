@@ -24,7 +24,7 @@ public class PostgresDistributedLockTest
     [Test]
     public void TestMultiplexingWithDbDataSourceThrowNotSupportedException()
     {
-        using var dataSource = new NpgsqlDataSourceBuilder(TestingPostgresDb.DefaultConnectionString).Build();
+        using var dataSource = new NpgsqlDataSourceBuilder(PostgresSetUpFixture.PostgreSql.GetConnectionString()).Build();
         Assert.Throws<NotSupportedException>(() => new PostgresDistributedLock(new(0), dataSource, opt => opt.UseMultiplexing()));
     }
 
@@ -33,7 +33,7 @@ public class PostgresDistributedLockTest
     [Test]
     public async Task TestDbDataSourceConstructorWorks()
     {
-        using var dataSource = new NpgsqlDataSourceBuilder(TestingPostgresDb.DefaultConnectionString).Build();
+        using var dataSource = new NpgsqlDataSourceBuilder(PostgresSetUpFixture.PostgreSql.GetConnectionString()).Build();
         PostgresDistributedLock @lock = new(new(5, 5), dataSource);
         await using (await @lock.AcquireAsync())
         {
@@ -46,7 +46,7 @@ public class PostgresDistributedLockTest
     [Test]
     public async Task TestInt64AndInt32PairKeyNamespacesAreDifferent()
     {
-        var connectionString = TestingPostgresDb.DefaultConnectionString;
+        var connectionString = PostgresSetUpFixture.PostgreSql.GetConnectionString();
         var key1 = new PostgresAdvisoryLockKey(0);
         var key2 = new PostgresAdvisoryLockKey(0, 0);
         var @lock1 = new PostgresDistributedLock(key1, connectionString);
@@ -62,11 +62,11 @@ public class PostgresDistributedLockTest
     [Test]
     public async Task TestWorksWithAmbientTransaction()
     {
-        using var connection = new NpgsqlConnection(TestingPostgresDb.DefaultConnectionString);
+        using var connection = new NpgsqlConnection(PostgresSetUpFixture.PostgreSql.GetConnectionString());
         await connection.OpenAsync();
 
         var connectionLock = new PostgresDistributedLock(new PostgresAdvisoryLockKey("AmbTrans"), connection);
-        var otherLock = new PostgresDistributedLock(connectionLock.Key, TestingPostgresDb.DefaultConnectionString);
+        var otherLock = new PostgresDistributedLock(connectionLock.Key, PostgresSetUpFixture.PostgreSql.GetConnectionString());
         using var otherLockHandle = await otherLock.AcquireAsync();
 
         using (var transaction = connection.BeginTransaction())
