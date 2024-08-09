@@ -6,14 +6,9 @@ using System.Text;
 
 namespace Medallion.Threading.SqlServer;
 
-internal sealed class SqlSemaphore : IDbSynchronizationStrategy<SqlSemaphore.Cookie>
+internal sealed class SqlSemaphore(int maxCount) : IDbSynchronizationStrategy<SqlSemaphore.Cookie>
 {
-    public SqlSemaphore(int maxCount)
-    {
-        this.MaxCount = maxCount;
-    }
-
-    public int MaxCount { get; }
+    public int MaxCount { get; } = maxCount;
 
     #region ---- Execution ----
     public async ValueTask<Cookie?> TryAcquireAsync(DatabaseConnection connection, string resourceName, TimeoutValue timeout, CancellationToken cancellationToken)
@@ -87,16 +82,10 @@ internal sealed class SqlSemaphore : IDbSynchronizationStrategy<SqlSemaphore.Coo
 
     bool IDbSynchronizationStrategy<Cookie>.IsUpgradeable => false;
 
-    public sealed class Cookie
+    public sealed class Cookie(string ticket, string markerTable)
     {
-        public Cookie(string ticket, string markerTable)
-        {
-            this.Ticket = ticket ?? throw new ArgumentNullException(nameof(ticket));
-            this.MarkerTable = markerTable ?? throw new ArgumentNullException(nameof(markerTable));
-        }
-
-        public string Ticket { get; }
-        public string MarkerTable { get; }
+        public string Ticket { get; } = ticket ?? throw new ArgumentNullException(nameof(ticket));
+        public string MarkerTable { get; } = markerTable ?? throw new ArgumentNullException(nameof(markerTable));
     }
     #endregion
     

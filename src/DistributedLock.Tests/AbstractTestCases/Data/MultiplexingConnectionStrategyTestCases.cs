@@ -55,7 +55,7 @@ public abstract class MultiplexingConnectionStrategyTestCases<TLockProvider, TDb
     {
         var handle = lock1.Acquire();
 
-        Assert.That(lock2.TryAcquireAsync().Result, Is.Null);
+        Assert.That(lock2.TryAcquireAsync().AsTask().Result, Is.Null);
 
         return new WeakReference(handle);
     }
@@ -146,7 +146,7 @@ public abstract class MultiplexingConnectionStrategyTestCases<TLockProvider, TDb
         await using var handle2 = await lock2.AcquireAsync();
         Assert.DoesNotThrow(() => lock2.TryAcquire()?.Dispose());
 
-        Assert.Catch(() => handle1.Dispose());
+        Assert.Catch(handle1.Dispose);
 
         Assert.DoesNotThrowAsync(async () => await (await lock1.AcquireAsync()).DisposeAsync());
     }

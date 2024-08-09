@@ -23,7 +23,7 @@ public abstract class ExternalConnectionOrTransactionStrategyTestCases<TLockProv
 
     [Test]
     [NonParallelizable, Retry(tryCount: 3)] // timing sensitive for SqlSemaphore (see comment in that file regarding the 32ms wait)
-    public void TestDeadlockDetection()
+    public async Task TestDeadlockDetection()
     {
         var timeout = TimeSpan.FromSeconds(20);
 
@@ -48,7 +48,7 @@ public abstract class ExternalConnectionOrTransactionStrategyTestCases<TLockProv
 
         var tasks = new[] { RunDeadlockAsync(isFirst: true), RunDeadlockAsync(isFirst: false) };
 
-        Task.WhenAll(tasks).ContinueWith(_ => { }).Wait(TimeSpan.FromSeconds(15)).ShouldEqual(true, this.GetType().Name);
+        (await Task.WhenAll(tasks).ContinueWith(_ => { }).TryWaitAsync(TimeSpan.FromSeconds(15))).ShouldEqual(true, this.GetType().Name);
 
         // MariaDB fails both tasks due to deadlock instead of just picking a single victim
         Assert.That(tasks.Count(t => t.IsFaulted), Is.GreaterThanOrEqualTo(1));

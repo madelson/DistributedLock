@@ -2,6 +2,9 @@ using Medallion.Threading.Postgres;
 using Npgsql;
 using NUnit.Framework;
 using System.Data;
+#if NET7_0_OR_GREATER
+using System.Data.Common;
+#endif
 
 namespace Medallion.Threading.Tests.Postgres;
 
@@ -12,7 +15,33 @@ public class PostgresDistributedLockTest
     {
         Assert.Throws<ArgumentNullException>(() => new PostgresDistributedLock(new(0), default(string)!));
         Assert.Throws<ArgumentNullException>(() => new PostgresDistributedLock(new(0), default(IDbConnection)!));
+#if NET7_0_OR_GREATER
+        Assert.Throws<ArgumentNullException>(() => new PostgresDistributedLock(new(0), default(DbDataSource)!));
+#endif
     }
+
+#if NET7_0_OR_GREATER
+    [Test]
+    public void TestMultiplexingWithDbDataSourceThrowNotSupportedException()
+    {
+        using var dataSource = new NpgsqlDataSourceBuilder(TestingPostgresDb.DefaultConnectionString).Build();
+        Assert.Throws<NotSupportedException>(() => new PostgresDistributedLock(new(0), dataSource, opt => opt.UseMultiplexing()));
+    }
+
+    // DbDataSource just calls through to the IDbConnection flow so we don't need exhaustive testing, but we want to
+    // see it at least work once
+    [Test]
+    public async Task TestDbDataSourceConstructorWorks()
+    {
+        using var dataSource = new NpgsqlDataSourceBuilder(TestingPostgresDb.DefaultConnectionString).Build();
+        PostgresDistributedLock @lock = new(new(5, 5), dataSource);
+        await using (await @lock.AcquireAsync())
+        {
+            await using var handle = await @lock.TryAcquireAsync();
+            Assert.IsNull(handle);
+        }
+    }
+#endif
 
     [Test]
     public async Task TestInt64AndInt32PairKeyNamespacesAreDifferent()
