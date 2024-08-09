@@ -12,9 +12,9 @@ public sealed class TestingPostgresDb : TestingPrimaryClientDb
 {
     private readonly PostgreSqlContainer _container = new PostgreSqlBuilder().Build();
 
-    private NpgsqlConnectionStringBuilder _connectionStringBuilder;
+    private NpgsqlConnectionStringBuilder? _connectionStringBuilder;
 
-    public override DbConnectionStringBuilder ConnectionStringBuilder => this._connectionStringBuilder;
+    public override DbConnectionStringBuilder ConnectionStringBuilder => this._connectionStringBuilder!;
 
     // https://til.hashrocket.com/posts/8f87c65a0a-postgresqls-max-identifier-length-is-63-bytes
     public override int MaxApplicationNameLength => 63;

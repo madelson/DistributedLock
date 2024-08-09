@@ -24,7 +24,7 @@ public class PostgresDistributedLockTest
     [Test]
     public void TestMultiplexingWithDbDataSourceThrowNotSupportedException()
     {
-        using var dataSource = new NpgsqlDataSourceBuilder(TestingPostgresDb.DefaultConnectionString).Build();
+        using var dataSource = new NpgsqlDataSourceBuilder(PostgresSetUpFixture.PostgreSql.GetConnectionString()).Build();
         Assert.Throws<NotSupportedException>(() => new PostgresDistributedLock(new(0), dataSource, opt => opt.UseMultiplexing()));
     }
 
@@ -33,7 +33,7 @@ public class PostgresDistributedLockTest
     [Test]
     public async Task TestDbDataSourceConstructorWorks()
     {
-        using var dataSource = new NpgsqlDataSourceBuilder(TestingPostgresDb.DefaultConnectionString).Build();
+        using var dataSource = new NpgsqlDataSourceBuilder(PostgresSetUpFixture.PostgreSql.GetConnectionString()).Build();
         PostgresDistributedLock @lock = new(new(5, 5), dataSource);
         await using (await @lock.AcquireAsync())
         {
