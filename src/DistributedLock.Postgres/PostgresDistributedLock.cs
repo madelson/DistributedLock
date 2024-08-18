@@ -32,17 +32,6 @@ public sealed partial class PostgresDistributedLock : IInternalDistributedLock<P
     {
     }
 
-    /// <summary>
-    /// Constructs a lock with the given <paramref name="key"/> (effectively the lock name) and <paramref name="transaction"/>.
-    /// 
-    /// The provided <paramref name="transaction"/> will be used to connect to the database and will provide lock scope. It is assumed to be externally managed and
-    /// will not be committed or rolled back.
-    /// </summary>
-    public PostgresDistributedLock(PostgresAdvisoryLockKey key, IDbTransaction transaction)
-        : this(key, CreateInternalLock(key, transaction))
-    {
-    }
-
 #if NET7_0_OR_GREATER
     /// <summary>
     /// Constructs a lock with the given <paramref name="key"/> (effectively the lock name) and <paramref name="dbDataSource"/>,
@@ -87,12 +76,6 @@ public sealed partial class PostgresDistributedLock : IInternalDistributedLock<P
     {
         if (connection == null) { throw new ArgumentNullException(nameof(connection)); }
         return new DedicatedConnectionOrTransactionDbDistributedLock(key.ToString(), () => new PostgresDatabaseConnection(connection));
-    }
-
-    internal static IDbDistributedLock CreateInternalLock(PostgresAdvisoryLockKey key, IDbTransaction transaction)
-    {
-        if (transaction == null) { throw new ArgumentNullException(nameof(transaction)); }
-        return new DedicatedConnectionOrTransactionDbDistributedLock(key.ToString(), () => new PostgresDatabaseConnection(transaction));
     }
 
 #if NET7_0_OR_GREATER

@@ -32,17 +32,6 @@ public sealed partial class PostgresDistributedReaderWriterLock : IInternalDistr
     {
     }
 
-    /// <summary>
-    /// Constructs a lock with the given <paramref name="key"/> (effectively the lock name) and <paramref name="transaction"/>.
-    /// 
-    /// The provided <paramref name="transaction"/> will be used to connect to the database and will provide lock scope. It is assumed to be externally managed and
-    /// will not be committed or rolled back.
-    /// </summary>
-    public PostgresDistributedReaderWriterLock(PostgresAdvisoryLockKey key, IDbTransaction transaction)
-        : this(key, PostgresDistributedLock.CreateInternalLock(key, transaction))
-    {
-    }
-
 #if NET7_0_OR_GREATER
     /// <summary>
     /// Constructs a lock with the given <paramref name="key"/> (effectively the lock name) and <paramref name="dbDataSource"/>,
