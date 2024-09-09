@@ -12,7 +12,7 @@ namespace Medallion.Threading.Azure;
 public sealed partial class AzureBlobLeaseDistributedLock : IInternalDistributedLock<AzureBlobLeaseDistributedLockHandle>
 {
     /// <summary>
-    /// Metadata marker used to indicate that a blob was created for distributed locking and therefore 
+    /// Metadata marker used to indicate that a blob was created for distributed locking and therefore
     /// should be destroyed upon release
     /// </summary>
     private static readonly string CreatedMetadataKey = $"__DistributedLock";
@@ -53,7 +53,7 @@ public sealed partial class AzureBlobLeaseDistributedLock : IInternalDistributed
 
         return DistributedLockHelpers.ToSafeName(name, maxLength, s => ConvertToValidName(s));
 
-        // check based on 
+        // check based on
         // https://docs.microsoft.com/en-us/azure/storage/common/storage-use-emulator#connect-to-the-emulator-account-using-the-well-known-account-name-and-key
         bool IsStorageEmulator() => blobContainerClient.Uri.IsAbsoluteUri
             && blobContainerClient.Uri.AbsoluteUri.StartsWith("http://127.0.0.1:10000/devstoreaccount1", StringComparison.Ordinal);
@@ -105,13 +105,15 @@ public sealed partial class AzureBlobLeaseDistributedLock : IInternalDistributed
         );
 
     private async ValueTask<AzureBlobLeaseDistributedLockHandle?> TryAcquireAsync(
-        BlobLeaseClientWrapper leaseClient, 
+        BlobLeaseClientWrapper leaseClient,
         CancellationToken cancellationToken,
         bool isRetryAfterCreate)
     {
-        try  { await leaseClient.AcquireAsync(this._options.duration, cancellationToken).ConfigureAwait(false); }
-        catch (RequestFailedException acquireException)
+        var response = await leaseClient.AcquireAsync(this._options.duration, cancellationToken).ConfigureAwait(false);
+        if (response.IsError)
         {
+            var acquireException = new RequestFailedException(response);
+
             if (acquireException.ErrorCode == AzureErrors.LeaseAlreadyPresent) { return null; }
 
             if (acquireException.ErrorCode == AzureErrors.BlobNotFound)
@@ -144,7 +146,7 @@ public sealed partial class AzureBlobLeaseDistributedLock : IInternalDistributed
                 }
             }
 
-            throw;
+            throw acquireException;
         }
 
         var shouldDeleteBlob = isRetryAfterCreate
@@ -160,7 +162,7 @@ public sealed partial class AzureBlobLeaseDistributedLock : IInternalDistributed
         private readonly bool _ownsBlob;
         private readonly AzureBlobLeaseDistributedLock _lock;
         private readonly LeaseMonitor _leaseMonitor;
-        
+
         public InternalHandle(BlobLeaseClientWrapper leaseClient, bool ownsBlob, AzureBlobLeaseDistributedLock @lock)
         {
             this._leaseClient = leaseClient;
@@ -193,7 +195,7 @@ public sealed partial class AzureBlobLeaseDistributedLock : IInternalDistributed
             {
                 await this._lock._blobClient.DeleteIfExistsAsync(leaseId: this._leaseClient.LeaseId).ConfigureAwait(false);
             }
-            else 
+            else
             {
                 await this._leaseClient.ReleaseAsync().ConfigureAwait(false);
             }
