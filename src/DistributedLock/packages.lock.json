@@ -46,12 +46,12 @@
       },
       "Azure.Identity": {
         "type": "Transitive",
-        "resolved": "1.11.3",
-        "contentHash": "4EsGMAr+oog5UqHs46qwA7S/lJiwpXjPBY3t9tQBmJ8nsgmT/LLnrc32eiTlfOdfKxUz4fxBD2YjSnVZacu97w==",
+        "resolved": "1.11.4",
+        "contentHash": "Sf4BoE6Q3jTgFkgBkx7qztYOFELBCo+wQgpYDwal/qJ1unBH73ywPztIJKXBXORRzAeNijsuxhk94h0TIMvfYg==",
         "dependencies": {
           "Azure.Core": "1.38.0",
-          "Microsoft.Identity.Client": "4.60.3",
-          "Microsoft.Identity.Client.Extensions.Msal": "4.60.3",
+          "Microsoft.Identity.Client": "4.61.3",
+          "Microsoft.Identity.Client.Extensions.Msal": "4.61.3",
           "System.Memory": "4.5.4",
           "System.Security.Cryptography.ProtectedData": "4.7.0",
           "System.Text.Json": "4.7.2",
@@ -103,8 +103,8 @@
       },
       "Microsoft.Identity.Client": {
         "type": "Transitive",
-        "resolved": "4.60.3",
-        "contentHash": "jve1RzmSpBhGlqMzPva6VfRbLMLZZc1Q8WRVZf8+iEruQkBgDTJPq8OeTehcY4GGYG1j6UB1xVofVE+n4BLDdw==",
+        "resolved": "4.61.3",
+        "contentHash": "naJo/Qm35Caaoxp5utcw+R8eU8ZtLz2ALh8S+gkekOYQ1oazfCQMWVT4NJ/FnHzdIJlm8dMz0oMpMGCabx5odA==",
         "dependencies": {
           "Microsoft.IdentityModel.Abstractions": "6.35.0",
           "System.Diagnostics.DiagnosticSource": "6.0.1"
@@ -112,10 +112,10 @@
       },
       "Microsoft.Identity.Client.Extensions.Msal": {
         "type": "Transitive",
-        "resolved": "4.60.3",
-        "contentHash": "X1Cz14/RbmlLshusE5u2zfG+5ul6ttgou19BZe5Mdw1qm6fgOI9/imBB2TIsx2UD7nkgd2+MCSzhbukZf7udeg==",
+        "resolved": "4.61.3",
+        "contentHash": "PWnJcznrSGr25MN8ajlc2XIDW4zCFu0U6FkpaNLEWLgd1NgFCp5uDY3mqLDgM8zCN8hqj8yo5wHYfLB2HjcdGw==",
         "dependencies": {
-          "Microsoft.Identity.Client": "4.60.3",
+          "Microsoft.Identity.Client": "4.61.3",
           "System.IO.FileSystem.AccessControl": "5.0.0",
           "System.Security.Cryptography.ProtectedData": "4.5.0"
         }
@@ -430,7 +430,7 @@
         "type": "Project",
         "dependencies": {
           "Azure.Storage.Blobs": "[12.19.1, )",
-          "DistributedLock.Core": "[1.0.6, )"
+          "DistributedLock.Core": "[1.0.7, )"
         }
       },
       "distributedlock.core": {
@@ -443,54 +443,54 @@
       "distributedlock.filesystem": {
         "type": "Project",
         "dependencies": {
-          "DistributedLock.Core": "[1.0.6, )"
+          "DistributedLock.Core": "[1.0.7, )"
         }
       },
       "distributedlock.mysql": {
         "type": "Project",
         "dependencies": {
-          "DistributedLock.Core": "[1.0.6, )",
+          "DistributedLock.Core": "[1.0.7, )",
           "MySqlConnector": "[2.3.5, )"
         }
       },
       "distributedlock.oracle": {
         "type": "Project",
         "dependencies": {
-          "DistributedLock.Core": "[1.0.6, )",
+          "DistributedLock.Core": "[1.0.7, )",
           "Oracle.ManagedDataAccess": "[21.13.0, )"
         }
       },
       "distributedlock.postgres": {
         "type": "Project",
         "dependencies": {
-          "DistributedLock.Core": "[1.0.6, )",
+          "DistributedLock.Core": "[1.0.7, )",
           "Npgsql": "[8.0.3, )"
         }
       },
       "distributedlock.redis": {
         "type": "Project",
         "dependencies": {
-          "DistributedLock.Core": "[1.0.6, )",
+          "DistributedLock.Core": "[1.0.7, )",
           "StackExchange.Redis": "[2.7.27, )"
         }
       },
       "distributedlock.sqlserver": {
         "type": "Project",
         "dependencies": {
-          "DistributedLock.Core": "[1.0.6, )",
-          "Microsoft.Data.SqlClient": "[5.2.1, )"
+          "DistributedLock.Core": "[1.0.7, )",
+          "Microsoft.Data.SqlClient": "[5.2.2, )"
         }
       },
       "distributedlock.waithandles": {
         "type": "Project",
         "dependencies": {
-          "DistributedLock.Core": "[1.0.6, )"
+          "DistributedLock.Core": "[1.0.7, )"
         }
       },
       "distributedlock.zookeeper": {
         "type": "Project",
         "dependencies": {
-          "DistributedLock.Core": "[1.0.6, )",
+          "DistributedLock.Core": "[1.0.7, )",
           "ZooKeeperNetEx": "[3.4.12.4, )"
         }
       },
@@ -515,13 +515,13 @@
       },
       "Microsoft.Data.SqlClient": {
         "type": "CentralTransitive",
-        "requested": "[5.2.1, )",
-        "resolved": "5.2.1",
-        "contentHash": "ojg2XWmih4ubPPtrhRqqXk0SM6wC2ZSTkNNEAlYBhMo4IsRHjLazFc0abzcZCNfw1JyWcqY7vGutWTv8ZaFD9g==",
+        "requested": "[5.2.2, )",
+        "resolved": "5.2.2",
+        "contentHash": "mtoeRMh7F/OA536c/Cnh8L4H0uLSKB5kSmoi54oN7Fp0hNJDy22IqyMhaMH4PkDCqI7xL//Fvg9ldtuPHG0h5g==",
         "dependencies": {
-          "Azure.Identity": "1.11.3",
+          "Azure.Identity": "1.11.4",
           "Microsoft.Data.SqlClient.SNI": "5.2.0",
-          "Microsoft.Identity.Client": "4.60.3",
+          "Microsoft.Identity.Client": "4.61.3",
           "Microsoft.IdentityModel.JsonWebTokens": "6.35.0",
           "Microsoft.IdentityModel.Protocols.OpenIdConnect": "6.35.0",
           "System.Buffers": "4.5.1",
@@ -636,12 +636,12 @@
       },
       "Azure.Identity": {
         "type": "Transitive",
-        "resolved": "1.11.3",
-        "contentHash": "4EsGMAr+oog5UqHs46qwA7S/lJiwpXjPBY3t9tQBmJ8nsgmT/LLnrc32eiTlfOdfKxUz4fxBD2YjSnVZacu97w==",
+        "resolved": "1.11.4",
+        "contentHash": "Sf4BoE6Q3jTgFkgBkx7qztYOFELBCo+wQgpYDwal/qJ1unBH73ywPztIJKXBXORRzAeNijsuxhk94h0TIMvfYg==",
         "dependencies": {
           "Azure.Core": "1.38.0",
-          "Microsoft.Identity.Client": "4.60.3",
-          "Microsoft.Identity.Client.Extensions.Msal": "4.60.3",
+          "Microsoft.Identity.Client": "4.61.3",
+          "Microsoft.Identity.Client.Extensions.Msal": "4.61.3",
           "System.Memory": "4.5.4",
           "System.Security.Cryptography.ProtectedData": "4.7.0",
           "System.Text.Json": "4.7.2",
@@ -698,8 +698,8 @@
       },
       "Microsoft.Identity.Client": {
         "type": "Transitive",
-        "resolved": "4.60.3",
-        "contentHash": "jve1RzmSpBhGlqMzPva6VfRbLMLZZc1Q8WRVZf8+iEruQkBgDTJPq8OeTehcY4GGYG1j6UB1xVofVE+n4BLDdw==",
+        "resolved": "4.61.3",
+        "contentHash": "naJo/Qm35Caaoxp5utcw+R8eU8ZtLz2ALh8S+gkekOYQ1oazfCQMWVT4NJ/FnHzdIJlm8dMz0oMpMGCabx5odA==",
         "dependencies": {
           "Microsoft.IdentityModel.Abstractions": "6.35.0",
           "System.Diagnostics.DiagnosticSource": "6.0.1"
@@ -707,10 +707,10 @@
       },
       "Microsoft.Identity.Client.Extensions.Msal": {
         "type": "Transitive",
-        "resolved": "4.60.3",
-        "contentHash": "X1Cz14/RbmlLshusE5u2zfG+5ul6ttgou19BZe5Mdw1qm6fgOI9/imBB2TIsx2UD7nkgd2+MCSzhbukZf7udeg==",
+        "resolved": "4.61.3",
+        "contentHash": "PWnJcznrSGr25MN8ajlc2XIDW4zCFu0U6FkpaNLEWLgd1NgFCp5uDY3mqLDgM8zCN8hqj8yo5wHYfLB2HjcdGw==",
         "dependencies": {
-          "Microsoft.Identity.Client": "4.60.3",
+          "Microsoft.Identity.Client": "4.61.3",
           "System.IO.FileSystem.AccessControl": "5.0.0",
           "System.Security.Cryptography.ProtectedData": "4.5.0"
         }
@@ -1088,7 +1088,7 @@
         "type": "Project",
         "dependencies": {
           "Azure.Storage.Blobs": "[12.19.1, )",
-          "DistributedLock.Core": "[1.0.6, )"
+          "DistributedLock.Core": "[1.0.7, )"
         }
       },
       "distributedlock.core": {
@@ -1100,48 +1100,48 @@
       "distributedlock.filesystem": {
         "type": "Project",
         "dependencies": {
-          "DistributedLock.Core": "[1.0.6, )"
+          "DistributedLock.Core": "[1.0.7, )"
         }
       },
       "distributedlock.mysql": {
         "type": "Project",
         "dependencies": {
-          "DistributedLock.Core": "[1.0.6, )",
+          "DistributedLock.Core": "[1.0.7, )",
           "MySqlConnector": "[2.3.5, )"
         }
       },
       "distributedlock.postgres": {
         "type": "Project",
         "dependencies": {
-          "DistributedLock.Core": "[1.0.6, )",
+          "DistributedLock.Core": "[1.0.7, )",
           "Npgsql": "[8.0.3, )"
         }
       },
       "distributedlock.redis": {
         "type": "Project",
         "dependencies": {
-          "DistributedLock.Core": "[1.0.6, )",
+          "DistributedLock.Core": "[1.0.7, )",
           "StackExchange.Redis": "[2.7.27, )"
         }
       },
       "distributedlock.sqlserver": {
         "type": "Project",
         "dependencies": {
-          "DistributedLock.Core": "[1.0.6, )",
-          "Microsoft.Data.SqlClient": "[5.2.1, )"
+          "DistributedLock.Core": "[1.0.7, )",
+          "Microsoft.Data.SqlClient": "[5.2.2, )"
         }
       },
       "distributedlock.waithandles": {
         "type": "Project",
         "dependencies": {
-          "DistributedLock.Core": "[1.0.6, )",
+          "DistributedLock.Core": "[1.0.7, )",
           "System.Threading.AccessControl": "[8.0.0, )"
         }
       },
       "distributedlock.zookeeper": {
         "type": "Project",
         "dependencies": {
-          "DistributedLock.Core": "[1.0.6, )",
+          "DistributedLock.Core": "[1.0.7, )",
           "ZooKeeperNetEx": "[3.4.12.4, )"
         }
       },
@@ -1166,13 +1166,13 @@
       },
       "Microsoft.Data.SqlClient": {
         "type": "CentralTransitive",
-        "requested": "[5.2.1, )",
-        "resolved": "5.2.1",
-        "contentHash": "ojg2XWmih4ubPPtrhRqqXk0SM6wC2ZSTkNNEAlYBhMo4IsRHjLazFc0abzcZCNfw1JyWcqY7vGutWTv8ZaFD9g==",
+        "requested": "[5.2.2, )",
+        "resolved": "5.2.2",
+        "contentHash": "mtoeRMh7F/OA536c/Cnh8L4H0uLSKB5kSmoi54oN7Fp0hNJDy22IqyMhaMH4PkDCqI7xL//Fvg9ldtuPHG0h5g==",
         "dependencies": {
-          "Azure.Identity": "1.11.3",
+          "Azure.Identity": "1.11.4",
           "Microsoft.Data.SqlClient.SNI.runtime": "5.2.0",
-          "Microsoft.Identity.Client": "4.60.3",
+          "Microsoft.Identity.Client": "4.61.3",
           "Microsoft.IdentityModel.JsonWebTokens": "6.35.0",
           "Microsoft.IdentityModel.Protocols.OpenIdConnect": "6.35.0",
           "Microsoft.SqlServer.Server": "1.0.0",
@@ -1278,12 +1278,12 @@
       },
       "Azure.Identity": {
         "type": "Transitive",
-        "resolved": "1.11.3",
-        "contentHash": "4EsGMAr+oog5UqHs46qwA7S/lJiwpXjPBY3t9tQBmJ8nsgmT/LLnrc32eiTlfOdfKxUz4fxBD2YjSnVZacu97w==",
+        "resolved": "1.11.4",
+        "contentHash": "Sf4BoE6Q3jTgFkgBkx7qztYOFELBCo+wQgpYDwal/qJ1unBH73ywPztIJKXBXORRzAeNijsuxhk94h0TIMvfYg==",
         "dependencies": {
           "Azure.Core": "1.38.0",
-          "Microsoft.Identity.Client": "4.60.3",
-          "Microsoft.Identity.Client.Extensions.Msal": "4.60.3",
+          "Microsoft.Identity.Client": "4.61.3",
+          "Microsoft.Identity.Client.Extensions.Msal": "4.61.3",
           "System.Memory": "4.5.4",
           "System.Security.Cryptography.ProtectedData": "4.7.0",
           "System.Text.Json": "4.7.2",
@@ -1336,8 +1336,8 @@
       },
       "Microsoft.Identity.Client": {
         "type": "Transitive",
-        "resolved": "4.60.3",
-        "contentHash": "jve1RzmSpBhGlqMzPva6VfRbLMLZZc1Q8WRVZf8+iEruQkBgDTJPq8OeTehcY4GGYG1j6UB1xVofVE+n4BLDdw==",
+        "resolved": "4.61.3",
+        "contentHash": "naJo/Qm35Caaoxp5utcw+R8eU8ZtLz2ALh8S+gkekOYQ1oazfCQMWVT4NJ/FnHzdIJlm8dMz0oMpMGCabx5odA==",
         "dependencies": {
           "Microsoft.IdentityModel.Abstractions": "6.35.0",
           "System.Diagnostics.DiagnosticSource": "6.0.1"
@@ -1345,10 +1345,10 @@
       },
       "Microsoft.Identity.Client.Extensions.Msal": {
         "type": "Transitive",
-        "resolved": "4.60.3",
-        "contentHash": "X1Cz14/RbmlLshusE5u2zfG+5ul6ttgou19BZe5Mdw1qm6fgOI9/imBB2TIsx2UD7nkgd2+MCSzhbukZf7udeg==",
+        "resolved": "4.61.3",
+        "contentHash": "PWnJcznrSGr25MN8ajlc2XIDW4zCFu0U6FkpaNLEWLgd1NgFCp5uDY3mqLDgM8zCN8hqj8yo5wHYfLB2HjcdGw==",
         "dependencies": {
-          "Microsoft.Identity.Client": "4.60.3",
+          "Microsoft.Identity.Client": "4.61.3",
           "System.IO.FileSystem.AccessControl": "5.0.0",
           "System.Security.Cryptography.ProtectedData": "4.5.0"
         }
@@ -1747,7 +1747,7 @@
         "type": "Project",
         "dependencies": {
           "Azure.Storage.Blobs": "[12.19.1, )",
-          "DistributedLock.Core": "[1.0.6, )"
+          "DistributedLock.Core": "[1.0.7, )"
         }
       },
       "distributedlock.core": {
@@ -1756,55 +1756,55 @@
       "distributedlock.filesystem": {
         "type": "Project",
         "dependencies": {
-          "DistributedLock.Core": "[1.0.6, )"
+          "DistributedLock.Core": "[1.0.7, )"
         }
       },
       "distributedlock.mysql": {
         "type": "Project",
         "dependencies": {
-          "DistributedLock.Core": "[1.0.6, )",
+          "DistributedLock.Core": "[1.0.7, )",
           "MySqlConnector": "[2.3.5, )"
         }
       },
       "distributedlock.oracle": {
         "type": "Project",
         "dependencies": {
-          "DistributedLock.Core": "[1.0.6, )",
+          "DistributedLock.Core": "[1.0.7, )",
           "Oracle.ManagedDataAccess.Core": "[3.21.130, )"
         }
       },
       "distributedlock.postgres": {
         "type": "Project",
         "dependencies": {
-          "DistributedLock.Core": "[1.0.6, )",
+          "DistributedLock.Core": "[1.0.7, )",
           "Npgsql": "[8.0.3, )"
         }
       },
       "distributedlock.redis": {
         "type": "Project",
         "dependencies": {
-          "DistributedLock.Core": "[1.0.6, )",
+          "DistributedLock.Core": "[1.0.7, )",
           "StackExchange.Redis": "[2.7.27, )"
         }
       },
       "distributedlock.sqlserver": {
         "type": "Project",
         "dependencies": {
-          "DistributedLock.Core": "[1.0.6, )",
-          "Microsoft.Data.SqlClient": "[5.2.1, )"
+          "DistributedLock.Core": "[1.0.7, )",
+          "Microsoft.Data.SqlClient": "[5.2.2, )"
         }
       },
       "distributedlock.waithandles": {
         "type": "Project",
         "dependencies": {
-          "DistributedLock.Core": "[1.0.6, )",
+          "DistributedLock.Core": "[1.0.7, )",
           "System.Threading.AccessControl": "[8.0.0, )"
         }
       },
       "distributedlock.zookeeper": {
         "type": "Project",
         "dependencies": {
-          "DistributedLock.Core": "[1.0.6, )",
+          "DistributedLock.Core": "[1.0.7, )",
           "ZooKeeperNetEx": "[3.4.12.4, )"
         }
       },
@@ -1820,13 +1820,13 @@
       },
       "Microsoft.Data.SqlClient": {
         "type": "CentralTransitive",
-        "requested": "[5.2.1, )",
-        "resolved": "5.2.1",
-        "contentHash": "ojg2XWmih4ubPPtrhRqqXk0SM6wC2ZSTkNNEAlYBhMo4IsRHjLazFc0abzcZCNfw1JyWcqY7vGutWTv8ZaFD9g==",
+        "requested": "[5.2.2, )",
+        "resolved": "5.2.2",
+        "contentHash": "mtoeRMh7F/OA536c/Cnh8L4H0uLSKB5kSmoi54oN7Fp0hNJDy22IqyMhaMH4PkDCqI7xL//Fvg9ldtuPHG0h5g==",
         "dependencies": {
-          "Azure.Identity": "1.11.3",
+          "Azure.Identity": "1.11.4",
           "Microsoft.Data.SqlClient.SNI.runtime": "5.2.0",
-          "Microsoft.Identity.Client": "4.60.3",
+          "Microsoft.Identity.Client": "4.61.3",
           "Microsoft.IdentityModel.JsonWebTokens": "6.35.0",
           "Microsoft.IdentityModel.Protocols.OpenIdConnect": "6.35.0",
           "Microsoft.SqlServer.Server": "1.0.0",
