@@ -14,7 +14,7 @@
     <PackageVersion Include="Oracle.ManagedDataAccess" Version="21.13.0" Condition="'$(TargetFramework)' == 'net462'" />
     <PackageVersion Include="Npgsql" Version="8.0.3" />
     <PackageVersion Include="StackExchange.Redis" Version="2.7.27" />
-    <PackageVersion Include="Microsoft.Data.SqlClient" Version="5.2.1" />
+    <PackageVersion Include="Microsoft.Data.SqlClient" Version="5.2.2" />
     <PackageVersion Include="nunit" Version="3.14.0" />
     <PackageVersion Include="nunit3testadapter" Version="4.5.0" />
     <PackageVersion Include="Microsoft.NET.Test.SDK" Version="17.9.0" />
