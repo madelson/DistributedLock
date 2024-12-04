@@ -1,4 +1,5 @@
-﻿using Azure.Storage.Blobs.Specialized;
+﻿using Azure;
+using Azure.Storage.Blobs.Specialized;
 using Medallion.Threading.Internal;
 
 namespace Medallion.Threading.Azure;
@@ -17,14 +18,19 @@ internal sealed class BlobLeaseClientWrapper
 
     public string LeaseId => this._blobLeaseClient.LeaseId;
 
-    public ValueTask AcquireAsync(TimeoutValue duration, CancellationToken cancellationToken)
+    public ValueTask<Response> AcquireAsync(TimeoutValue duration, CancellationToken cancellationToken)
     {
+        var requestContext = new RequestContext
+        {
+            CancellationToken = cancellationToken,
+            ErrorOptions = ErrorOptions.NoThrow
+        };
+
         if (SyncViaAsync.IsSynchronous)
         {
-            this._blobLeaseClient.Acquire(duration.TimeSpan, cancellationToken: cancellationToken);
-            return default;
+            return new ValueTask<Response>(this._blobLeaseClient.Acquire(duration.TimeSpan, conditions: null, requestContext));
         }
-        return new ValueTask(this._blobLeaseClient.AcquireAsync(duration.TimeSpan, cancellationToken: cancellationToken));
+        return new ValueTask<Response>(this._blobLeaseClient.AcquireAsync(duration.TimeSpan, conditions: null, requestContext));
     }
 
     public ValueTask RenewAsync(CancellationToken cancellationToken)
