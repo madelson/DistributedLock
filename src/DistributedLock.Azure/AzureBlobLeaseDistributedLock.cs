@@ -105,11 +105,11 @@ public sealed partial class AzureBlobLeaseDistributedLock : IInternalDistributed
         );
 
     private async ValueTask<AzureBlobLeaseDistributedLockHandle?> TryAcquireAsync(
-        BlobLeaseClientWrapper leaseClient, 
+        BlobLeaseClientWrapper leaseClient,
         CancellationToken cancellationToken,
         bool isRetryAfterCreate)
     {
-        try  { await leaseClient.AcquireAsync(this._options.duration, cancellationToken).ConfigureAwait(false); }
+        try { await leaseClient.AcquireAsync(this._options.duration, cancellationToken).ConfigureAwait(false); }
         catch (RequestFailedException acquireException)
         {
             if (acquireException.ErrorCode == AzureErrors.LeaseAlreadyPresent) { return null; }
@@ -135,6 +135,11 @@ public sealed partial class AzureBlobLeaseDistributedLock : IInternalDistributed
                 {
                     // if the retry fails and we created, attempt deletion to clean things up
                     try { await this._blobClient.DeleteIfExistsAsync().ConfigureAwait(false); }
+                    catch (RequestFailedException deletionException) when (deletionException.ErrorCode == AzureErrors.LeaseIdMissing)
+                    {
+                        // handle the race condition where we try to delete and someone else acquired it
+                        // only the original Exception from TryAcquireAsync should be thrown
+                    }
                     catch (Exception deletionException)
                     {
                         throw new AggregateException(retryException, deletionException);
@@ -160,7 +165,7 @@ public sealed partial class AzureBlobLeaseDistributedLock : IInternalDistributed
         private readonly bool _ownsBlob;
         private readonly AzureBlobLeaseDistributedLock _lock;
         private readonly LeaseMonitor _leaseMonitor;
-        
+
         public InternalHandle(BlobLeaseClientWrapper leaseClient, bool ownsBlob, AzureBlobLeaseDistributedLock @lock)
         {
             this._leaseClient = leaseClient;
@@ -193,7 +198,7 @@ public sealed partial class AzureBlobLeaseDistributedLock : IInternalDistributed
             {
                 await this._lock._blobClient.DeleteIfExistsAsync(leaseId: this._leaseClient.LeaseId).ConfigureAwait(false);
             }
-            else 
+            else
             {
                 await this._leaseClient.ReleaseAsync().ConfigureAwait(false);
             }
