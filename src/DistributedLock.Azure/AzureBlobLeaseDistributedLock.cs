@@ -137,6 +137,11 @@ public sealed partial class AzureBlobLeaseDistributedLock : IInternalDistributed
                 {
                     // if the retry fails and we created, attempt deletion to clean things up
                     try { await this._blobClient.DeleteIfExistsAsync().ConfigureAwait(false); }
+                    catch (RequestFailedException deletionException) when (deletionException.ErrorCode == AzureErrors.LeaseIdMissing)
+                    {
+                        // handle the race condition where we try to delete and someone else acquired it
+                        // only the original Exception from TryAcquireAsync should be thrown
+                    }
                     catch (Exception deletionException)
                     {
                         throw new AggregateException(retryException, deletionException);
