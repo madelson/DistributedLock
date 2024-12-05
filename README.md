@@ -141,6 +141,10 @@ Contributions are welcome! If you are interested in contributing towards a new o
 Setup steps for working with the repository locally are documented [here](docs/Developing%20DistributedLock.md).
 
 ## Release notes
+- 2.5.1
+	- Increase efficiency of Azure blob locks when the blob does not exist. Thanks [@richardkooiman](https://github.com/richardkooiman) for contributing! ([#227](https://github.com/madelson/DistributedLock/pull/227), DistributedLock.Azure 1.0.2)
+	- Improve error handling in race condition scenarios for Azure blobs. Thanks [@MartinDembergerR9](https://github.com/MartinDembergerR9) for contributing! ([#228](https://github.com/madelson/DistributedLock/pull/228), DistributedLock.Azure 1.0.2)
+	- Bump Microsoft.Data.SqlClient to 5.2.2 to avoid vulnerability. Thanks [@steve85](https://github.com/steve85) for implementing! ([#229](https://github.com/madelson/DistributedLock/pull/229), DistributedLock.SqlServer 1.0.6)
 - 2.5
 	- Add support for creating Postgres locks off `DbDataSource` which is helpful for apps using `NpgsqlMultiHostDataSource`. Thanks [davidngjy](https://github.com/davidngjy) for implementing! ([#153](https://github.com/madelson/DistributedLock/issues/153), DistributedLock.Postgres 1.2.0)
 	- Upgrade Npgsql to 8.0.3 to avoid vulnerability. Thanks [@Meir017](https://github.com/Meir017)/[@davidngjy](https://github.com/davidngjy) for implementing! ([#218](https://github.com/madelson/DistributedLock/issues/218), DistributedLock.Postgres 1.2.0)
