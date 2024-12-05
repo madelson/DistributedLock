@@ -51,7 +51,7 @@ public sealed partial class AzureBlobLeaseDistributedLock : IInternalDistributed
     {
         var maxLength = IsStorageEmulator() ? 256 : 1024;
 
-        return DistributedLockHelpers.ToSafeName(name, maxLength, s => ConvertToValidName(s));
+        return DistributedLockHelpers.ToSafeName(name, maxLength, ConvertToValidName);
 
         // check based on
         // https://docs.microsoft.com/en-us/azure/storage/common/storage-use-emulator#connect-to-the-emulator-account-using-the-well-known-account-name-and-key
@@ -109,7 +109,7 @@ public sealed partial class AzureBlobLeaseDistributedLock : IInternalDistributed
         CancellationToken cancellationToken,
         bool isRetryAfterCreate)
     {
-        var response = await leaseClient.AcquireAsync(this._options.duration, cancellationToken).ConfigureAwait(false);
+        using var response = await leaseClient.AcquireAsync(this._options.duration, cancellationToken).ConfigureAwait(false);
         if (response.IsError)
         {
             var acquireException = new RequestFailedException(response);
@@ -128,7 +128,7 @@ public sealed partial class AzureBlobLeaseDistributedLock : IInternalDistributed
                 {
                     // handle the race condition where we try to create and someone else creates it first
                     return createException.ErrorCode == AzureErrors.LeaseIdMissing
-                        ? default(AzureBlobLeaseDistributedLockHandle?)
+                        ? default
                         : throw new AggregateException($"Blob {this._blobClient.Name} does not exist and could not be created. See inner exceptions for details", acquireException, createException);
                 }
 
@@ -139,8 +139,8 @@ public sealed partial class AzureBlobLeaseDistributedLock : IInternalDistributed
                     try { await this._blobClient.DeleteIfExistsAsync().ConfigureAwait(false); }
                     catch (RequestFailedException deletionException) when (deletionException.ErrorCode == AzureErrors.LeaseIdMissing)
                     {
-                        // handle the race condition where we try to delete and someone else acquired it
-                        // only the original Exception from TryAcquireAsync should be thrown
+                        // Handle the race condition where we try to delete and someone else acquired it:
+                        // in that case only the original Exception from TryAcquireAsync should be thrown.
                     }
                     catch (Exception deletionException)
                     {
