@@ -82,7 +82,12 @@ internal
         if ((cancellationToken.CanBeCanceled || !SyncViaAsync.IsSynchronous)
             && this.InnerConnection is DbConnection dbConnection)
         {
-            await dbConnection.OpenAsync(cancellationToken).ConfigureAwait(false);
+            try { await dbConnection.OpenAsync(cancellationToken).ConfigureAwait(false); }
+            // Oracle can throw OracleException instead of OCE here
+            catch (Exception ex) when (cancellationToken.IsCancellationRequested && this.IsCommandCancellationException(ex))
+            {
+                throw new OperationCanceledException("Connection open canceled", ex, cancellationToken);
+            }
         }
         else
         {

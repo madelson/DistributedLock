@@ -72,6 +72,8 @@ internal class OracleDatabaseConnection : DatabaseConnection
         {
             var firstSeparatorIndex = connectionString.IndexOf(';');
             var applicationName = connectionString.Substring(startIndex: ApplicationNameIndicatorPrefix.Length, length: firstSeparatorIndex - ApplicationNameIndicatorPrefix.Length);
+            // After upgrading the Oracle client to 23.6.1, the connection pool sometimes seems to grow beyond what is strictly required.
+            // This causes issues if we're tracking connections by name. Therefore, we disable pooling on named connections
             var connection = new OracleConnection(connectionString.Substring(startIndex: firstSeparatorIndex + 1));
             connection.ConnectionOpen += _ => connection.ClientInfo = applicationName;
             return connection;

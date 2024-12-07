@@ -12,7 +12,7 @@ public class DatabaseConnectionTest
     [Test]
     public async Task TestConnectionMonitorStaysSubscribedAfterClose()
     {
-        var db = new TestingSqlServerDb { ApplicationName = nameof(TestConnectionMonitorStaysSubscribedAfterClose) };
+        var db = new TestingSqlServerDb { ApplicationName = TestHelper.UniqueName };
 
         await using var connection = new SqlDatabaseConnection(db.ConnectionString);
 

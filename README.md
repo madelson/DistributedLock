@@ -141,6 +141,13 @@ Contributions are welcome! If you are interested in contributing towards a new o
 Setup steps for working with the repository locally are documented [here](docs/Developing%20DistributedLock.md).
 
 ## Release notes
+- 2.5.1
+	- Increase efficiency of Azure blob locks when the blob does not exist. Thanks [@richardkooiman](https://github.com/richardkooiman) for implementing! ([#227](https://github.com/madelson/DistributedLock/pull/227), DistributedLock.Azure 1.0.2)
+	- Improve error handling in race condition scenarios for Azure blobs. Thanks [@MartinDembergerR9](https://github.com/MartinDembergerR9) for implementing! ([#228](https://github.com/madelson/DistributedLock/pull/228), DistributedLock.Azure 1.0.2)
+	- Bump Microsoft.Data.SqlClient to 5.2.2 to avoid vulnerability. Thanks [@steve85](https://github.com/steve85) for implementing! ([#229](https://github.com/madelson/DistributedLock/pull/229), DistributedLock.SqlServer 1.0.6)
+	- Bump Oracle.ManagedDataAccess to latest to avoid bringing in vulnerable packages (DistributedLock.Core 1.0.8, DistributedLock.Oracle 1.0.4)
+	- Bump Npgsql to latest patch to avoid bringing in vulnerable packages (DistributedLock.Postgres 1.2.1)
+	- Improve directory creation concurrency handling for `FileDistributedLock` (DistributedLock.FileSystem 1.0.3) 
 - 2.5
 	- Add support for creating Postgres locks off `DbDataSource` which is helpful for apps using `NpgsqlMultiHostDataSource`. Thanks [davidngjy](https://github.com/davidngjy) for implementing! ([#153](https://github.com/madelson/DistributedLock/issues/153), DistributedLock.Postgres 1.2.0)
 	- Upgrade Npgsql to 8.0.3 to avoid vulnerability. Thanks [@Meir017](https://github.com/Meir017)/[@davidngjy](https://github.com/davidngjy) for implementing! ([#218](https://github.com/madelson/DistributedLock/issues/218), DistributedLock.Postgres 1.2.0)
@@ -149,10 +156,10 @@ Setup steps for working with the repository locally are documented [here](docs/D
 - 2.4
 	- Add support for transaction-scoped locking in Postgres using `pg_advisory_xact_lock` which is helpful when using PgBouncer ([#168](https://github.com/madelson/DistributedLock/issues/168), DistributedLock.Postgres 1.1.0)
 	- Improve support for newer versions of StackExchange.Redis, especially when using the default backlog policy ([#162](https://github.com/madelson/DistributedLock/issues/162), DistributedLock.Redis 1.0.3). Thanks [@Bartleby2718](https://github.com/Bartleby2718) for helping with this!
-   - Drop `net461` support (`net462` remains supported). Thanks [@Bartleby2718](https://github.com/Bartleby2718) for implementing! 
+	- Drop `net461` support (`net462` remains supported). Thanks [@Bartleby2718](https://github.com/Bartleby2718) for implementing! 
 	- Reduce occurrence of `UnobservedTaskException`s thrown by the library ([#192](https://github.com/madelson/DistributedLock/issues/192), DistributedLock.Core 1.0.6)
 	- Update dependencies to modern versions without known issues/vulnerabilities ([#111](https://github.com/madelson/DistributedLock/issues/111)/[#177](https://github.com/madelson/DistributedLock/issues/177)/[#184](https://github.com/madelson/DistributedLock/issues/184)/[#185](https://github.com/madelson/DistributedLock/issues/185), all packages). Thanks [@Bartleby2718](https://github.com/Bartleby2718) for helping with this!
-	- Improve directory creation concurrency handling for `FileDistributedLock` on Linux/.NET 8 ([#195](), DistributedLock.FileSystem 1.0.2)
+	- Improve directory creation concurrency handling for `FileDistributedLock` on Linux/.NET 8 ([#195](https://github.com/madelson/DistributedLock/issues/195), DistributedLock.FileSystem 1.0.2)
 	- Allow using transaction-scoped locks in SQL Server without explicitly disabling multiplexing ([#189](https://github.com/madelson/DistributedLock/issues/189), DistributedLock.SqlServer 1.0.4)
 	- New API documentation on [dndocs](https://dndocs.com/). Thanks [@NeuroXiq](https://github.com/NeuroXiq)!
 	- New documentation for contributors to get the project running locally (see [Contributing](#contributing))

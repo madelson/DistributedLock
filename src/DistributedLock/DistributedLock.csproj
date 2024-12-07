@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;netstandard2.1;net462</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;netstandard2.1;net462;net472</TargetFrameworks>
     <RootNamespace>Medallion.Threading</RootNamespace>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
     <WarningLevel>4</WarningLevel>
@@ -10,7 +10,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <Version>2.5.0</Version>
+    <Version>2.5.1</Version>
     <AssemblyVersion>2.0.0.0</AssemblyVersion>
     <Authors>Michael Adelson</Authors>
     <Description>Provides easy-to-use mutexes, reader-writer locks, and semaphores that can synchronize across processes and machines. This is an umbrella package that brings in the entire family of DistributedLock.* packages (e. g. DistributedLock.SqlServer) as references. Those packages can also be installed individually.
@@ -53,7 +53,7 @@
     <ProjectReference Include="..\DistributedLock.Redis\DistributedLock.Redis.csproj" />
     <ProjectReference Include="..\DistributedLock.ZooKeeper\DistributedLock.ZooKeeper.csproj" />
     <ProjectReference Include="..\DistributedLock.MySql\DistributedLock.MySql.csproj" />
-    <ProjectReference Include="..\DistributedLock.Oracle\DistributedLock.Oracle.csproj" Condition="'$(TargetFramework)' != 'netstandard2.0'" />
+    <ProjectReference Include="..\DistributedLock.Oracle\DistributedLock.Oracle.csproj" Condition="'$(TargetFramework)' != 'netstandard2.0' and '$(TargetFramework)' != 'net462'" />
   </ItemGroup>
 
   <ItemGroup>
