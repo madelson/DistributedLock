@@ -31,6 +31,13 @@ public sealed class TestingOracleDb : TestingPrimaryClientDb
     {
         Invariant.Require(applicationName.Length <= this.MaxApplicationNameLength);
 
+        // Oracle's client seems to allow the connection pool to grow beyond what is strictly required;
+        // Clear the pool to get an accurate count. See https://github.com/oracle/dotnet-db-samples/issues/425
+        using (var clearConnection = this.CreateConnection())
+        {
+            this.ClearPool(clearConnection);
+        }
+
         using var connection = new OracleConnection(DefaultConnectionString);
         connection.Open();
         using var command = connection.CreateCommand();
