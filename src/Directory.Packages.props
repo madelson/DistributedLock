@@ -12,7 +12,7 @@
     <PackageVersion Include="NUnit.Analyzers" Version="4.1.0" />
     <PackageVersion Include="Oracle.ManagedDataAccess.Core" Version="23.6.1" Condition="'$(TargetFramework)' == 'netstandard2.1'" />
     <PackageVersion Include="Oracle.ManagedDataAccess" Version="23.6.1" Condition="'$(TargetFramework)' == 'net472'" />
-    <PackageVersion Include="Npgsql" Version="8.0.3" />
+    <PackageVersion Include="Npgsql" Version="8.0.6" />
     <PackageVersion Include="StackExchange.Redis" Version="2.7.27" />
     <PackageVersion Include="Microsoft.Data.SqlClient" Version="5.2.2" />
     <PackageVersion Include="nunit" Version="3.14.0" />
