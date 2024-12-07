@@ -147,12 +147,12 @@ Setup steps for working with the repository locally are documented [here](docs/D
 	- Bump Microsoft.Data.SqlClient to 5.2.2 to avoid vulnerability. Thanks [@steve85](https://github.com/steve85) for implementing! ([#229](https://github.com/madelson/DistributedLock/pull/229), DistributedLock.SqlServer 1.0.6)
 	- Bump Oracle.ManagedDataAccess to latest to avoid bringing in vulnerable packages (DistributedLock.Core 1.0.8, DistributedLock.Oracle 1.0.4)
 	- Bump Npgsql to latest patch to avoid bringing in vulnerable packages (DistributedLock.Postgres 1.2.1)
+	- Improve directory creation concurrency handling for `FileDistributedLock` (DistributedLock.FileSystem 1.0.3) 
 - 2.5
 	- Add support for creating Postgres locks off `DbDataSource` which is helpful for apps using `NpgsqlMultiHostDataSource`. Thanks [davidngjy](https://github.com/davidngjy) for implementing! ([#153](https://github.com/madelson/DistributedLock/issues/153), DistributedLock.Postgres 1.2.0)
 	- Upgrade Npgsql to 8.0.3 to avoid vulnerability. Thanks [@Meir017](https://github.com/Meir017)/[@davidngjy](https://github.com/davidngjy) for implementing! ([#218](https://github.com/madelson/DistributedLock/issues/218), DistributedLock.Postgres 1.2.0)
 	- Fix Postgres race condition with connection keepalive enabled ([#216](https://github.com/madelson/DistributedLock/issues/216), DistributedLock.Core 1.0.7)
 	- Upgrade Microsoft.Data.SqlClient to 5.2.1 to avoid vulnerability ([#210](https://github.com/madelson/DistributedLock/issues/210), DistributedLock.SqlServer 1.0.5)
-	- Improve directory creation concurrency handling for `FileDistributedLock` (DistributedLock.FileSystem 1.0.3) 
 - 2.4
 	- Add support for transaction-scoped locking in Postgres using `pg_advisory_xact_lock` which is helpful when using PgBouncer ([#168](https://github.com/madelson/DistributedLock/issues/168), DistributedLock.Postgres 1.1.0)
 	- Improve support for newer versions of StackExchange.Redis, especially when using the default backlog policy ([#162](https://github.com/madelson/DistributedLock/issues/162), DistributedLock.Redis 1.0.3). Thanks [@Bartleby2718](https://github.com/Bartleby2718) for helping with this!
