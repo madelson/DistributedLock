@@ -152,13 +152,14 @@ Setup steps for working with the repository locally are documented [here](docs/D
 	- Upgrade Npgsql to 8.0.3 to avoid vulnerability. Thanks [@Meir017](https://github.com/Meir017)/[@davidngjy](https://github.com/davidngjy) for implementing! ([#218](https://github.com/madelson/DistributedLock/issues/218), DistributedLock.Postgres 1.2.0)
 	- Fix Postgres race condition with connection keepalive enabled ([#216](https://github.com/madelson/DistributedLock/issues/216), DistributedLock.Core 1.0.7)
 	- Upgrade Microsoft.Data.SqlClient to 5.2.1 to avoid vulnerability ([#210](https://github.com/madelson/DistributedLock/issues/210), DistributedLock.SqlServer 1.0.5)
+	- Improve directory creation concurrency handling for `FileDistributedLock` (DistributedLock.FileSystem 1.0.3) 
 - 2.4
 	- Add support for transaction-scoped locking in Postgres using `pg_advisory_xact_lock` which is helpful when using PgBouncer ([#168](https://github.com/madelson/DistributedLock/issues/168), DistributedLock.Postgres 1.1.0)
 	- Improve support for newer versions of StackExchange.Redis, especially when using the default backlog policy ([#162](https://github.com/madelson/DistributedLock/issues/162), DistributedLock.Redis 1.0.3). Thanks [@Bartleby2718](https://github.com/Bartleby2718) for helping with this!
 	- Drop `net461` support (`net462` remains supported). Thanks [@Bartleby2718](https://github.com/Bartleby2718) for implementing! 
 	- Reduce occurrence of `UnobservedTaskException`s thrown by the library ([#192](https://github.com/madelson/DistributedLock/issues/192), DistributedLock.Core 1.0.6)
 	- Update dependencies to modern versions without known issues/vulnerabilities ([#111](https://github.com/madelson/DistributedLock/issues/111)/[#177](https://github.com/madelson/DistributedLock/issues/177)/[#184](https://github.com/madelson/DistributedLock/issues/184)/[#185](https://github.com/madelson/DistributedLock/issues/185), all packages). Thanks [@Bartleby2718](https://github.com/Bartleby2718) for helping with this!
-	- Improve directory creation concurrency handling for `FileDistributedLock` on Linux/.NET 8 ([#195](), DistributedLock.FileSystem 1.0.2)
+	- Improve directory creation concurrency handling for `FileDistributedLock` on Linux/.NET 8 ([#195](https://github.com/madelson/DistributedLock/issues/195), DistributedLock.FileSystem 1.0.2)
 	- Allow using transaction-scoped locks in SQL Server without explicitly disabling multiplexing ([#189](https://github.com/madelson/DistributedLock/issues/189), DistributedLock.SqlServer 1.0.4)
 	- New API documentation on [dndocs](https://dndocs.com/). Thanks [@NeuroXiq](https://github.com/NeuroXiq)!
 	- New documentation for contributors to get the project running locally (see [Contributing](#contributing))
