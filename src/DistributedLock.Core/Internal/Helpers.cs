@@ -28,7 +28,7 @@ static class Helpers
 
     public readonly struct TaskConversion<TTo> { }
 
-    public static async ValueTask ConvertToVoid<TResult>(this ValueTask<TResult> task) => await task.ConfigureAwait(false);
+    internal static async ValueTask ConvertToVoid<TResult>(this ValueTask<TResult> task) => await task.ConfigureAwait(false);
 
     public static ValueTask<T> AsValueTask<T>(this Task<T> task) => new(task);
     public static ValueTask AsValueTask(this Task task) => new(task);

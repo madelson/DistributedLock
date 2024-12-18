@@ -1,5 +1,4 @@
-﻿using Medallion.Threading.Internal.Data;
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 using System.Text;
 
 namespace Medallion.Threading.Internal;
@@ -132,30 +131,6 @@ static class DistributedLockHelpers
 
     public static bool TryUpgradeToWriteLock(IDistributedLockUpgradeableHandle handle, TimeSpan timeout, CancellationToken cancellationToken) =>
         SyncViaAsync.Run(t => t.handle.TryUpgradeToWriteLockAsync(t.timeout, t.cancellationToken), (handle, timeout, cancellationToken));
-    #endregion
-
-    #region ---- IDbSynchronizationStrategy implementations ----
-    public static ValueTask<THandle?> TryAcquireAsync<THandle>(IDbSynchronizationStrategy<THandle> strategy, DatabaseConnection connection, string resourceName, TimeSpan timeout, CancellationToken cancellationToken)
-        where THandle : class =>
-        strategy.TryAcquireAsync(connection, resourceName, timeout, cancellationToken);
-
-    public static ValueTask<THandle> AcquireAsync<THandle>(IDbSynchronizationStrategy<THandle> strategy, DatabaseConnection connection, string resourceName, TimeSpan? timeout, CancellationToken cancellationToken)
-        where THandle : class =>
-        strategy.TryAcquireAsync(connection, resourceName, timeout, cancellationToken).ThrowTimeoutIfNull();
-
-    public static THandle Acquire<THandle>(IDbSynchronizationStrategy<THandle> strategy, DatabaseConnection connection, string resourceName, TimeSpan? timeout, CancellationToken cancellationToken)
-        where THandle : class =>
-        SyncViaAsync.Run(
-            state => AcquireAsync(state.strategy, state.connection, state.resourceName, state.timeout, state.cancellationToken),
-            (strategy, connection, resourceName, timeout, cancellationToken)
-        );
-
-    public static THandle? TryAcquire<THandle>(IDbSynchronizationStrategy<THandle> strategy, DatabaseConnection connection, string resourceName, TimeSpan timeout, CancellationToken cancellationToken)
-        where THandle : class =>
-        SyncViaAsync.Run(
-            state => TryAcquireAsync(strategy, connection, resourceName, timeout, cancellationToken),
-            (strategy, connection, resourceName, timeout, cancellationToken)
-        );
     #endregion
 
     private static Exception LockTimeout(string? @object = null) => new TimeoutException($"Timeout exceeded when trying to acquire the {@object ?? "lock"}");

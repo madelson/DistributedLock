@@ -211,13 +211,7 @@ internal class PostgresAdvisoryLock : IDbSynchronizationStrategy<object>
 
     private async ValueTask ReleaseAsync(DatabaseConnection connection, PostgresAdvisoryLockKey key, bool isTry)
     {
-        // For transaction scoped advisory locks, the lock can only be released by ending the transaction.
-        // If the transaction is internally-owned, then the lock will be released when the transaction is disposed as part of the internal connection management.
-        // If the transaction is externally-owned, then the lock will have to be released explicitly by the transaction initiator.
-        if (UseTransactionScopedLock(connection))
-        {
-            return;
-        }
+        Invariant.Require(!UseTransactionScopedLock(connection));
 
         using var command = connection.CreateCommand();
         command.SetCommandText($"SELECT pg_catalog.pg_advisory_unlock{(this._isShared ? "_shared" : string.Empty)}({AddKeyParametersAndGetKeyArguments(command, key)})");
