@@ -97,7 +97,7 @@ public partial class PostgresDistributedLock
     public static ValueTask AcquireWithTransactionAsync(PostgresAdvisoryLockKey key, IDbTransaction transaction, TimeSpan? timeout = null, CancellationToken cancellationToken = default) =>
         AcquireWithTransactionAsyncInternal(key, transaction, timeout, cancellationToken);
 
-    internal static ValueTask<bool> TryAcquireWithTransactionAsyncInternal(PostgresAdvisoryLockKey key, IDbTransaction transaction, TimeSpan timeout = default, CancellationToken cancellationToken = default)
+    internal static ValueTask<bool> TryAcquireWithTransactionAsyncInternal(PostgresAdvisoryLockKey key, IDbTransaction transaction, TimeSpan timeout, CancellationToken cancellationToken)
     {
         if (key == null) { throw new ArgumentNullException(nameof(key)); }
         if (transaction == null) { throw new ArgumentNullException(nameof(transaction)); }
@@ -110,14 +110,14 @@ public partial class PostgresDistributedLock
 
             await using (connection.ConfigureAwait(false))
             {
-                var handle = await PostgresAdvisoryLock.ExclusiveLock.TryAcquireAsync(connection, key.ToString(), timeout, cancellationToken).ConfigureAwait(false);
+                var lockAcquiredCookie = await PostgresAdvisoryLock.ExclusiveLock.TryAcquireAsync(connection, key.ToString(), timeout, cancellationToken).ConfigureAwait(false);
 
-                return handle != null;
+                return lockAcquiredCookie != null;
             }
         }
     }
 
-    internal static ValueTask AcquireWithTransactionAsyncInternal(PostgresAdvisoryLockKey key, IDbTransaction transaction, TimeSpan? timeout = null, CancellationToken cancellationToken = default)
+    internal static ValueTask AcquireWithTransactionAsyncInternal(PostgresAdvisoryLockKey key, IDbTransaction transaction, TimeSpan? timeout, CancellationToken cancellationToken)
     {
         if (key == null) { throw new ArgumentNullException(nameof(key)); }
         if (transaction == null) { throw new ArgumentNullException(nameof(transaction)); }
