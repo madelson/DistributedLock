@@ -83,7 +83,7 @@ public class WaitHandleDistributedSemaphoreTest
     [Test]
     public async Task TestCancellationDoesNotLeadToLostSignal([Values] bool async)
     {
-        var semaphore = new WaitHandleDistributedSemaphore(nameof(this.TestCancellationDoesNotLeadToLostSignal), 2);
+        var semaphore = new WaitHandleDistributedSemaphore(TestHelper.UniqueName, 2);
         await using var _ = await semaphore.AcquireAsync(TimeSpan.FromSeconds(1));
 
         Random random = new();
