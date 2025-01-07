@@ -186,12 +186,14 @@ internal class PostgresAdvisoryLock : IDbSynchronizationStrategy<object>
         // If the connection is internally-owned, we only define a save point if a transaction has been opened.
         if (!connection.IsExernallyOwned) { return connection.HasTransaction; }
 
-        // If the connection is externally-owned with an established transaction, we don't want to pollute it with a save point 
-        // which we won't be able to release in case the lock will be acquired.
+        // If the connection is externally-owned with an established transaction,
+        // it means that the connection came through the transactional locking APIs (see PostgresDistributedLock.Extensions class),
+        // and we can't define a save point since it can't be released in case the lock will be acquired (the lock will be released too in this scneario).
         if (connection.HasTransaction) { return false; }
 
         // The externally-owned connection might still be part of a transaction that we can't see.
-        // In that case, the only real way to detect it is to begin a new one.
+        // This can only be the case if the externally-owned connection didn't came through the transactional locking APIs (see PostgresDistributedLock.Extensions class).
+        // In that case, the only real way to detect the transaction is to begin a new one.
         try
         {
             await connection.BeginTransactionAsync().ConfigureAwait(false);
@@ -203,6 +205,7 @@ internal class PostgresAdvisoryLock : IDbSynchronizationStrategy<object>
 
         await connection.DisposeTransactionAsync().ConfigureAwait(false);
 
+        // If we reached this point, it means the externally-owned connection has no transaction, therefore we can't define a save point.
         return false;
     }
 
@@ -239,8 +242,8 @@ internal class PostgresAdvisoryLock : IDbSynchronizationStrategy<object>
     }
 
     private static bool UseTransactionScopedLock(DatabaseConnection connection) =>
-        // Transaction-scoped locking is supported on both externally-owned and internally-owned connections,
-        // as long as the connection has a transaction.
+        // Transaction-scoped locking is supported on internally-owned connections and externally-owned connections which explicitly have a transaction
+        // (meaning that the external connection came through the transactional locking APIs, see PostgresDistributedLock.Extensions class).
         connection.HasTransaction;
 
     private static string AddPGLocksFilterParametersAndGetFilterExpression(DatabaseCommand command, PostgresAdvisoryLockKey key)
