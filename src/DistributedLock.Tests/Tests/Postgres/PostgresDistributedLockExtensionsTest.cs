@@ -45,4 +45,71 @@ internal class PostgresDistributedLockExtensionsTest
             transaction.Commit();
         }
     }
+
+    [Test]
+    public async Task TestTimeoutSettingsRestoredWithExternalTransaction()
+    {
+        bool isLockAcquired;
+
+        var key = new PostgresAdvisoryLockKey(0);
+
+        using var connection = new NpgsqlConnection(TestingPostgresDb.DefaultConnectionString);
+        await connection.OpenAsync();
+
+        using (var transaction = connection.BeginTransaction())
+        {
+            using var transactionCommand = connection.CreateCommand();
+            transactionCommand.Transaction = transaction;
+
+            transactionCommand.CommandText = "SET LOCAL statement_timeout = 1010;SET LOCAL lock_timeout = 510;";
+            await transactionCommand.ExecuteNonQueryAsync();
+
+            isLockAcquired = await PostgresDistributedLock.TryAcquireWithTransactionAsync(key, transaction).ConfigureAwait(false);
+            Assert.That(isLockAcquired, Is.True);
+
+            (await GetTimeoutAsync("statement_timeout", transactionCommand)).ShouldEqual("1010ms");
+            (await GetTimeoutAsync("lock_timeout", transactionCommand)).ShouldEqual("510ms");
+
+            isLockAcquired = PostgresDistributedLock.TryAcquireWithTransaction(key, transaction, TimeSpan.FromMilliseconds(10));
+            Assert.That(isLockAcquired, Is.False);
+
+            (await GetTimeoutAsync("statement_timeout", transactionCommand)).ShouldEqual("1010ms");
+            (await GetTimeoutAsync("lock_timeout", transactionCommand)).ShouldEqual("510ms");
+
+            transaction.Rollback();
+
+            (await GetTimeoutAsync("statement_timeout", transactionCommand)).ShouldEqual("0");
+            (await GetTimeoutAsync("lock_timeout", transactionCommand)).ShouldEqual("0");
+        }
+
+        using (var transaction = connection.BeginTransaction())
+        {
+            using var transactionCommand = connection.CreateCommand();
+            transactionCommand.Transaction = transaction;
+
+            transactionCommand.CommandText = "SET LOCAL statement_timeout = 1010;SET LOCAL lock_timeout = 510;";
+            await transactionCommand.ExecuteNonQueryAsync();
+
+            await PostgresDistributedLock.AcquireWithTransactionAsync(key, transaction).ConfigureAwait(false);
+
+            (await GetTimeoutAsync("statement_timeout", transactionCommand)).ShouldEqual("1010ms");
+            (await GetTimeoutAsync("lock_timeout", transactionCommand)).ShouldEqual("510ms");
+
+            Assert.Throws<TimeoutException>(() => PostgresDistributedLock.AcquireWithTransaction(key, transaction, TimeSpan.FromMilliseconds(10)));
+
+            (await GetTimeoutAsync("statement_timeout", transactionCommand)).ShouldEqual("1010ms");
+            (await GetTimeoutAsync("lock_timeout", transactionCommand)).ShouldEqual("510ms");
+
+            transaction.Commit();
+
+            (await GetTimeoutAsync("statement_timeout", transactionCommand)).ShouldEqual("0");
+            (await GetTimeoutAsync("lock_timeout", transactionCommand)).ShouldEqual("0");
+        }
+    }
+
+    private static Task<object> GetTimeoutAsync(string timeoutName, NpgsqlCommand command)
+    {
+        command.CommandText = $"SHOW {timeoutName}";
+        return command.ExecuteScalarAsync()!;
+    }
 }
