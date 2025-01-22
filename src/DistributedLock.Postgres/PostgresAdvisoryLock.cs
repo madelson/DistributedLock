@@ -203,7 +203,7 @@ internal class PostgresAdvisoryLock : IDbSynchronizationStrategy<object>
         var statementTimeout = await GetCurrentSetting("statement_timeout", connection, cancellationToken).ConfigureAwait(false);
         var lockTimeout = await GetCurrentSetting("lock_timeout", connection, cancellationToken).ConfigureAwait(false);
 
-        var capturedTimeoutSettings = new CapturedTimeoutSettings(statementTimeout, lockTimeout);
+        var capturedTimeoutSettings = new CapturedTimeoutSettings(statementTimeout!, lockTimeout!);
 
         return capturedTimeoutSettings;
     }
@@ -248,22 +248,14 @@ internal class PostgresAdvisoryLock : IDbSynchronizationStrategy<object>
     private static async ValueTask RestoreTimeoutSettingsIfNeededAsync(CapturedTimeoutSettings? settings, DatabaseConnection connection)
     {
         // Settings is expected to be null in case we didn't try to acquire a transaction-scoped lock.
-        // If all the timeouts are null, than it means none of them were found in the DB. Theoretically it should never happen.
-        if (settings is null || (settings.Value.StatementTimeout == null && settings.Value.LockTimeout == null)) { return; }
+        if (settings is null) { return; }
 
         using var restoreTimeoutSettingsCommand = connection.CreateCommand();
 
         var commandText = new StringBuilder();
 
-        if (settings.Value.StatementTimeout != null)
-        {
-            commandText.AppendLine($"SET LOCAL statement_timeout = {settings.Value.StatementTimeout};");
-        }
-
-        if (settings.Value.LockTimeout != null)
-        {
-            commandText.AppendLine($"SET LOCAL lock_timeout = {settings.Value.LockTimeout};");
-        }
+        commandText.AppendLine($"SET LOCAL statement_timeout = {settings.Value.StatementTimeout};");
+        commandText.AppendLine($"SET LOCAL lock_timeout = {settings.Value.LockTimeout};");
         
         restoreTimeoutSettingsCommand.SetCommandText(commandText.ToString());
 
@@ -338,19 +330,18 @@ internal class PostgresAdvisoryLock : IDbSynchronizationStrategy<object>
 
     private readonly struct CapturedTimeoutSettings
     {
-        public CapturedTimeoutSettings(string? statementTimeout, string? lockTimeout)
+        public CapturedTimeoutSettings(string statementTimeout, string lockTimeout)
         {
             this.StatementTimeout = ParsePostgresTimeout(statementTimeout);
             this.LockTimeout = ParsePostgresTimeout(lockTimeout);
         }
 
-        public int? StatementTimeout { get; }
+        public int StatementTimeout { get; }
 
-        public int? LockTimeout { get; }
+        public int LockTimeout { get; }
 
-        private static int? ParsePostgresTimeout(string? timeout)
+        private static int ParsePostgresTimeout(string timeout)
         {
-            if (timeout == null) { return null; } // This will be the case if the timeout wasn't found in the DB. Theoretically it should never happen.
             if (timeout == "0") { return 0; } // This will be the case if the timeout is disabled.
 
             // In any other case we need to extract the timeout from the string, since Postgres returns timeouts with their unit attached, e.g. "5000ms".
