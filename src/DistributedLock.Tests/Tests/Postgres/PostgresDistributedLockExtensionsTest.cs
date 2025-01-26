@@ -107,6 +107,31 @@ internal class PostgresDistributedLockExtensionsTest
         }
     }
 
+    
+    [Test]
+    public async Task TestWorksForMultipleLocksUnderTheSameConnectionWithExternalTransaction()
+    {
+        var key1 = new PostgresAdvisoryLockKey(1);
+        var key2 = new PostgresAdvisoryLockKey(2);
+
+        using var connection = new NpgsqlConnection(TestingPostgresDb.DefaultConnectionString);
+        await connection.OpenAsync();
+
+        using (var transaction = connection.BeginTransaction())
+        {
+            var isFirstLockAcquired = await PostgresDistributedLock.TryAcquireWithTransactionAsync(key1, transaction).ConfigureAwait(false);
+            Assert.That(isFirstLockAcquired, Is.True);
+
+            var isSecondLockAcquired = await PostgresDistributedLock.TryAcquireWithTransactionAsync(key2, transaction).ConfigureAwait(false);
+            Assert.That(isSecondLockAcquired, Is.True);
+
+            isSecondLockAcquired = await PostgresDistributedLock.TryAcquireWithTransactionAsync(key2, transaction).ConfigureAwait(false);
+            Assert.That(isSecondLockAcquired, Is.False);
+
+            transaction.Rollback();
+        }
+    }
+
     private static Task<object> GetTimeoutAsync(string timeoutName, NpgsqlCommand command)
     {
         command.CommandText = $"SHOW {timeoutName}";
