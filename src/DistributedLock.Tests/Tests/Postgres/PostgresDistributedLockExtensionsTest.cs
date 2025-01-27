@@ -109,6 +109,8 @@ internal class PostgresDistributedLockExtensionsTest
 
     
     [Test]
+    // Each lock acquisition creates the same named savepoint; this seems like it would create a conflict
+    // but it actually works fine in Postgres (see https://www.postgresql.org/docs/current/sql-savepoint.html)
     public async Task TestWorksForMultipleLocksUnderTheSameConnectionWithExternalTransaction()
     {
         var key1 = new PostgresAdvisoryLockKey(1);

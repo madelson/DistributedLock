@@ -138,6 +138,9 @@ internal class PostgresAdvisoryLock : IDbSynchronizationStrategy<object>
         {
             if (needsSavePoint
                 // For transaction scoped locks, we can't roll back the save point on success because that will roll back our hold on the lock.
+                // It's ok to "leak" the savepoint because if it's an internally-owned transaction then the savepoint will be cleaned up with the disposal of the transaction.
+                // If it's an externally-owned transaction then we must "leak" it or we will lose the lock. Also, we can't avoid using a save point in this case
+                // because otherwise if an exception had occurred the extrenally-owned transaction will be aborted and become completely unusable.
                 && !(acquired && UseTransactionScopedLock(connection)))
             {
                 // attempt to clear the timeout variables we set
@@ -195,9 +198,9 @@ internal class PostgresAdvisoryLock : IDbSynchronizationStrategy<object>
 
     private static async ValueTask<CapturedTimeoutSettings?> CaptureTimeoutSettingsIfNeededAsync(DatabaseConnection connection, CancellationToken cancellationToken)
     {
-        var shouldCaptureTimeoutSettings = UseTransactionScopedLock(connection);
+        var shouldCaptureTimeoutSettings = connection.IsExernallyOwned && UseTransactionScopedLock(connection);
 
-        // Return null in case we won't try to acquire a transaction-scoped lock.
+        // Return null in case we won't try to acquire an externally-owned transaction-scoped lock.
         if (!shouldCaptureTimeoutSettings) { return null; }
 
         var statementTimeout = await GetCurrentSetting("statement_timeout", connection, cancellationToken).ConfigureAwait(false);
@@ -247,7 +250,7 @@ internal class PostgresAdvisoryLock : IDbSynchronizationStrategy<object>
 
     private static async ValueTask RestoreTimeoutSettingsIfNeededAsync(CapturedTimeoutSettings? settings, DatabaseConnection connection)
     {
-        // Settings is expected to be null in case we didn't try to acquire a transaction-scoped lock.
+        // Settings is expected to be null in case we didn't try to acquire an externally-owned transaction-scoped lock.
         if (settings is null) { return; }
 
         using var restoreTimeoutSettingsCommand = connection.CreateCommand();
