@@ -18,6 +18,17 @@ await using (await @lock.AcquireAsync())
 - The `PostgresDistributedReaderWriterLock` class implements the `IDistributedReaderWriterLock` interface.
 - The `PostgresDistributedSynchronizationProvider` class implements the `IDistributedLockProvider` and `IDistributedReaderWriterLockProvider` interfaces.
 
+As of version 1.3, an additional set of static APIs on `PostgresDistributedLock` allows you to leverage transaction-scoped locking with an existing `IDbTransaction` instance. Since Postgres offers no way to explicitly release transaction-scoped locks and the caller controls the transaction, these locks are acquire-only and do not need a using block. For example:
+```C#
+using (var transaction = connection.BeginTransaction())
+{
+   ...
+   // acquires the lock; it will be held until the transaction ends
+   await PostgresDistributedLock.AcquireWithTransactionAsync(key, transaction);
+   ...
+}
+```
+
 ## Implementation notes
 
 Under the hood, [Postgres advisory locks can be based on either one 64-bit integer value or a pair of 32-bit integer values](https://www.postgresql.org/docs/12/functions-admin.html#FUNCTIONS-ADVISORY-LOCKS). Because of this, rather than taking in a name the lock constructors take a `PostgresAdvisoryLockKey` object which can be constructed in several ways:

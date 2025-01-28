@@ -127,7 +127,6 @@ public partial class PostgresDistributedLock
         async ValueTask AcquireAsync()
         {
             var connection = new PostgresDatabaseConnection(transaction);
-
             await using (connection.ConfigureAwait(false))
             {
                 await PostgresAdvisoryLock.ExclusiveLock.TryAcquireAsync(connection, key.ToString(), timeout, cancellationToken).ThrowTimeoutIfNull().ConfigureAwait(false);

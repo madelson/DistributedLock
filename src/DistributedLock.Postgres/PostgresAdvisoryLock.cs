@@ -211,15 +211,15 @@ internal class PostgresAdvisoryLock : IDbSynchronizationStrategy<object>
         var capturedTimeoutSettings = new CapturedTimeoutSettings(statementTimeout!, lockTimeout!);
 
         return capturedTimeoutSettings;
-    }
 
-    private static async ValueTask<string?> GetCurrentSetting(string settingName, DatabaseConnection connection, CancellationToken cancellationToken)
-    {
-        using var getCurrentSettingCommand = connection.CreateCommand();
+        async ValueTask<string?> GetCurrentSetting(string settingName, DatabaseConnection connection, CancellationToken cancellationToken)
+        {
+            using var getCurrentSettingCommand = connection.CreateCommand();
 
-        getCurrentSettingCommand.SetCommandText($"SELECT current_setting('{settingName}', 'true') AS {settingName};");
+            getCurrentSettingCommand.SetCommandText($"SELECT current_setting('{settingName}', 'true') AS {settingName};");
 
-        return (string?) await getCurrentSettingCommand.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
+            return (string?)await getCurrentSettingCommand.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
+        }
     }
 
     private static async ValueTask<bool> ShouldDefineSavePoint(DatabaseConnection connection)
@@ -240,13 +240,13 @@ internal class PostgresAdvisoryLock : IDbSynchronizationStrategy<object>
         }
         catch (InvalidOperationException)
         {
-            // If we reached this point, it means the externally-owned connection has a transaction, therefore we need to define a save point.
+            // Externally-owned connection with a transaction => we need to define a save point.
             return true;
         }
 
         await connection.DisposeTransactionAsync().ConfigureAwait(false);
 
-        // If we reached this point, it means the externally-owned connection has no transaction, therefore we can't define a save point.
+        // Externally-owned connection with no transaction => no save point
         return false;
     }
 
@@ -257,8 +257,7 @@ internal class PostgresAdvisoryLock : IDbSynchronizationStrategy<object>
 
         using var restoreTimeoutSettingsCommand = connection.CreateCommand();
 
-        var commandText = new StringBuilder();
-
+        StringBuilder commandText = new();
         commandText.AppendLine($"SET LOCAL statement_timeout = {settings.Value.StatementTimeout};");
         commandText.AppendLine($"SET LOCAL lock_timeout = {settings.Value.LockTimeout};");
         

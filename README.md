@@ -141,6 +141,8 @@ Contributions are welcome! If you are interested in contributing towards a new o
 Setup steps for working with the repository locally are documented [here](docs/Developing%20DistributedLock.md).
 
 ## Release notes
+- 2.6
+	- Add support for acquiring transaction-scoped Postgres locks using externally-owned transactions. Thanks [@Tzachi009](https://github.com/Tzachi009) for implementing! ([#213](https://github.com/madelson/DistributedLock/issues/213), DistributedLock.Postgres 1.3)
 - 2.5.1
 	- Increase efficiency of Azure blob locks when the blob does not exist. Thanks [@richardkooiman](https://github.com/richardkooiman) for implementing! ([#227](https://github.com/madelson/DistributedLock/pull/227), DistributedLock.Azure 1.0.2)
 	- Improve error handling in race condition scenarios for Azure blobs. Thanks [@MartinDembergerR9](https://github.com/MartinDembergerR9) for implementing! ([#228](https://github.com/madelson/DistributedLock/pull/228), DistributedLock.Azure 1.0.2)
