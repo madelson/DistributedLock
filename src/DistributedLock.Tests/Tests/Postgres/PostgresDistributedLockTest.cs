@@ -60,6 +60,24 @@ public class PostgresDistributedLockTest
     }
 
     [Test]
+    public async Task TestWorksWithInternalTransaction()
+    {
+        using var connection = new NpgsqlConnection(TestingPostgresDb.DefaultConnectionString);
+        await connection.OpenAsync();
+
+        using var command = connection.CreateCommand();
+
+        var transactionLock = new PostgresDistributedLock(new PostgresAdvisoryLockKey("InternTrans", true), TestingPostgresDb.DefaultConnectionString, o => o.UseTransaction());
+
+        using (var transactionLockHandle = await transactionLock.TryAcquireAsync(TimeSpan.FromSeconds(.3)))
+        {
+            (await GetTimeoutAsync("lock_timeout", command)).ShouldEqual("0");
+        }
+
+        (await GetTimeoutAsync("lock_timeout", command)).ShouldEqual("0");
+    }
+
+    [Test]
     public async Task TestWorksWithAmbientTransaction()
     {
         using var connection = new NpgsqlConnection(TestingPostgresDb.DefaultConnectionString);
@@ -79,26 +97,28 @@ public class PostgresDistributedLockTest
 
             using (var timedOutHandle = await connectionLock.TryAcquireAsync(TimeSpan.FromSeconds(.2)))
             {
+                (await GetTimeoutAsync("statement_timeout", transactionCommand)).ShouldEqual("1010ms");
+
                 Assert.That(timedOutHandle, Is.Null);
             }
 
-            (await GetTimeoutAsync(transactionCommand)).ShouldEqual("1010ms");
+            (await GetTimeoutAsync("statement_timeout", transactionCommand)).ShouldEqual("1010ms");
 
             var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(.3));
             var task = connectionLock.AcquireAsync(cancellationToken: cancellationTokenSource.Token).AsTask();
             task.ContinueWith(_ => { }).Wait(TimeSpan.FromSeconds(5)).ShouldEqual(true);
             task.Status.ShouldEqual(TaskStatus.Canceled);
 
-            (await GetTimeoutAsync(transactionCommand)).ShouldEqual("1010ms");
+            (await GetTimeoutAsync("statement_timeout", transactionCommand)).ShouldEqual("1010ms");
         }
 
         using var connectionCommand = connection.CreateCommand();
-        (await GetTimeoutAsync(connectionCommand)).ShouldEqual("0");
+        (await GetTimeoutAsync("statement_timeout", connectionCommand)).ShouldEqual("0");
+    }
 
-        static Task<object> GetTimeoutAsync(NpgsqlCommand command)
-        {
-            command.CommandText = "SHOW statement_timeout";
-            return command.ExecuteScalarAsync()!;
-        }
+    private static Task<object> GetTimeoutAsync(string timeoutName, NpgsqlCommand command)
+    {
+        command.CommandText = $"SHOW {timeoutName}";
+        return command.ExecuteScalarAsync()!;
     }
 }
