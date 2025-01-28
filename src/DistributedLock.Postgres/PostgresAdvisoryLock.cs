@@ -3,6 +3,8 @@ using Medallion.Threading.Internal.Data;
 using Npgsql;
 using System.Data;
 using System.Text;
+using System.Text.RegularExpressions;
+using System.Threading;
 
 namespace Medallion.Threading.Postgres;
 
@@ -44,13 +46,22 @@ internal class PostgresAdvisoryLock : IDbSynchronizationStrategy<object>
             return null;
         }
 
+        // Only in the case where we will try to acquire a transaction-scoped lock, we will define a save point, but we won't be able to roll it back
+        // in case of a successful lock acquisition becuase the lock will be released. Therefore, in such cases, we capture the timeout settings values before
+        // we set a save point, and then we try to restore the values after the attempt to acquire the lock.
+        // NOTE: the save point functionality can't be removed in favor of capturing and restoring the values for all cases.
+        // When an error occurs while attempting to acquire the lock, the transaction is aborted and we can't run any other query, unless either
+        // the transaction or the save point are rolled back.
+        var capturedTimeoutSettings = await CaptureTimeoutSettingsIfNeededAsync(connection, cancellationToken).ConfigureAwait(false);
+
         // Our acquire command will use SET LOCAL to set up statement timeouts. This lasts until the end
         // of the current transaction instead of just the current batch if we're in a transaction. To make sure
-        // we don't leak those settings, in the case of a transaction we first set up a save point which we can
-        // later roll back (taking the settings changes with it but NOT the lock). Because we can't confidently
-        // roll back a save point without knowing that it has been set up, we start the save point in its own
-        // query before we try-catch
-        var needsSavePoint = await HasTransactionAsync(connection).ConfigureAwait(false);
+        // we don't leak those settings, in the case of a transaction, we first set up a save point which we can
+        // later roll back (only in cases where we don't acquire a transaction scoped lock - taking the settings changes with it but NOT the lock).
+        // Because we can't confidently roll back a save point without knowing that it has been set up, we start the save point in its own
+        // query before we try-catch.
+        var needsSavePoint = await ShouldDefineSavePoint(connection).ConfigureAwait(false);
+
         if (needsSavePoint)
         {
             using var setSavePointCommand = connection.CreateCommand();
@@ -68,6 +79,8 @@ internal class PostgresAdvisoryLock : IDbSynchronizationStrategy<object>
         catch (Exception ex)
         {
             await RollBackTransactionTimeoutVariablesIfNeededAsync(acquired: false).ConfigureAwait(false);
+
+            await RestoreTimeoutSettingsIfNeededAsync(capturedTimeoutSettings, connection).ConfigureAwait(false);
 
             if (ex is PostgresException postgresException)
             {
@@ -114,6 +127,8 @@ internal class PostgresAdvisoryLock : IDbSynchronizationStrategy<object>
 
         await RollBackTransactionTimeoutVariablesIfNeededAsync(acquired: acquired == true).ConfigureAwait(false);
 
+        await RestoreTimeoutSettingsIfNeededAsync(capturedTimeoutSettings, connection).ConfigureAwait(false);
+
         return acquired switch
         {
             false => null,
@@ -123,10 +138,11 @@ internal class PostgresAdvisoryLock : IDbSynchronizationStrategy<object>
 
         async ValueTask RollBackTransactionTimeoutVariablesIfNeededAsync(bool acquired)
         {
-            if (needsSavePoint 
-                // For transaction scoped locks, we can't roll back the save point on success because that will roll
-                // back our hold on the lock. It's ok to "leak" the savepoint in that case because it's an internally-owned
-                // transaction/connection and the savepoint will be cleaned up with the disposal of the transaction.
+            if (needsSavePoint
+                // For transaction scoped locks, we can't roll back the save point on success because that will roll back our hold on the lock.
+                // It's ok to "leak" the savepoint because if it's an internally-owned transaction then the savepoint will be cleaned up with the disposal of the transaction.
+                // If it's an externally-owned transaction then we must "leak" it or we will lose the lock. Also, we can't avoid using a save point in this case
+                // because otherwise if an exception had occurred the extrenally-owned transaction will be aborted and become completely unusable.
                 && !(acquired && UseTransactionScopedLock(connection)))
             {
                 // attempt to clear the timeout variables we set
@@ -182,24 +198,72 @@ internal class PostgresAdvisoryLock : IDbSynchronizationStrategy<object>
         return command;
     }
 
-    private static async ValueTask<bool> HasTransactionAsync(DatabaseConnection connection)
+    private static async ValueTask<CapturedTimeoutSettings?> CaptureTimeoutSettingsIfNeededAsync(DatabaseConnection connection, CancellationToken cancellationToken)
     {
-        if (connection.HasTransaction) { return true; }
-        if (!connection.IsExernallyOwned) { return false; }
+        var shouldCaptureTimeoutSettings = connection.IsExernallyOwned && UseTransactionScopedLock(connection);
 
-        // If the connection is externally owned, then it might be part of a transaction that we can't
-        // see. In that case, the only real way to detect it is to begin a new one
+        // Return null in case we won't try to acquire an externally-owned transaction-scoped lock.
+        if (!shouldCaptureTimeoutSettings) { return null; }
+
+        var statementTimeout = await GetCurrentSetting("statement_timeout", connection, cancellationToken).ConfigureAwait(false);
+        var lockTimeout = await GetCurrentSetting("lock_timeout", connection, cancellationToken).ConfigureAwait(false);
+
+        var capturedTimeoutSettings = new CapturedTimeoutSettings(statementTimeout!, lockTimeout!);
+
+        return capturedTimeoutSettings;
+
+        async ValueTask<string?> GetCurrentSetting(string settingName, DatabaseConnection connection, CancellationToken cancellationToken)
+        {
+            using var getCurrentSettingCommand = connection.CreateCommand();
+
+            getCurrentSettingCommand.SetCommandText($"SELECT current_setting('{settingName}', 'true') AS {settingName};");
+
+            return (string?)await getCurrentSettingCommand.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
+        }
+    }
+
+    private static async ValueTask<bool> ShouldDefineSavePoint(DatabaseConnection connection)
+    {
+        // If the connection is internally-owned, we only define a save point if a transaction has been opened.
+        if (!connection.IsExernallyOwned) { return connection.HasTransaction; }
+
+        // If the connection is externally-owned with an established transaction,
+        // it means that the connection came through the transactional locking APIs (see PostgresDistributedLock.Transactions.cs).
+        if (connection.HasTransaction) { return true; }
+
+        // The externally-owned connection might still be part of a transaction that we can't see.
+        // This can only be the case if the externally-owned connection didn't came through the transactional locking APIs (see PostgresDistributedLock.Transactions.cs).
+        // In that case, the only real way to detect the transaction is to begin a new one.
         try
         {
             await connection.BeginTransactionAsync().ConfigureAwait(false);
         }
         catch (InvalidOperationException)
         {
+            // Externally-owned connection with a transaction => we need to define a save point.
             return true;
         }
 
         await connection.DisposeTransactionAsync().ConfigureAwait(false);
+
+        // Externally-owned connection with no transaction => no save point
         return false;
+    }
+
+    private static async ValueTask RestoreTimeoutSettingsIfNeededAsync(CapturedTimeoutSettings? settings, DatabaseConnection connection)
+    {
+        // Settings is expected to be null in case we didn't try to acquire an externally-owned transaction-scoped lock.
+        if (settings is null) { return; }
+
+        using var restoreTimeoutSettingsCommand = connection.CreateCommand();
+
+        StringBuilder commandText = new();
+        commandText.AppendLine($"SET LOCAL statement_timeout = {settings.Value.StatementTimeout};");
+        commandText.AppendLine($"SET LOCAL lock_timeout = {settings.Value.LockTimeout};");
+        
+        restoreTimeoutSettingsCommand.SetCommandText(commandText.ToString());
+
+        await restoreTimeoutSettingsCommand.ExecuteNonQueryAsync(CancellationToken.None).ConfigureAwait(false);
     }
 
     public ValueTask ReleaseAsync(DatabaseConnection connection, string resourceName, object lockCookie) =>
@@ -235,10 +299,9 @@ internal class PostgresAdvisoryLock : IDbSynchronizationStrategy<object>
     }
 
     private static bool UseTransactionScopedLock(DatabaseConnection connection) =>
-        // This implementation (similar to what we do for SQL Server) is based on the fact that we only create transactions on
-        // internally-owned connections when doing transaction-scoped locking, and we only support transaction-scoped locking on
-        // internally-owned connections (since there's no explicit release).
-        !connection.IsExernallyOwned && connection.HasTransaction;
+        // Transaction-scoped locking is supported on internally-owned connections and externally-owned connections which explicitly have a transaction
+        // (meaning that the external connection came through the transactional locking APIs, see PostgresDistributedLock.Transactions.cs).
+        connection.HasTransaction;
 
     private static string AddPGLocksFilterParametersAndGetFilterExpression(DatabaseCommand command, PostgresAdvisoryLockKey key)
     {
@@ -267,5 +330,17 @@ internal class PostgresAdvisoryLock : IDbSynchronizationStrategy<object>
         }
 
         return $"(l.classid = @{classIdParameter} AND l.objid = @{objIdParameter} AND l.objsubid = {objSubId})";
+    }
+
+    private readonly struct CapturedTimeoutSettings(string statementTimeout, string lockTimeout)
+    {
+        public int StatementTimeout { get; } = ParsePostgresTimeout(statementTimeout);
+
+        public int LockTimeout { get; } = ParsePostgresTimeout(lockTimeout);
+
+        private static int ParsePostgresTimeout(string timeout) =>
+            Regex.Match(timeout, @"^\d+(?=(?:ms)?$)") is { Success: true, Value: var value }
+                ? int.Parse(value)
+                : throw new FormatException($"Unexpected timeout setting value '{timeout}'");
     }
 }
