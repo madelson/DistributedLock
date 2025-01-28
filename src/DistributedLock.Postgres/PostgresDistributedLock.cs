@@ -83,7 +83,7 @@ public sealed partial class PostgresDistributedLock : IInternalDistributedLock<P
     {
         if (dbDataSource == null) { throw new ArgumentNullException(nameof(dbDataSource)); }
 
-        // Multiplexing is currently incompatible with DbDataSource, so default it to false
+        // Multiplexing is currently incompatible with DbDataSource (see #238), so default it to false
         var originalOptions = options;
         options = o => { o.UseMultiplexing(false); originalOptions?.Invoke(o); };
 
