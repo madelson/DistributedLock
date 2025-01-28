@@ -3,6 +3,8 @@ using Medallion.Threading.Internal.Data;
 using Npgsql;
 using System.Data;
 using System.Text;
+using System.Text.RegularExpressions;
+using System.Threading;
 
 namespace Medallion.Threading.Postgres;
 
@@ -226,11 +228,11 @@ internal class PostgresAdvisoryLock : IDbSynchronizationStrategy<object>
         if (!connection.IsExernallyOwned) { return connection.HasTransaction; }
 
         // If the connection is externally-owned with an established transaction,
-        // it means that the connection came through the transactional locking APIs (see PostgresDistributedLock.Extensions class).
+        // it means that the connection came through the transactional locking APIs (see PostgresDistributedLock.Transactions.cs).
         if (connection.HasTransaction) { return true; }
 
         // The externally-owned connection might still be part of a transaction that we can't see.
-        // This can only be the case if the externally-owned connection didn't came through the transactional locking APIs (see PostgresDistributedLock.Extensions class).
+        // This can only be the case if the externally-owned connection didn't came through the transactional locking APIs (see PostgresDistributedLock.Transactions.cs).
         // In that case, the only real way to detect the transaction is to begin a new one.
         try
         {
@@ -299,7 +301,7 @@ internal class PostgresAdvisoryLock : IDbSynchronizationStrategy<object>
 
     private static bool UseTransactionScopedLock(DatabaseConnection connection) =>
         // Transaction-scoped locking is supported on internally-owned connections and externally-owned connections which explicitly have a transaction
-        // (meaning that the external connection came through the transactional locking APIs, see PostgresDistributedLock.Extensions class).
+        // (meaning that the external connection came through the transactional locking APIs, see PostgresDistributedLock.Transactions.cs).
         connection.HasTransaction;
 
     private static string AddPGLocksFilterParametersAndGetFilterExpression(DatabaseCommand command, PostgresAdvisoryLockKey key)
@@ -331,34 +333,15 @@ internal class PostgresAdvisoryLock : IDbSynchronizationStrategy<object>
         return $"(l.classid = @{classIdParameter} AND l.objid = @{objIdParameter} AND l.objsubid = {objSubId})";
     }
 
-    private readonly struct CapturedTimeoutSettings
+    private readonly struct CapturedTimeoutSettings(string statementTimeout, string lockTimeout)
     {
-        public CapturedTimeoutSettings(string statementTimeout, string lockTimeout)
-        {
-            this.StatementTimeout = ParsePostgresTimeout(statementTimeout);
-            this.LockTimeout = ParsePostgresTimeout(lockTimeout);
-        }
+        public int StatementTimeout { get; } = ParsePostgresTimeout(statementTimeout);
 
-        public int StatementTimeout { get; }
+        public int LockTimeout { get; } = ParsePostgresTimeout(lockTimeout);
 
-        public int LockTimeout { get; }
-
-        private static int ParsePostgresTimeout(string timeout)
-        {
-            if (timeout == "0") { return 0; } // This will be the case if the timeout is disabled.
-
-            // In any other case we need to extract the timeout from the string, since Postgres returns timeouts with their unit attached, e.g. "5000ms".
-            var timeoutOnlyDigits = string.Empty;
-
-            for (var i = 0; i < timeout.Length; ++i)
-            {
-                if (char.IsDigit(timeout[i])) 
-                { 
-                    timeoutOnlyDigits += timeout[i]; 
-                }
-            }
-
-            return int.Parse(timeoutOnlyDigits);
-        }
+        private static int ParsePostgresTimeout(string timeout) =>
+            Regex.Match(timeout, @"^\d+(?=(?:ms)?$)") is { Success: true, Value: var value }
+                ? int.Parse(value)
+                : throw new FormatException($"Unexpected timeout setting value '{timeout}'");
     }
 }
