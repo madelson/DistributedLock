@@ -78,11 +78,11 @@ using (var handle = myDistributedLock.TryAcquire())
 
 `async` versions of both of these methods are also supported. These are preferred when you are writing async code since they will not consume a thread while waiting for the lock. If you are using C#8 or higher, you can also dispose of handles asynchronously:
 
-### Timeouts
-
 ```C#
 await using (await myDistributedLock.AcquireAsync()) { ... }
 ```
+
+### Timeouts
 
 Additionally, all of these methods support an optional `timeout` parameter. `timeout` determines how long `Acquire` will wait before failing with a `TimeoutException` and how long `TryAcquire` will wait before returning null. The default `timeout` for `Acquire` is `Timeout.InfiniteTimeSpan` while for `TryAcquire` the default `timeout` is `TimeSpan.Zero`.
 
