@@ -1,0 +1,5 @@
+Medallion.Threading.Etcd.EtcdLeaseDistributedLock
+Medallion.Threading.Etcd.EtcdLeaseDistributedLock.EtcdLeaseDistributedLock(string! lockName, string! address) -> void
+Medallion.Threading.Etcd.EtcdLeaseDistributedLockHandle
+Medallion.Threading.Etcd.EtcdLeaseDistributedLockHandle.Dispose() -> void
+Medallion.Threading.Etcd.EtcdLeaseDistributedLockHandle.DisposeAsync() -> System.Threading.Tasks.ValueTask

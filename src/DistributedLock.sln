@@ -47,6 +47,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		package.readme.md = package.readme.md
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DistributedLock.Etcd", "DistributedLock.Etcd\DistributedLock.Etcd.csproj", "{E86AA401-6EE6-4B39-8E14-A44188E908AA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -109,6 +111,10 @@ Global
 		{1CAB9A1D-0C02-459C-A90E-47819832BD58}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1CAB9A1D-0C02-459C-A90E-47819832BD58}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1CAB9A1D-0C02-459C-A90E-47819832BD58}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E86AA401-6EE6-4B39-8E14-A44188E908AA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E86AA401-6EE6-4B39-8E14-A44188E908AA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E86AA401-6EE6-4B39-8E14-A44188E908AA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E86AA401-6EE6-4B39-8E14-A44188E908AA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
