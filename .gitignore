@@ -1,7 +1,9 @@
 #OS junk files 
 Thumbs.db
 *.DS_Store
- 
+#Rider files
+**/.idea/**
+
 #Visual Studio files 
 *.obj
 *.exe
