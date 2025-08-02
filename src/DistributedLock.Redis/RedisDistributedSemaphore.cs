@@ -41,7 +41,6 @@ public sealed partial class RedisDistributedSemaphore : IInternalDistributedSema
 
     public int GetCurrentCount()
     {
-        // Sync-over-async wrapper
         return GetCurrentCountAsync().GetAwaiter().GetResult();
     }
     

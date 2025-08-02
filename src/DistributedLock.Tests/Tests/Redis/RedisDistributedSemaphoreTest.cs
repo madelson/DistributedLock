@@ -26,36 +26,60 @@ public class RedisDistributedSemaphoreTest
         Assert.Throws<ArgumentOutOfRangeException>(() => new RedisDistributedSemaphore("key", -1, database));
         Assert.Throws<ArgumentNullException>(() => new RedisDistributedSemaphore("key", 2, default(IDatabase)!));
     }
-    
+
     [Test]
     [Category("CI")]
     public async Task TestGetCurrentCountAsync()
     {
-        // Arrange
         const int maxCount = 5;
         const int acquiredCount = 2;
         var expectedAvailable = maxCount - acquiredCount;
+        var scriptSubstring = "zcard";
 
         var databaseMock = new Mock<IDatabase>(MockBehavior.Strict);
 
-        // Mock ScriptEvaluateAsync to return acquiredCount
+        var fakeResult = RedisResult.Create((RedisValue)(long)acquiredCount);
+        var fakeTask = Task.FromResult(fakeResult);
+
         databaseMock
             .Setup(db => db.ScriptEvaluateAsync(
-                It.IsAny<string>(),
-                It.IsAny<RedisKey[]>(),
-                It.IsAny<RedisValue[]>(),
-                It.IsAny<CommandFlags>()))
-            .ReturnsAsync((RedisResult)(object)(long)acquiredCount);
+                It.Is<string>(s => s.Contains(scriptSubstring)),
+                It.Is<RedisKey[]>(keys => keys.Length == 1 && keys[0] == "test-key"),
+                null,
+                CommandFlags.None))
+            .Returns(fakeTask);
 
         var semaphore = new RedisDistributedSemaphore("test-key", maxCount, databaseMock.Object);
+        var available = await semaphore.GetCurrentCountAsync();
 
-        // Act
-        var availableCount = await semaphore.GetCurrentCountAsync();
-
-        // Assert
-        availableCount.ShouldEqual(expectedAvailable);
+        expectedAvailable.ShouldEqual(available);
 
         databaseMock.VerifyAll();
     }
 
+    [Test]
+    [Category("CI")]
+    public void TestGetCurrentCountSync()
+    {
+        const int maxCount = 5;
+        const int acquiredCount = 3;
+        var expectedAvailable = maxCount - acquiredCount;
+        var fakeResult = RedisResult.Create((RedisValue)(long)acquiredCount);
+        var fakeTask = Task.FromResult(fakeResult);
+
+        var databaseMock = new Mock<IDatabase>(MockBehavior.Strict);
+        databaseMock
+            .Setup(db => db.ScriptEvaluateAsync(
+                It.IsAny<string>(),
+                It.IsAny<RedisKey[]>(),
+                null,
+                CommandFlags.None))
+            .Returns(fakeTask);
+
+        var semaphore = new RedisDistributedSemaphore("test-key", maxCount, databaseMock.Object);
+        var available = semaphore.GetCurrentCount();
+
+        expectedAvailable.ShouldEqual(available);
+        databaseMock.VerifyAll();
+    }
 }
