@@ -39,6 +39,20 @@ public sealed partial class RedisDistributedSemaphore : IInternalDistributedSema
     /// </summary>
     public string Name => this.Key.ToString();
 
+    public int GetCurrentCount()
+    {
+        // Sync-over-async wrapper
+        return GetCurrentCountAsync().GetAwaiter().GetResult();
+    }
+    
+    public async ValueTask<int> GetCurrentCountAsync()
+    {
+        var database = _databases[0];
+        var primitive = new RedisSemaphorePrimitive(this.Key, this.MaxCount, this._options.RedLockTimeouts);
+        var acquiredCount = await primitive.GetCurrentCountAsync(database).ConfigureAwait(false);
+        return this.MaxCount - acquiredCount;
+    }
+    
     /// <summary>
     /// Implements <see cref="IDistributedSemaphore.MaxCount"/>
     /// </summary>

@@ -78,4 +78,23 @@ internal class RedisSemaphorePrimitive : IRedLockAcquirableSynchronizationPrimit
     public Task<bool> TryExtendAsync(IDatabaseAsync database) => ExtendScript.ExecuteAsync(database, this).AsBooleanTask();
 
     public bool IsConnected(IDatabase database) => database.IsConnected(this._key, CommandFlags.DemandMaster);
+    
+    /// <summary>
+    /// Get Current Count
+    /// </summary>
+    /// <param name="database"></param>
+    /// <returns></returns>
+    internal async ValueTask<int> GetCurrentCountAsync(IDatabaseAsync database)
+    {
+        // Lua script to count the members (holders)
+        const string script = @" return redis.call('zcard', KEYS[1]) ";
+
+        // Execute against the semaphore key
+        var result = (int) (long) await database.ScriptEvaluateAsync(
+            script,
+            keys: new RedisKey[] { this._key }
+        ).ConfigureAwait(false);
+
+        return result;
+    }
 }

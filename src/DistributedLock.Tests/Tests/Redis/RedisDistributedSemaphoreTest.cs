@@ -26,4 +26,36 @@ public class RedisDistributedSemaphoreTest
         Assert.Throws<ArgumentOutOfRangeException>(() => new RedisDistributedSemaphore("key", -1, database));
         Assert.Throws<ArgumentNullException>(() => new RedisDistributedSemaphore("key", 2, default(IDatabase)!));
     }
+    
+    [Test]
+    [Category("CI")]
+    public async Task TestGetCurrentCountAsync()
+    {
+        // Arrange
+        const int maxCount = 5;
+        const int acquiredCount = 2;
+        var expectedAvailable = maxCount - acquiredCount;
+
+        var databaseMock = new Mock<IDatabase>(MockBehavior.Strict);
+
+        // Mock ScriptEvaluateAsync to return acquiredCount
+        databaseMock
+            .Setup(db => db.ScriptEvaluateAsync(
+                It.IsAny<string>(),
+                It.IsAny<RedisKey[]>(),
+                It.IsAny<RedisValue[]>(),
+                It.IsAny<CommandFlags>()))
+            .ReturnsAsync((RedisResult)(object)(long)acquiredCount);
+
+        var semaphore = new RedisDistributedSemaphore("test-key", maxCount, databaseMock.Object);
+
+        // Act
+        var availableCount = await semaphore.GetCurrentCountAsync();
+
+        // Assert
+        availableCount.ShouldEqual(expectedAvailable);
+
+        databaseMock.VerifyAll();
+    }
+
 }
