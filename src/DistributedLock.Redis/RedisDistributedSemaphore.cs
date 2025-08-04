@@ -39,19 +39,28 @@ public sealed partial class RedisDistributedSemaphore : IInternalDistributedSema
     /// </summary>
     public string Name => this.Key.ToString();
 
-    public int GetCurrentCount()
-    {
-        return GetCurrentCountAsync().GetAwaiter().GetResult();
-    }
-    
+    /// <summary>
+    /// Gets the current available count.
+    /// </summary>
+    /// <remarks>
+    /// Use <see cref="GetCurrentCountAsync"/> in async contexts to avoid blocking.
+    /// </remarks>
+    public int GetCurrentCount() => (int)SyncViaAsync.Run(s => s.GetCurrentCountAsync(), state: this);
+
+    /// <summary>
+    /// Asynchronously gets the current available count.
+    /// </summary>
+    /// <returns>The number of available slots.</returns>
     public async ValueTask<int> GetCurrentCountAsync()
     {
-        var database = _databases[0];
+        var database = this._databases[0];
         var primitive = new RedisSemaphorePrimitive(this.Key, this.MaxCount, this._options.RedLockTimeouts);
-        var acquiredCount = await primitive.GetCurrentCountAsync(database).ConfigureAwait(false);
-        return this.MaxCount - acquiredCount;
+        var acquiredCount = await primitive.GetAcquiredCountAsync(database).ConfigureAwait(false);
+
+        var available = this.MaxCount - acquiredCount;
+        return (int)Math.Max(0, available);
     }
-    
+
     /// <summary>
     /// Implements <see cref="IDistributedSemaphore.MaxCount"/>
     /// </summary>

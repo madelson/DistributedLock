@@ -32,27 +32,23 @@ public class RedisDistributedSemaphoreTest
     public async Task TestGetCurrentCountAsync()
     {
         const int maxCount = 5;
-        const int acquiredCount = 2;
-        var expectedAvailable = maxCount - acquiredCount;
-        var scriptSubstring = "zcard";
+        const int heldCount = 2;
+        var expectedAvailable = maxCount - heldCount;
 
         var databaseMock = new Mock<IDatabase>(MockBehavior.Strict);
-
-        var fakeResult = RedisResult.Create((RedisValue)(long)acquiredCount);
-        var fakeTask = Task.FromResult(fakeResult);
-
         databaseMock
-            .Setup(db => db.ScriptEvaluateAsync(
-                It.Is<string>(s => s.Contains(scriptSubstring)),
-                It.Is<RedisKey[]>(keys => keys.Length == 1 && keys[0] == "test-key"),
-                null,
-                CommandFlags.None))
-            .Returns(fakeTask);
+              .Setup(db => db.SortedSetLengthAsync(
+                  It.Is<RedisKey>(k => k == "test-key"),
+                  It.IsAny<double>(),
+                  It.IsAny<double>(),
+                  It.IsAny<Exclude>(),
+                  CommandFlags.DemandMaster))
+              .ReturnsAsync(heldCount);
 
-        var semaphore = new RedisDistributedSemaphore("test-key", maxCount, databaseMock.Object);
+        var semaphore = new RedisDistributedSemaphore("test-key", 5, databaseMock.Object);
         var available = await semaphore.GetCurrentCountAsync();
 
-        expectedAvailable.ShouldEqual(available);
+        available.ShouldEqual(expectedAvailable);
 
         databaseMock.VerifyAll();
     }
@@ -61,20 +57,19 @@ public class RedisDistributedSemaphoreTest
     [Category("CI")]
     public void TestGetCurrentCountSync()
     {
-        const int maxCount = 5;
-        const int acquiredCount = 3;
-        var expectedAvailable = maxCount - acquiredCount;
-        var fakeResult = RedisResult.Create((RedisValue)(long)acquiredCount);
-        var fakeTask = Task.FromResult(fakeResult);
+        const int maxCount = 4;
+        const int heldCount = 3;
+        var expectedAvailable = maxCount - heldCount;
 
         var databaseMock = new Mock<IDatabase>(MockBehavior.Strict);
         databaseMock
-            .Setup(db => db.ScriptEvaluateAsync(
-                It.IsAny<string>(),
-                It.IsAny<RedisKey[]>(),
-                null,
-                CommandFlags.None))
-            .Returns(fakeTask);
+             .Setup(db => db.SortedSetLength(
+                 It.Is<RedisKey>(k => k == "test-key"),
+                 It.IsAny<double>(),
+                 It.IsAny<double>(),
+                 It.IsAny<Exclude>(),
+                 CommandFlags.DemandMaster))
+             .Returns(heldCount);
 
         var semaphore = new RedisDistributedSemaphore("test-key", maxCount, databaseMock.Object);
         var available = semaphore.GetCurrentCount();

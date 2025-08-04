@@ -79,29 +79,24 @@ internal class RedisSemaphorePrimitive : IRedLockAcquirableSynchronizationPrimit
 
     public bool IsConnected(IDatabase database) => database.IsConnected(this._key, CommandFlags.DemandMaster);
 
-    /// <summary>
-    /// Get Current Count
-    /// </summary>
-    /// <param name="database"></param>
-    /// <returns></returns>
-    internal async ValueTask<int> GetCurrentCountAsync(IDatabaseAsync database)
+    public async ValueTask<long> GetAcquiredCountAsync(IDatabase database)
     {
-        const string script = @"return redis.call('zcard', KEYS[1])";
-
-        // Execute Lua script
-        var result = await database.ScriptEvaluateAsync(
-            script,
-            keys: new RedisKey[] { this._key }
-        ).ConfigureAwait(false);
-
-        // Safely handle result
-        if (result.IsNull)
+        long held;
+        if (SyncViaAsync.IsSynchronous)
         {
-            // Key does not exist => count = 0
-            return 0;
+            held = database.SortedSetLength(
+                this._key,
+                flags: CommandFlags.DemandMaster
+            );
+        }
+        else
+        {
+            held = await database.SortedSetLengthAsync(
+                this._key,
+                flags: CommandFlags.DemandMaster
+            ).ConfigureAwait(false);
         }
 
-        return (int)(long)result; // Redis returns integer reply
+        return held;
     }
-
 }
