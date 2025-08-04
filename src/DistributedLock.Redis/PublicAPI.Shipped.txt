@@ -33,6 +33,7 @@ Medallion.Threading.Redis.RedisDistributedSemaphore.Acquire(System.TimeSpan? tim
 Medallion.Threading.Redis.RedisDistributedSemaphore.AcquireAsync(System.TimeSpan? timeout = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<Medallion.Threading.Redis.RedisDistributedSemaphoreHandle!>
 Medallion.Threading.Redis.RedisDistributedSemaphore.MaxCount.get -> int
 Medallion.Threading.Redis.RedisDistributedSemaphore.Name.get -> string!
+Medallion.Threading.Redis.RedisDistributedSemaphore.GetCurrentCountAsync() -> System.Threading.Tasks.ValueTask<int>
 Medallion.Threading.Redis.RedisDistributedSemaphore.RedisDistributedSemaphore(StackExchange.Redis.RedisKey key, int maxCount, StackExchange.Redis.IDatabase! database, System.Action<Medallion.Threading.Redis.RedisDistributedSynchronizationOptionsBuilder!>? options = null) -> void
 Medallion.Threading.Redis.RedisDistributedSemaphore.TryAcquire(System.TimeSpan timeout = default(System.TimeSpan), System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> Medallion.Threading.Redis.RedisDistributedSemaphoreHandle?
 Medallion.Threading.Redis.RedisDistributedSemaphore.TryAcquireAsync(System.TimeSpan timeout = default(System.TimeSpan), System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<Medallion.Threading.Redis.RedisDistributedSemaphoreHandle?>
