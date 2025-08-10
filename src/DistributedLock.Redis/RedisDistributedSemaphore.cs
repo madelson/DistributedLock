@@ -45,7 +45,7 @@ public sealed partial class RedisDistributedSemaphore : IInternalDistributedSema
     /// <remarks>
     /// Use <see cref="GetCurrentCountAsync"/> in async contexts to avoid blocking.
     /// </remarks>
-    public int GetCurrentCount() => (int)SyncViaAsync.Run(s => s.GetCurrentCountAsync(), state: this);
+    public int GetCurrentCount() => SyncViaAsync.Run(s => s.GetCurrentCountAsync(), state: this);
 
     /// <summary>
     /// Asynchronously gets the current available count.
