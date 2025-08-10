@@ -141,6 +141,8 @@ Contributions are welcome! If you are interested in contributing towards a new o
 Setup steps for working with the repository locally are documented [here](docs/Developing%20DistributedLock.md).
 
 ## Release notes
+- 2.7
+	- Add support for fetching a Redis-based semaphore's current available count. Thanks [@teesoftech](https://github.com/teesofttech) for implementing! ([#234](https://github.com/madelson/DistributedLock/issues/234), DistributedLock.Redis 1.1)
 - 2.6
 	- Add support for acquiring transaction-scoped Postgres locks using externally-owned transactions. Thanks [@Tzachi009](https://github.com/Tzachi009) for implementing! ([#213](https://github.com/madelson/DistributedLock/issues/213), DistributedLock.Postgres 1.3)
 - 2.5.1
