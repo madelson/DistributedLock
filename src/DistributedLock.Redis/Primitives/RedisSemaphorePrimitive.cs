@@ -78,4 +78,25 @@ internal class RedisSemaphorePrimitive : IRedLockAcquirableSynchronizationPrimit
     public Task<bool> TryExtendAsync(IDatabaseAsync database) => ExtendScript.ExecuteAsync(database, this).AsBooleanTask();
 
     public bool IsConnected(IDatabase database) => database.IsConnected(this._key, CommandFlags.DemandMaster);
+
+    public async ValueTask<long> GetAcquiredCountAsync(IDatabase database)
+    {
+        long held;
+        if (SyncViaAsync.IsSynchronous)
+        {
+            held = database.SortedSetLength(
+                this._key,
+                flags: CommandFlags.DemandMaster
+            );
+        }
+        else
+        {
+            held = await database.SortedSetLengthAsync(
+                this._key,
+                flags: CommandFlags.DemandMaster
+            ).ConfigureAwait(false);
+        }
+
+        return held;
+    }
 }
