@@ -40,17 +40,13 @@ public sealed partial class RedisDistributedSemaphore : IInternalDistributedSema
     public string Name => this.Key.ToString();
 
     /// <summary>
-    /// Gets the current available count.
+    /// Gets the current available count. Comparable to <see cref="SemaphoreSlim.CurrentCount"/>
     /// </summary>
-    /// <remarks>
-    /// Use <see cref="GetCurrentCountAsync"/> in async contexts to avoid blocking.
-    /// </remarks>
     public int GetCurrentCount() => SyncViaAsync.Run(s => s.GetCurrentCountAsync(), state: this);
 
     /// <summary>
-    /// Asynchronously gets the current available count.
+    /// Asynchronously gets the current available count. Comparable to <see cref="SemaphoreSlim.CurrentCount"/>
     /// </summary>
-    /// <returns>The number of available slots.</returns>
     public async ValueTask<int> GetCurrentCountAsync()
     {
         var database = this._databases[0];
