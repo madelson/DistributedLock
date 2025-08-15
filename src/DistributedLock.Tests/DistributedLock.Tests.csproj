@@ -27,6 +27,7 @@
     <PackageReference Include="MedallionShell.StrongName" />
     <PackageReference Include="System.Data.SqlClient" />
     <PackageReference Include="Moq" />
+    <PackageReference Include="Testcontainers" />
   </ItemGroup>
 
   <ItemGroup>

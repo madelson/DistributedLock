@@ -6,6 +6,11 @@ namespace Medallion.Threading.Tests.Azure
     public class Core_AzureBlobLease_AzureBlobLeaseSynchronizationStrategyTest : DistributedLockCoreTestCases<TestingAzureBlobLeaseDistributedLockProvider, TestingAzureBlobLeaseSynchronizationStrategy> { }
 }
 
+namespace Medallion.Threading.Tests.Etcd
+{
+    public class Core_EtcdLease_EtcdLeaseSynchronizationStrategyTest : DistributedLockCoreTestCases<TestingEtcdLeaseDistributedLockProvider, TestingEtcdLeaseSynchronizationStrategy> { }
+}
+
 namespace Medallion.Threading.Tests.FileSystem
 {
     [Category("CI")] public class Core_File_FileSynchronizationStrategyTest : DistributedLockCoreTestCases<TestingFileDistributedLockProvider, TestingLockFileSynchronizationStrategy> { }
