@@ -81,9 +81,6 @@ Also, install Java Development Kit (JDK) because ZooKeeper runs on Java.
 
 ### Etcd
 
-You can install etcd locally for development and testing. There are several options:
-
-#### Option 1: Using Docker (Recommended)
 The easiest way to run etcd tests locally is to install [Docker](https://docs.docker.com/desktop/):
 
 ```bash
