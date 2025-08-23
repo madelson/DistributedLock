@@ -49,6 +49,10 @@ StyleCop.Cache
 #Project files 
 [Bb]uild/
 
+# vs code files
+.vscode/
+*.code-workspace
+
 #Nuget Files
 *.nupkg
 #MA: using nuget package restore!
