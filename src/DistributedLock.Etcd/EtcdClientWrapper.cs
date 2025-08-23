@@ -1,4 +1,3 @@
-using dotnet_etcd;
 using dotnet_etcd.interfaces;
 using Etcdserverpb;
 using Grpc.Core;

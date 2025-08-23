@@ -18,11 +18,11 @@ public sealed class TestingEtcdLeaseSynchronizationStrategy : TestingSynchroniza
 {
     private readonly DisposableCollection _disposables = new();
 
-    private static readonly Action<EtcdLeaseOptionsBuilder> DefaultTestingOptions = o => 
+    private static readonly Action<EtcdLeaseOptionsBuilder> DefaultTestingOptions = o =>
         // for test speed
         o.BusyWaitSleepTime(TimeSpan.FromMilliseconds(10), TimeSpan.FromMilliseconds(25));
 
-    
+
     public Action<EtcdLeaseOptionsBuilder>? Options { get; set; } = DefaultTestingOptions;
     public bool CreateBlobBeforeLockIsCreated { get; set; }
 
@@ -53,7 +53,7 @@ public sealed class TestingEtcdLeaseSynchronizationStrategy : TestingSynchroniza
     {
         public void Dispose()
         {
-            var etcdClient = EtcdSetupFixture.EtcdClusterSetup.CreateClientToEtcdCluster(); 
+            // TODO: ???
         }
     }
 }

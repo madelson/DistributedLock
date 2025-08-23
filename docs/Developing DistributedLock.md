@@ -78,3 +78,26 @@ Extract the zip archive, and within it copy `zoo_sample.cfg` to `zoo.cfg`.
 Add the full path of the extracted directory (the one containing README.md, bin, conf, etc) to `DistributedLock.Tests/credentials/zookeeper.txt` as a single line.
 
 Also, install Java Development Kit (JDK) because ZooKeeper runs on Java.
+
+### Etcd
+
+You can install etcd locally for development and testing. There are several options:
+
+#### Option 1: Using Docker (Recommended)
+The easiest way to run etcd tests locally is to install [Docker](https://docs.docker.com/desktop/):
+
+```bash
+# Run a single-node etcd cluster
+docker run -d --name etcd \
+  -p 2379:2379 \
+  -p 2380:2380 \
+  gcr.io/etcd-development/etcd:v3.6.1 \
+  /usr/local/bin/etcd \
+  --advertise-client-urls http://0.0.0.0:2379 \
+  --listen-client-urls http://0.0.0.0:2379 \
+  --data-dir /etcd-data
+
+# Or run a 3-node cluster for more robust testing, this is already setup in EtcdClusterSetup
+```
+
+The tests will automatically start and stop etcd instances using Docker containers, so you don't need to have etcd running as a service for testing.

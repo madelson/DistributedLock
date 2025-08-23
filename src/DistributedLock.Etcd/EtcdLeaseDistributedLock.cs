@@ -63,8 +63,7 @@ public sealed partial class EtcdLeaseDistributedLock : IInternalDistributedLock<
         return new EtcdLeaseDistributedLockHandle(actualKey.ToString(), this._etcdClient, leaseId);
     }
 
-
-    private static string GetSafeName(string name)
+    public static string GetSafeName(string name)
     {
         // TODO figure
         return DistributedLockHelpers.ToSafeName(name, 1000, s => s);

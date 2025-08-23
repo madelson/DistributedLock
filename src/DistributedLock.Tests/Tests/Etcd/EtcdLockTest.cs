@@ -3,7 +3,6 @@ using NUnit.Framework;
 
 namespace Medallion.Threading.Tests.Etcd;
 
-[Category("CI")]
 public class EtcdLockTest
 {
     private readonly EtcdClusterSetup _etcdClusterBuilder = EtcdSetupFixture.EtcdClusterSetup;
