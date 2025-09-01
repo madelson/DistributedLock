@@ -7,6 +7,8 @@ namespace Medallion.Threading;
 /// </summary>
 public static class DistributedUpgradeableReaderWriterLockProviderExtensions
 {
+    # region Single Lock Methods
+
     /// <summary>
     /// Equivalent to calling <see cref="IDistributedUpgradeableReaderWriterLockProvider.CreateUpgradeableReaderWriterLock(string)" /> and then
     /// <see cref="IDistributedUpgradeableReaderWriterLock.TryAcquireUpgradeableReadLock(TimeSpan, CancellationToken)" />.
@@ -34,4 +36,12 @@ public static class DistributedUpgradeableReaderWriterLockProviderExtensions
     /// </summary>
     public static ValueTask<IDistributedLockUpgradeableHandle> AcquireUpgradeableReadLockAsync(this IDistributedUpgradeableReaderWriterLockProvider provider, string name, TimeSpan? timeout = null, CancellationToken cancellationToken = default) =>
         (provider ?? throw new ArgumentNullException(nameof(provider))).CreateUpgradeableReaderWriterLock(name).AcquireUpgradeableReadLockAsync(timeout, cancellationToken);
+
+    # endregion
+ 
+    # region Composite Lock Methods
+
+// Composite methods are not supported for IDistributedUpgradeableReaderWriterLock
+
+    # endregion
 }
