@@ -19,9 +19,9 @@ internal class RedisSemaphorePrimitive : IRedLockAcquirableSynchronizationPrimit
             local nowMillis = (tonumber(nowResult[1]) * 1000.0) + (tonumber(nowResult[2]) / 1000.0)";
 
     private const string RenewSetScriptFragment = @"
-            local keyTtl = redis.call('pttl', @key)
-            if keyTtl < tonumber(@setExpiryMillis) then
-                redis.call('pexpire', @key, @setExpiryMillis)
+            local keyTtl = redis.call('pttl', KEYS[1])
+            if keyTtl < tonumber(ARGV[3]) then
+                redis.call('pexpire', KEYS[1], ARGV[3])
             end";
 
     private readonly RedisValue _lockId = RedLockHelper.CreateLockId();
@@ -53,14 +53,14 @@ internal class RedisSemaphorePrimitive : IRedLockAcquirableSynchronizationPrimit
 
     private static readonly RedisScript<RedisSemaphorePrimitive> AcquireScript = new($@"
             {GetNowMillisScriptFragment}
-            redis.call('zremrangebyscore', @key, '-inf', nowMillis)
-            if redis.call('zcard', @key) < tonumber(@maxCount) then
-                redis.call('zadd', @key, nowMillis + tonumber(@expiryMillis), @lockId)
+            redis.call('zremrangebyscore', KEYS[1], '-inf', nowMillis)
+            if redis.call('zcard', KEYS[1]) < tonumber(ARGV[4]) then
+                redis.call('zadd', KEYS[1], nowMillis + tonumber(ARGV[2]), ARGV[1])
                 {RenewSetScriptFragment}
                 return 1
             end
             return 0",
-        p => new { key = p._key, maxCount = p._maxCount, expiryMillis = p._timeouts.Expiry.InMilliseconds, lockId = p._lockId, setExpiryMillis = p.SetExpiry.InMilliseconds }
+        p => ([p._key], [p._lockId, p._timeouts.Expiry.InMilliseconds, p.SetExpiry.InMilliseconds, p._maxCount])
     );
 
     public bool TryAcquire(IDatabase database) => (bool)AcquireScript.Execute(database, this);
@@ -69,10 +69,10 @@ internal class RedisSemaphorePrimitive : IRedLockAcquirableSynchronizationPrimit
 
     private static readonly RedisScript<RedisSemaphorePrimitive> ExtendScript = new($@"
             {GetNowMillisScriptFragment}
-            local result = redis.call('zadd', @key, 'XX', 'CH', nowMillis + tonumber(@expiryMillis), @lockId)
+            local result = redis.call('zadd', KEYS[1], 'XX', 'CH', nowMillis + tonumber(ARGV[2]), ARGV[1])
             {RenewSetScriptFragment}
             return result",
-        p => new { key = p._key, expiryMillis = p._timeouts.Expiry.InMilliseconds, lockId = p._lockId, setExpiryMillis = p.SetExpiry.InMilliseconds }
+        p => ([p._key], [p._lockId, p._timeouts.Expiry.InMilliseconds, p.SetExpiry.InMilliseconds])
     );
 
     public Task<bool> TryExtendAsync(IDatabaseAsync database) => ExtendScript.ExecuteAsync(database, this).AsBooleanTask();

@@ -20,11 +20,11 @@ internal class RedisMutexPrimitive : IRedLockAcquirableSynchronizationPrimitive,
     public TimeoutValue AcquireTimeout => this._timeouts.AcquireTimeout;
 
     private static readonly RedisScript<RedisMutexPrimitive> ReleaseScript = new(@"
-        if redis.call('get', @key) == @lockId then
-            return redis.call('del', @key)
+        if redis.call('get', KEYS[1]) == ARGV[1] then
+            return redis.call('del', KEYS[1])
         end
         return 0",
-        p => new { key = p._key, lockId = p._lockId }
+        p => ([p._key], [p._lockId])
     );
 
     public void Release(IDatabase database, bool fireAndForget) => ReleaseScript.Execute(database, this, fireAndForget);
@@ -36,11 +36,11 @@ internal class RedisMutexPrimitive : IRedLockAcquirableSynchronizationPrimitive,
         database.StringSetAsync(this._key, this._lockId, this._timeouts.Expiry.TimeSpan, When.NotExists, CommandFlags.DemandMaster);
 
     private static readonly RedisScript<RedisMutexPrimitive> ExtendScript = new(@"
-        if redis.call('get', @key) == @lockId then
-            return redis.call('pexpire', @key, @expiryMillis)
+        if redis.call('get', KEYS[1]) == ARGV[1] then
+            return redis.call('pexpire', KEYS[1], ARGV[2])
         end
         return 0",
-        p => new { key = p._key, lockId = p._lockId, expiryMillis = p._timeouts.Expiry.InMilliseconds }
+        p => ([p._key], [p._lockId, p._timeouts.Expiry.InMilliseconds])
     );
 
     public Task<bool> TryExtendAsync(IDatabaseAsync database) => ExtendScript.ExecuteAsync(database, this).AsBooleanTask();

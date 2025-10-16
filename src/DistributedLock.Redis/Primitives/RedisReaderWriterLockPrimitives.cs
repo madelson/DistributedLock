@@ -21,12 +21,12 @@ internal class RedisReadLockPrimitive : IRedLockAcquirableSynchronizationPrimiti
 
     /// <summary>
     /// RELEASE READ
-    /// 
+    ///
     /// Just remove our ID from the reader set (noop if it wasn't there or the set DNE)
     /// </summary>
     private static readonly RedisScript<RedisReadLockPrimitive> ReleaseReadScript = new(
-        @"redis.call('srem', @readerKey, @lockId)",
-        p => new { readerKey = p._readerKey, lockId = p._lockId }
+        @"redis.call('srem', KEYS[1], ARGV[1])",
+        p => ([p._readerKey], [p._lockId])
     );
 
     public void Release(IDatabase database, bool fireAndForget) => ReleaseReadScript.Execute(database, this, fireAndForget);
@@ -34,43 +34,43 @@ internal class RedisReadLockPrimitive : IRedLockAcquirableSynchronizationPrimiti
 
     /// <summary>
     /// TRY EXTEND READ
-    /// 
+    ///
     /// First, check if the reader set exists and our ID is still a member. If not, we fail.
-    /// 
+    ///
     /// Then, extend the reader set TTL to be at least our expiry (at least because other readers might be operating with a longer expiry)
     /// </summary>
     private static readonly RedisScript<RedisReadLockPrimitive> TryExtendReadScript = new(@"
-            if redis.call('sismember', @readerKey, @lockId) == 0 then
+            if redis.call('sismember', KEYS[1], ARGV[1]) == 0 then
                 return 0
             end
-            if redis.call('pttl', @readerKey) < tonumber(@expiryMillis) then
-                redis.call('pexpire', @readerKey, @expiryMillis)
+            if redis.call('pttl', KEYS[1]) < tonumber(ARGV[2]) then
+                redis.call('pexpire', KEYS[1], ARGV[2])
             end
             return 1",
-        p => new { readerKey = p._readerKey, lockId = p._lockId, expiryMillis = p._timeouts.Expiry.InMilliseconds }
+        p => ([p._readerKey], [p._lockId, p._timeouts.Expiry.InMilliseconds])
     );
 
     public Task<bool> TryExtendAsync(IDatabaseAsync database) => TryExtendReadScript.ExecuteAsync(database, this).AsBooleanTask();
 
     /// <summary>
     /// TRY ACQUIRE READ
-    /// 
+    ///
     /// First, check the writer lock value: if it exists then we fail.
-    /// 
+    ///
     /// Then, add our ID to the reader set, creating it if it does not exist. Then, extend the TTL
     /// of the reader set to be at least our expiry. Return success.
     /// </summary>
     private static readonly RedisScript<RedisReadLockPrimitive> TryAcquireReadScript = new($@"
-            if redis.call('exists', @writerKey) == 1 then
+            if redis.call('exists', KEYS[1]) == 1 then
                 return 0
             end
-            redis.call('sadd', @readerKey, @lockId)
-            local readerTtl = redis.call('pttl', @readerKey)
-            if readerTtl < tonumber(@expiryMillis) then
-                redis.call('pexpire', @readerKey, @expiryMillis)
+            redis.call('sadd', KEYS[2], ARGV[1])
+            local readerTtl = redis.call('pttl',KEYS[2])
+            if readerTtl < tonumber(ARGV[2]) then
+                redis.call('pexpire', KEYS[2], ARGV[2])
             end
             return 1",
-        p => new { writerKey = p._writerKey, readerKey = p._readerKey, lockId = p._lockId, expiryMillis = p._timeouts.Expiry.InMilliseconds }
+        p => ([p._writerKey, p._readerKey], [p._lockId, p._timeouts.Expiry.InMilliseconds])
     );
 
     public Task<bool> TryAcquireAsync(IDatabaseAsync database) => TryAcquireReadScript.ExecuteAsync(database, this).AsBooleanTask();
@@ -97,8 +97,8 @@ internal class RedisWriteLockPrimitive : IRedLockAcquirableSynchronizationPrimit
     private readonly RedisMutexPrimitive _mutexPrimitive;
 
     public RedisWriteLockPrimitive(
-        RedisKey readerKey, 
-        RedisKey writerKey, 
+        RedisKey readerKey,
+        RedisKey writerKey,
         RedisValue lockId,
         RedLockTimeouts timeouts)
     {
@@ -116,27 +116,27 @@ internal class RedisWriteLockPrimitive : IRedLockAcquirableSynchronizationPrimit
 
     /// <summary>
     /// TRY ACQUIRE WRITE
-    /// 
+    ///
     /// First, check if writerValue exists. If so, fail unless it's our waiting ID.
-    /// 
+    ///
     /// Then, check if there are no readers. If so, then set writerValue to our ID and return success. If not, then if the lock
     /// has our waiting ID re-up the expiry (avoids the need to extend the writer waiting lock).
-    /// 
+    ///
     /// Finally, return failure.
     /// </summary>
     private static readonly RedisScript<RedisWriteLockPrimitive> TryAcquireWriteScript = new($@"
-            local writerValue = redis.call('get', @writerKey)
-            if writerValue == false or writerValue == @lockId .. '{RedisWriterWaitingPrimitive.LockIdSuffix}' then
-                if redis.call('scard', @readerKey) == 0 then
-                    redis.call('set', @writerKey, @lockId, 'px', @expiryMillis)
+            local writerValue = redis.call('get', KEYS[1])
+            if writerValue == false or writerValue == ARGV[1] .. '{RedisWriterWaitingPrimitive.LockIdSuffix}' then
+                if redis.call('scard', KEYS[2]) == 0 then
+                    redis.call('set', KEYS[1], ARGV[1], 'px', ARGV[2])
                     return 1
                 end
                 if writerValue ~= false then
-                    redis.call('pexpire', @writerKey, @expiryMillis)
+                    redis.call('pexpire', KEYS[1], ARGV[2])
                 end
             end
             return 0",
-        p => new { writerKey = p._writerKey, readerKey = p._readerKey, lockId = p._lockId, expiryMillis = p._timeouts.Expiry.InMilliseconds }
+        p => ([p._writerKey, p._readerKey], [p._lockId, p._timeouts.Expiry.InMilliseconds])
     );
 
     public bool TryAcquire(IDatabase database) => (bool)TryAcquireWriteScript.Execute(database, this);
