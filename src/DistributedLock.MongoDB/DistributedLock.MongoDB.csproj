@@ -13,7 +13,7 @@
 	<PropertyGroup>
 		<Version>1.3.0</Version>
 		<AssemblyVersion>1.0.0.0</AssemblyVersion>
-		<Authors>Michael Adelson</Authors>
+		<Authors>Michael Adelson, joesdu</Authors>
 		<Description>Provides a distributed lock implementation based on MongoDB</Description>
 		<Copyright>Copyright © 2020 Michael Adelson</Copyright>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
