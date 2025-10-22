@@ -519,6 +519,7 @@
         "dependencies": {
           "DistributedLock.Azure": "[1.0.2, )",
           "DistributedLock.FileSystem": "[1.0.3, )",
+          "DistributedLock.MongoDB": "[1.3.0, )",
           "DistributedLock.MySql": "[1.0.2, )",
           "DistributedLock.Oracle": "[1.0.4, )",
           "DistributedLock.Postgres": "[1.3.0, )",
