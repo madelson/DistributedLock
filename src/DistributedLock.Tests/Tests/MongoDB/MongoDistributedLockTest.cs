@@ -97,6 +97,7 @@ public class MongoDistributedLockTest
     }
 
     [Test]
+    [Category("CI")]
     public void TestName()
     {
         const string Name = "\0🐉汉字\b\r\n\\";
@@ -107,6 +108,7 @@ public class MongoDistributedLockTest
     }
 
     [Test]
+    [Category("CI")]
     public void TestValidatesConstructorParameters()
     {
         var database = new Mock<IMongoDatabase>(MockBehavior.Strict).Object;

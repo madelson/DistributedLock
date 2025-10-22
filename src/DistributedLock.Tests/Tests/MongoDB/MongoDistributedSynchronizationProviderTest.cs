@@ -4,7 +4,6 @@ using NUnit.Framework;
 
 namespace Medallion.Threading.Tests.MongoDB;
 
-[Category("CI")]
 public class MongoDistributedSynchronizationProviderTest
 {
     [Test]
