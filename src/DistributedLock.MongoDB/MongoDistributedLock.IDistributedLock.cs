@@ -4,6 +4,8 @@ namespace Medallion.Threading.MongoDB;
 
 public partial class MongoDistributedLock
 {
+    // AUTO-GENERATED
+
     IDistributedSynchronizationHandle? IDistributedLock.TryAcquire(TimeSpan timeout, CancellationToken cancellationToken)
     {
         return TryAcquire(timeout, cancellationToken);
@@ -84,7 +86,7 @@ public partial class MongoDistributedLock
     ///     await using (await myLock.AcquireAsync(...))
     ///     {
     ///         /* we have the lock! */
-    ///  }
+    ///     }
     ///     // dispose releases the lock
     /// </code>
     /// </summary>
