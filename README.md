@@ -141,6 +141,8 @@ Contributions are welcome! If you are interested in contributing towards a new o
 Setup steps for working with the repository locally are documented [here](docs/Developing%20DistributedLock.md).
 
 ## Release notes
+- 2.7.1
+	- Improve compatibility with Redis clusters that require keys in Lua scripts to be passed via the KEYS array. Thanks [@pengweiqhca](https://github.com/pengweiqhca) for reporting a identifying the fix! ([#254](https://github.com/madelson/DistributedLock/issues/254), DistributedLock.Redis 1.1.1)
 - 2.7
 	- Add support for fetching a Redis-based semaphore's current available count. Thanks [@teesoftech](https://github.com/teesofttech) for implementing! ([#234](https://github.com/madelson/DistributedLock/issues/234), DistributedLock.Redis 1.1)
 - 2.6
