@@ -78,7 +78,6 @@ public class RedisDistributedSemaphoreTest
         databaseMock.VerifyAll();
     }
 
-
     [Test]
     public async Task TestGetCurrentCountReflectsAcquisitionsAndReleases()
     {
