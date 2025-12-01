@@ -52,7 +52,7 @@ internal sealed class CompositeDistributedSynchronizationHandle : IDistributedSy
     {
         ValidateAcquireParameters(provider, acquireFunc, names);
 
-        var timeoutTracker = new TimeoutTracker(timeout);
+        var timeoutTracker = new TimeoutTracker(new TimeoutValue(timeout));
         var handles = new List<IDistributedSynchronizationHandle>(names.Count);
         IDistributedSynchronizationHandle? result = null;
 
@@ -156,7 +156,7 @@ internal sealed class CompositeDistributedSynchronizationHandle : IDistributedSy
     {
         ValidateAcquireParameters(provider, acquireFunc, names);
 
-        var timeoutTracker = new TimeoutTracker(timeout);
+        var timeoutTracker = new TimeoutTracker(new TimeoutValue(timeout));
         var handles = new List<IDistributedSynchronizationHandle>(names.Count);
         IDistributedSynchronizationHandle? result = null;
 
@@ -481,16 +481,16 @@ internal sealed class CompositeDistributedSynchronizationHandle : IDistributedSy
                 : throw new TimeoutException($"Failed to acquire lock for '{n}'");
         };
 
-    private sealed class TimeoutTracker(TimeSpan timeout)
+    private readonly struct TimeoutTracker(TimeoutValue timeout)
     {
-        private readonly System.Diagnostics.Stopwatch? _stopwatch = timeout == Timeout.InfiniteTimeSpan
+        private readonly System.Diagnostics.Stopwatch? _stopwatch = timeout.IsInfinite
             ? null
             : System.Diagnostics.Stopwatch.StartNew();
 
         public TimeSpan Remaining => this._stopwatch is null
             ? Timeout.InfiniteTimeSpan
-            : timeout - this._stopwatch.Elapsed;
+            : timeout.TimeSpan - this._stopwatch.Elapsed;
 
-        public bool IsExpired => this._stopwatch is not null && this._stopwatch.Elapsed >= timeout;
+        public bool IsExpired => this._stopwatch is not null && this._stopwatch.Elapsed >= timeout.TimeSpan;
     }
 }
