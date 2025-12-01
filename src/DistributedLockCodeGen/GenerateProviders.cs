@@ -70,7 +70,10 @@ public class GenerateProviders
         var extensionCompositeMethodBodies = ExcludedInterfacesForCompositeMethods.Contains(interfaceName)
             ?
             [
-                $"// Composite methods are not supported for {interfaceName}"
+                $"""
+                     // Composite methods are not supported for {interfaceName}
+                     // because a composite acquire operation must be able to roll back and upgrade does not support that.
+                 """
             ]
             : interfaceMethods
                 .Select(m =>

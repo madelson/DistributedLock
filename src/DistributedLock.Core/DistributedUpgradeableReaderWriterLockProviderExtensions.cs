@@ -41,7 +41,8 @@ public static class DistributedUpgradeableReaderWriterLockProviderExtensions
  
     # region Composite Lock Methods
 
-// Composite methods are not supported for IDistributedUpgradeableReaderWriterLock
+    // Composite methods are not supported for IDistributedUpgradeableReaderWriterLock
+    // because a composite acquire operation must be able to roll back and upgrade does not support that.
 
     # endregion
 }
