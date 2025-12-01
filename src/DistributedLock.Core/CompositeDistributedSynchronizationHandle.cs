@@ -54,6 +54,7 @@ internal sealed class CompositeDistributedSynchronizationHandle : IDistributedSy
 
         var timeoutTracker = new TimeoutTracker(timeout);
         var handles = new List<IDistributedSynchronizationHandle>(names.Count);
+        IDistributedSynchronizationHandle? result = null;
 
         try
         {
@@ -64,25 +65,28 @@ internal sealed class CompositeDistributedSynchronizationHandle : IDistributedSy
 
                 if (handle is null)
                 {
-                    return null;
+                    break;
                 }
 
                 handles.Add(handle);
 
                 if (timeoutTracker.IsExpired)
                 {
-                    return null;
+                    break;
                 }
             }
 
-            var result = new CompositeDistributedSynchronizationHandle(handles);
-            handles.Clear();
-            return result;
+            result = new CompositeDistributedSynchronizationHandle(handles);
         }
         finally
         {
-            await DisposeHandlesAsync(handles).ConfigureAwait(false);
+            if (result is null)
+            {
+                await DisposeHandlesAsync(handles).ConfigureAwait(false);
+            }
         }
+
+        return result;
     }
 
 
@@ -155,6 +159,7 @@ internal sealed class CompositeDistributedSynchronizationHandle : IDistributedSy
 
         var timeoutTracker = new TimeoutTracker(timeout);
         var handles = new List<IDistributedSynchronizationHandle>(names.Count);
+        IDistributedSynchronizationHandle? result = null;
 
         try
         {
@@ -165,25 +170,28 @@ internal sealed class CompositeDistributedSynchronizationHandle : IDistributedSy
 
                 if (handle is null)
                 {
-                    return null;
+                    break;
                 }
 
                 handles.Add(handle);
 
                 if (timeoutTracker.IsExpired)
                 {
-                    return null;
+                    break;
                 }
             }
 
-            var result = new CompositeDistributedSynchronizationHandle(handles);
-            handles.Clear();
-            return result;
+            result = new CompositeDistributedSynchronizationHandle(handles);
         }
         finally
         {
-            await DisposeHandlesAsync(handles).ConfigureAwait(false);
+            if (result is null)
+            {
+                await DisposeHandlesAsync(handles).ConfigureAwait(false);
+            }
         }
+
+        return result;
     }
 
 
