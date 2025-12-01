@@ -38,7 +38,7 @@ public static class DistributedUpgradeableReaderWriterLockProviderExtensions
         (provider ?? throw new ArgumentNullException(nameof(provider))).CreateUpgradeableReaderWriterLock(name).AcquireUpgradeableReadLockAsync(timeout, cancellationToken);
 
     # endregion
- 
+
     # region Composite Lock Methods
 
     // Composite methods are not supported for IDistributedUpgradeableReaderWriterLock

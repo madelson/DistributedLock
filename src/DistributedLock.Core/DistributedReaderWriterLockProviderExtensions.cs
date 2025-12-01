@@ -66,7 +66,7 @@ public static class DistributedReaderWriterLockProviderExtensions
         (provider ?? throw new ArgumentNullException(nameof(provider))).CreateReaderWriterLock(name).AcquireWriteLockAsync(timeout, cancellationToken);
 
     # endregion
- 
+
     # region Composite Lock Methods
 
     /// <summary>

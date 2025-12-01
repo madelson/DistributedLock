@@ -38,7 +38,7 @@ public static class DistributedSemaphoreProviderExtensions
         (provider ?? throw new ArgumentNullException(nameof(provider))).CreateSemaphore(name, maxCount).AcquireAsync(timeout, cancellationToken);
 
     # endregion
- 
+
     # region Composite Lock Methods
 
     /// <summary>

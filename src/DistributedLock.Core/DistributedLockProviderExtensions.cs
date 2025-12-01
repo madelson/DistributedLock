@@ -38,7 +38,7 @@ public static class DistributedLockProviderExtensions
         (provider ?? throw new ArgumentNullException(nameof(provider))).CreateLock(name).AcquireAsync(timeout, cancellationToken);
 
     # endregion
- 
+
     # region Composite Lock Methods
 
     /// <summary>

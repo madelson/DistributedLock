@@ -111,7 +111,7 @@ public class GenerateProviders
                                        {{string.Join(Environment.NewLine + Environment.NewLine, extensionSingleMethodBodies)}}
 
                                            # endregion
-                                        
+
                                            # region Composite Lock Methods
 
                                        {{string.Join(Environment.NewLine + Environment.NewLine, extensionCompositeMethodBodies)}}
