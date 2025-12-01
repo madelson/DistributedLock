@@ -76,7 +76,10 @@ internal sealed class CompositeDistributedSynchronizationHandle : IDistributedSy
                 }
             }
 
-            result = new CompositeDistributedSynchronizationHandle(handles);
+            if (handles.Count == names.Count)
+            {
+                result = new CompositeDistributedSynchronizationHandle(handles);
+            }
         }
         finally
         {
@@ -180,7 +183,10 @@ internal sealed class CompositeDistributedSynchronizationHandle : IDistributedSy
                 }
             }
 
-            result = new CompositeDistributedSynchronizationHandle(handles);
+            if (handles.Count == names.Count)
+            {
+                result = new CompositeDistributedSynchronizationHandle(handles);
+            }
         }
         finally
         {
