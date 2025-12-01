@@ -18,10 +18,10 @@ public class GenerateProviders
         "IDistributedSemaphore"
     ];
 
-    private static readonly IReadOnlyList<string> ExcludedInterfacesForCompositeMethods =
-    [
-        "IDistributedUpgradeableReaderWriterLock"
-    ];
+    private static readonly IReadOnlyDictionary<string, string> ExcludedInterfacesForCompositeMethods = new Dictionary<string, string>
+    {
+        ["IDistributedUpgradeableReaderWriterLock"] = "a composite acquire operation must be able to roll back and upgrade does not support that."
+    };
 
     [TestCaseSource(nameof(Interfaces))]
     public void GenerateProviderInterfaceAndExtensions(string interfaceName)
@@ -67,12 +67,12 @@ public class GenerateProviders
                  """
             );
 
-        var extensionCompositeMethodBodies = ExcludedInterfacesForCompositeMethods.Contains(interfaceName)
+        var extensionCompositeMethodBodies = ExcludedInterfacesForCompositeMethods.TryGetValue(interfaceName, out var exclusionReason)
             ?
             [
                 $"""
                      // Composite methods are not supported for {interfaceName}
-                     // because a composite acquire operation must be able to roll back and upgrade does not support that.
+                     // because {exclusionReason}
                  """
             ]
             : interfaceMethods
