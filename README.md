@@ -78,11 +78,11 @@ using (var handle = myDistributedLock.TryAcquire())
 
 `async` versions of both of these methods are also supported. These are preferred when you are writing async code since they will not consume a thread while waiting for the lock. If you are using C#8 or higher, you can also dispose of handles asynchronously:
 
-### Timeouts
-
 ```C#
 await using (await myDistributedLock.AcquireAsync()) { ... }
 ```
+
+### Timeouts
 
 Additionally, all of these methods support an optional `timeout` parameter. `timeout` determines how long `Acquire` will wait before failing with a `TimeoutException` and how long `TryAcquire` will wait before returning null. The default `timeout` for `Acquire` is `Timeout.InfiniteTimeSpan` while for `TryAcquire` the default `timeout` is `TimeSpan.Zero`.
 
@@ -141,6 +141,10 @@ Contributions are welcome! If you are interested in contributing towards a new o
 Setup steps for working with the repository locally are documented [here](docs/Developing%20DistributedLock.md).
 
 ## Release notes
+- 2.7.1
+	- Improve compatibility with Redis clusters that require keys in Lua scripts to be passed via the KEYS array. Thanks [@pengweiqhca](https://github.com/pengweiqhca) for reporting a identifying the fix! ([#254](https://github.com/madelson/DistributedLock/issues/254), DistributedLock.Redis 1.1.1)
+- 2.7
+	- Add support for fetching a Redis-based semaphore's current available count. Thanks [@teesoftech](https://github.com/teesofttech) for implementing! ([#234](https://github.com/madelson/DistributedLock/issues/234), DistributedLock.Redis 1.1)
 - 2.6
 	- Add support for acquiring transaction-scoped Postgres locks using externally-owned transactions. Thanks [@Tzachi009](https://github.com/Tzachi009) for implementing! ([#213](https://github.com/madelson/DistributedLock/issues/213), DistributedLock.Postgres 1.3)
 - 2.5.1

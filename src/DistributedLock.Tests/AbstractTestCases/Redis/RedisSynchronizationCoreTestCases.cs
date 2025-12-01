@@ -30,7 +30,9 @@ public abstract class RedisSynchronizationCoreTestCases<TLockProvider>
         var @lock = this._provider.CreateLock("multi");
 
         // we only get the one exception
-        Assert.ThrowsAsync<TimeZoneNotFoundException>(() => @lock.TryAcquireAsync().AsTask());
+        Assert.That(
+            Assert.CatchAsync(() => @lock.TryAcquireAsync().AsTask()), 
+            Is.InstanceOf<TimeZoneNotFoundException>().Or.InstanceOf<ArrayTypeMismatchException>());
 
         // single sync acquire flow is different
         this._provider.Strategy.DatabaseProvider.Databases = new[] { databases[2].Object };
