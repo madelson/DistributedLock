@@ -47,8 +47,8 @@ internal sealed class CompositeDistributedSynchronizationHandle : IDistributedSy
         TProvider provider,
         Func<TProvider, string, TimeSpan, CancellationToken, ValueTask<IDistributedSynchronizationHandle?>> acquireFunc,
         IReadOnlyList<string> names,
-        TimeSpan timeout = default,
-        CancellationToken cancellationToken = default)
+        TimeSpan timeout,
+        CancellationToken cancellationToken)
     {
         ValidateAcquireParameters(provider, acquireFunc, names);
 
@@ -89,13 +89,12 @@ internal sealed class CompositeDistributedSynchronizationHandle : IDistributedSy
         return result;
     }
 
-
     public static async ValueTask<IDistributedSynchronizationHandle> AcquireAllAsync<TProvider>(
         TProvider provider,
         Func<TProvider, string, TimeSpan, CancellationToken, ValueTask<IDistributedSynchronizationHandle>> acquireFunc,
         IReadOnlyList<string> names,
-        TimeSpan? timeout = null,
-        CancellationToken cancellationToken = default)
+        TimeSpan? timeout,
+        CancellationToken cancellationToken)
     {
         var effectiveTimeout = timeout ?? Timeout.InfiniteTimeSpan;
         var handle = await TryAcquireAllAsync(
@@ -118,8 +117,8 @@ internal sealed class CompositeDistributedSynchronizationHandle : IDistributedSy
         TProvider provider,
         Func<TProvider, string, TimeSpan, CancellationToken, IDistributedSynchronizationHandle?> acquireFunc,
         IReadOnlyList<string> names,
-        TimeSpan timeout = default,
-        CancellationToken cancellationToken = default) =>
+        TimeSpan timeout,
+        CancellationToken cancellationToken) =>
         SyncViaAsync.Run(
             state => TryAcquireAllAsync(
                 state.provider,
@@ -134,8 +133,8 @@ internal sealed class CompositeDistributedSynchronizationHandle : IDistributedSy
         TProvider provider,
         Func<TProvider, string, TimeSpan, CancellationToken, IDistributedSynchronizationHandle?> acquireFunc,
         IReadOnlyList<string> names,
-        TimeSpan? timeout = null,
-        CancellationToken cancellationToken = default) =>
+        TimeSpan? timeout,
+        CancellationToken cancellationToken) =>
         SyncViaAsync.Run(
             state => AcquireAllAsync(
                 state.provider,
@@ -152,8 +151,8 @@ internal sealed class CompositeDistributedSynchronizationHandle : IDistributedSy
             acquireFunc,
         IReadOnlyList<string> names,
         int maxCount,
-        TimeSpan timeout = default,
-        CancellationToken cancellationToken = default)
+        TimeSpan timeout,
+        CancellationToken cancellationToken)
     {
         ValidateAcquireParameters(provider, acquireFunc, names);
 
@@ -201,8 +200,8 @@ internal sealed class CompositeDistributedSynchronizationHandle : IDistributedSy
             acquireFunc,
         IReadOnlyList<string> names,
         int maxCount,
-        TimeSpan? timeout = null,
-        CancellationToken cancellationToken = default)
+        TimeSpan? timeout,
+        CancellationToken cancellationToken)
     {
         var effectiveTimeout = timeout ?? Timeout.InfiniteTimeSpan;
         var handle = await TryAcquireAllAsync(
@@ -227,8 +226,8 @@ internal sealed class CompositeDistributedSynchronizationHandle : IDistributedSy
         Func<TProvider, string, int, TimeSpan, CancellationToken, IDistributedSynchronizationHandle?> acquireFunc,
         IReadOnlyList<string> names,
         int maxCount,
-        TimeSpan timeout = default,
-        CancellationToken cancellationToken = default) =>
+        TimeSpan timeout,
+        CancellationToken cancellationToken) =>
         SyncViaAsync.Run(
             state => TryAcquireAllAsync(
                 state.provider,
@@ -245,8 +244,8 @@ internal sealed class CompositeDistributedSynchronizationHandle : IDistributedSy
         Func<TProvider, string, int, TimeSpan, CancellationToken, IDistributedSynchronizationHandle?> acquireFunc,
         IReadOnlyList<string> names,
         int maxCount,
-        TimeSpan? timeout = null,
-        CancellationToken cancellationToken = default) =>
+        TimeSpan? timeout,
+        CancellationToken cancellationToken) =>
         SyncViaAsync.Run(
             state => AcquireAllAsync(
                 state.provider,
