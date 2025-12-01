@@ -487,9 +487,12 @@ internal sealed class CompositeDistributedSynchronizationHandle : IDistributedSy
             ? null
             : System.Diagnostics.Stopwatch.StartNew();
 
-        public TimeSpan Remaining => this._stopwatch is null
-            ? Timeout.InfiniteTimeSpan
-            : timeout.TimeSpan - this._stopwatch.Elapsed;
+        public TimeSpan Remaining =>
+            this._stopwatch is { Elapsed: var elapsed }
+                ? elapsed >= timeout.TimeSpan
+                    ? TimeSpan.Zero
+                    : timeout.TimeSpan - elapsed
+                : Timeout.InfiniteTimeSpan;
 
         public bool IsExpired => this._stopwatch is not null && this._stopwatch.Elapsed >= timeout.TimeSpan;
     }
