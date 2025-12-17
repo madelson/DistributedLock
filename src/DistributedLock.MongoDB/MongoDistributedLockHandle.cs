@@ -79,7 +79,7 @@ public sealed class MongoDistributedLockHandle : IDistributedSynchronizationHand
         if (Interlocked.Exchange(ref this._disposed, 1) is 0)
         {
 #if NET8_0_OR_GREATER
-            await this._cts.CancelAsync();
+            await this._cts.CancelAsync().ConfigureAwait(false);
 #else
             this._cts.Cancel();
 #endif
@@ -130,7 +130,7 @@ public sealed class MongoDistributedLockHandle : IDistributedSynchronizationHand
                     continue;
                 }
 #if NET8_0_OR_GREATER
-                await this._cts.CancelAsync();
+                await this._cts.CancelAsync().ConfigureAwait(false);
 #else
                 this._cts.Cancel();
 #endif
@@ -145,7 +145,7 @@ public sealed class MongoDistributedLockHandle : IDistributedSynchronizationHand
         {
             // Lock extension failed, signal that the lock is lost
 #if NET8_0_OR_GREATER
-            await this._cts.CancelAsync();
+            await this._cts.CancelAsync().ConfigureAwait(false);
 #else
             this._cts.Cancel();
 #endif
