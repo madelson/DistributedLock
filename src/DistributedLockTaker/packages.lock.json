@@ -172,8 +172,8 @@
       },
       "MongoDB.Bson": {
         "type": "Transitive",
-        "resolved": "3.5.0",
-        "contentHash": "JGNK6BanLDEifgkvPLqVFCPus5EDCy416pxf1dxUBRSVd3D9+NB3AvMVX190eXlk5/UXuCxpsQv7jWfNKvppBQ==",
+        "resolved": "3.5.2",
+        "contentHash": "aTlbKclBjXi4j3AkrHiaeuKCvdoGA029VbvXJUmmsCXDz+DEfBFq6n9uOvXJu2YXcJiW9Vay1ZctY5Iu0JRXdw==",
         "dependencies": {
           "System.Memory": "4.5.5",
           "System.Runtime.CompilerServices.Unsafe": "5.0.0"
@@ -482,7 +482,7 @@
           "DistributedLock.MySql": "[1.0.2, )",
           "DistributedLock.Oracle": "[1.0.4, )",
           "DistributedLock.Postgres": "[1.3.0, )",
-          "DistributedLock.Redis": "[1.1.0, )",
+          "DistributedLock.Redis": "[1.1.1, )",
           "DistributedLock.SqlServer": "[1.0.6, )",
           "DistributedLock.WaitHandles": "[1.0.1, )",
           "DistributedLock.ZooKeeper": "[1.0.0, )"
@@ -512,7 +512,7 @@
         "type": "Project",
         "dependencies": {
           "DistributedLock.Core": "[1.0.8, )",
-          "MongoDB.Driver": "[3.5.0, )"
+          "MongoDB.Driver": "[3.5.2, )"
         }
       },
       "distributedlock.mysql": {
@@ -592,13 +592,13 @@
       },
       "MongoDB.Driver": {
         "type": "CentralTransitive",
-        "requested": "[3.5.0, )",
-        "resolved": "3.5.0",
-        "contentHash": "ST90u7psyMkNNOWFgSkexsrB3kPn7Ynl2DlMFj2rJyYuc6SIxjmzu4ufy51yzM+cPVE1SvVcdb5UFobrRw6cMg==",
+        "requested": "[3.5.2, )",
+        "resolved": "3.5.2",
+        "contentHash": "Z1EW+CI18wOQqyAnhZkQXvUVXycrHoOb8/dlJzPHKFfNp9XPB6sEJJR67GUVYyB03B5xzt1RlwSyLXAx9B5+yQ==",
         "dependencies": {
           "DnsClient": "1.6.1",
           "Microsoft.Extensions.Logging.Abstractions": "2.0.0",
-          "MongoDB.Bson": "3.5.0",
+          "MongoDB.Bson": "3.5.2",
           "SharpCompress": "0.30.1",
           "Snappier": "1.0.0",
           "System.Buffers": "4.5.1",
@@ -790,9 +790,9 @@
     "net8.0": {
       "Microsoft.NET.ILLink.Tasks": {
         "type": "Direct",
-        "requested": "[8.0.21, )",
-        "resolved": "8.0.21",
-        "contentHash": "s8H5PZQs50OcNkaB6Si54+v3GWM7vzs6vxFRMlD3aXsbM+aPCtod62gmK0BYWou9diGzmo56j8cIf/PziijDqQ=="
+        "requested": "[8.0.22, )",
+        "resolved": "8.0.22",
+        "contentHash": "MhcMithKEiyyNkD2ZfbDZPmcOdi0GheGfg8saEIIEfD/fol3iHmcV8TsZkD4ZYz5gdUuoX4YtlVySUU7Sxl9SQ=="
       },
       "Azure.Core": {
         "type": "Transitive",
@@ -964,8 +964,8 @@
       },
       "MongoDB.Bson": {
         "type": "Transitive",
-        "resolved": "3.5.0",
-        "contentHash": "JGNK6BanLDEifgkvPLqVFCPus5EDCy416pxf1dxUBRSVd3D9+NB3AvMVX190eXlk5/UXuCxpsQv7jWfNKvppBQ==",
+        "resolved": "3.5.2",
+        "contentHash": "aTlbKclBjXi4j3AkrHiaeuKCvdoGA029VbvXJUmmsCXDz+DEfBFq6n9uOvXJu2YXcJiW9Vay1ZctY5Iu0JRXdw==",
         "dependencies": {
           "System.Memory": "4.5.5",
           "System.Runtime.CompilerServices.Unsafe": "5.0.0"
@@ -1185,7 +1185,7 @@
           "DistributedLock.MySql": "[1.0.2, )",
           "DistributedLock.Oracle": "[1.0.4, )",
           "DistributedLock.Postgres": "[1.3.0, )",
-          "DistributedLock.Redis": "[1.1.0, )",
+          "DistributedLock.Redis": "[1.1.1, )",
           "DistributedLock.SqlServer": "[1.0.6, )",
           "DistributedLock.WaitHandles": "[1.0.1, )",
           "DistributedLock.ZooKeeper": "[1.0.0, )"
@@ -1211,7 +1211,7 @@
         "type": "Project",
         "dependencies": {
           "DistributedLock.Core": "[1.0.8, )",
-          "MongoDB.Driver": "[3.5.0, )"
+          "MongoDB.Driver": "[3.5.2, )"
         }
       },
       "distributedlock.mysql": {
@@ -1291,13 +1291,13 @@
       },
       "MongoDB.Driver": {
         "type": "CentralTransitive",
-        "requested": "[3.5.0, )",
-        "resolved": "3.5.0",
-        "contentHash": "ST90u7psyMkNNOWFgSkexsrB3kPn7Ynl2DlMFj2rJyYuc6SIxjmzu4ufy51yzM+cPVE1SvVcdb5UFobrRw6cMg==",
+        "requested": "[3.5.2, )",
+        "resolved": "3.5.2",
+        "contentHash": "Z1EW+CI18wOQqyAnhZkQXvUVXycrHoOb8/dlJzPHKFfNp9XPB6sEJJR67GUVYyB03B5xzt1RlwSyLXAx9B5+yQ==",
         "dependencies": {
           "DnsClient": "1.6.1",
           "Microsoft.Extensions.Logging.Abstractions": "2.0.0",
-          "MongoDB.Bson": "3.5.0",
+          "MongoDB.Bson": "3.5.2",
           "SharpCompress": "0.30.1",
           "Snappier": "1.0.0",
           "System.Buffers": "4.5.1",

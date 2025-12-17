@@ -1,4 +1,5 @@
 using Medallion.Threading.Internal;
+using MongoDB.Bson;
 using MongoDB.Driver;
 
 namespace Medallion.Threading.MongoDB;
@@ -8,9 +9,8 @@ namespace Medallion.Threading.MongoDB;
 /// </summary>
 public sealed class MongoDistributedLockHandle : IDistributedSynchronizationHandle
 {
-    private readonly string _collectionName;
     private readonly CancellationTokenSource _cts;
-    private readonly IMongoDatabase _database;
+    private readonly IMongoCollection<MongoLockDocument> _collection;
     private readonly Task _extensionTask;
     private readonly string _key;
     private readonly string _lockId;
@@ -19,24 +19,22 @@ public sealed class MongoDistributedLockHandle : IDistributedSynchronizationHand
     /// <summary>
     /// Implements <see cref="IDistributedSynchronizationHandle.HandleLostToken" />
     /// </summary>
-    public CancellationToken HandleLostToken => _cts.Token;
+    public CancellationToken HandleLostToken => this._cts.Token;
 
     internal MongoDistributedLockHandle(
-        IMongoDatabase database,
-        string collectionName,
+        IMongoCollection<MongoLockDocument> collection,
         string key,
         string lockId,
         TimeoutValue expiry,
         TimeoutValue extensionCadence)
     {
-        _database = database;
-        _collectionName = collectionName;
-        _key = key;
-        _lockId = lockId;
-        _cts = new();
+        this._collection = collection;
+        this._key = key;
+        this._lockId = lockId;
+        this._cts = new();
 
         // Start background task to extend the lock
-        _extensionTask = ExtendLockAsync(expiry, extensionCadence, _cts.Token);
+        this._extensionTask = this.ExtendLockAsync(expiry, extensionCadence, this._cts.Token);
     }
 
     /// <summary>
@@ -44,14 +42,16 @@ public sealed class MongoDistributedLockHandle : IDistributedSynchronizationHand
     /// </summary>
     public void Dispose()
     {
-        if (Interlocked.Exchange(ref _disposed, 1) is not 0)
+        if (Interlocked.Exchange(ref this._disposed, 1) is not 0)
         {
             return;
         }
-        _cts.Cancel();
+
+        this._cts.Cancel();
         try
         {
-            _extensionTask.Wait(HandleLostToken);
+            // Do not use HandleLostToken here: it is backed by _cts and has been canceled above.
+            this._extensionTask.GetAwaiter().GetResult();
         }
         catch
         {
@@ -59,8 +59,15 @@ public sealed class MongoDistributedLockHandle : IDistributedSynchronizationHand
         }
         finally
         {
-            _cts.Dispose();
-            ReleaseLockAsync(CancellationToken.None).AsTask().Wait(HandleLostToken);
+            this._cts.Dispose();
+            try
+            {
+                this.ReleaseLockAsync(CancellationToken.None).AsTask().GetAwaiter().GetResult();
+            }
+            catch
+            {
+                // Ignore errors during release
+            }
         }
     }
 
@@ -69,12 +76,16 @@ public sealed class MongoDistributedLockHandle : IDistributedSynchronizationHand
     /// </summary>
     public async ValueTask DisposeAsync()
     {
-        if (Interlocked.Exchange(ref _disposed, 1) is 0)
+        if (Interlocked.Exchange(ref this._disposed, 1) is 0)
         {
-            _cts.Cancel();
+#if NET8_0_OR_GREATER
+            await this._cts.CancelAsync();
+#else
+            this._cts.Cancel();
+#endif
             try
             {
-                await _extensionTask.ConfigureAwait(false);
+                await this._extensionTask.ConfigureAwait(false);
             }
             catch
             {
@@ -82,8 +93,8 @@ public sealed class MongoDistributedLockHandle : IDistributedSynchronizationHand
             }
             finally
             {
-                _cts.Dispose();
-                await ReleaseLockAsync(CancellationToken.None).ConfigureAwait(false);
+                this._cts.Dispose();
+                await this.ReleaseLockAsync(CancellationToken.None).ConfigureAwait(false);
             }
         }
     }
@@ -95,17 +106,34 @@ public sealed class MongoDistributedLockHandle : IDistributedSynchronizationHand
             while (!cancellationToken.IsCancellationRequested)
             {
                 await Task.Delay(extensionCadence.TimeSpan, cancellationToken).ConfigureAwait(false);
-                var collection = _database.GetCollection<MongoLockDocument>(_collectionName);
-                var filter = Builders<MongoLockDocument>.Filter.Eq(d => d.Id, _key) & Builders<MongoLockDocument>.Filter.Eq(d => d.LockId, _lockId);
-                var update = Builders<MongoLockDocument>.Update.Set(d => d.ExpiresAt, DateTime.UtcNow.Add(expiry.TimeSpan));
-                var result = await collection.UpdateOneAsync(filter, update, cancellationToken: cancellationToken).ConfigureAwait(false);
+                var filter = Builders<MongoLockDocument>.Filter.Eq(d => d.Id, this._key) & Builders<MongoLockDocument>.Filter.Eq(d => d.LockId, this._lockId);
+
+                // Use server time ($$NOW) for expiry to avoid client clock skew.
+                var newExpiresAt = new BsonDocument(
+                    "$dateAdd",
+                    new BsonDocument
+                    {
+                        { "startDate", "$$NOW" },
+                        { "unit", "millisecond" },
+                        { "amount", expiry.InMilliseconds }
+                    }
+                );
+                var update = new PipelineUpdateDefinition<MongoLockDocument>(
+                    new[] { new BsonDocument("$set", new BsonDocument("expiresAt", newExpiresAt)) }
+                );
+
+                var result = await this._collection.UpdateOneAsync(filter, update, cancellationToken: cancellationToken).ConfigureAwait(false);
 
                 // If we failed to extend, the lock was lost
                 if (result.MatchedCount is not 0)
                 {
                     continue;
                 }
-                _cts.Cancel();
+#if NET8_0_OR_GREATER
+                await this._cts.CancelAsync();
+#else
+                this._cts.Cancel();
+#endif
                 break;
             }
         }
@@ -116,7 +144,11 @@ public sealed class MongoDistributedLockHandle : IDistributedSynchronizationHand
         catch
         {
             // Lock extension failed, signal that the lock is lost
-            _cts.Cancel();
+#if NET8_0_OR_GREATER
+            await this._cts.CancelAsync();
+#else
+            this._cts.Cancel();
+#endif
         }
     }
 
@@ -124,9 +156,8 @@ public sealed class MongoDistributedLockHandle : IDistributedSynchronizationHand
     {
         try
         {
-            var collection = _database.GetCollection<MongoLockDocument>(_collectionName);
-            var filter = Builders<MongoLockDocument>.Filter.Eq(d => d.Id, _key) & Builders<MongoLockDocument>.Filter.Eq(d => d.LockId, _lockId);
-            await collection.DeleteOneAsync(filter, cancellationToken).ConfigureAwait(false);
+            var filter = Builders<MongoLockDocument>.Filter.Eq(d => d.Id, this._key) & Builders<MongoLockDocument>.Filter.Eq(d => d.LockId, this._lockId);
+            await this._collection.DeleteOneAsync(filter, cancellationToken).ConfigureAwait(false);
         }
         catch
         {
