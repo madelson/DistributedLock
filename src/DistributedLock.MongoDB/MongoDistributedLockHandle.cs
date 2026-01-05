@@ -21,16 +21,24 @@ public sealed class MongoDistributedLockHandle : IDistributedSynchronizationHand
     /// </summary>
     public CancellationToken HandleLostToken => this._cts.Token;
 
+    /// <summary>
+    /// Gets the fencing token for this lock acquisition. This is a monotonically increasing value
+    /// that can be used to detect stale operations when working with external resources.
+    /// </summary>
+    public long FencingToken { get; }
+
     internal MongoDistributedLockHandle(
         IMongoCollection<MongoLockDocument> collection,
         string key,
         string lockId,
+        long fencingToken,
         TimeoutValue expiry,
         TimeoutValue extensionCadence)
     {
         this._collection = collection;
         this._key = key;
         this._lockId = lockId;
+        this.FencingToken = fencingToken;
         this._cts = new();
 
         // Start background task to extend the lock
@@ -101,6 +109,9 @@ public sealed class MongoDistributedLockHandle : IDistributedSynchronizationHand
 
     private async Task ExtendLockAsync(TimeoutValue expiry, TimeoutValue extensionCadence, CancellationToken cancellationToken)
     {
+        const int MaxConsecutiveFailures = 3;
+        var consecutiveFailures = 0;
+
         try
         {
             while (!cancellationToken.IsCancellationRequested)
@@ -122,19 +133,43 @@ public sealed class MongoDistributedLockHandle : IDistributedSynchronizationHand
                     new[] { new BsonDocument("$set", new BsonDocument("expiresAt", newExpiresAt)) }
                 );
 
-                var result = await this._collection.UpdateOneAsync(filter, update, cancellationToken: cancellationToken).ConfigureAwait(false);
-
-                // If we failed to extend, the lock was lost
-                if (result.MatchedCount is not 0)
+                try
                 {
-                    continue;
+                    var result = await this._collection.UpdateOneAsync(filter, update, cancellationToken: cancellationToken).ConfigureAwait(false);
+
+                    // If we successfully extended, reset failure count
+                    if (result.MatchedCount is not 0)
+                    {
+                        consecutiveFailures = 0;
+                        continue;
+                    }
+
+                    // Lock was truly lost (document doesn't exist or lockId changed)
+                    await this.SignalLockLostAsync().ConfigureAwait(false);
+                    break;
                 }
-#if NET8_0_OR_GREATER
-                await this._cts.CancelAsync().ConfigureAwait(false);
-#else
-                this._cts.Cancel();
-#endif
-                break;
+                catch (OperationCanceledException)
+                {
+                    throw; // Propagate cancellation
+                }
+                catch (MongoException) when (++consecutiveFailures < MaxConsecutiveFailures)
+                {
+                    // Transient network error, retry after a short delay
+                    try
+                    {
+                        await Task.Delay(TimeSpan.FromMilliseconds(100 * consecutiveFailures), cancellationToken).ConfigureAwait(false);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        throw;
+                    }
+                }
+                catch (MongoException)
+                {
+                    // Too many consecutive failures, assume lock is lost
+                    await this.SignalLockLostAsync().ConfigureAwait(false);
+                    break;
+                }
             }
         }
         catch (OperationCanceledException)
@@ -144,12 +179,18 @@ public sealed class MongoDistributedLockHandle : IDistributedSynchronizationHand
         catch
         {
             // Lock extension failed, signal that the lock is lost
-#if NET8_0_OR_GREATER
-            await this._cts.CancelAsync().ConfigureAwait(false);
-#else
-            this._cts.Cancel();
-#endif
+            await this.SignalLockLostAsync().ConfigureAwait(false);
         }
+    }
+
+    private async Task SignalLockLostAsync()
+    {
+#if NET8_0_OR_GREATER
+        await this._cts.CancelAsync().ConfigureAwait(false);
+#else
+        this._cts.Cancel();
+        await Task.CompletedTask.ConfigureAwait(false);
+#endif
     }
 
     private async ValueTask ReleaseLockAsync(CancellationToken cancellationToken)

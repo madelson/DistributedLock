@@ -15,6 +15,7 @@ public sealed class MongoDistributedSynchronizationOptionsBuilder
     private static readonly TimeoutValue MinimumExpiry = TimeSpan.FromSeconds(.1);
 
     private TimeoutValue? _expiry, _extensionCadence, _minBusyWaitSleepTime, _maxBusyWaitSleepTime;
+    private bool? _useAdaptiveBackoff;
 
     private MongoDistributedSynchronizationOptionsBuilder() { }
 
@@ -73,6 +74,19 @@ public sealed class MongoDistributedSynchronizationOptionsBuilder
         return this;
     }
 
+    /// <summary>
+    /// Enables adaptive exponential backoff for busy waiting. When enabled, the sleep time between
+    /// acquisition attempts will start at the minimum and exponentially increase towards the maximum
+    /// as consecutive failures occur, then reset on success. This reduces MongoDB load under high
+    /// contention while maintaining responsiveness when contention is low.
+    /// Defaults to false (random sleep time within the configured range).
+    /// </summary>
+    public MongoDistributedSynchronizationOptionsBuilder UseAdaptiveBackoff(bool enabled = true)
+    {
+        _useAdaptiveBackoff = enabled;
+        return this;
+    }
+
     internal static MongoDistributedLockOptions GetOptions(Action<MongoDistributedSynchronizationOptionsBuilder>? optionsBuilder)
     {
         MongoDistributedSynchronizationOptionsBuilder? options;
@@ -104,7 +118,8 @@ public sealed class MongoDistributedSynchronizationOptionsBuilder
         return new(expiry,
             extensionCadence,
             options?._minBusyWaitSleepTime ?? TimeSpan.FromMilliseconds(10),
-            options?._maxBusyWaitSleepTime ?? TimeSpan.FromSeconds(0.8));
+            options?._maxBusyWaitSleepTime ?? TimeSpan.FromSeconds(0.8),
+            options?._useAdaptiveBackoff ?? false);
     }
 }
 
@@ -112,7 +127,8 @@ internal readonly struct MongoDistributedLockOptions(
     TimeoutValue expiry,
     TimeoutValue extensionCadence,
     TimeoutValue minBusyWaitSleepTime,
-    TimeoutValue maxBusyWaitSleepTime)
+    TimeoutValue maxBusyWaitSleepTime,
+    bool useAdaptiveBackoff)
 {
     public TimeoutValue Expiry { get; } = expiry;
 
@@ -121,4 +137,6 @@ internal readonly struct MongoDistributedLockOptions(
     public TimeoutValue MinBusyWaitSleepTime { get; } = minBusyWaitSleepTime;
 
     public TimeoutValue MaxBusyWaitSleepTime { get; } = maxBusyWaitSleepTime;
+
+    public bool UseAdaptiveBackoff { get; } = useAdaptiveBackoff;
 }

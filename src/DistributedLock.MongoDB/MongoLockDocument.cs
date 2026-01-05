@@ -24,6 +24,12 @@ internal sealed class MongoLockDocument
     public DateTime ExpiresAt { get; set; }
 
     /// <summary>
+    /// Monotonically increasing fencing token for safe resource access
+    /// </summary>
+    [BsonElement("fencingToken")]
+    public long FencingToken { get; set; }
+
+    /// <summary>
     /// The lock name/key (MongoDB document ID)
     /// </summary>
     [BsonId]

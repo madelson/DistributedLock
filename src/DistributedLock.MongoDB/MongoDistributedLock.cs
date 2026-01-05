@@ -3,6 +3,10 @@ using MongoDB.Bson;
 using MongoDB.Driver;
 using System.Collections.Concurrent;
 
+#if NET8_0_OR_GREATER
+using System.Diagnostics;
+#endif
+
 namespace Medallion.Threading.MongoDB;
 
 /// <summary>
@@ -12,6 +16,13 @@ public sealed partial class MongoDistributedLock : IInternalDistributedLock<Mong
 {
 #if !NETSTANDARD2_1_OR_GREATER && !NET8_0_OR_GREATER
     private static readonly DateTime EpochUtc = new(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+#endif
+
+#if NET8_0_OR_GREATER
+    /// <summary>
+    /// ActivitySource for distributed tracing and diagnostics
+    /// </summary>
+    private static readonly ActivitySource ActivitySource = new("DistributedLock.MongoDB", "1.0.0");
 #endif
 
     // We want to ensure indexes at most once per process per (db, collection)
@@ -53,6 +64,11 @@ public sealed partial class MongoDistributedLock : IInternalDistributedLock<Mong
 
     ValueTask<MongoDistributedLockHandle?> IInternalDistributedLock<MongoDistributedLockHandle>.InternalTryAcquireAsync(TimeoutValue timeout, CancellationToken cancellationToken)
     {
+        if (this._options.UseAdaptiveBackoff)
+        {
+            return this.AdaptiveBusyWaitAsync(timeout, cancellationToken);
+        }
+
         return BusyWaitHelper.WaitAsync(this,
             (@this, ct) => @this.TryAcquireAsync(ct),
             timeout,
@@ -61,8 +77,77 @@ public sealed partial class MongoDistributedLock : IInternalDistributedLock<Mong
             cancellationToken);
     }
 
+    private async ValueTask<MongoDistributedLockHandle?> AdaptiveBusyWaitAsync(TimeoutValue timeout, CancellationToken cancellationToken)
+    {
+        // Try immediately first
+        var result = await this.TryAcquireAsync(cancellationToken).ConfigureAwait(false);
+        if (result != null || timeout.IsZero)
+        {
+            return result;
+        }
+
+        using var timeoutCts = timeout.IsInfinite ? null : new CancellationTokenSource(timeout.TimeSpan);
+        using var linkedCts = timeoutCts != null
+            ? CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutCts.Token)
+            : null;
+        var effectiveToken = linkedCts?.Token ?? cancellationToken;
+
+        var minMs = this._options.MinBusyWaitSleepTime.InMilliseconds;
+        var maxMs = this._options.MaxBusyWaitSleepTime.InMilliseconds;
+        var consecutiveFailures = 0;
+        const double BackoffMultiplier = 1.5;
+#if NET8_0_OR_GREATER
+        var random = Random.Shared;
+#else
+        var random = new Random(Guid.NewGuid().GetHashCode());
+#endif
+
+        while (!effectiveToken.IsCancellationRequested)
+        {
+            // Exponential backoff with jitter
+            var backoffMs = minMs * Math.Pow(BackoffMultiplier, Math.Min(consecutiveFailures, 10));
+            var sleepMs = Math.Min(backoffMs, maxMs);
+            // Add jitter (±20%) to prevent thundering herd
+            var jitter = (random.NextDouble() - 0.5) * 0.4 * sleepMs;
+            var finalSleepMs = Math.Max(minMs, sleepMs + jitter);
+
+            try
+            {
+                await Task.Delay(TimeSpan.FromMilliseconds(finalSleepMs), effectiveToken).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) when (timeoutCts?.IsCancellationRequested == true && !cancellationToken.IsCancellationRequested)
+            {
+                // Timeout expired, try one last time
+                return await this.TryAcquireAsync(cancellationToken).ConfigureAwait(false);
+            }
+
+            try
+            {
+                result = await this.TryAcquireAsync(effectiveToken).ConfigureAwait(false);
+                if (result != null)
+                {
+                    return result;
+                }
+                consecutiveFailures++;
+            }
+            catch (OperationCanceledException) when (timeoutCts?.IsCancellationRequested == true && !cancellationToken.IsCancellationRequested)
+            {
+                return null;
+            }
+        }
+
+        cancellationToken.ThrowIfCancellationRequested();
+        return null;
+    }
+
     private async ValueTask<MongoDistributedLockHandle?> TryAcquireAsync(CancellationToken cancellationToken)
     {
+#if NET8_0_OR_GREATER
+        using var activity = ActivitySource.StartActivity("MongoDistributedLock.TryAcquire");
+        activity?.SetTag("lock.key", this.Key);
+        activity?.SetTag("lock.collection", this._collectionName);
+#endif
+
         var collection = this._database.GetCollection<MongoLockDocument>(this._collectionName);
 
         // Ensure indexes exist (TTL cleanup); do this at most once per process per (db, collection)
@@ -88,13 +173,21 @@ public sealed partial class MongoDistributedLock : IInternalDistributedLock<Mong
         // Verify we actually got the lock
         if (result != null && result.LockId == lockId)
         {
+#if NET8_0_OR_GREATER
+            activity?.SetTag("lock.acquired", true);
+            activity?.SetTag("lock.fencing_token", result.FencingToken);
+#endif
             return new(collection,
                 this.Key,
                 lockId,
+                result.FencingToken,
                 this._options.Expiry,
                 this._options.ExtensionCadence);
         }
 
+#if NET8_0_OR_GREATER
+        activity?.SetTag("lock.acquired", false);
+#endif
         return null;
     }
 
@@ -126,6 +219,16 @@ public sealed partial class MongoDistributedLock : IInternalDistributedLock<Mong
             }
         );
 
+        // Increment fencing token only when acquiring a new lock
+        var newFencingToken = new BsonDocument(
+            "$add",
+            new BsonArray
+            {
+                new BsonDocument("$ifNull", new BsonArray { "$fencingToken", 0L }),
+                1L
+            }
+        );
+
         var setStage = new BsonDocument(
             "$set",
             new BsonDocument
@@ -133,7 +236,8 @@ public sealed partial class MongoDistributedLock : IInternalDistributedLock<Mong
                 // Only overwrite lock fields when the previous lock is expired/missing
                 { "lockId", new BsonDocument("$cond", new BsonArray { expiredOrMissing, lockId, "$lockId" }) },
                 { "expiresAt", new BsonDocument("$cond", new BsonArray { expiredOrMissing, newExpiresAt, "$expiresAt" }) },
-                { "acquiredAt", new BsonDocument("$cond", new BsonArray { expiredOrMissing, "$$NOW", "$acquiredAt" }) }
+                { "acquiredAt", new BsonDocument("$cond", new BsonArray { expiredOrMissing, "$$NOW", "$acquiredAt" }) },
+                { "fencingToken", new BsonDocument("$cond", new BsonArray { expiredOrMissing, newFencingToken, "$fencingToken" }) }
             }
         );
 
@@ -160,13 +264,21 @@ public sealed partial class MongoDistributedLock : IInternalDistributedLock<Mong
             {
                 // TTL cleanup: remove documents once expiresAt < now
                 ExpireAfter = TimeSpan.Zero,
+                Name = "expiresAt_ttl"
             };
             var indexModel = new CreateIndexModel<MongoLockDocument>(indexKeys, indexOptions);
             await collection.Indexes.CreateOneAsync(indexModel, cancellationToken: CancellationToken.None).ConfigureAwait(false);
         }
-        catch
+        catch (MongoCommandException ex) when (
+            ex.CodeName is "IndexOptionsConflict" or "IndexKeySpecsConflict" or "IndexAlreadyExists")
         {
-            // Index may already exist, or server may reject options (e.g., conflicts). Ignore.
+            // Index already exists with same or different options - this is acceptable.
+            // The existing index will still handle TTL cleanup.
+        }
+        catch (MongoException)
+        {
+            // Other MongoDB errors (network, auth, etc.) - swallow to avoid blocking lock acquisition.
+            // The lock will still work correctly; TTL cleanup is a best-effort optimization.
         }
     }
 }
