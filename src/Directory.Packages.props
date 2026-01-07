@@ -22,7 +22,7 @@
     <PackageVersion Include="MedallionShell.StrongName" Version="1.6.2" />
     <PackageVersion Include="System.Data.SqlClient" Version="4.8.6" />
     <PackageVersion Include="Moq" Version="4.20.70" />
-    <PackageVersion Include="System.Diagnostics.DiagnosticSource" Version="10.0.1" />
+    <PackageVersion Include="System.Diagnostics.DiagnosticSource" Version="10.0.1" Condition="'$(TargetFramework)' == 'netstandard2.1' OR '$(TargetFramework)' == 'net472'" />
     <PackageVersion Include="System.Threading.AccessControl" Version="8.0.0" Condition="'$(TargetFramework)' != 'net462'" />
     <PackageVersion Include="ZooKeeperNetEx" Version="3.4.12.4" />
     <PackageVersion Include="IsExternalInit" Version="1.0.3" />
