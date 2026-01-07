@@ -5,15 +5,16 @@ namespace Medallion.Threading.Tests.MongoDB;
 
 public sealed class TestingMongoDistributedLockProvider : TestingLockProvider<TestingMongoDbSynchronizationStrategy>
 {
-    private readonly string _collectionName = "DistributedLocks_" + Guid.NewGuid().ToString("N");
+    private const string CollectionName = "distributed.locks";
     private readonly IMongoDatabase _database = MongoDbCredentials.GetDefaultDatabase(Environment.CurrentDirectory);
 
     public override IDistributedLock CreateLockWithExactName(string name)
     {
-        var @lock = new MongoDistributedLock(name, _database, _collectionName);
-        Strategy.KillHandleAction = () =>
+        // Use a short expiry to make tests like TestHandleLostTriggersCorrectly run faster
+        var @lock = new MongoDistributedLock(name, _database, CollectionName, options => options.Expiry(TimeSpan.FromSeconds(5)));
+        this.Strategy.KillHandleAction = () =>
         {
-            var collection = _database.GetCollection<MongoLockDocument>(_collectionName);
+            var collection = _database.GetCollection<MongoLockDocument>(CollectionName);
             collection.DeleteOne(Builders<MongoLockDocument>.Filter.Eq(d => d.Id, name));
         };
         return @lock;
@@ -21,7 +22,7 @@ public sealed class TestingMongoDistributedLockProvider : TestingLockProvider<Te
 
     public override string GetSafeName(string name)
     {
-        return new MongoDistributedLock(name, _database, _collectionName).Name;
+        return new MongoDistributedLock(name, _database, CollectionName).Name;
     }
 
     public override string GetCrossProcessLockType()
@@ -34,7 +35,7 @@ public sealed class TestingMongoDistributedLockProvider : TestingLockProvider<Te
         // Clean up test collection
         try
         {
-            _database.DropCollection(_collectionName);
+            _database.DropCollection(CollectionName);
         }
         catch
         {

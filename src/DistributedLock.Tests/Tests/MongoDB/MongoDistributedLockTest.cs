@@ -67,7 +67,7 @@ public class MongoDistributedLockTest
         });
 
         // Manually delete the lock document to simulate lock loss
-        var collection = database.GetCollection<MongoLockDocument>("DistributedLocks");
+        var collection = database.GetCollection<MongoLockDocument>("distributed.locks");
         await collection.DeleteOneAsync(Builders<MongoLockDocument>.Filter.Eq(d => d.Id, lockName));
 
         // Wait a bit for the extension task to detect the loss
@@ -113,8 +113,157 @@ public class MongoDistributedLockTest
     {
         var database = new Mock<IMongoDatabase>(MockBehavior.Strict).Object;
         Assert.Throws<ArgumentNullException>(() => new MongoDistributedLock(null!, database));
-        Assert.Throws<ArgumentNullException>(() => new MongoDistributedLock(string.Empty, database));
         Assert.Throws<ArgumentNullException>(() => new MongoDistributedLock("key", null!));
         Assert.Throws<ArgumentNullException>(() => new MongoDistributedLock("key", database, (string)null!));
+    }
+
+    [Test]
+    public async Task TestIndexExistence()
+    {
+        var database = MongoDbCredentials.GetDefaultDatabase(Environment.CurrentDirectory);
+        var collectionName = "TestIndex" + Guid.NewGuid().ToString("N");
+        
+        var @lock = new MongoDistributedLock("lock", database, collectionName);
+        await using (await @lock.AcquireAsync())
+        {
+        }
+
+        var collection = database.GetCollection<MongoLockDocument>(collectionName);
+        using var cursor = await collection.Indexes.ListAsync();
+        var indexes = await cursor.ToListAsync();
+        
+        var ttlIndex = indexes.FirstOrDefault(i => i["name"] == "expiresAt_ttl");
+        Assert.That(ttlIndex, Is.Not.Null, "TTL index should exist");
+        Assert.That(ttlIndex!["expireAfterSeconds"].AsInt32, Is.EqualTo(0)); // check functionality
+    }
+
+    [Test]
+    [Category("CI")]
+    public async Task TestIndexCreationIsScopedToCluster()
+    {
+        // Simulate two distinct databases with SAME name/collection but treated as different
+        var db1 = new Mock<IMongoDatabase>(MockBehavior.Strict);
+        var db2 = new Mock<IMongoDatabase>(MockBehavior.Strict);
+        
+        var coll1 = new Mock<IMongoCollection<MongoLockDocument>>(MockBehavior.Strict);
+        var coll2 = new Mock<IMongoCollection<MongoLockDocument>>(MockBehavior.Strict);
+
+        // We can't easily mock ClusterId equality without deeper mocking, 
+        // but verify that if we use the *same* logic we rely on unique behavior?
+        // Wait, unit testing static cache with mocks is tricky because state persists.
+        // We need a unique db/coll name to avoid interference from other tests.
+        var uniqueName = "db_" + Guid.NewGuid().ToString("N");
+        SetupDb(db1, coll1, uniqueName, "locks");
+        SetupDb(db2, coll2, uniqueName, "locks");
+
+        // We want to verify ConfigureIndexes is called on BOTH.
+        
+        // Setup index creation mocks
+        var idx1 = new Mock<IMongoIndexManager<MongoLockDocument>>(MockBehavior.Strict);
+        var idx2 = new Mock<IMongoIndexManager<MongoLockDocument>>(MockBehavior.Strict);
+        
+        coll1.Setup(c => c.Indexes).Returns(idx1.Object);
+        coll2.Setup(c => c.Indexes).Returns(idx2.Object);
+
+        // Allow FindOneAndUpdate
+        coll1.Setup(c => c.FindOneAndUpdateAsync(It.IsAny<FilterDefinition<MongoLockDocument>>(), It.IsAny<UpdateDefinition<MongoLockDocument>>(), It.IsAny<FindOneAndUpdateOptions<MongoLockDocument, MongoLockDocument>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((MongoLockDocument)null!);
+        coll2.Setup(c => c.FindOneAndUpdateAsync(It.IsAny<FilterDefinition<MongoLockDocument>>(), It.IsAny<UpdateDefinition<MongoLockDocument>>(), It.IsAny<FindOneAndUpdateOptions<MongoLockDocument, MongoLockDocument>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((MongoLockDocument)null!);
+
+        // Expect CreateOneAsync
+        idx1.Setup(i => i.CreateOneAsync(It.IsAny<CreateIndexModel<MongoLockDocument>>(), It.IsAny<CreateOneIndexOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("idx");
+        idx2.Setup(i => i.CreateOneAsync(It.IsAny<CreateIndexModel<MongoLockDocument>>(), It.IsAny<CreateOneIndexOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("idx");
+
+        var lock1 = new MongoDistributedLock("k", db1.Object, "locks");
+        var lock2 = new MongoDistributedLock("k", db2.Object, "locks");
+
+        await lock1.TryAcquireAsync();
+        await lock2.TryAcquireAsync();
+
+        idx1.Verify(i => i.CreateOneAsync(It.IsAny<CreateIndexModel<MongoLockDocument>>(), It.IsAny<CreateOneIndexOptions>(), It.IsAny<CancellationToken>()), Times.Once, "First DB should create index");
+        
+        idx2.Verify(i => i.CreateOneAsync(It.IsAny<CreateIndexModel<MongoLockDocument>>(), It.IsAny<CreateOneIndexOptions>(), It.IsAny<CancellationToken>()), Times.Once, "Second DB should create index too because it's a different instance");
+    }
+
+    private static void SetupDb(Mock<IMongoDatabase> db, Mock<IMongoCollection<MongoLockDocument>> coll, string dbName, string collName)
+    {
+        db.Setup(d => d.GetCollection<MongoLockDocument>(collName, null)).Returns(coll.Object);
+        var dbNs = new DatabaseNamespace(dbName);
+        var collNs = new CollectionNamespace(dbNs, collName);
+        
+        coll.Setup(c => c.CollectionNamespace).Returns(collNs);
+        coll.Setup(c => c.Database).Returns(db.Object);
+        db.Setup(d => d.DatabaseNamespace).Returns(dbNs);
+
+        // Mock Client and Settings
+        var client = new Mock<IMongoClient>(MockBehavior.Strict);
+        // Ensure settings are distinct by adding a random server address
+        var settings = new MongoClientSettings { Servers = [new("host" + Guid.NewGuid().ToString("N"))] };
+        client.Setup(c => c.Settings).Returns(settings);
+        db.Setup(d => d.Client).Returns(client.Object);
+    }
+
+    [Test]
+    [Category("CI")]
+    public async Task TestIndexCreationFailureIsCached()
+    {
+        var db = new Mock<IMongoDatabase>(MockBehavior.Strict);
+        var coll = new Mock<IMongoCollection<MongoLockDocument>>(MockBehavior.Strict);
+        SetupDb(db, coll, "db_" + Guid.NewGuid().ToString("N"), "locks");
+
+        var idx = new Mock<IMongoIndexManager<MongoLockDocument>>(MockBehavior.Strict);
+        coll.Setup(c => c.Indexes).Returns(idx.Object);
+
+        // Fail first time
+        idx.SetupSequence(i => i.CreateOneAsync(It.IsAny<CreateIndexModel<MongoLockDocument>>(), It.IsAny<CreateOneIndexOptions>(), It.IsAny<CancellationToken>()))
+           .ThrowsAsync(new MongoException("Test failure"))
+           .ReturnsAsync("idx");
+
+        // Allow FindOneAndUpdate
+        coll.Setup(c => c.FindOneAndUpdateAsync(It.IsAny<FilterDefinition<MongoLockDocument>>(), It.IsAny<UpdateDefinition<MongoLockDocument>>(), It.IsAny<FindOneAndUpdateOptions<MongoLockDocument, MongoLockDocument>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((MongoLockDocument)null!);
+        
+        var @lock = new MongoDistributedLock("k", db.Object, "locks");
+        
+        // First acquire: fails to create index (swallowed), acquires lock
+        await @lock.TryAcquireAsync();
+        
+        // Second acquire: should retry index creation if we fix it. 
+        // Currently it caches the failed task, so it won't retry.
+        await @lock.TryAcquireAsync();
+
+        // Verify CreateOneAsync was called TWICE (proving retry).
+        // If the current bug exists, it will be called ONCE.
+        idx.Verify(i => i.CreateOneAsync(It.IsAny<CreateIndexModel<MongoLockDocument>>(), It.IsAny<CreateOneIndexOptions>(), It.IsAny<CancellationToken>()), Times.Exactly(2), "Should retry index creation after failure");
+    }
+
+    [Test]
+    public async Task TestLockDocumentStructure()
+    {
+        var database = MongoDbCredentials.GetDefaultDatabase(Environment.CurrentDirectory);
+        var lockName = TestHelper.UniqueName;
+        var collectionName = "locks_" + Guid.NewGuid().ToString("N");
+        
+        var @lock = new MongoDistributedLock(lockName, database, collectionName, o => o.Expiry(TimeSpan.FromSeconds(10)));
+        await using var handle = await @lock.AcquireAsync();
+        var collection = database.GetCollection<MongoLockDocument>(collectionName);
+        var doc = await collection.Find(Builders<MongoLockDocument>.Filter.Eq(d => d.Id, lockName)).FirstOrDefaultAsync();
+            
+        Assert.That(doc, Is.Not.Null);
+        Assert.That(doc.LockId, Is.Not.Null);
+        Assert.That(doc.FencingToken, Is.GreaterThan(0));
+            
+        // Allow for some clock skew/processing time
+        var now = DateTime.UtcNow; // Mongo assumes UTC usually, check implicit assumption
+        // BsonDateTime is usually UTC.
+            
+        // Depending on Mongo version and driver, dates are UTC.
+        // The lock sets expiresAt = $$NOW + 10s.
+        // Check that it is roughly in the future.
+        Assert.That(doc.ExpiresAt.ToUniversalTime(), Is.GreaterThan(DateTime.UtcNow.AddSeconds(5)));
+        Assert.That(doc.ExpiresAt.ToUniversalTime(), Is.LessThan(DateTime.UtcNow.AddSeconds(15)));
     }
 }

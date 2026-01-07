@@ -13,10 +13,10 @@ public sealed class MongoDistributedSynchronizationProvider : IDistributedLockPr
 
     /// <summary>
     /// Constructs a <see cref="MongoDistributedSynchronizationProvider" /> that connects to the provided <paramref name="database" />
-    /// and uses the provided <paramref name="options" />. Locks will be stored in a collection named "DistributedLocks" by default.
+    /// and uses the provided <paramref name="options" />. Locks will be stored in a collection named "distributed.locks" by default.
     /// </summary>
     public MongoDistributedSynchronizationProvider(IMongoDatabase database, Action<MongoDistributedSynchronizationOptionsBuilder>? options = null)
-        : this(database, "DistributedLocks", options) { }
+        : this(database, "distributed.locks", options) { }
 
     /// <summary>
     /// Constructs a <see cref="MongoDistributedSynchronizationProvider" /> that connects to the provided <paramref name="database" />,
@@ -39,6 +39,6 @@ public sealed class MongoDistributedSynchronizationProvider : IDistributedLockPr
 
     IDistributedLock IDistributedLockProvider.CreateLock(string name)
     {
-        return CreateLock(name);
+        return this.CreateLock(name);
     }
 }

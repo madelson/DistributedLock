@@ -21,7 +21,7 @@ public sealed partial class MongoDistributedLock : IInternalDistributedLock<Mong
     private static readonly ActivitySource ActivitySource = new("DistributedLock.MongoDB", "1.0.0");
 
     // We want to ensure indexes are created at most once per process per (database, collection)
-    private static readonly ConcurrentDictionary<string, Lazy<Task>> IndexInitializationTasks = new(StringComparer.Ordinal);
+    private static readonly ConcurrentDictionary<string, Lazy<Task<bool>>> IndexInitializationTasks = new(StringComparer.Ordinal);
 
     private readonly string _collectionName;
     private readonly IMongoDatabase _database;
@@ -42,7 +42,7 @@ public sealed partial class MongoDistributedLock : IInternalDistributedLock<Mong
     /// The locks will be stored in a collection named "distributedLocks" by default.
     /// </summary>
     public MongoDistributedLock(string key, IMongoDatabase database, Action<MongoDistributedSynchronizationOptionsBuilder>? options = null)
-        : this(key, database, "distributedLocks", options) { }
+        : this(key, database, "distributed.locks", options) { }
 
     /// <summary>
     /// Constructs a lock named <paramref name="key" /> using the provided <paramref name="database" />, <paramref name="collectionName" />, and
@@ -50,10 +50,9 @@ public sealed partial class MongoDistributedLock : IInternalDistributedLock<Mong
     /// </summary>
     public MongoDistributedLock(string key, IMongoDatabase database, string collectionName, Action<MongoDistributedSynchronizationOptionsBuilder>? options = null)
     {
-        if (string.IsNullOrEmpty(key)) { throw new ArgumentNullException(nameof(key)); }
         this._database = database ?? throw new ArgumentNullException(nameof(database));
         this._collectionName = collectionName ?? throw new ArgumentNullException(nameof(collectionName));
-        this.Key = key;
+        this.Key = key ?? throw new ArgumentNullException(nameof(key));
         this._options = MongoDistributedSynchronizationOptionsBuilder.GetOptions(options);
     }
 
@@ -108,7 +107,7 @@ public sealed partial class MongoDistributedLock : IInternalDistributedLock<Mong
 
             try
             {
-                await Task.Delay(TimeSpan.FromMilliseconds(finalSleepMs), effectiveToken).ConfigureAwait(false);
+                await SyncViaAsync.Delay(TimeSpan.FromMilliseconds(finalSleepMs), effectiveToken).ConfigureAwait(false);
             }
             catch (OperationCanceledException) when (timeoutCts?.IsCancellationRequested == true && !cancellationToken.IsCancellationRequested)
             {
@@ -161,7 +160,15 @@ public sealed partial class MongoDistributedLock : IInternalDistributedLock<Mong
             ReturnDocument = ReturnDocument.After
         };
 
-        var result = await collection.FindOneAndUpdateAsync(filter, update, options, cancellationToken).ConfigureAwait(false);
+        MongoLockDocument? result;
+        if (SyncViaAsync.IsSynchronous)
+        {
+            result = collection.FindOneAndUpdate(filter, update, options, cancellationToken);
+        }
+        else
+        {
+            result = await collection.FindOneAndUpdateAsync(filter, update, options, cancellationToken).ConfigureAwait(false);
+        }
 
         // Verify we actually got the lock
         if (result != null && result.LockId == lockId)
@@ -237,13 +244,36 @@ public sealed partial class MongoDistributedLock : IInternalDistributedLock<Mong
         // Best-effort TTL index to clean up expired rows over time.
         // Note: TTL monitors run on a schedule; correctness MUST NOT depend on this.
         var databaseName = collection.Database.DatabaseNamespace.DatabaseName;
-        var key = databaseName + "/" + collection.CollectionNamespace.CollectionName;
+        // include the hash code of the settings to differentiate between different clusters/clients
+        // that happen to use the same database/collection names.
+        // While GetHashCode() isn't perfect, it should be sufficient to distinguish between different clients/settings 
+        // in valid use-cases (e.g. diff connection strings).
+        var clientSettingsHash = collection.Database.Client.Settings.GetHashCode();
+        var key = clientSettingsHash + "|" + databaseName + "/" + collection.CollectionNamespace.CollectionName;
 
         var lazy = IndexInitializationTasks.GetOrAdd(key, _ => new(() => CreateIndexesAsync(collection)));
-        return lazy.Value;
+        
+        // If we are executing synchronously, we must ensure the task is complete.
+        // This covers two cases:
+        // 1. We just created the task. CreateIndexesAsync will run synchronously and return a completed task.
+        // 2. The task was created by a previous async caller and is still running. We must block until it finishes.
+        if (SyncViaAsync.IsSynchronous && !lazy.Value.IsCompleted)
+        {
+            lazy.Value.GetAwaiter().GetResult();
+        }
+
+        var task = lazy.Value;
+        if (task.IsCompleted && !task.Result)
+        {
+            // If the task failed (returned false), we remove it so we can try again next time.
+            // Note: worst case we remove a *new* valid task if a race happens, which is fine (just extra work).
+            ((ICollection<KeyValuePair<string, Lazy<Task<bool>>>>)IndexInitializationTasks).Remove(new KeyValuePair<string, Lazy<Task<bool>>>(key, lazy));
+        }
+        
+        return task;
     }
 
-    private static async Task CreateIndexesAsync(IMongoCollection<MongoLockDocument> collection)
+    private static async Task<bool> CreateIndexesAsync(IMongoCollection<MongoLockDocument> collection)
     {
         try
         {
@@ -256,17 +286,20 @@ public sealed partial class MongoDistributedLock : IInternalDistributedLock<Mong
             };
             var indexModel = new CreateIndexModel<MongoLockDocument>(indexKeys, indexOptions);
             await collection.Indexes.CreateOneAsync(indexModel, cancellationToken: CancellationToken.None).ConfigureAwait(false);
+            return true;
         }
         catch (MongoCommandException ex) when (
             ex.CodeName is "IndexOptionsConflict" or "IndexKeySpecsConflict" or "IndexAlreadyExists")
         {
             // Index already exists with same or different options - this is acceptable.
             // The existing index will still handle TTL cleanup.
+            return true;
         }
         catch (MongoException)
         {
             // Other MongoDB errors (network, auth, etc.) - swallow to avoid blocking lock acquisition.
             // The lock will still work correctly; TTL cleanup is a best-effort optimization.
+            return false;
         }
     }
 }

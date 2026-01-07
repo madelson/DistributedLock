@@ -109,7 +109,7 @@ var @lock = new MongoDistributedLock(
 
 ### 自定义集合名称
 
-默认情况下，锁存储在名为 `"DistributedLocks"` 的集合中。您可以指定自定义集合名称：
+默认情况下，锁存储在名为 `"distributed.locks"` 的集合中。您可以指定自定义集合名称：
 
 ```csharp
 // 直接创建锁并使用自定义集合
@@ -190,7 +190,7 @@ graph TB
     Handle["MongoDistributedLockHandle"]
 
     MongoDB[("MongoDB 数据库")]
-    Collection["DistributedLocks 集合"]
+    Collection["distributed.locks 集合"]
     TTLIndex["expiresAt 上的 TTL 索引"]
 
     Client -->|创建| Lock
