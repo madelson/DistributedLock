@@ -39,7 +39,7 @@ public sealed partial class MongoDistributedLock : IInternalDistributedLock<Mong
 
     /// <summary>
     /// Constructs a lock named <paramref name="key" /> using the provided <paramref name="database" /> and <paramref name="options" />.
-    /// The locks will be stored in a collection named "distributedLocks" by default.
+    /// The locks will be stored in a collection named "distributed.locks" by default.
     /// </summary>
     public MongoDistributedLock(string key, IMongoDatabase database, Action<MongoDistributedSynchronizationOptionsBuilder>? options = null)
         : this(key, database, "distributed.locks", options) { }
