@@ -44,6 +44,10 @@
 		<DefineConstants>TRACE;DEBUG</DefineConstants>
 	</PropertyGroup>
 
+	<ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.1' OR '$(TargetFramework)' == 'net472'">
+		<PackageReference Include="System.Diagnostics.DiagnosticSource" />
+	</ItemGroup>
+
 	<ItemGroup>
 		<PackageReference Include="MongoDB.Driver" />
 		<PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All" />

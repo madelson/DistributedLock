@@ -2,10 +2,7 @@ using Medallion.Threading.Internal;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using System.Collections.Concurrent;
-
-#if NET8_0_OR_GREATER
 using System.Diagnostics;
-#endif
 
 namespace Medallion.Threading.MongoDB;
 
@@ -18,14 +15,12 @@ public sealed partial class MongoDistributedLock : IInternalDistributedLock<Mong
     private static readonly DateTime EpochUtc = new(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 #endif
 
-#if NET8_0_OR_GREATER
     /// <summary>
     /// ActivitySource for distributed tracing and diagnostics
     /// </summary>
     private static readonly ActivitySource ActivitySource = new("DistributedLock.MongoDB", "1.0.0");
-#endif
 
-    // We want to ensure indexes at most once per process per (db, collection)
+    // We want to ensure indexes are created at most once per process per (database, collection)
     private static readonly ConcurrentDictionary<string, Lazy<Task>> IndexInitializationTasks = new(StringComparer.Ordinal);
 
     private readonly string _collectionName;
@@ -44,10 +39,10 @@ public sealed partial class MongoDistributedLock : IInternalDistributedLock<Mong
 
     /// <summary>
     /// Constructs a lock named <paramref name="key" /> using the provided <paramref name="database" /> and <paramref name="options" />.
-    /// The locks will be stored in a collection named "DistributedLocks" by default.
+    /// The locks will be stored in a collection named "distributedLocks" by default.
     /// </summary>
     public MongoDistributedLock(string key, IMongoDatabase database, Action<MongoDistributedSynchronizationOptionsBuilder>? options = null)
-        : this(key, database, "DistributedLocks", options) { }
+        : this(key, database, "distributedLocks", options) { }
 
     /// <summary>
     /// Constructs a lock named <paramref name="key" /> using the provided <paramref name="database" />, <paramref name="collectionName" />, and
@@ -142,11 +137,9 @@ public sealed partial class MongoDistributedLock : IInternalDistributedLock<Mong
 
     private async ValueTask<MongoDistributedLockHandle?> TryAcquireAsync(CancellationToken cancellationToken)
     {
-#if NET8_0_OR_GREATER
         using var activity = ActivitySource.StartActivity("MongoDistributedLock.TryAcquire");
         activity?.SetTag("lock.key", this.Key);
         activity?.SetTag("lock.collection", this._collectionName);
-#endif
 
         var collection = this._database.GetCollection<MongoLockDocument>(this._collectionName);
 
@@ -173,10 +166,8 @@ public sealed partial class MongoDistributedLock : IInternalDistributedLock<Mong
         // Verify we actually got the lock
         if (result != null && result.LockId == lockId)
         {
-#if NET8_0_OR_GREATER
             activity?.SetTag("lock.acquired", true);
             activity?.SetTag("lock.fencing_token", result.FencingToken);
-#endif
             return new(collection,
                 this.Key,
                 lockId,
@@ -184,10 +175,7 @@ public sealed partial class MongoDistributedLock : IInternalDistributedLock<Mong
                 this._options.Expiry,
                 this._options.ExtensionCadence);
         }
-
-#if NET8_0_OR_GREATER
         activity?.SetTag("lock.acquired", false);
-#endif
         return null;
     }
 
@@ -234,7 +222,7 @@ public sealed partial class MongoDistributedLock : IInternalDistributedLock<Mong
             new BsonDocument
             {
                 // Only overwrite lock fields when the previous lock is expired/missing
-                { "lockId", new BsonDocument("$cond", new BsonArray { expiredOrMissing, lockId, "$lockId" }) },
+                { nameof(lockId), new BsonDocument("$cond", new BsonArray { expiredOrMissing, lockId, "$lockId" }) },
                 { "expiresAt", new BsonDocument("$cond", new BsonArray { expiredOrMissing, newExpiresAt, "$expiresAt" }) },
                 { "acquiredAt", new BsonDocument("$cond", new BsonArray { expiredOrMissing, "$$NOW", "$acquiredAt" }) },
                 { "fencingToken", new BsonDocument("$cond", new BsonArray { expiredOrMissing, newFencingToken, "$fencingToken" }) }
@@ -251,7 +239,7 @@ public sealed partial class MongoDistributedLock : IInternalDistributedLock<Mong
         var databaseName = collection.Database.DatabaseNamespace.DatabaseName;
         var key = databaseName + "/" + collection.CollectionNamespace.CollectionName;
 
-        var lazy = IndexInitializationTasks.GetOrAdd(key, _ => new Lazy<Task>(() => CreateIndexesAsync(collection)));
+        var lazy = IndexInitializationTasks.GetOrAdd(key, _ => new(() => CreateIndexesAsync(collection)));
         return lazy.Value;
     }
 
