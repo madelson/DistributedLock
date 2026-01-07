@@ -256,9 +256,8 @@ public class MongoDistributedLockTest
         Assert.That(doc.LockId, Is.Not.Null);
         Assert.That(doc.FencingToken, Is.GreaterThan(0));
             
-        // Allow for some clock skew/processing time
-        var now = DateTime.UtcNow; // Mongo assumes UTC usually, check implicit assumption
-        // BsonDateTime is usually UTC.
+        // Allow for some clock skew/processing time.
+        // Mongo and BsonDateTime usually assume UTC; check implicit assumption.
             
         // Depending on Mongo version and driver, dates are UTC.
         // The lock sets expiresAt = $$NOW + 10s.
