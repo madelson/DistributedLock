@@ -1,3 +1,2 @@
 #nullable enable
 Medallion.Threading.MongoDB.MongoDistributedLockHandle.FencingToken.get -> long
-Medallion.Threading.MongoDB.MongoDistributedSynchronizationOptionsBuilder.UseAdaptiveBackoff(bool enabled = true) -> Medallion.Threading.MongoDB.MongoDistributedSynchronizationOptionsBuilder!
