@@ -1,0 +1,22 @@
+#nullable enable
+Medallion.Threading.MongoDB.MongoDistributedLock
+Medallion.Threading.MongoDB.MongoDistributedLock.Acquire(System.TimeSpan? timeout = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> Medallion.Threading.MongoDB.MongoDistributedLockHandle!
+Medallion.Threading.MongoDB.MongoDistributedLock.AcquireAsync(System.TimeSpan? timeout = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<Medallion.Threading.MongoDB.MongoDistributedLockHandle!>
+Medallion.Threading.MongoDB.MongoDistributedLock.Key.get -> string!
+Medallion.Threading.MongoDB.MongoDistributedLock.Name.get -> string!
+Medallion.Threading.MongoDB.MongoDistributedLock.MongoDistributedLock(string! key, MongoDB.Driver.IMongoDatabase! database, System.Action<Medallion.Threading.MongoDB.MongoDistributedSynchronizationOptionsBuilder!>? options = null) -> void
+Medallion.Threading.MongoDB.MongoDistributedLock.MongoDistributedLock(string! key, MongoDB.Driver.IMongoDatabase! database, string! collectionName, System.Action<Medallion.Threading.MongoDB.MongoDistributedSynchronizationOptionsBuilder!>? options = null) -> void
+Medallion.Threading.MongoDB.MongoDistributedLock.TryAcquire(System.TimeSpan timeout = default(System.TimeSpan), System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> Medallion.Threading.MongoDB.MongoDistributedLockHandle?
+Medallion.Threading.MongoDB.MongoDistributedLock.TryAcquireAsync(System.TimeSpan timeout = default(System.TimeSpan), System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<Medallion.Threading.MongoDB.MongoDistributedLockHandle?>
+Medallion.Threading.MongoDB.MongoDistributedLockHandle
+Medallion.Threading.MongoDB.MongoDistributedLockHandle.Dispose() -> void
+Medallion.Threading.MongoDB.MongoDistributedLockHandle.DisposeAsync() -> System.Threading.Tasks.ValueTask
+Medallion.Threading.MongoDB.MongoDistributedLockHandle.HandleLostToken.get -> System.Threading.CancellationToken
+Medallion.Threading.MongoDB.MongoDistributedSynchronizationOptionsBuilder
+Medallion.Threading.MongoDB.MongoDistributedSynchronizationOptionsBuilder.BusyWaitSleepTime(System.TimeSpan min, System.TimeSpan max) -> Medallion.Threading.MongoDB.MongoDistributedSynchronizationOptionsBuilder!
+Medallion.Threading.MongoDB.MongoDistributedSynchronizationOptionsBuilder.Expiry(System.TimeSpan expiry) -> Medallion.Threading.MongoDB.MongoDistributedSynchronizationOptionsBuilder!
+Medallion.Threading.MongoDB.MongoDistributedSynchronizationOptionsBuilder.ExtensionCadence(System.TimeSpan extensionCadence) -> Medallion.Threading.MongoDB.MongoDistributedSynchronizationOptionsBuilder!
+Medallion.Threading.MongoDB.MongoDistributedSynchronizationProvider
+Medallion.Threading.MongoDB.MongoDistributedSynchronizationProvider.CreateLock(string! name) -> Medallion.Threading.MongoDB.MongoDistributedLock!
+Medallion.Threading.MongoDB.MongoDistributedSynchronizationProvider.MongoDistributedSynchronizationProvider(MongoDB.Driver.IMongoDatabase! database, System.Action<Medallion.Threading.MongoDB.MongoDistributedSynchronizationOptionsBuilder!>? options = null) -> void
+Medallion.Threading.MongoDB.MongoDistributedSynchronizationProvider.MongoDistributedSynchronizationProvider(MongoDB.Driver.IMongoDatabase! database, string! collectionName, System.Action<Medallion.Threading.MongoDB.MongoDistributedSynchronizationOptionsBuilder!>? options = null) -> void

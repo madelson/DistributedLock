@@ -11,6 +11,11 @@ namespace Medallion.Threading.Tests.FileSystem
     [Category("CI")] public class Core_File_FileSynchronizationStrategyTest : DistributedLockCoreTestCases<TestingFileDistributedLockProvider, TestingLockFileSynchronizationStrategy> { }
 }
 
+namespace Medallion.Threading.Tests.MongoDB
+{
+    public class Core_Mongo_MongoDbSynchronizationStrategyTest : DistributedLockCoreTestCases<TestingMongoDistributedLockProvider, TestingMongoDbSynchronizationStrategy> { }
+}
+
 namespace Medallion.Threading.Tests.MySql
 {
     public class ConnectionStringStrategy_MySql_ConnectionMultiplexingSynchronizationStrategy_MariaDbDb_MariaDbDb_ConnectionMultiplexingSynchronizationStrategy_MariaDbDb_MariaDbDbTest : ConnectionStringStrategyTestCases<TestingMySqlDistributedLockProvider<TestingConnectionMultiplexingSynchronizationStrategy<TestingMariaDbDb>, TestingMariaDbDb>, TestingConnectionMultiplexingSynchronizationStrategy<TestingMariaDbDb>, TestingMariaDbDb> { }

@@ -1,0 +1,2 @@
+#nullable enable
+Medallion.Threading.MongoDB.MongoDistributedLockHandle.FencingToken.get -> long

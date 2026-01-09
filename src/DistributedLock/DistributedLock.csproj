@@ -54,10 +54,11 @@
     <ProjectReference Include="..\DistributedLock.ZooKeeper\DistributedLock.ZooKeeper.csproj" />
     <ProjectReference Include="..\DistributedLock.MySql\DistributedLock.MySql.csproj" />
     <ProjectReference Include="..\DistributedLock.Oracle\DistributedLock.Oracle.csproj" Condition="'$(TargetFramework)' != 'netstandard2.0' and '$(TargetFramework)' != 'net462'" />
+    <ProjectReference Include="..\DistributedLock.MongoDB\DistributedLock.MongoDB.csproj" Condition="'$(TargetFramework)' != 'netstandard2.0' and '$(TargetFramework)' != 'net462'" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All"/>
+    <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All" />
     <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" PrivateAssets="All" />
   </ItemGroup>
 </Project>
