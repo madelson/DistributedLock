@@ -10,6 +10,20 @@ namespace Medallion.Threading.MongoDB;
 internal sealed class MongoLockDocument
 {
     /// <summary>
+    /// The lock name/key (MongoDB document ID)
+    /// </summary>
+    [BsonId]
+    [BsonRepresentation(BsonType.String)]
+    public string Id { get; set; } = null!;
+
+    /// <summary>
+    /// Unique identifier for this lock acquisition
+    /// </summary>
+    [BsonElement("lockId")]
+    [BsonRepresentation(BsonType.String)]
+    public string LockId { get; set; } = null!;
+
+    /// <summary>
     /// When the lock was acquired (UTC)
     /// </summary>
     [BsonElement("acquiredAt")]
@@ -28,18 +42,4 @@ internal sealed class MongoLockDocument
     /// </summary>
     [BsonElement("fencingToken")]
     public long FencingToken { get; set; }
-
-    /// <summary>
-    /// The lock name/key (MongoDB document ID)
-    /// </summary>
-    [BsonId]
-    [BsonRepresentation(BsonType.String)]
-    public string Id { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Unique identifier for this lock acquisition
-    /// </summary>
-    [BsonElement("lockId")]
-    [BsonRepresentation(BsonType.String)]
-    public string LockId { get; set; } = string.Empty;
 }

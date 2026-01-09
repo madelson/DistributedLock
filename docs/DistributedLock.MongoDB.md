@@ -7,7 +7,7 @@ The DistributedLock.MongoDB package offers distributed locks based on [MongoDB](
 ```C#
 var client = new MongoClient("mongodb://localhost:27017");
 var database = client.GetDatabase("myDatabase");
-var @lock = new MongoDistributedLock("MyLockName", database);
+var @lock = new MongoDistributedLock("myLockName", database);
 await using (await @lock.AcquireAsync())
 {
     // I have the lock
@@ -28,7 +28,7 @@ MongoDB-based locks use MongoDB's document upsert and update operations to imple
 3. **Release**: Deletes the lock document when disposed.
 4. **Expiry**: Locks automatically expire if not extended, allowing recovery from crashed processes.
 
-MongoDB locks can be constructed with an `IMongoDatabase` and an optional collection name. If no collection name is specified, locks will be stored in a collection named `"DistributedLocks"`. The collection will automatically have an index created on the `expiresAt` field for efficient queries.
+MongoDB locks can be constructed with an `IMongoDatabase` and an optional collection name. If no collection name is specified, locks will be stored in a collection named `"distributed.locks"`. The collection will automatically have an index created on the `expiresAt` field for efficient queries.
 
 When using the provider pattern, you can create multiple locks with different names from the same provider:
 

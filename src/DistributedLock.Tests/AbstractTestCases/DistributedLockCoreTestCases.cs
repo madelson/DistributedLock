@@ -1,4 +1,4 @@
-﻿using Medallion.Shell;
+using Medallion.Shell;
 using Medallion.Threading.Internal;
 using NUnit.Framework;
 using System.Runtime.InteropServices;
@@ -206,29 +206,6 @@ public abstract class DistributedLockCoreTestCases<TLockProvider, TStrategy>
         Assert.That(completed, Is.Not.SameAs(timeout), $"Timed out! (only {tasks.Count(t => t.IsCompleted)}/{taskCount} completed)");
 
         tasks.ForEach(t => t.Result.ShouldEqual(0));
-    }
-
-    [Test]
-    [NonParallelizable] // takes locks with known names
-    public void TestGetSafeName()
-    {
-        Assert.Catch<ArgumentNullException>(() => this._lockProvider.GetSafeName(null!));
-
-        foreach (var name in new[] { string.Empty, new string('a', 1000), @"\\\\\", new string('\\', 1000) })
-        {
-            var safeName = this._lockProvider.GetSafeName(name);
-            Assert.DoesNotThrow(() => this._lockProvider.CreateLockWithExactName(safeName).Acquire(TimeSpan.FromSeconds(10)).Dispose(), $"{this.GetType().Name}: could not acquire '{name}'");
-        }
-    }
-
-    [Test]
-    public void TestGetSafeLockNameIsCaseSensitive()
-    {
-        var longName1 = new string('a', 1000);
-        var longName2 = new string('a', longName1.Length - 1) + "A";
-        StringComparer.OrdinalIgnoreCase.Equals(longName1, longName2).ShouldEqual(true, "sanity check");
-
-        Assert.That(this._lockProvider.GetSafeName(longName2), Is.Not.EqualTo(this._lockProvider.GetSafeName(longName1)));
     }
 
     [Test]

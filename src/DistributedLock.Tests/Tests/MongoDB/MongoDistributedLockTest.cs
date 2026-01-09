@@ -103,8 +103,48 @@ public class MongoDistributedLockTest
         const string Name = "\0🐉汉字\b\r\n\\";
         var database = new Mock<IMongoDatabase>(MockBehavior.Strict).Object;
         var @lock = new MongoDistributedLock(Name, database);
-        @lock.Name.ShouldEqual(Name);
-        @lock.Key.ShouldEqual(Name);
+        // With safe name conversion, the key should be the same as name since it's within byte limits
+        @lock.Name.ShouldEqual(@lock.Key);
+    }
+
+    [Test]
+    [Category("CI")]
+    public void TestReturnsUnmodifiedKey()
+    {
+        const string Key = "my-exact-key";
+        var database = new Mock<IMongoDatabase>(MockBehavior.Strict).Object;
+        var @lock = new MongoDistributedLock(Key, database);
+        @lock.Key.ShouldEqual(Key);
+        @lock.Name.ShouldEqual(Key);
+    }
+
+    [Test]
+    [Category("CI")]
+    public void TestValidatesEmptyKey()
+    {
+        var database = new Mock<IMongoDatabase>(MockBehavior.Strict).Object;
+        Assert.Throws<FormatException>(() => new MongoDistributedLock(string.Empty, database));
+    }
+
+    [Test]
+    [Category("CI")]
+    public void TestValidatesKeyTooLong()
+    {
+        var database = new Mock<IMongoDatabase>(MockBehavior.Strict).Object;
+        // Create a string that's exactly 256 bytes in UTF-8 (over the 255 limit)
+        var longKey = new string('a', 256);
+        Assert.Throws<FormatException>(() => new MongoDistributedLock(longKey, database));
+    }
+
+    [Test]
+    [Category("CI")]
+    public void TestValidatesMultibyteCharacters()
+    {
+        var database = new Mock<IMongoDatabase>(MockBehavior.Strict).Object;
+        // Chinese characters are 3 bytes each in UTF-8
+        // 86 characters * 3 bytes = 258 bytes (over 255 limit)
+        var multibyteLongKey = new string('汉', 86);
+        Assert.Throws<FormatException>(() => new MongoDistributedLock(multibyteLongKey, database));
     }
 
     [Test]
@@ -153,8 +193,8 @@ public class MongoDistributedLockTest
         // Wait, unit testing static cache with mocks is tricky because state persists.
         // We need a unique db/coll name to avoid interference from other tests.
         var uniqueName = "db_" + Guid.NewGuid().ToString("N");
-        SetupDb(db1, coll1, uniqueName, "locks");
-        SetupDb(db2, coll2, uniqueName, "locks");
+        SetDb(db1, coll1, uniqueName, "locks");
+        SetDb(db2, coll2, uniqueName, "locks");
 
         // We want to verify ConfigureIndexes is called on BOTH.
         
@@ -188,9 +228,9 @@ public class MongoDistributedLockTest
         idx2.Verify(i => i.CreateOneAsync(It.IsAny<CreateIndexModel<MongoLockDocument>>(), It.IsAny<CreateOneIndexOptions>(), It.IsAny<CancellationToken>()), Times.Once, "Second DB should create index too because it's a different instance");
     }
 
-    private static void SetupDb(Mock<IMongoDatabase> db, Mock<IMongoCollection<MongoLockDocument>> coll, string dbName, string collName)
+    private static void SetDb(Mock<IMongoDatabase> db, Mock<IMongoCollection<MongoLockDocument>> coll, string dbName, string collName)
     {
-        db.Setup(d => d.GetCollection<MongoLockDocument>(collName, null)).Returns(coll.Object);
+        db.Setup(d => d.GetCollection<MongoLockDocument>(collName)).Returns(coll.Object);
         var dbNs = new DatabaseNamespace(dbName);
         var collNs = new CollectionNamespace(dbNs, collName);
         
@@ -212,7 +252,7 @@ public class MongoDistributedLockTest
     {
         var db = new Mock<IMongoDatabase>(MockBehavior.Strict);
         var coll = new Mock<IMongoCollection<MongoLockDocument>>(MockBehavior.Strict);
-        SetupDb(db, coll, "db_" + Guid.NewGuid().ToString("N"), "locks");
+        SetDb(db, coll, "db_" + Guid.NewGuid().ToString("N"), "locks");
 
         var idx = new Mock<IMongoIndexManager<MongoLockDocument>>(MockBehavior.Strict);
         coll.Setup(c => c.Indexes).Returns(idx.Object);

@@ -16,7 +16,7 @@ public sealed class MongoDistributedSynchronizationProvider : IDistributedLockPr
     /// and uses the provided <paramref name="options" />. Locks will be stored in a collection named "distributed.locks" by default.
     /// </summary>
     public MongoDistributedSynchronizationProvider(IMongoDatabase database, Action<MongoDistributedSynchronizationOptionsBuilder>? options = null)
-        : this(database, "distributed.locks", options) { }
+        : this(database, MongoDistributedLock.DefaultCollectionName, options) { }
 
     /// <summary>
     /// Constructs a <see cref="MongoDistributedSynchronizationProvider" /> that connects to the provided <paramref name="database" />,

@@ -9,17 +9,13 @@ namespace Medallion.Threading.MongoDB;
 /// </summary>
 public sealed class MongoDistributedLockHandle : IDistributedSynchronizationHandle
 {
-    private readonly CancellationTokenSource _cts;
-    private readonly IMongoCollection<MongoLockDocument> _collection;
-    private readonly Task _extensionTask;
-    private readonly string _key;
-    private readonly string _lockId;
-    private int _disposed;
+    private InnerHandle? _innerHandle;
+    private IDisposable? _finalizerRegistration;
 
     /// <summary>
     /// Implements <see cref="IDistributedSynchronizationHandle.HandleLostToken" />
     /// </summary>
-    public CancellationToken HandleLostToken => this._cts.Token;
+    public CancellationToken HandleLostToken => (this._innerHandle ?? throw this.ObjectDisposed()).HandleLostToken;
 
     /// <summary>
     /// Gets the fencing token for this lock acquisition. This is a monotonically increasing value
@@ -35,65 +31,69 @@ public sealed class MongoDistributedLockHandle : IDistributedSynchronizationHand
         TimeoutValue expiry,
         TimeoutValue extensionCadence)
     {
-        this._collection = collection;
-        this._key = key;
-        this._lockId = lockId;
         this.FencingToken = fencingToken;
-        this._cts = new();
-
-        // Start background task to extend the lock
-        this._extensionTask = this.ExtendLockAsync(expiry, extensionCadence, this._cts.Token);
+        var innerHandle = new InnerHandle(collection, key, lockId, expiry, extensionCadence);
+        this._innerHandle = innerHandle;
+        // Register for managed finalization so the lock gets released if the handle is GC'd without being disposed
+        this._finalizerRegistration = ManagedFinalizerQueue.Instance.Register(this, innerHandle);
     }
 
     /// <summary>
     /// Releases the lock
     /// </summary>
-    public void Dispose()
-    {
-        if (Interlocked.Exchange(ref this._disposed, 1) is not 0)
-        {
-            return;
-        }
-
-        this._cts.Cancel();
-        try
-        {
-            // Do not use HandleLostToken here: it is backed by _cts and has been canceled above.
-            this._extensionTask.GetAwaiter().GetResult();
-        }
-        catch
-        {
-            // Ignore exceptions during cleanup
-        }
-        finally
-        {
-            this._cts.Dispose();
-            try
-            {
-                this.ReleaseLockAsync(CancellationToken.None).AsTask().GetAwaiter().GetResult();
-            }
-            catch
-            {
-                // Ignore errors during release
-            }
-        }
-    }
+    public void Dispose() => this.DisposeSyncViaAsync();
 
     /// <summary>
     /// Releases the lock asynchronously
     /// </summary>
-    public async ValueTask DisposeAsync()
+    public ValueTask DisposeAsync()
     {
-        if (Interlocked.Exchange(ref this._disposed, 1) is 0)
+        Interlocked.Exchange(ref this._finalizerRegistration, null)?.Dispose();
+        return Interlocked.Exchange(ref this._innerHandle, null)?.DisposeAsync() ?? default;
+    }
+
+    /// <summary>
+    /// Inner handle that performs actual lock management and release.
+    /// Separated from the outer handle so it can be registered with ManagedFinalizerQueue.
+    /// </summary>
+    private sealed class InnerHandle : IAsyncDisposable
+    {
+        private readonly CancellationTokenSource _cts;
+        private readonly IMongoCollection<MongoLockDocument> _collection;
+        private readonly Task _extensionTask;
+        private readonly string _key;
+        private readonly string _lockId;
+        private int _disposed;
+
+        public CancellationToken HandleLostToken => this._cts.Token;
+
+        public InnerHandle(
+            IMongoCollection<MongoLockDocument> collection,
+            string key,
+            string lockId,
+            TimeoutValue expiry,
+            TimeoutValue extensionCadence)
         {
-#if NET8_0_OR_GREATER
-            await this._cts.CancelAsync().ConfigureAwait(false);
-#else
+            this._collection = collection;
+            this._key = key;
+            this._lockId = lockId;
+            this._cts = new();
+
+            // Start background task to extend the lock
+            this._extensionTask = this.ExtendLockAsync(expiry, extensionCadence, this._cts.Token);
+        }
+
+        public async ValueTask DisposeAsync()
+        {
+            if (Interlocked.Exchange(ref this._disposed, 1) != 0)
+            {
+                return;
+            }
+
             this._cts.Cancel();
-#endif
             try
             {
-                await this._extensionTask.ConfigureAwait(false);
+                await this._extensionTask.AwaitSyncOverAsync().ConfigureAwait(false);
             }
             catch
             {
@@ -102,107 +102,102 @@ public sealed class MongoDistributedLockHandle : IDistributedSynchronizationHand
             finally
             {
                 this._cts.Dispose();
-                await this.ReleaseLockAsync(CancellationToken.None).ConfigureAwait(false);
+                await this.ReleaseLockAsync().ConfigureAwait(false);
             }
         }
-    }
 
-    private async Task ExtendLockAsync(TimeoutValue expiry, TimeoutValue extensionCadence, CancellationToken cancellationToken)
-    {
-        const int MaxConsecutiveFailures = 3;
-        var consecutiveFailures = 0;
-
-        try
+        private async Task ExtendLockAsync(TimeoutValue expiry, TimeoutValue extensionCadence, CancellationToken cancellationToken)
         {
-            while (!cancellationToken.IsCancellationRequested)
+            const int MaxConsecutiveFailures = 3;
+            var consecutiveFailures = 0;
+
+            try
             {
-                await Task.Delay(extensionCadence.TimeSpan, cancellationToken).ConfigureAwait(false);
-                var filter = Builders<MongoLockDocument>.Filter.Eq(d => d.Id, this._key) & Builders<MongoLockDocument>.Filter.Eq(d => d.LockId, this._lockId);
-
-                // Use server time ($$NOW) for expiry to avoid client clock skew.
-                var newExpiresAt = new BsonDocument(
-                    "$dateAdd",
-                    new BsonDocument
-                    {
-                        { "startDate", "$$NOW" },
-                        { "unit", "millisecond" },
-                        { "amount", expiry.InMilliseconds }
-                    }
-                );
-                var update = new PipelineUpdateDefinition<MongoLockDocument>(
-                    new[] { new BsonDocument("$set", new BsonDocument("expiresAt", newExpiresAt)) }
-                );
-
-                try
+                while (!cancellationToken.IsCancellationRequested)
                 {
-                    var result = await this._collection.UpdateOneAsync(filter, update, cancellationToken: cancellationToken).ConfigureAwait(false);
+                    await Task.Delay(extensionCadence.TimeSpan, cancellationToken).ConfigureAwait(false);
+                    var filter = Builders<MongoLockDocument>.Filter.Eq(d => d.Id, this._key) & Builders<MongoLockDocument>.Filter.Eq(d => d.LockId, this._lockId);
 
-                    // If we successfully extended, reset failure count
-                    if (result.MatchedCount is not 0)
-                    {
-                        consecutiveFailures = 0;
-                        continue;
-                    }
+                    // Use server time ($$NOW) for expiry to avoid client clock skew.
+                    var newExpiresAt = new BsonDocument(
+                        "$dateAdd",
+                        new BsonDocument
+                        {
+                            { "startDate", "$$NOW" },
+                            { "unit", "millisecond" },
+                            { "amount", expiry.InMilliseconds }
+                        }
+                    );
+                    var update = new PipelineUpdateDefinition<MongoLockDocument>(
+                        new[] { new BsonDocument("$set", new BsonDocument("expiresAt", newExpiresAt)) }
+                    );
 
-                    // Lock was truly lost (document doesn't exist or lockId changed)
-                    await this.SignalLockLostAsync().ConfigureAwait(false);
-                    break;
-                }
-                catch (OperationCanceledException)
-                {
-                    throw; // Propagate cancellation
-                }
-                catch (MongoException) when (++consecutiveFailures < MaxConsecutiveFailures)
-                {
-                    // Transient network error, retry after a short delay
                     try
                     {
-                        await Task.Delay(TimeSpan.FromMilliseconds(100 * consecutiveFailures), cancellationToken).ConfigureAwait(false);
+                        var result = await this._collection.UpdateOneAsync(filter, update, cancellationToken: cancellationToken).ConfigureAwait(false);
+
+                        // If we successfully extended, reset failure count
+                        if (result.MatchedCount != 0)
+                        {
+                            consecutiveFailures = 0;
+                            continue;
+                        }
+
+                        // Lock was truly lost (document doesn't exist or lockId changed)
+                        await this.SignalLockLostAsync().ConfigureAwait(false);
+                        break;
                     }
                     catch (OperationCanceledException)
                     {
-                        throw;
+                        throw; // Propagate cancellation
+                    }
+                    catch (MongoException) when (++consecutiveFailures < MaxConsecutiveFailures)
+                    {
+                        // Transient network error, retry after a short delay
+                        await Task.Delay(TimeSpan.FromMilliseconds(100 * consecutiveFailures), cancellationToken).ConfigureAwait(false);
+                    }
+                    catch (MongoException)
+                    {
+                        // Too many consecutive failures, assume lock is lost
+                        await this.SignalLockLostAsync().ConfigureAwait(false);
+                        break;
                     }
                 }
-                catch (MongoException)
-                {
-                    // Too many consecutive failures, assume lock is lost
-                    await this.SignalLockLostAsync().ConfigureAwait(false);
-                    break;
-                }
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                // Expected when disposing
+            }
+            catch
+            {
+                // Lock extension failed, signal that the lock is lost
+                await this.SignalLockLostAsync().ConfigureAwait(false);
             }
         }
-        catch (OperationCanceledException)
-        {
-            // Expected when disposing
-        }
-        catch
-        {
-            // Lock extension failed, signal that the lock is lost
-            await this.SignalLockLostAsync().ConfigureAwait(false);
-        }
-    }
 
-    private async Task SignalLockLostAsync()
-    {
+        private async Task SignalLockLostAsync()
+        {
 #if NET8_0_OR_GREATER
-        await this._cts.CancelAsync().ConfigureAwait(false);
+            await this._cts.CancelAsync().ConfigureAwait(false);
 #else
-        this._cts.Cancel();
-        await Task.CompletedTask.ConfigureAwait(false);
+            this._cts.Cancel();
+            await Task.CompletedTask.ConfigureAwait(false);
 #endif
-    }
+        }
 
-    private async ValueTask ReleaseLockAsync(CancellationToken cancellationToken)
-    {
-        try
+        private async ValueTask ReleaseLockAsync()
         {
             var filter = Builders<MongoLockDocument>.Filter.Eq(d => d.Id, this._key) & Builders<MongoLockDocument>.Filter.Eq(d => d.LockId, this._lockId);
-            await this._collection.DeleteOneAsync(filter, cancellationToken).ConfigureAwait(false);
-        }
-        catch
-        {
-            // Ignore errors during release
+            if (SyncViaAsync.IsSynchronous)
+            {
+                // ReSharper disable once MethodHasAsyncOverload
+                this._collection.DeleteOne(filter);
+            }
+            else
+            {
+                // ReSharper disable once MethodSupportsCancellation
+                await this._collection.DeleteOneAsync(filter).ConfigureAwait(false);
+            }
         }
     }
 }

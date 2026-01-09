@@ -3,6 +3,7 @@ using MongoDB.Bson;
 using MongoDB.Driver;
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Text;
 
 namespace Medallion.Threading.MongoDB;
 
@@ -11,9 +12,14 @@ namespace Medallion.Threading.MongoDB;
 /// </summary>
 public sealed partial class MongoDistributedLock : IInternalDistributedLock<MongoDistributedLockHandle>
 {
-#if !NETSTANDARD2_1_OR_GREATER && !NET8_0_OR_GREATER
+    internal const string DefaultCollectionName = "distributed.locks";
+    /// <summary>
+    /// MongoDB _id field maximum length in bytes.
+    /// See https://www.mongodb.com/docs/manual/reference/limits/#mongodb-limit-Index-Key-Limit
+    /// </summary>
+    private const int MaxKeyLength = 255;
+
     private static readonly DateTime EpochUtc = new(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-#endif
 
     /// <summary>
     /// ActivitySource for distributed tracing and diagnostics
@@ -42,7 +48,7 @@ public sealed partial class MongoDistributedLock : IInternalDistributedLock<Mong
     /// The locks will be stored in a collection named "distributed.locks" by default.
     /// </summary>
     public MongoDistributedLock(string key, IMongoDatabase database, Action<MongoDistributedSynchronizationOptionsBuilder>? options = null)
-        : this(key, database, "distributed.locks", options) { }
+        : this(key, database, DefaultCollectionName, options) { }
 
     /// <summary>
     /// Constructs a lock named <paramref name="key" /> using the provided <paramref name="database" />, <paramref name="collectionName" />, and
@@ -52,86 +58,21 @@ public sealed partial class MongoDistributedLock : IInternalDistributedLock<Mong
     {
         this._database = database ?? throw new ArgumentNullException(nameof(database));
         this._collectionName = collectionName ?? throw new ArgumentNullException(nameof(collectionName));
-        this.Key = key ?? throw new ArgumentNullException(nameof(key));
+
+        if (key == null) { throw new ArgumentNullException(nameof(key)); }
+        ValidateKey(key);
+        this.Key = key;
         this._options = MongoDistributedSynchronizationOptionsBuilder.GetOptions(options);
     }
 
     ValueTask<MongoDistributedLockHandle?> IInternalDistributedLock<MongoDistributedLockHandle>.InternalTryAcquireAsync(TimeoutValue timeout, CancellationToken cancellationToken)
     {
-        if (this._options.UseAdaptiveBackoff)
-        {
-            return this.AdaptiveBusyWaitAsync(timeout, cancellationToken);
-        }
-
         return BusyWaitHelper.WaitAsync(this,
             (@this, ct) => @this.TryAcquireAsync(ct),
             timeout,
             this._options.MinBusyWaitSleepTime,
             this._options.MaxBusyWaitSleepTime,
             cancellationToken);
-    }
-
-    private async ValueTask<MongoDistributedLockHandle?> AdaptiveBusyWaitAsync(TimeoutValue timeout, CancellationToken cancellationToken)
-    {
-        // Try immediately first
-        var result = await this.TryAcquireAsync(cancellationToken).ConfigureAwait(false);
-        if (result != null || timeout.IsZero)
-        {
-            return result;
-        }
-
-        using var timeoutCts = timeout.IsInfinite ? null : new CancellationTokenSource(timeout.TimeSpan);
-        using var linkedCts = timeoutCts != null
-            ? CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutCts.Token)
-            : null;
-        var effectiveToken = linkedCts?.Token ?? cancellationToken;
-
-        var minMs = this._options.MinBusyWaitSleepTime.InMilliseconds;
-        var maxMs = this._options.MaxBusyWaitSleepTime.InMilliseconds;
-        var consecutiveFailures = 0;
-        const double BackoffMultiplier = 1.5;
-#if NET8_0_OR_GREATER
-        var random = Random.Shared;
-#else
-        var random = new Random(Guid.NewGuid().GetHashCode());
-#endif
-
-        while (!effectiveToken.IsCancellationRequested)
-        {
-            // Exponential backoff with jitter
-            var backoffMs = minMs * Math.Pow(BackoffMultiplier, Math.Min(consecutiveFailures, 10));
-            var sleepMs = Math.Min(backoffMs, maxMs);
-            // Add jitter (±20%) to prevent thundering herd
-            var jitter = (random.NextDouble() - 0.5) * 0.4 * sleepMs;
-            var finalSleepMs = Math.Max(minMs, sleepMs + jitter);
-
-            try
-            {
-                await SyncViaAsync.Delay(TimeSpan.FromMilliseconds(finalSleepMs), effectiveToken).ConfigureAwait(false);
-            }
-            catch (OperationCanceledException) when (timeoutCts?.IsCancellationRequested == true && !cancellationToken.IsCancellationRequested)
-            {
-                // Timeout expired, try one last time
-                return await this.TryAcquireAsync(cancellationToken).ConfigureAwait(false);
-            }
-
-            try
-            {
-                result = await this.TryAcquireAsync(effectiveToken).ConfigureAwait(false);
-                if (result != null)
-                {
-                    return result;
-                }
-                consecutiveFailures++;
-            }
-            catch (OperationCanceledException) when (timeoutCts?.IsCancellationRequested == true && !cancellationToken.IsCancellationRequested)
-            {
-                return null;
-            }
-        }
-
-        cancellationToken.ThrowIfCancellationRequested();
-        return null;
     }
 
     private async ValueTask<MongoDistributedLockHandle?> TryAcquireAsync(CancellationToken cancellationToken)
@@ -171,7 +112,7 @@ public sealed partial class MongoDistributedLock : IInternalDistributedLock<Mong
         }
 
         // Verify we actually got the lock
-        if (result != null && result.LockId == lockId)
+        if (result is not null && result.LockId == lockId)
         {
             activity?.SetTag("lock.acquired", true);
             activity?.SetTag("lock.fencing_token", result.FencingToken);
@@ -193,13 +134,7 @@ public sealed partial class MongoDistributedLock : IInternalDistributedLock<Mong
             "$lte",
             new BsonArray
             {
-                new BsonDocument("$ifNull", new BsonArray { "$expiresAt", new BsonDateTime(
-#if NETSTANDARD2_1_OR_GREATER || NET8_0_OR_GREATER
-                    DateTime.UnixEpoch
-#else
-                    EpochUtc
-#endif
-                ) }),
+                new BsonDocument("$ifNull", new BsonArray { "$expiresAt", new BsonDateTime(EpochUtc) }),
                 "$$NOW"
             }
         );
@@ -239,38 +174,28 @@ public sealed partial class MongoDistributedLock : IInternalDistributedLock<Mong
         return new PipelineUpdateDefinition<MongoLockDocument>(new[] { setStage });
     }
 
-    private static Task EnsureIndexesCreatedAsync(IMongoCollection<MongoLockDocument> collection)
+    private static async Task EnsureIndexesCreatedAsync(IMongoCollection<MongoLockDocument> collection)
     {
         // Best-effort TTL index to clean up expired rows over time.
         // Note: TTL monitors run on a schedule; correctness MUST NOT depend on this.
         var databaseName = collection.Database.DatabaseNamespace.DatabaseName;
         // include the hash code of the settings to differentiate between different clusters/clients
         // that happen to use the same database/collection names.
-        // While GetHashCode() isn't perfect, it should be sufficient to distinguish between different clients/settings 
+        // While GetHashCode() isn't perfect, it should be sufficient to distinguish between different clients/settings
         // in valid use-cases (e.g. diff connection strings).
         var clientSettingsHash = collection.Database.Client.Settings.GetHashCode();
         var key = clientSettingsHash + "|" + databaseName + "/" + collection.CollectionNamespace.CollectionName;
 
         var lazy = IndexInitializationTasks.GetOrAdd(key, _ => new(() => CreateIndexesAsync(collection)));
-        
-        // If we are executing synchronously, we must ensure the task is complete.
-        // This covers two cases:
-        // 1. We just created the task. CreateIndexesAsync will run synchronously and return a completed task.
-        // 2. The task was created by a previous async caller and is still running. We must block until it finishes.
-        if (SyncViaAsync.IsSynchronous && !lazy.Value.IsCompleted)
-        {
-            lazy.Value.GetAwaiter().GetResult();
-        }
 
         var task = lazy.Value;
-        if (task.IsCompleted && !task.Result)
+        var success = await task.AwaitSyncOverAsync().ConfigureAwait(false);
+        if (!success)
         {
             // If the task failed (returned false), we remove it so we can try again next time.
             // Note: worst case we remove a *new* valid task if a race happens, which is fine (just extra work).
-            ((ICollection<KeyValuePair<string, Lazy<Task<bool>>>>)IndexInitializationTasks).Remove(new KeyValuePair<string, Lazy<Task<bool>>>(key, lazy));
+            IndexInitializationTasks.As<ICollection<KeyValuePair<string, Lazy<Task<bool>>>>>().Remove(new KeyValuePair<string, Lazy<Task<bool>>>(key, lazy));
         }
-        
-        return task;
     }
 
     private static async Task<bool> CreateIndexesAsync(IMongoCollection<MongoLockDocument> collection)
@@ -288,8 +213,7 @@ public sealed partial class MongoDistributedLock : IInternalDistributedLock<Mong
             await collection.Indexes.CreateOneAsync(indexModel, cancellationToken: CancellationToken.None).ConfigureAwait(false);
             return true;
         }
-        catch (MongoCommandException ex) when (
-            ex.CodeName is "IndexOptionsConflict" or "IndexKeySpecsConflict" or "IndexAlreadyExists")
+        catch (MongoCommandException ex) when (ex.CodeName is "IndexOptionsConflict" or "IndexKeySpecsConflict" or "IndexAlreadyExists")
         {
             // Index already exists with same or different options - this is acceptable.
             // The existing index will still handle TTL cleanup.
@@ -300,6 +224,21 @@ public sealed partial class MongoDistributedLock : IInternalDistributedLock<Mong
             // Other MongoDB errors (network, auth, etc.) - swallow to avoid blocking lock acquisition.
             // The lock will still work correctly; TTL cleanup is a best-effort optimization.
             return false;
+        }
+    }
+
+    /// <summary>
+    /// Validates that a key is valid for use as an exact MongoDB key.
+    /// </summary>
+    private static void ValidateKey(string key)
+    {
+        if (key == null) { throw new ArgumentNullException(nameof(key)); }
+        if (key.Length == 0) { throw new FormatException($"{nameof(key)}: must not be empty"); }
+
+        var byteCount = Encoding.UTF8.GetByteCount(key);
+        if (byteCount > MaxKeyLength)
+        {
+            throw new FormatException($"{nameof(key)}: must be at most {MaxKeyLength} bytes when encoded as UTF-8 (was {byteCount} bytes)");
         }
     }
 }
