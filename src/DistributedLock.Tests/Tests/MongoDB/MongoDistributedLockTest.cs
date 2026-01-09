@@ -230,7 +230,7 @@ public class MongoDistributedLockTest
 
     private static void SetDb(Mock<IMongoDatabase> db, Mock<IMongoCollection<MongoLockDocument>> coll, string dbName, string collName)
     {
-        db.Setup(d => d.GetCollection<MongoLockDocument>(collName)).Returns(coll.Object);
+        db.Setup(d => d.GetCollection<MongoLockDocument>(collName, null)).Returns(coll.Object);
         var dbNs = new DatabaseNamespace(dbName);
         var collNs = new CollectionNamespace(dbNs, collName);
         
