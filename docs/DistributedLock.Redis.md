@@ -39,8 +39,8 @@ As of 1.0.1, Redis-based primitives support the use of `IDatabase.WithKeyPrefix(
 In addition to specifying the name/key and database(s), some additional tuning options are available.
 
 - `Expiry` determines how long the lock will be *initially* claimed for (because of auto-extension, locks can be held for longer). Defaults to 30s.
-- `ExtensionCadence` determines how frequently the hold on the lock will be renewed to the full `Expiry`. Defaults to 1/3 of `Expiry`.
 - `MinValidityTime` determines what fraction of `Expiry` still has to remain when the locking operation completes to consider it a success. This is mostly relevant when acquiring a lock across multiple databases (e. g. if we immediately succeed on database 1 and eventually succeed on database 2 after 30s have elapsed, then our hold on database 1 will have expired). Defaults to 90% of the `Expiry`.
+- `ExtensionCadence` determines how frequently the hold on the lock will be renewed to the full `Expiry`. Defaults to 1/3 of `MinValidityTime`.
 - `BusyWaitSleepTime` specifies a range of times that the implementation will sleep between attempts to acquire a lock that is currently held by someone else. A random number in the range will be chosen for each sleep. If you expect contention, lowering these values may increase the responsiveness (how quickly a lock detects that it can now be taken) but will increase the number of calls made to Redis. Raising the values will have the reverse effects.
 
 
