@@ -7,6 +7,8 @@ namespace Medallion.Threading;
 /// </summary>
 public static class DistributedReaderWriterLockProviderExtensions
 {
+    # region Single Lock Methods
+
     /// <summary>
     /// Equivalent to calling <see cref="IDistributedReaderWriterLockProvider.CreateReaderWriterLock(string)" /> and then
     /// <see cref="IDistributedReaderWriterLock.TryAcquireReadLock(TimeSpan, CancellationToken)" />.
@@ -62,4 +64,90 @@ public static class DistributedReaderWriterLockProviderExtensions
     /// </summary>
     public static ValueTask<IDistributedSynchronizationHandle> AcquireWriteLockAsync(this IDistributedReaderWriterLockProvider provider, string name, TimeSpan? timeout = null, CancellationToken cancellationToken = default) =>
         (provider ?? throw new ArgumentNullException(nameof(provider))).CreateReaderWriterLock(name).AcquireWriteLockAsync(timeout, cancellationToken);
+
+    # endregion
+
+    # region Composite Lock Methods
+
+    /// <summary>
+    /// Equivalent to calling <see cref="IDistributedReaderWriterLockProvider.CreateReaderWriterLock(string)" /> for each name in <paramref name="names" /> and then
+    /// <see cref="IDistributedReaderWriterLock.TryAcquireReadLock(TimeSpan, CancellationToken)" /> on each created instance, combining the results into a composite handle.
+    /// </summary>
+    public static IDistributedSynchronizationHandle? TryAcquireAllReadLocks(this IDistributedReaderWriterLockProvider provider, IReadOnlyList<string> names, TimeSpan timeout = default, CancellationToken cancellationToken = default) =>
+        CompositeDistributedSynchronizationHandle.TryAcquireAll(
+            provider,
+            static (p, n, t, c) => p.TryAcquireReadLock(n, t, c),
+            names, timeout, cancellationToken);
+
+    /// <summary>
+    /// Equivalent to calling <see cref="IDistributedReaderWriterLockProvider.CreateReaderWriterLock(string)" /> for each name in <paramref name="names" /> and then
+    /// <see cref="IDistributedReaderWriterLock.AcquireReadLock(TimeSpan?, CancellationToken)" /> on each created instance, combining the results into a composite handle.
+    /// </summary>
+    public static IDistributedSynchronizationHandle AcquireAllReadLocks(this IDistributedReaderWriterLockProvider provider, IReadOnlyList<string> names, TimeSpan? timeout = null, CancellationToken cancellationToken = default) =>
+        CompositeDistributedSynchronizationHandle.AcquireAll(
+            provider,
+            static (p, n, t, c) => p.AcquireReadLock(n, t, c),
+            names, timeout, cancellationToken);
+
+    /// <summary>
+    /// Equivalent to calling <see cref="IDistributedReaderWriterLockProvider.CreateReaderWriterLock(string)" /> for each name in <paramref name="names" /> and then
+    /// <see cref="IDistributedReaderWriterLock.TryAcquireReadLockAsync(TimeSpan, CancellationToken)" /> on each created instance, combining the results into a composite handle.
+    /// </summary>
+    public static ValueTask<IDistributedSynchronizationHandle?> TryAcquireAllReadLocksAsync(this IDistributedReaderWriterLockProvider provider, IReadOnlyList<string> names, TimeSpan timeout = default, CancellationToken cancellationToken = default) =>
+        CompositeDistributedSynchronizationHandle.TryAcquireAllAsync(
+            provider,
+            static (p, n, t, c) => p.TryAcquireReadLockAsync(n, t, c),
+            names, timeout, cancellationToken);
+
+    /// <summary>
+    /// Equivalent to calling <see cref="IDistributedReaderWriterLockProvider.CreateReaderWriterLock(string)" /> for each name in <paramref name="names" /> and then
+    /// <see cref="IDistributedReaderWriterLock.AcquireReadLockAsync(TimeSpan?, CancellationToken)" /> on each created instance, combining the results into a composite handle.
+    /// </summary>
+    public static ValueTask<IDistributedSynchronizationHandle> AcquireAllReadLocksAsync(this IDistributedReaderWriterLockProvider provider, IReadOnlyList<string> names, TimeSpan? timeout = null, CancellationToken cancellationToken = default) =>
+        CompositeDistributedSynchronizationHandle.AcquireAllAsync(
+            provider,
+            static (p, n, t, c) => p.AcquireReadLockAsync(n, t, c),
+            names, timeout, cancellationToken);
+
+    /// <summary>
+    /// Equivalent to calling <see cref="IDistributedReaderWriterLockProvider.CreateReaderWriterLock(string)" /> for each name in <paramref name="names" /> and then
+    /// <see cref="IDistributedReaderWriterLock.TryAcquireWriteLock(TimeSpan, CancellationToken)" /> on each created instance, combining the results into a composite handle.
+    /// </summary>
+    public static IDistributedSynchronizationHandle? TryAcquireAllWriteLocks(this IDistributedReaderWriterLockProvider provider, IReadOnlyList<string> names, TimeSpan timeout = default, CancellationToken cancellationToken = default) =>
+        CompositeDistributedSynchronizationHandle.TryAcquireAll(
+            provider,
+            static (p, n, t, c) => p.TryAcquireWriteLock(n, t, c),
+            names, timeout, cancellationToken);
+
+    /// <summary>
+    /// Equivalent to calling <see cref="IDistributedReaderWriterLockProvider.CreateReaderWriterLock(string)" /> for each name in <paramref name="names" /> and then
+    /// <see cref="IDistributedReaderWriterLock.AcquireWriteLock(TimeSpan?, CancellationToken)" /> on each created instance, combining the results into a composite handle.
+    /// </summary>
+    public static IDistributedSynchronizationHandle AcquireAllWriteLocks(this IDistributedReaderWriterLockProvider provider, IReadOnlyList<string> names, TimeSpan? timeout = null, CancellationToken cancellationToken = default) =>
+        CompositeDistributedSynchronizationHandle.AcquireAll(
+            provider,
+            static (p, n, t, c) => p.AcquireWriteLock(n, t, c),
+            names, timeout, cancellationToken);
+
+    /// <summary>
+    /// Equivalent to calling <see cref="IDistributedReaderWriterLockProvider.CreateReaderWriterLock(string)" /> for each name in <paramref name="names" /> and then
+    /// <see cref="IDistributedReaderWriterLock.TryAcquireWriteLockAsync(TimeSpan, CancellationToken)" /> on each created instance, combining the results into a composite handle.
+    /// </summary>
+    public static ValueTask<IDistributedSynchronizationHandle?> TryAcquireAllWriteLocksAsync(this IDistributedReaderWriterLockProvider provider, IReadOnlyList<string> names, TimeSpan timeout = default, CancellationToken cancellationToken = default) =>
+        CompositeDistributedSynchronizationHandle.TryAcquireAllAsync(
+            provider,
+            static (p, n, t, c) => p.TryAcquireWriteLockAsync(n, t, c),
+            names, timeout, cancellationToken);
+
+    /// <summary>
+    /// Equivalent to calling <see cref="IDistributedReaderWriterLockProvider.CreateReaderWriterLock(string)" /> for each name in <paramref name="names" /> and then
+    /// <see cref="IDistributedReaderWriterLock.AcquireWriteLockAsync(TimeSpan?, CancellationToken)" /> on each created instance, combining the results into a composite handle.
+    /// </summary>
+    public static ValueTask<IDistributedSynchronizationHandle> AcquireAllWriteLocksAsync(this IDistributedReaderWriterLockProvider provider, IReadOnlyList<string> names, TimeSpan? timeout = null, CancellationToken cancellationToken = default) =>
+        CompositeDistributedSynchronizationHandle.AcquireAllAsync(
+            provider,
+            static (p, n, t, c) => p.AcquireWriteLockAsync(n, t, c),
+            names, timeout, cancellationToken);
+
+    # endregion
 }
