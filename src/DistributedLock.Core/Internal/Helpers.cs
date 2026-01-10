@@ -21,11 +21,6 @@ static class Helpers
         where TDerived : TBase =>
         await task.ConfigureAwait(false);
 
-    public readonly struct TaskConversion
-    {
-        public TaskConversion<TTo> To<TTo>() => throw new InvalidOperationException();
-    }
-
     public readonly struct TaskConversion<TTo> { }
 
     internal static async ValueTask ConvertToVoid<TResult>(this ValueTask<TResult> task) => await task.ConfigureAwait(false);

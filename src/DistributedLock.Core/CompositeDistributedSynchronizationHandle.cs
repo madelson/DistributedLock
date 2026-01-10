@@ -4,82 +4,89 @@ namespace Medallion.Threading;
 
 internal sealed class CompositeDistributedSynchronizationHandle : IDistributedSynchronizationHandle
 {
-    private readonly IDistributedSynchronizationHandle[] _handles;
-    private readonly CancellationTokenSource? _linkedLostCts;
-    private bool _disposed;
+    private RefBox<(IReadOnlyList<IDistributedSynchronizationHandle> Handles, CancellationTokenSource? HandleLostSource)>? _box;
 
-    public CompositeDistributedSynchronizationHandle(IReadOnlyList<IDistributedSynchronizationHandle> handles)
+    private CompositeDistributedSynchronizationHandle(IReadOnlyList<IDistributedSynchronizationHandle> handles)
     {
-        ValidateHandles(handles);
-        this._handles = handles.ToArray();
-        this._linkedLostCts = this.CreateLinkedCancellationTokenSource();
+        this._box = RefBox.Create((handles, default(CancellationTokenSource)));
     }
 
-    public CancellationToken HandleLostToken => this._linkedLostCts?.Token ?? CancellationToken.None;
-
-    public void Dispose()
+    public CancellationToken HandleLostToken
     {
-        if (this._disposed)
+        get
         {
-            return;
-        }
+            var existingBox = Volatile.Read(ref this._box);
 
-        this._disposed = true;
-        var errors = this.DisposeHandles(h => h.Dispose());
-        this._linkedLostCts?.Dispose();
-        ThrowAggregateExceptionIfNeeded(errors, "disposing");
+            if (existingBox != null
+                && existingBox.Value.HandleLostSource is null
+                && CreateLinkedCancellationTokenSource(existingBox.Value.Handles) is { } handleLostSource)
+            {
+                var newContents = existingBox.Value;
+                var newBox = RefBox.Create(newContents);
+                var newExistingBox = Interlocked.CompareExchange(ref this._box, newBox, comparand: existingBox);
+                if (newExistingBox != existingBox)
+                {
+                    handleLostSource.Dispose();
+                    existingBox = newExistingBox;
+                }
+            }
+
+            return existingBox is null ? throw this.ObjectDisposed() : existingBox.Value.HandleLostSource?.Token ?? CancellationToken.None;
+        }
     }
+
+    public void Dispose() => this.DisposeSyncViaAsync();
 
     public async ValueTask DisposeAsync()
     {
-        if (this._disposed)
+        if (Interlocked.Exchange(ref this._box, null) is { } box)
         {
-            return;
+            try { await DisposeHandlesAsync(box.Value.Handles).ConfigureAwait(false); }
+            finally { box.Value.HandleLostSource?.Dispose(); }
         }
-
-        this._disposed = true;
-        var errors = await this.DisposeHandlesAsync(h => h.DisposeAsync()).ConfigureAwait(false);
-        this._linkedLostCts?.Dispose();
-        ThrowAggregateExceptionIfNeeded(errors, "asynchronously disposing");
     }
 
-    public static async ValueTask<IDistributedSynchronizationHandle?> TryAcquireAllAsync<TProvider>(
-        TProvider provider,
-        Func<TProvider, string, TimeSpan, CancellationToken, ValueTask<IDistributedSynchronizationHandle?>> acquireFunc,
-        IReadOnlyList<string> names,
+    public static IReadOnlyList<TPrimitive> FromNames<TPrimitive, TState>(IReadOnlyList<string> names, TState state, Func<TState, string, TPrimitive> create)
+    {
+        if (names is null) { throw new ArgumentNullException(nameof(names)); }
+        if (names.Count == 0) { throw new ArgumentException("At least one lock name is required.", nameof(names)); }
+        if (names.Contains(null)) { throw new ArgumentException("Must not contain null", nameof(names)); }
+
+        return names.Select(n => create(state, n)).ToArray();
+    }
+
+    public static async ValueTask<AcquireResult> TryAcquireAllAsync<TPrimitive>(
+        IReadOnlyList<TPrimitive> primitives,
+        Func<TPrimitive, TimeSpan, CancellationToken, ValueTask<IDistributedSynchronizationHandle?>> acquireFunc,
         TimeSpan timeout,
         CancellationToken cancellationToken)
+        where TPrimitive : class
     {
-        ValidateAcquireParameters(provider, acquireFunc, names);
+        if (primitives.Count == 1)
+        {
+            return new(await acquireFunc(primitives[0], timeout, cancellationToken) ?? primitives[0].As<object>());
+        }
 
         var timeoutTracker = new TimeoutTracker(new TimeoutValue(timeout));
-        var handles = new List<IDistributedSynchronizationHandle>(names.Count);
-        IDistributedSynchronizationHandle? result = null;
+        var handles = new List<IDistributedSynchronizationHandle>(primitives.Count);
+        CompositeDistributedSynchronizationHandle? result = null;
 
         try
         {
-            foreach (var name in names)
+            foreach (var primitive in primitives)
             {
-                var handle = await acquireFunc(provider, name, timeoutTracker.Remaining, cancellationToken)
+                var handle = await acquireFunc(primitive, timeoutTracker.Remaining, cancellationToken)
                     .ConfigureAwait(false);
 
                 if (handle is null)
                 {
-                    break;
+                    return new(primitive); // failure
                 }
 
                 handles.Add(handle);
-
-                if (timeoutTracker.IsExpired)
-                {
-                    break;
-                }
             }
 
-            if (handles.Count == names.Count)
-            {
-                result = new CompositeDistributedSynchronizationHandle(handles);
-            }
+            result = new(handles);
         }
         finally
         {
@@ -89,207 +96,28 @@ internal sealed class CompositeDistributedSynchronizationHandle : IDistributedSy
             }
         }
 
-        return result;
+        return new(result);
     }
 
-    public static async ValueTask<IDistributedSynchronizationHandle> AcquireAllAsync<TProvider>(
-        TProvider provider,
-        Func<TProvider, string, TimeSpan, CancellationToken, ValueTask<IDistributedSynchronizationHandle>> acquireFunc,
-        IReadOnlyList<string> names,
-        TimeSpan? timeout,
-        CancellationToken cancellationToken)
+    public readonly struct AcquireResult(object handleOrFailedPrimitive)
     {
-        var effectiveTimeout = timeout ?? Timeout.InfiniteTimeSpan;
-        var handle = await TryAcquireAllAsync(
-                provider,
-                WrapAcquireFunc(acquireFunc),
-                names,
-                effectiveTimeout,
-                cancellationToken)
-            .ConfigureAwait(false);
+        public IDistributedSynchronizationHandle? GetHandleOrDefault() =>
+            handleOrFailedPrimitive as IDistributedSynchronizationHandle;
+        public IDistributedSynchronizationHandle Handle =>
+                this.GetHandleOrDefault() ?? throw new TimeoutException($"Timed out acquiring '{this.GetFailedName()}'");
 
-        if (handle is null)
+        private string GetFailedName() => handleOrFailedPrimitive switch
         {
-            throw new TimeoutException($"Timed out after {effectiveTimeout} while acquiring all locks.");
-        }
-
-        return handle;
+            IDistributedLock @lock => @lock.Name,
+            IDistributedReaderWriterLock @lock => @lock.Name,
+            IDistributedSemaphore semaphore => semaphore.Name,
+            _ => handleOrFailedPrimitive.ToString()!
+        };
     }
 
-    public static IDistributedSynchronizationHandle? TryAcquireAll<TProvider>(
-        TProvider provider,
-        Func<TProvider, string, TimeSpan, CancellationToken, IDistributedSynchronizationHandle?> acquireFunc,
-        IReadOnlyList<string> names,
-        TimeSpan timeout,
-        CancellationToken cancellationToken) =>
-        SyncViaAsync.Run(
-            state => TryAcquireAllAsync(
-                state.provider,
-                WrapSyncAcquireFunc(state.acquireFunc),
-                state.names,
-                state.timeout,
-                state.cancellationToken),
-            (provider, acquireFunc, names, timeout, cancellationToken)
-        );
-
-    public static IDistributedSynchronizationHandle AcquireAll<TProvider>(
-        TProvider provider,
-        Func<TProvider, string, TimeSpan, CancellationToken, IDistributedSynchronizationHandle?> acquireFunc,
-        IReadOnlyList<string> names,
-        TimeSpan? timeout,
-        CancellationToken cancellationToken) =>
-        SyncViaAsync.Run(
-            state => AcquireAllAsync(
-                state.provider,
-                WrapSyncAcquireFuncForRequired(state.acquireFunc),
-                state.names,
-                state.timeout,
-                state.cancellationToken),
-            (provider, acquireFunc, names, timeout, cancellationToken)
-        );
-
-    public static async ValueTask<IDistributedSynchronizationHandle?> TryAcquireAllAsync<TProvider>(
-        TProvider provider,
-        Func<TProvider, string, int, TimeSpan, CancellationToken, ValueTask<IDistributedSynchronizationHandle?>>
-            acquireFunc,
-        IReadOnlyList<string> names,
-        int maxCount,
-        TimeSpan timeout,
-        CancellationToken cancellationToken)
+    private static CancellationTokenSource? CreateLinkedCancellationTokenSource(IReadOnlyList<IDistributedSynchronizationHandle> handles)
     {
-        ValidateAcquireParameters(provider, acquireFunc, names);
-
-        var timeoutTracker = new TimeoutTracker(new TimeoutValue(timeout));
-        var handles = new List<IDistributedSynchronizationHandle>(names.Count);
-        IDistributedSynchronizationHandle? result = null;
-
-        try
-        {
-            foreach (var name in names)
-            {
-                var handle = await acquireFunc(provider, name, maxCount, timeoutTracker.Remaining, cancellationToken)
-                    .ConfigureAwait(false);
-
-                if (handle is null)
-                {
-                    break;
-                }
-
-                handles.Add(handle);
-
-                if (timeoutTracker.IsExpired)
-                {
-                    break;
-                }
-            }
-
-            if (handles.Count == names.Count)
-            {
-                result = new CompositeDistributedSynchronizationHandle(handles);
-            }
-        }
-        finally
-        {
-            if (result is null)
-            {
-                await DisposeHandlesAsync(handles).ConfigureAwait(false);
-            }
-        }
-
-        return result;
-    }
-
-
-    public static async ValueTask<IDistributedSynchronizationHandle> AcquireAllAsync<TProvider>(
-        TProvider provider,
-        Func<TProvider, string, int, TimeSpan, CancellationToken, ValueTask<IDistributedSynchronizationHandle>>
-            acquireFunc,
-        IReadOnlyList<string> names,
-        int maxCount,
-        TimeSpan? timeout,
-        CancellationToken cancellationToken)
-    {
-        var effectiveTimeout = timeout ?? Timeout.InfiniteTimeSpan;
-        var handle = await TryAcquireAllAsync(
-                provider,
-                WrapAcquireFunc(acquireFunc),
-                names,
-                maxCount,
-                effectiveTimeout,
-                cancellationToken)
-            .ConfigureAwait(false);
-
-        if (handle is null)
-        {
-            throw new TimeoutException($"Timed out after {effectiveTimeout} while acquiring all locks.");
-        }
-
-        return handle;
-    }
-
-    public static IDistributedSynchronizationHandle? TryAcquireAll<TProvider>(
-        TProvider provider,
-        Func<TProvider, string, int, TimeSpan, CancellationToken, IDistributedSynchronizationHandle?> acquireFunc,
-        IReadOnlyList<string> names,
-        int maxCount,
-        TimeSpan timeout,
-        CancellationToken cancellationToken) =>
-        SyncViaAsync.Run(
-            state => TryAcquireAllAsync(
-                state.provider,
-                WrapSyncAcquireFunc(state.acquireFunc),
-                state.names,
-                state.maxCount,
-                state.timeout,
-                state.cancellationToken),
-            (provider, acquireFunc, names, maxCount, timeout, cancellationToken)
-        );
-
-    public static IDistributedSynchronizationHandle AcquireAll<TProvider>(
-        TProvider provider,
-        Func<TProvider, string, int, TimeSpan, CancellationToken, IDistributedSynchronizationHandle?> acquireFunc,
-        IReadOnlyList<string> names,
-        int maxCount,
-        TimeSpan? timeout,
-        CancellationToken cancellationToken) =>
-        SyncViaAsync.Run(
-            state => AcquireAllAsync(
-                state.provider,
-                WrapSyncAcquireFuncForRequired(state.acquireFunc),
-                state.names,
-                state.maxCount,
-                state.timeout,
-                state.cancellationToken),
-            (provider, acquireFunc, names, maxCount, timeout, cancellationToken)
-        );
-
-    private static void ValidateHandles(IReadOnlyList<IDistributedSynchronizationHandle> handles)
-    {
-        if (handles is null)
-        {
-            throw new ArgumentNullException(nameof(handles));
-        }
-
-        if (handles.Count == 0)
-        {
-            throw new ArgumentException("At least one handle is required", nameof(handles));
-        }
-
-        for (var i = 0; i < handles.Count; ++i)
-        {
-            if (handles[i] is null)
-            {
-                throw new ArgumentException(
-                    $"Handles must not contain null elements; found null at index {i}",
-                    nameof(handles)
-                );
-            }
-        }
-    }
-
-    private CancellationTokenSource? CreateLinkedCancellationTokenSource()
-    {
-        var cancellableTokens = this._handles
+        var cancellableTokens = handles
             .Select(h => h.HandleLostToken)
             .Where(t => t.CanBeCanceled)
             .ToArray();
@@ -299,193 +127,30 @@ internal sealed class CompositeDistributedSynchronizationHandle : IDistributedSy
             : null;
     }
 
-    private List<Exception>? DisposeHandles(Action<IDistributedSynchronizationHandle> disposeAction)
+    private static async ValueTask DisposeHandlesAsync(IReadOnlyList<IDistributedSynchronizationHandle> handles)
     {
-        List<Exception>? errors = null;
-
-        foreach (var handle in this._handles)
+        List<Exception>? exceptions = null;
+        // release in reverse order of acquisition
+        for (var i = handles.Count - 1; i >= 0; i--)
         {
             try
             {
-                disposeAction(handle);
+                // in most cases Dispose() will call DisposeSyncViaAsync() anyway, but we need to do this to be
+                // robust to externally-implemented handle types that aren't sync-via-async friendly
+                if (SyncViaAsync.IsSynchronous) { handles[i].Dispose(); }
+                else { await handles[i].DisposeAsync().ConfigureAwait(false); }
             }
             catch (Exception ex)
             {
-                (errors ??= []).Add(ex);
+                (exceptions ??= []).Add(ex);
             }
         }
 
-        return errors;
-    }
-
-    private async ValueTask<List<Exception>?> DisposeHandlesAsync(
-        Func<IDistributedSynchronizationHandle, ValueTask> disposeAction)
-    {
-        List<Exception>? errors = null;
-
-        foreach (var handle in this._handles)
+        if (exceptions != null)
         {
-            try
-            {
-                await disposeAction(handle).ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                (errors ??= []).Add(ex);
-            }
-        }
-
-        return errors;
-    }
-
-    private static void ThrowAggregateExceptionIfNeeded(List<Exception>? errors, string operation)
-    {
-        if (errors is not null && errors.Count > 0)
-        {
-            throw new AggregateException(
-                $"One or more errors occurred while {operation} a composite distributed handle.", errors);
+            throw new AggregateException(exceptions);
         }
     }
-
-    private static void ValidateAcquireParameters<TProvider>(
-        TProvider provider,
-        Func<TProvider, string, TimeSpan, CancellationToken, ValueTask<IDistributedSynchronizationHandle?>> acquireFunc,
-        IReadOnlyList<string> names)
-    {
-        if (provider is null)
-        {
-            throw new ArgumentNullException(nameof(provider));
-        }
-
-        if (acquireFunc is null)
-        {
-            throw new ArgumentNullException(nameof(acquireFunc));
-        }
-
-        if (names is null)
-        {
-            throw new ArgumentNullException(nameof(names));
-        }
-
-        if (names.Count == 0)
-        {
-            throw new ArgumentException("At least one lock name is required.", nameof(names));
-        }
-
-        for (var i = 0; i < names.Count; ++i)
-        {
-            if (names[i] is null)
-            {
-                throw new ArgumentException(
-                    $"Names must not contain null elements; found null at index {i}",
-                    nameof(names)
-                );
-            }
-        }
-    }
-
-    private static void ValidateAcquireParameters<TProvider>(
-        TProvider provider,
-        Func<TProvider, string, int, TimeSpan, CancellationToken, ValueTask<IDistributedSynchronizationHandle?>>
-            acquireFunc,
-        IReadOnlyList<string> names)
-    {
-        if (provider is null)
-        {
-            throw new ArgumentNullException(nameof(provider));
-        }
-
-        if (acquireFunc is null)
-        {
-            throw new ArgumentNullException(nameof(acquireFunc));
-        }
-
-        if (names is null)
-        {
-            throw new ArgumentNullException(nameof(names));
-        }
-
-        if (names.Count == 0)
-        {
-            throw new ArgumentException("At least one lock name is required.", nameof(names));
-        }
-
-        for (var i = 0; i < names.Count; ++i)
-        {
-            if (names[i] is null)
-            {
-                throw new ArgumentException(
-                    $"Names must not contain null elements; found null at index {i}",
-                    nameof(names)
-                );
-            }
-        }
-    }
-
-    private static async ValueTask DisposeHandlesAsync(List<IDistributedSynchronizationHandle> handles)
-    {
-        foreach (var handle in handles)
-        {
-            try
-            {
-                await handle.DisposeAsync().ConfigureAwait(false);
-            }
-            catch
-            {
-                // Suppress exceptions during cleanup
-            }
-        }
-    }
-
-    private static Func<TProvider, string, TimeSpan, CancellationToken, ValueTask<IDistributedSynchronizationHandle?>>
-        WrapAcquireFunc<TProvider>(
-            Func<TProvider, string, TimeSpan, CancellationToken, ValueTask<IDistributedSynchronizationHandle>>
-                acquireFunc) =>
-        async (p, n, t, c) => await acquireFunc(p, n, t, c).ConfigureAwait(false);
-
-    private static Func<TProvider, string, TimeSpan, CancellationToken, ValueTask<IDistributedSynchronizationHandle?>>
-        WrapSyncAcquireFunc<TProvider>(
-            Func<TProvider, string, TimeSpan, CancellationToken, IDistributedSynchronizationHandle?> acquireFunc) =>
-        (p, n, t, c) => new ValueTask<IDistributedSynchronizationHandle?>(acquireFunc(p, n, t, c));
-
-    private static Func<TProvider, string, TimeSpan, CancellationToken, ValueTask<IDistributedSynchronizationHandle>>
-        WrapSyncAcquireFuncForRequired<TProvider>(
-            Func<TProvider, string, TimeSpan, CancellationToken, IDistributedSynchronizationHandle?> acquireFunc) =>
-        (p, n, t, c) =>
-        {
-            var handle = acquireFunc(p, n, t, c);
-            return handle is not null
-                ? new ValueTask<IDistributedSynchronizationHandle>(handle)
-                : throw new TimeoutException($"Failed to acquire lock for '{n}'");
-        };
-
-
-    private static Func<TProvider, string, int, TimeSpan, CancellationToken,
-            ValueTask<IDistributedSynchronizationHandle?>>
-        WrapAcquireFunc<TProvider>(
-            Func<TProvider, string, int, TimeSpan, CancellationToken, ValueTask<IDistributedSynchronizationHandle>>
-                acquireFunc) =>
-        async (p, n, mc, t, c) => await acquireFunc(p, n, mc, t, c).ConfigureAwait(false);
-
-    private static Func<TProvider, string, int, TimeSpan, CancellationToken,
-            ValueTask<IDistributedSynchronizationHandle?>>
-        WrapSyncAcquireFunc<TProvider>(
-            Func<TProvider, string, int, TimeSpan, CancellationToken, IDistributedSynchronizationHandle?>
-                acquireFunc) =>
-        (p, n, mc, t, c) => new ValueTask<IDistributedSynchronizationHandle?>(acquireFunc(p, n, mc, t, c));
-
-    private static Func<TProvider, string, int, TimeSpan, CancellationToken,
-            ValueTask<IDistributedSynchronizationHandle>>
-        WrapSyncAcquireFuncForRequired<TProvider>(
-            Func<TProvider, string, int, TimeSpan, CancellationToken, IDistributedSynchronizationHandle?>
-                acquireFunc) =>
-        (p, n, mc, t, c) =>
-        {
-            var handle = acquireFunc(p, n, mc, t, c);
-            return handle is not null
-                ? new ValueTask<IDistributedSynchronizationHandle>(handle)
-                : throw new TimeoutException($"Failed to acquire lock for '{n}'");
-        };
 
     private readonly struct TimeoutTracker(TimeoutValue timeout)
     {
@@ -499,7 +164,16 @@ internal sealed class CompositeDistributedSynchronizationHandle : IDistributedSy
                     ? TimeSpan.Zero
                     : timeout.TimeSpan - elapsed
                 : Timeout.InfiniteTimeSpan;
-
-        public bool IsExpired => this._stopwatch is not null && this._stopwatch.Elapsed >= timeout.TimeSpan;
     }
+}
+
+internal static class CompositeDistributedLockHandleExtensions
+{
+    public static async ValueTask<IDistributedSynchronizationHandle?> GetHandleOrDefault(
+        this ValueTask<CompositeDistributedSynchronizationHandle.AcquireResult> @this) =>
+        (await @this.ConfigureAwait(false)).GetHandleOrDefault();
+
+    public static async ValueTask<IDistributedSynchronizationHandle> GetHandleOrTimeout(
+        this ValueTask<CompositeDistributedSynchronizationHandle.AcquireResult> @this) =>
+        (await @this.ConfigureAwait(false)).Handle;
 }

@@ -1,5 +1,8 @@
 // AUTO-GENERATED
 
+using Medallion.Threading.Internal;
+using System.Threading;
+
 namespace Medallion.Threading;
 
 /// <summary>
@@ -46,40 +49,42 @@ public static class DistributedLockProviderExtensions
     /// <see cref="IDistributedLock.TryAcquire(TimeSpan, CancellationToken)" /> on each created instance, combining the results into a composite handle.
     /// </summary>
     public static IDistributedSynchronizationHandle? TryAcquireAllLocks(this IDistributedLockProvider provider, IReadOnlyList<string> names, TimeSpan timeout = default, CancellationToken cancellationToken = default) =>
-        CompositeDistributedSynchronizationHandle.TryAcquireAll(
-            provider,
-            static (p, n, t, c) => p.TryAcquireLock(n, t, c),
-            names, timeout, cancellationToken);
+        SyncViaAsync.Run(
+            static s => s.provider.TryAcquireAllLocksAsync(s.names, s.timeout, s.cancellationToken),
+            (provider, names, timeout, cancellationToken));
 
     /// <summary>
     /// Equivalent to calling <see cref="IDistributedLockProvider.CreateLock(string)" /> for each name in <paramref name="names" /> and then
     /// <see cref="IDistributedLock.Acquire(TimeSpan?, CancellationToken)" /> on each created instance, combining the results into a composite handle.
     /// </summary>
     public static IDistributedSynchronizationHandle AcquireAllLocks(this IDistributedLockProvider provider, IReadOnlyList<string> names, TimeSpan? timeout = null, CancellationToken cancellationToken = default) =>
-        CompositeDistributedSynchronizationHandle.AcquireAll(
-            provider,
-            static (p, n, t, c) => p.AcquireLock(n, t, c),
-            names, timeout, cancellationToken);
+        SyncViaAsync.Run(
+            static s => s.provider.AcquireAllLocksAsync(s.names, s.timeout, s.cancellationToken),
+            (provider, names, timeout, cancellationToken));
 
     /// <summary>
     /// Equivalent to calling <see cref="IDistributedLockProvider.CreateLock(string)" /> for each name in <paramref name="names" /> and then
     /// <see cref="IDistributedLock.TryAcquireAsync(TimeSpan, CancellationToken)" /> on each created instance, combining the results into a composite handle.
     /// </summary>
     public static ValueTask<IDistributedSynchronizationHandle?> TryAcquireAllLocksAsync(this IDistributedLockProvider provider, IReadOnlyList<string> names, TimeSpan timeout = default, CancellationToken cancellationToken = default) =>
-        CompositeDistributedSynchronizationHandle.TryAcquireAllAsync(
-            provider,
-            static (p, n, t, c) => p.TryAcquireLockAsync(n, t, c),
-            names, timeout, cancellationToken);
+        provider.TryAcquireAllLocksInternalAsync(names, timeout, cancellationToken).GetHandleOrDefault();
 
     /// <summary>
     /// Equivalent to calling <see cref="IDistributedLockProvider.CreateLock(string)" /> for each name in <paramref name="names" /> and then
     /// <see cref="IDistributedLock.AcquireAsync(TimeSpan?, CancellationToken)" /> on each created instance, combining the results into a composite handle.
     /// </summary>
     public static ValueTask<IDistributedSynchronizationHandle> AcquireAllLocksAsync(this IDistributedLockProvider provider, IReadOnlyList<string> names, TimeSpan? timeout = null, CancellationToken cancellationToken = default) =>
-        CompositeDistributedSynchronizationHandle.AcquireAllAsync(
-            provider,
-            static (p, n, t, c) => p.AcquireLockAsync(n, t, c),
-            names, timeout, cancellationToken);
+        provider.TryAcquireAllLocksInternalAsync(names, timeout ?? Timeout.InfiniteTimeSpan, cancellationToken).GetHandleOrTimeout();
+
+    private static ValueTask<CompositeDistributedSynchronizationHandle.AcquireResult> TryAcquireAllLocksInternalAsync(
+        this IDistributedLockProvider provider,
+        IReadOnlyList<string> names,
+        TimeSpan timeout,
+        CancellationToken cancellationToken) =>
+        CompositeDistributedSynchronizationHandle.TryAcquireAllAsync(
+            CompositeDistributedSynchronizationHandle.FromNames(names, provider ?? throw new ArgumentNullException(nameof(provider)), static (p, n) => p.CreateLock(n)),
+            static (p, t, c) => SyncViaAsync.IsSynchronous ? p.TryAcquire(t, c).AsValueTask() : p.TryAcquireAsync(t, c),
+            timeout, cancellationToken);
 
     # endregion
 }
