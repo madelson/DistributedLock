@@ -33,21 +33,21 @@ public class GenerateProviders
 
         var createMethodName = $"Create{interfaceName.Replace("IDistributed", string.Empty)}";
         var providerInterfaceCode = $$"""
-                                      // AUTO-GENERATED
-                                      namespace Medallion.Threading;
+            // AUTO-GENERATED
+            namespace Medallion.Threading;
 
-                                      /// <summary>
-                                      /// Acts as a factory for <see cref="{{interfaceName}}"/> instances of a certain type. This interface may be
-                                      /// easier to use than <see cref="{{interfaceName}}"/> in dependency injection scenarios.
-                                      /// </summary>
-                                      public interface {{providerInterfaceName}}{{(interfaceName == "IDistributedUpgradeableReaderWriterLock" ? ": IDistributedReaderWriterLockProvider" : string.Empty)}}
-                                      {
-                                          /// <summary>
-                                          /// Constructs an <see cref="{{interfaceName}}"/> instance with the given <paramref name="name"/>.
-                                          /// </summary>
-                                          {{interfaceName}} {{createMethodName}}(string name{{(interfaceName.Contains("Semaphore") ? ", int maxCount" : string.Empty)}});
-                                      }
-                                      """;
+            /// <summary>
+            /// Acts as a factory for <see cref="{{interfaceName}}"/> instances of a certain type. This interface may be
+            /// easier to use than <see cref="{{interfaceName}}"/> in dependency injection scenarios.
+            /// </summary>
+            public interface {{providerInterfaceName}}{{(interfaceName == "IDistributedUpgradeableReaderWriterLock" ? ": IDistributedReaderWriterLockProvider" : string.Empty)}}
+            {
+                /// <summary>
+                /// Constructs an <see cref="{{interfaceName}}"/> instance with the given <paramref name="name"/>.
+                /// </summary>
+                {{interfaceName}} {{createMethodName}}(string name{{(interfaceName.Contains("Semaphore") ? ", int maxCount" : string.Empty)}});
+            }
+            """;
 
         var interfaceMethods = Regex.Matches(
             File.ReadAllText(interfaceFile),
@@ -78,47 +78,58 @@ public class GenerateProviders
             : interfaceMethods
                 .Select(m =>
                     {
-                        var (extensionMethodName, innerCallName) = GetAllExtensionMethodName(m.Groups["name"].Value);
+                        var baseExtensionMethodName = GetExtensionMethodName(m.Groups["name"].Value);
+                        var isAsync = baseExtensionMethodName.EndsWith("Async");
+                        var isTry = baseExtensionMethodName.StartsWith("Try");
+                        var extensionMethodName = baseExtensionMethodName.Replace("Async", "")
+                            .Replace("Acquire", "AcquireAll")
+                            + "s"
+                            + (isAsync ? "Async" : "");
                         var isSemaphore = interfaceName.Contains("Semaphore");
+                        string MaxCountArg(string prefix = "") => isSemaphore ? prefix + "maxCount, " : "";
 
                         return $"""
-                                    /// <summary>
-                                    /// Equivalent to calling <see cref="{providerInterfaceName}.{createMethodName}(string{(isSemaphore ? ", int" : string.Empty)})" /> for each name in <paramref name="names" /> and then
-                                    /// <see cref="{interfaceName}.{m.Groups["name"].Value}({string.Join(", ", m.Groups["parameterType"].Captures.Select(c => c.Value))})" /> on each created instance, combining the results into a composite handle.
-                                    /// </summary>
-                                    public static {m.Groups["returnType"].Value} {extensionMethodName}(this {providerInterfaceName} provider, IReadOnlyList<string> names{(isSemaphore ? ", int maxCount" : string.Empty)}, {m.Groups["parameters"].Value}) =>
-                                        CompositeDistributedSynchronizationHandle.{innerCallName}(
-                                            provider,
-                                            static (p, n{(isSemaphore ? ", mc" : string.Empty)}, t, c) => p.{GetExtensionMethodName(m.Groups["name"].Value)}(n{(isSemaphore ? ", mc" : string.Empty)}, t, c),
-                                            names,{(isSemaphore ? " maxCount," : string.Empty)} timeout, cancellationToken);
-                                """;
+                                /// <summary>
+                                /// Equivalent to calling <see cref="{providerInterfaceName}.{createMethodName}(string{(isSemaphore ? ", int" : string.Empty)})" /> for each name in <paramref name="names" /> and then
+                                /// <see cref="{interfaceName}.{m.Groups["name"].Value}({string.Join(", ", m.Groups["parameterType"].Captures.Select(c => c.Value))})" /> on each created instance, combining the results into a composite handle.
+                                /// </summary>
+                                public static {m.Groups["returnType"].Value} {extensionMethodName}(this {providerInterfaceName} provider, IReadOnlyList<string> names{(isSemaphore ? ", int maxCount" : string.Empty)}, {m.Groups["parameters"].Value}) =>
+                                    {(
+                                        isAsync
+                                            ? $"provider.Try{extensionMethodName.Replace("Try", "").Replace("Async", "InternalAsync")}(names, {MaxCountArg()}timeout, cancellationToken).GetHandleOr{(isTry ? "Default" : "Timeout")}();"
+                                            : $"SyncViaAsync.Run(static s => s.provider.{extensionMethodName}Async(s.names, {MaxCountArg("s.")}s.timeout, s.cancellationToken), (provider, names, {MaxCountArg()}timeout, cancellationToken));"
+                                    )}
+                            """;
                     }
                 );
 
         var providerExtensionsName = providerInterfaceName.TrimStart('I') + "Extensions";
+
         var providerExtensionsCode = $$"""
-                                       // AUTO-GENERATED
+            // AUTO-GENERATED
 
-                                       namespace Medallion.Threading;
+            using Medallion.Threading.Internal;
 
-                                       /// <summary>
-                                       /// Productivity helper methods for <see cref="{{providerInterfaceName}}" />
-                                       /// </summary>
-                                       public static class {{providerExtensionsName}}
-                                       {
-                                           # region Single Lock Methods
+            namespace Medallion.Threading;
 
-                                       {{string.Join(Environment.NewLine + Environment.NewLine, extensionSingleMethodBodies)}}
+            /// <summary>
+            /// Productivity helper methods for <see cref="{{providerInterfaceName}}" />
+            /// </summary>
+            public static class {{providerExtensionsName}}
+            {
+                # region Single Lock Methods
 
-                                           # endregion
+            {{string.Join(Environment.NewLine + Environment.NewLine, extensionSingleMethodBodies)}}
 
-                                           # region Composite Lock Methods
+                # endregion
 
-                                       {{string.Join(Environment.NewLine + Environment.NewLine, extensionCompositeMethodBodies)}}
+                # region Composite Lock Methods
 
-                                           # endregion
-                                       }
-                                       """;
+            {{string.Join(Environment.NewLine + Environment.NewLine, extensionCompositeMethodBodies)}}
+
+                # endregion
+            }
+            """;
 
         var changes = new[]
             {
@@ -140,42 +151,5 @@ public class GenerateProviders
                   + interfaceName.Replace("IDistributed", string.Empty)
                   + (interfaceMethodName.EndsWith("Async") ? "Async" : string.Empty)
                 : interfaceMethodName;
-
-        (string extensionMethodName, string innerCallName) GetAllExtensionMethodName(string interfaceMethodName)
-        {
-            var isExactAcquire = Regex.IsMatch(interfaceMethodName, "^(Try)?Acquire(Async)?$");
-            var isAsync = interfaceMethodName.EndsWith("Async", StringComparison.Ordinal);
-            var isTryVariant = interfaceMethodName.StartsWith("Try", StringComparison.Ordinal);
-
-            string extensionMethodName;
-
-            if (!isExactAcquire)
-            {
-                // e.g.  TryAcquireReadLock                  -> TryAcquireAllReadLocks
-                //       TryAcquireSemaphore                 -> TryAcquireAllSemaphores
-                //       TryAcquireUpgradeableReadLockAsync  -> TryAcquireUpgradeableAllReadLockAsync
-                extensionMethodName = interfaceMethodName
-                                          .Replace("Acquire", "AcquireAll") // Acquire -> AcquireAll
-                                          .Replace("Async", string.Empty) // strip Async (add back later)
-                                      + "s" // pluralise
-                                      + (isAsync ? "Async" : string.Empty); // restore Async if needed
-            }
-            else
-            {
-                // e.g.  TryAcquire              -> TryAcquireAllLocks
-                //       AcquireAsync            -> AcquireAllLocksAsync
-                extensionMethodName = interfaceMethodName.Replace("Async", string.Empty)
-                                      + "All"
-                                      + interfaceName.Replace("IDistributed", string.Empty) + "s"
-                                      + (isAsync ? "Async" : string.Empty);
-            }
-
-            //  - “Try…” methods  -> TryAcquireAll[Async]
-            //  - plain Acquire…  ->  AcquireAll[Async]
-            var innerCallName = (isTryVariant ? "TryAcquireAll" : "AcquireAll")
-                                + (isAsync ? "Async" : string.Empty);
-
-            return (extensionMethodName, innerCallName);
-        }
     }
 }

@@ -15,23 +15,21 @@ internal sealed class CompositeDistributedSynchronizationHandle : IDistributedSy
     {
         get
         {
-            var existingBox = Volatile.Read(ref this._box);
+            var currentBox = Volatile.Read(ref this._box);
 
-            if (existingBox != null
-                && existingBox.Value.HandleLostSource is null
-                && CreateLinkedCancellationTokenSource(existingBox.Value.Handles) is { } handleLostSource)
+            if (currentBox != null
+                && currentBox.Value.HandleLostSource is null
+                && CreateLinkedCancellationTokenSource(currentBox.Value.Handles) is { } newHandleLostSource)
             {
-                var newContents = existingBox.Value;
-                var newBox = RefBox.Create(newContents);
-                var newExistingBox = Interlocked.CompareExchange(ref this._box, newBox, comparand: existingBox);
-                if (newExistingBox != existingBox)
-                {
-                    handleLostSource.Dispose();
-                    existingBox = newExistingBox;
-                }
+                var newBox = RefBox.Create(currentBox.Value with { HandleLostSource = newHandleLostSource });
+                var result = Interlocked.CompareExchange(ref this._box, newBox, comparand: currentBox);
+                if (result == currentBox) { currentBox = newBox; }
+                else { newHandleLostSource.Dispose(); } // lost the race
             }
 
-            return existingBox is null ? throw this.ObjectDisposed() : existingBox.Value.HandleLostSource?.Token ?? CancellationToken.None;
+            return currentBox is null
+                ? throw this.ObjectDisposed() 
+                : (currentBox.Value.HandleLostSource?.Token ?? CancellationToken.None);
         }
     }
 
@@ -58,17 +56,17 @@ internal sealed class CompositeDistributedSynchronizationHandle : IDistributedSy
     public static async ValueTask<AcquireResult> TryAcquireAllAsync<TPrimitive>(
         IReadOnlyList<TPrimitive> primitives,
         Func<TPrimitive, TimeSpan, CancellationToken, ValueTask<IDistributedSynchronizationHandle?>> acquireFunc,
-        TimeSpan timeout,
+        TimeoutValue timeout,
         CancellationToken cancellationToken)
         where TPrimitive : class
     {
         if (primitives.Count == 1)
         {
-            return new(await acquireFunc(primitives[0], timeout, cancellationToken) ?? primitives[0].As<object>());
+            return new(await acquireFunc(primitives[0], timeout.TimeSpan, cancellationToken).ConfigureAwait(false) ?? primitives[0].As<object>());
         }
 
-        var timeoutTracker = new TimeoutTracker(new TimeoutValue(timeout));
-        var handles = new List<IDistributedSynchronizationHandle>(primitives.Count);
+        TimeoutTracker timeoutTracker = new(timeout);
+        List<IDistributedSynchronizationHandle> handles = new(primitives.Count);
         CompositeDistributedSynchronizationHandle? result = null;
 
         try
@@ -104,7 +102,7 @@ internal sealed class CompositeDistributedSynchronizationHandle : IDistributedSy
         public IDistributedSynchronizationHandle? GetHandleOrDefault() =>
             handleOrFailedPrimitive as IDistributedSynchronizationHandle;
         public IDistributedSynchronizationHandle Handle =>
-                this.GetHandleOrDefault() ?? throw new TimeoutException($"Timed out acquiring '{this.GetFailedName()}'");
+            this.GetHandleOrDefault() ?? throw new TimeoutException($"Timed out acquiring '{this.GetFailedName()}'");
 
         private string GetFailedName() => handleOrFailedPrimitive switch
         {
@@ -176,4 +174,55 @@ internal static class CompositeDistributedLockHandleExtensions
     public static async ValueTask<IDistributedSynchronizationHandle> GetHandleOrTimeout(
         this ValueTask<CompositeDistributedSynchronizationHandle.AcquireResult> @this) =>
         (await @this.ConfigureAwait(false)).Handle;
+
+    public static ValueTask<CompositeDistributedSynchronizationHandle.AcquireResult> TryAcquireAllLocksInternalAsync(
+        this IDistributedLockProvider provider,
+        IReadOnlyList<string> names,
+        TimeoutValue timeout,
+        CancellationToken cancellationToken) =>
+        CompositeDistributedSynchronizationHandle.TryAcquireAllAsync(
+            CompositeDistributedSynchronizationHandle.FromNames(names, provider ?? throw new ArgumentNullException(nameof(provider)), static (p, n) => p.CreateLock(n)),
+            static (p, t, c) => SyncViaAsync.IsSynchronous ? p.TryAcquire(t, c).AsValueTask() : p.TryAcquireAsync(t, c),
+            timeout, cancellationToken);
+
+    public static ValueTask<CompositeDistributedSynchronizationHandle.AcquireResult> TryAcquireAllReadLocksInternalAsync(
+        this IDistributedReaderWriterLockProvider provider,
+        IReadOnlyList<string> names,
+        TimeoutValue timeout,
+        CancellationToken cancellationToken) =>
+        CompositeDistributedSynchronizationHandle.TryAcquireAllAsync(
+            CompositeDistributedSynchronizationHandle.FromNames(
+                names,
+                provider ?? throw new ArgumentNullException(nameof(provider)),
+                static (p, n) => p.CreateReaderWriterLock(n)),
+            static (p, t, c) => SyncViaAsync.IsSynchronous ? p.TryAcquireReadLock(t, c).AsValueTask() : p.TryAcquireReadLockAsync(t, c),
+            timeout, cancellationToken);
+
+    public static ValueTask<CompositeDistributedSynchronizationHandle.AcquireResult> TryAcquireAllWriteLocksInternalAsync(
+        this IDistributedReaderWriterLockProvider provider,
+        IReadOnlyList<string> names,
+        TimeoutValue timeout,
+        CancellationToken cancellationToken) =>
+        CompositeDistributedSynchronizationHandle.TryAcquireAllAsync(
+            CompositeDistributedSynchronizationHandle.FromNames(
+                names,
+                provider ?? throw new ArgumentNullException(nameof(provider)),
+                static (p, n) => p.CreateReaderWriterLock(n)),
+            static (p, t, c) => SyncViaAsync.IsSynchronous ? p.TryAcquireWriteLock(t, c).AsValueTask() : p.TryAcquireWriteLockAsync(t, c),
+            timeout, cancellationToken);
+
+    public static ValueTask<CompositeDistributedSynchronizationHandle.AcquireResult> TryAcquireAllSemaphoresInternalAsync(
+        this IDistributedSemaphoreProvider provider,
+        IReadOnlyList<string> names,
+        int maxCount,
+        TimeoutValue timeout,
+        CancellationToken cancellationToken) =>
+        CompositeDistributedSynchronizationHandle.TryAcquireAllAsync(
+            CompositeDistributedSynchronizationHandle.FromNames(
+                names,
+                (provider: provider ?? throw new ArgumentNullException(nameof(provider)), maxCount),
+                static (s, n) => s.provider.CreateSemaphore(n, s.maxCount)),
+            static (p, t, c) => SyncViaAsync.IsSynchronous ? p.TryAcquire(t, c).AsValueTask() : p.TryAcquireAsync(t, c),
+            timeout,
+            cancellationToken);
 }

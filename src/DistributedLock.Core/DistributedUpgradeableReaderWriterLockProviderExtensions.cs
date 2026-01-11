@@ -1,5 +1,7 @@
 // AUTO-GENERATED
 
+using Medallion.Threading.Internal;
+
 namespace Medallion.Threading;
 
 /// <summary>

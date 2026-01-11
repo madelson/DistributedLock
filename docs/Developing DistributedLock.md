@@ -55,13 +55,17 @@ You can install Postgres from [here](https://www.enterprisedb.com/downloads/post
 
 In `C:\Program Files\PostgreSQL\<version>\data\postgresql.conf`, update `max_connections` to 200.
 
+(Windows) If you don't want Postgres always running on your machine, set the Startup type to "Manual" for `postgresql-x64-{VERSION} - PostgresSQL Server {VERSION}`.
+
 Add your username (e.g. postgres) and password to `DistributedLock.Tests/credentials/postgres.txt`, with the username on line 1 and the password on line 2.
 
 ### SQL Server
 
 Download SQL developer edition from [here](https://www.microsoft.com/en-us/sql-server/sql-server-downloads).
 
-The tests connect via integrated security.
+(Windows) If you don't want SQLServer always running on your machine, set the Startup type to "Manual" for `SQL Server (MSSQLSERVER)`.
+
+The tests connect via integrated security. 
 
 ### Redis
 

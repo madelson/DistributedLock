@@ -228,27 +228,19 @@ internal sealed class MultiplexedConnectionLock : IAsyncDisposable
         {
             get
             {
-                var existingBox = Volatile.Read(ref this._box);
+                var currentBox = Volatile.Read(ref this._box);
 
-                if (existingBox != null && existingBox.Value.monitoringHandle == null)
+                if (currentBox != null && currentBox.Value.monitoringHandle == null)
                 {
-                    var newHandle = existingBox.Value.@lock._connection.ConnectionMonitor.GetMonitoringHandle();
-                    var newContents = existingBox.Value;
-                    newContents.monitoringHandle = newHandle;
-                    var newBox = RefBox.Create(newContents);
-                    var newExistingBox = Interlocked.CompareExchange(ref this._box, newBox, comparand: existingBox);
-                    if (newExistingBox == existingBox)
-                    {
-                        return newHandle.ConnectionLostToken;
-                    }
-
-                    existingBox = newExistingBox;
+                    var newHandle = currentBox.Value.@lock._connection.ConnectionMonitor.GetMonitoringHandle();
+                    var newBox = RefBox.Create(currentBox.Value with { monitoringHandle = newHandle });
+                    var result = Interlocked.CompareExchange(ref this._box, newBox, comparand: currentBox);
+                    if (result == currentBox) { currentBox = newBox; }
+                    else { newHandle.Dispose(); } // lost the race
                 }
 
-                if (existingBox == null) { throw this.ObjectDisposed(); }
-
-                // must exist here since we only clear the box on dispose or update the contents when creating a token
-                return existingBox.Value.monitoringHandle!.ConnectionLostToken;
+                // Now the handle must exist or we must be disposed
+                return currentBox?.Value.monitoringHandle!.ConnectionLostToken ?? throw this.ObjectDisposed();
             }
         }
 
