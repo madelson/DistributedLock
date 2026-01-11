@@ -160,7 +160,7 @@ internal sealed class SqlSemaphore(int maxCount) : IDbSynchronizationStrategy<Sq
     {
         command.AddParameter(SemaphoreNameParameter, semaphoreName);
         command.AddParameter(MaxCountParameter, this.MaxCount);
-        if (timeout.TryGetValue(out var timeoutValue))
+        if (timeout is { } timeoutValue)
         {
             command.AddParameter(TimeoutMillisParameter, timeoutValue.InMilliseconds);
         }
@@ -353,7 +353,7 @@ internal sealed class SqlSemaphore(int maxCount) : IDbSynchronizationStrategy<Sq
                 {(
                 // if this is the end of the query, we have to set an exit code. If we are going to retry we indicate the special code that will trigger that and otherwise we indicate
                 // timeout. If this is not the end of the query, we just release the preamble lock and keep going
-                willRetryInSeparateQueryAfterPreamble.TryGetValue(out var willRetryInSeparateQueryAfterPreambleValue)
+                willRetryInSeparateQueryAfterPreamble is { } willRetryInSeparateQueryAfterPreambleValue
                     ? $@"SET @{ResultCodeParameter} = {(willRetryInSeparateQueryAfterPreambleValue ? FinishedPreambleWithoutAcquiringCode : SqlApplicationLock.TimeoutExitCode)}"
                     : $"EXEC sys.sp_releaseapplock @{PreambleLockNameVariable}, @{LockScopeVariable}"
             )}";
@@ -446,7 +446,7 @@ internal sealed class SqlSemaphore(int maxCount) : IDbSynchronizationStrategy<Sq
                          across and allow that wait to be 32ms instead of 0. This is preferable to doing WAITFOR since the wait will be broken if that ticket
                          becomes available. Note that we used to wait just 1ms here. However, in testing that proved flaky in detecting
                          deadlocks; empirically, 32ms seems to be sufficient to work reliably. The longer wait should also reduce the
-                         CPU load without meaningfully adding delay overhead. */}
+                         CPU load without meaningfully adding delay overhead (SQL_SEMAPHORE_ONE_WAIT) */}
                         {(allowOneWait ? "DECLARE @lockTimeoutMillis INT = CASE @anyNotHeld WHEN 0 THEN 32 ELSE 0 END" : null)}
                         SET @anyNotHeld = 1
 

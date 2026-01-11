@@ -19,7 +19,9 @@ public interface IDistributedSynchronizationHandle
     /// which can be detected by checking <see cref="CancellationToken.CanBeCanceled"/>.
     /// 
     /// For lock types that do support this, accessing this property may incur additional
-    /// costs, such as polling to detect connectivity loss.
+    /// costs, such as polling to detect connectivity loss. In general, it is only recommended
+    /// when you (a) will be holding a lock for a long time, (b) have experienced/expect flakiness in holding
+    /// a lock, and (c) are very sensitive to the lock semantics being violated.
     /// </summary>
     CancellationToken HandleLostToken { get; }
 }
