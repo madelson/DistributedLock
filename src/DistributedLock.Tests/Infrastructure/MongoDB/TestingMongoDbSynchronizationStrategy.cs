@@ -9,28 +9,9 @@ public sealed class TestingMongoDbSynchronizationStrategy : TestingSynchronizati
 {
     public Action? KillHandleAction { get; set; }
 
-    public override void PrepareForHandleAbandonment()
-    {
-        this.KillHandleAction?.Invoke();
-    }
+    public override void PrepareForHandleAbandonment() => this.KillHandleAction?.Invoke();
 
-    public override void PerformAdditionalCleanupForHandleAbandonment()
-    {
-        this.KillHandleAction?.Invoke();
-    }
+    public override void PerformAdditionalCleanupForHandleAbandonment() => this.KillHandleAction?.Invoke();
 
-    public override IDisposable? PrepareForHandleLost()
-    {
-        return new DisposableAction(() => this.KillHandleAction?.Invoke());
-    }
-
-    private class DisposableAction(Action action) : IDisposable
-    {
-        private Action? _action = action;
-
-        public void Dispose()
-        {
-            Interlocked.Exchange(ref this._action, null)?.Invoke();
-        }
-    }
+    public override IDisposable? PrepareForHandleLost() => new ReleaseAction(() => this.KillHandleAction?.Invoke());
 }

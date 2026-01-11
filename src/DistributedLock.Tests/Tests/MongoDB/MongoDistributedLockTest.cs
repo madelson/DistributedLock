@@ -10,7 +10,7 @@ public class MongoDistributedLockTest
     [Test]
     public async Task TestBasicLockFunctionality()
     {
-        var database = MongoDbCredentials.GetDefaultDatabase(Environment.CurrentDirectory);
+        var database = MongoDBCredentials.GetDefaultDatabase(Environment.CurrentDirectory);
         var lockName = TestHelper.UniqueName;
         var @lock = new MongoDistributedLock(lockName, database);
         await using (var handle = await @lock.AcquireAsync())
@@ -34,7 +34,7 @@ public class MongoDistributedLockTest
     [Test]
     public async Task TestCustomCollectionName()
     {
-        var database = MongoDbCredentials.GetDefaultDatabase(Environment.CurrentDirectory);
+        var database = MongoDBCredentials.GetDefaultDatabase(Environment.CurrentDirectory);
         var lockName = TestHelper.UniqueName;
         const string CustomCollectionName = "CustomLocks";
         var @lock = new MongoDistributedLock(lockName, database, CustomCollectionName);
@@ -54,7 +54,7 @@ public class MongoDistributedLockTest
     [Test]
     public async Task TestHandleLostToken()
     {
-        var database = MongoDbCredentials.GetDefaultDatabase(Environment.CurrentDirectory);
+        var database = MongoDBCredentials.GetDefaultDatabase(Environment.CurrentDirectory);
         var lockName = TestHelper.UniqueName;
         // Configure a short extension cadence so the test doesn't have to wait too long
         var @lock = new MongoDistributedLock(lockName, database, options: o => o.ExtensionCadence(TimeSpan.FromMilliseconds(500)));
@@ -78,7 +78,7 @@ public class MongoDistributedLockTest
     [Test]
     public async Task TestLockContentionAsync()
     {
-        var database = MongoDbCredentials.GetDefaultDatabase(Environment.CurrentDirectory);
+        var database = MongoDBCredentials.GetDefaultDatabase(Environment.CurrentDirectory);
         var lockName = TestHelper.UniqueName;
         var lock1 = new MongoDistributedLock(lockName, database);
         var lock2 = new MongoDistributedLock(lockName, database);
@@ -160,7 +160,7 @@ public class MongoDistributedLockTest
     [Test]
     public async Task TestIndexExistence()
     {
-        var database = MongoDbCredentials.GetDefaultDatabase(Environment.CurrentDirectory);
+        var database = MongoDBCredentials.GetDefaultDatabase(Environment.CurrentDirectory);
         var collectionName = "TestIndex" + Guid.NewGuid().ToString("N");
         
         var @lock = new MongoDistributedLock("lock", database, collectionName);
@@ -283,7 +283,7 @@ public class MongoDistributedLockTest
     [Test]
     public async Task TestLockDocumentStructure()
     {
-        var database = MongoDbCredentials.GetDefaultDatabase(Environment.CurrentDirectory);
+        var database = MongoDBCredentials.GetDefaultDatabase(Environment.CurrentDirectory);
         var lockName = TestHelper.UniqueName;
         var collectionName = "locks_" + Guid.NewGuid().ToString("N");
         

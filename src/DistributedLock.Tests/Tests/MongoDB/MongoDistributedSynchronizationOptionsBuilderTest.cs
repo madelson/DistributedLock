@@ -8,7 +8,7 @@ public class MongoDistributedSynchronizationOptionsBuilderTest
     [Test]
     public void TestBusyWaitSleepTimeValidation()
     {
-        var database = MongoDbCredentials.GetDefaultDatabase(Environment.CurrentDirectory);
+        var database = MongoDBCredentials.GetDefaultDatabase(Environment.CurrentDirectory);
         Assert.Throws<ArgumentOutOfRangeException>(() =>
             new MongoDistributedLock("test", database, options => options
                 .BusyWaitSleepTime(TimeSpan.FromSeconds(1), TimeSpan.FromMilliseconds(500))));
@@ -23,7 +23,7 @@ public class MongoDistributedSynchronizationOptionsBuilderTest
     [Test]
     public void TestExpiryValidation()
     {
-        var database = MongoDbCredentials.GetDefaultDatabase(Environment.CurrentDirectory);
+        var database = MongoDBCredentials.GetDefaultDatabase(Environment.CurrentDirectory);
         Assert.Throws<ArgumentOutOfRangeException>(() =>
             new MongoDistributedLock("test", database, options => options.Expiry(TimeSpan.FromMilliseconds(50))));
         Assert.Throws<ArgumentOutOfRangeException>(() =>
@@ -35,7 +35,7 @@ public class MongoDistributedSynchronizationOptionsBuilderTest
     [Test]
     public void TestExtensionCadenceValidation()
     {
-        var database = MongoDbCredentials.GetDefaultDatabase(Environment.CurrentDirectory);
+        var database = MongoDBCredentials.GetDefaultDatabase(Environment.CurrentDirectory);
         Assert.Throws<ArgumentOutOfRangeException>(() =>
             new MongoDistributedLock("test", database, options => options
                                                                   .Expiry(TimeSpan.FromSeconds(5))
@@ -49,7 +49,7 @@ public class MongoDistributedSynchronizationOptionsBuilderTest
     [Test]
     public async Task TestOptionsAreApplied()
     {
-        var database = MongoDbCredentials.GetDefaultDatabase(Environment.CurrentDirectory);
+        var database = MongoDBCredentials.GetDefaultDatabase(Environment.CurrentDirectory);
         var lockName = TestHelper.UniqueName;
         var @lock = new MongoDistributedLock(lockName, database, options => options
                                                                             .Expiry(TimeSpan.FromSeconds(60))

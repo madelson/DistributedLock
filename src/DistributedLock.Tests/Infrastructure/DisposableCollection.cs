@@ -48,13 +48,13 @@ internal sealed class DisposableCollection : IDisposable
             }
         }
     }
+}
 
-    private class ReleaseAction : IDisposable
-    {
-        private Action? _action;
+internal class ReleaseAction : IDisposable
+{
+    private Action? _action;
 
-        public ReleaseAction(Action action) { this._action = action; }
+    public ReleaseAction(Action action) { this._action = action; }
 
-        public void Dispose() => Interlocked.Exchange(ref this._action, null)?.Invoke();
-    }
+    public void Dispose() => Interlocked.Exchange(ref this._action, null)?.Invoke();
 }

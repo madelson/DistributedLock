@@ -9,7 +9,7 @@ public class MongoDistributedSynchronizationProviderTest
     [Test]
     public void TestArgumentValidation()
     {
-        var database = MongoDbCredentials.GetDefaultDatabase(Environment.CurrentDirectory);
+        var database = MongoDBCredentials.GetDefaultDatabase(Environment.CurrentDirectory);
         Assert.Throws<ArgumentNullException>(() => new MongoDistributedSynchronizationProvider(null!));
         Assert.Throws<ArgumentNullException>(() => new MongoDistributedSynchronizationProvider(database, (string)null!));
         Assert.DoesNotThrow(() => new MongoDistributedSynchronizationProvider(database));
@@ -19,7 +19,7 @@ public class MongoDistributedSynchronizationProviderTest
     [Test]
     public void TestIDistributedLockProviderInterface()
     {
-        var database = MongoDbCredentials.GetDefaultDatabase(Environment.CurrentDirectory);
+        var database = MongoDBCredentials.GetDefaultDatabase(Environment.CurrentDirectory);
         IDistributedLockProvider provider = new MongoDistributedSynchronizationProvider(database);
         var @lock = provider.CreateLock("interfaceTest");
         Assert.That(@lock, Is.Not.Null);
@@ -30,7 +30,7 @@ public class MongoDistributedSynchronizationProviderTest
     [Test]
     public async Task TestProviderCreateLock()
     {
-        var database = MongoDbCredentials.GetDefaultDatabase(Environment.CurrentDirectory);
+        var database = MongoDBCredentials.GetDefaultDatabase(Environment.CurrentDirectory);
         var provider = new MongoDistributedSynchronizationProvider(database);
         var lock1 = provider.CreateLock("testLock1");
         var lock2 = provider.CreateLock("testLock2");
@@ -51,7 +51,7 @@ public class MongoDistributedSynchronizationProviderTest
     [Test]
     public async Task TestProviderWithCustomCollection()
     {
-        var database = MongoDbCredentials.GetDefaultDatabase(Environment.CurrentDirectory);
+        var database = MongoDBCredentials.GetDefaultDatabase(Environment.CurrentDirectory);
         const string CustomCollection = "TestProviderLocks";
         var provider = new MongoDistributedSynchronizationProvider(database, CustomCollection);
         var @lock = provider.CreateLock("testLock");
