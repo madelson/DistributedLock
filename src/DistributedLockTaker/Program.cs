@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Medallion.Threading.SqlServer;
 using Medallion.Threading.WaitHandles;
 using Medallion.Threading.Postgres;
@@ -15,6 +15,8 @@ using System.Collections.Generic;
 using Medallion.Threading.ZooKeeper;
 using Medallion.Threading.MySql;
 using Medallion.Threading.Oracle;
+using Medallion.Threading.MongoDB;
+using Medallion.Threading.Tests.MongoDB;
 
 namespace DistributedLockTaker;
 
@@ -134,6 +136,9 @@ internal static class Program
                     ).AcquireAsync().Result;
                     break;
                 }
+            case nameof(MongoDistributedLock):
+                handle = new MongoDistributedLock(name, MongoDbCredentials.GetDefaultDatabase(Environment.CurrentDirectory), options => options.Expiry(TimeSpan.FromSeconds(5))).Acquire();
+                break;
             default:
                 Console.Error.WriteLine($"type: {type}");
                 return 123;

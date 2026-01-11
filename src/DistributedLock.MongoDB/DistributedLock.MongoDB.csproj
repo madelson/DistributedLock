@@ -1,0 +1,66 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFrameworks>netstandard2.1;net8.0;net472;</TargetFrameworks>
+		<RootNamespace>Medallion.Threading.MongoDB</RootNamespace>
+		<GenerateDocumentationFile>True</GenerateDocumentationFile>
+		<WarningLevel>4</WarningLevel>
+		<LangVersion>Latest</LangVersion>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<Version>1.3.0</Version>
+		<AssemblyVersion>1.0.0.0</AssemblyVersion>
+		<Authors>Michael Adelson, joesdu</Authors>
+		<Description>Provides a distributed lock implementation based on MongoDB</Description>
+		<Copyright>Copyright © 2020 Michael Adelson</Copyright>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<PackageTags>distributed lock async mongodb</PackageTags>
+		<PackageProjectUrl>https://github.com/madelson/DistributedLock</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/madelson/DistributedLock</RepositoryUrl>
+		<FileVersion>1.0.0.0</FileVersion>
+		<PackageReleaseNotes>See https://github.com/madelson/DistributedLock#release-notes</PackageReleaseNotes>
+		<SignAssembly>true</SignAssembly>
+		<AssemblyOriginatorKeyFile>..\DistributedLock.snk</AssemblyOriginatorKeyFile>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)' == 'Release'">
+		<Optimize>True</Optimize>
+		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+		<TreatWarningsAsErrors>True</TreatWarningsAsErrors>
+		<TreatSpecificWarningsAsErrors />
+		<!-- see https://github.com/dotnet/sdk/issues/2679 -->
+		<DebugType>embedded</DebugType>
+		<!-- see https://mitchelsellers.com/blog/article/net-5-deterministic-builds-source-linking -->
+		<ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+		<EmbedUntrackedSources>true</EmbedUntrackedSources>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+		<Optimize>False</Optimize>
+		<NoWarn>1591</NoWarn>
+		<DefineConstants>TRACE;DEBUG</DefineConstants>
+	</PropertyGroup>
+
+	<ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.1' OR '$(TargetFramework)' == 'net472'">
+		<PackageReference Include="System.Diagnostics.DiagnosticSource" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="MongoDB.Driver" />
+		<PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All" />
+		<PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" PrivateAssets="All" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\DistributedLock.Core\DistributedLock.Core.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Using Remove="System.Net.Http" />
+	</ItemGroup>
+
+	<Import Project="..\FixDistributedLockCoreDependencyVersion.targets" />
+</Project>
