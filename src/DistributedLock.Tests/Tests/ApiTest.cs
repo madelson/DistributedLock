@@ -2,6 +2,7 @@
 using NUnit.Framework;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
+using Medallion.Threading.Internal;
 
 namespace Medallion.Threading.Tests;
 
@@ -155,6 +156,14 @@ public class ApiTest
         version.Build.ShouldEqual(0);
         var informationalVersion = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>();
         Assert.That(informationalVersion?.InformationalVersion, Does.StartWith($"{version.Major}."));
+    }
+
+    [Test]
+    public void RememberToRemoveObsoleteMembers()
+    {
+        Assert.That(
+            typeof(Helpers).Assembly.GetName().Version < new Version(1, 1)
+            || typeof(Helpers).GetMethod("TryGetValue") is null);
     }
 
     private static IEnumerable<Type> GetPublicTypes(Assembly assembly) => assembly.GetTypes()

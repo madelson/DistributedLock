@@ -99,6 +99,7 @@ static class Helpers
         public void UnsafeOnCompleted(Action continuation) => this._taskAwaiter.UnsafeOnCompleted(continuation);
     }
 
+    [Obsolete("Will be removed in DistributedLock.Core 1.1")]
     public static bool TryGetValue<T>(this T? nullable, out T value)
         where T : struct
     {

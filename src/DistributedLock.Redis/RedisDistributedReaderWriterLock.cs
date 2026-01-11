@@ -86,7 +86,7 @@ public sealed partial class RedisDistributedReaderWriterLock : IInternalDistribu
         {
             // If we failed to take the write lock but we took the writer waiting lock, release
             // the writer waiting lock on our way out.
-            if (handle == null && acquireWriteLockState.WriterWaiting.TryGetValue(out var writerWaiting)) 
+            if (handle == null && acquireWriteLockState.WriterWaiting is { } writerWaiting) 
             {
                 await new RedLockRelease(writerWaiting.Primitive, writerWaiting.TryAcquireTasks).ReleaseAsync().ConfigureAwait(false);
             }
