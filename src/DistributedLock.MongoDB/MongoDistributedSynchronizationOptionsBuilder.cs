@@ -61,8 +61,8 @@ public sealed class MongoDistributedSynchronizationOptionsBuilder
     /// </summary>
     public MongoDistributedSynchronizationOptionsBuilder BusyWaitSleepTime(TimeSpan min, TimeSpan max)
     {
-        var minTimeoutValue = new TimeoutValue(min, nameof(min));
-        var maxTimeoutValue = new TimeoutValue(max, nameof(max));
+        TimeoutValue minTimeoutValue = new(min, nameof(min)),
+            maxTimeoutValue = new(max, nameof(max));
         if (minTimeoutValue.IsInfinite) { throw new ArgumentOutOfRangeException(nameof(min), "may not be infinite"); }
         if (maxTimeoutValue.IsInfinite || maxTimeoutValue.CompareTo(min) < 0)
         {
@@ -101,10 +101,11 @@ public sealed class MongoDistributedSynchronizationOptionsBuilder
         {
             extensionCadence = TimeSpan.FromMilliseconds(expiry.InMilliseconds / 3.0);
         }
-        return new(expiry,
-            extensionCadence,
-            options?._minBusyWaitSleepTime ?? TimeSpan.FromMilliseconds(10),
-            options?._maxBusyWaitSleepTime ?? TimeSpan.FromSeconds(0.8));
+        return new(
+            expiry: expiry,
+            extensionCadence: extensionCadence,
+            minBusyWaitSleepTime: options?._minBusyWaitSleepTime ?? TimeSpan.FromMilliseconds(10),
+            maxBusyWaitSleepTime: options?._maxBusyWaitSleepTime ?? TimeSpan.FromSeconds(0.8));
     }
 }
 

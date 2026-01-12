@@ -301,6 +301,14 @@ public abstract class DistributedLockCoreTestCases<TLockProvider, TStrategy>
         }
 
         Assert.Throws<ObjectDisposedException>(() => handle.HandleLostToken.GetType());
+
+        CancellationToken handleLostToken;
+        await using (var handle2 = await @lock.AcquireAsync())
+        {
+            handleLostToken = handle2.HandleLostToken;
+            Assert.IsFalse(handleLostToken.IsCancellationRequested);
+        }
+        Assert.IsFalse(handleLostToken.IsCancellationRequested, "Token should not be canceled by manual release");
     }
 
     [Test]

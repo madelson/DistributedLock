@@ -101,12 +101,7 @@ public sealed partial class MongoDistributedLock : IInternalDistributedLock<Mong
         {
             activity?.SetTag("lock.acquired", true);
             activity?.SetTag("lock.fencing_token", result.FencingToken);
-            return new(collection,
-                key: this.Key,
-                lockId: lockId,
-                result.FencingToken,
-                this._options.Expiry,
-                this._options.ExtensionCadence);
+            return new(new(this, lockId, collection), result.FencingToken);
         }
         activity?.SetTag("lock.acquired", false);
         return null;
@@ -210,6 +205,75 @@ public sealed partial class MongoDistributedLock : IInternalDistributedLock<Mong
             // Other MongoDB errors (network, auth, etc.) - swallow to avoid blocking lock acquisition.
             // The lock will still work correctly; TTL cleanup is a best-effort optimization.
             return false;
+        }
+    }
+
+    /// <summary>
+    /// Inner handle that performs actual lock management and release.
+    /// Separated from the outer handle so it can be registered with ManagedFinalizerQueue.
+    /// </summary>
+    internal sealed class InnerHandle : IAsyncDisposable, LeaseMonitor.ILeaseHandle
+    {
+        private readonly MongoDistributedLock _lock;
+        private readonly string _lockId;
+        private readonly IMongoCollection<MongoLockDocument> _collection;
+        private readonly LeaseMonitor _monitor;
+        
+        public CancellationToken HandleLostToken => this._monitor.HandleLostToken;
+
+        TimeoutValue LeaseMonitor.ILeaseHandle.LeaseDuration => this._lock._options.Expiry;
+
+        // todo what if inf?
+        TimeoutValue LeaseMonitor.ILeaseHandle.MonitoringCadence => this._lock._options.ExtensionCadence;
+
+        public InnerHandle(MongoDistributedLock @lock, string lockId, IMongoCollection<MongoLockDocument> collection)
+        {
+            this._lock = @lock;
+            this._lockId = lockId;
+            // important to set this last, since the monitor constructor will read other fields of this
+            this._monitor = new(this);
+            this._collection = collection;
+        }
+
+        public async ValueTask DisposeAsync()
+        {
+            try { await this._monitor.DisposeAsync().ConfigureAwait(false); }
+            finally { await this.ReleaseLockAsync().ConfigureAwait(false); }
+        }
+
+        private async ValueTask ReleaseLockAsync()
+        {
+            var filter = Builders<MongoLockDocument>.Filter.Eq(d => d.Id, this._lock.Key) & Builders<MongoLockDocument>.Filter.Eq(d => d.LockId, this._lockId);
+            if (SyncViaAsync.IsSynchronous)
+            {
+                this._collection.DeleteOne(filter);
+            }
+            else
+            {
+                await this._collection.DeleteOneAsync(filter).ConfigureAwait(false);
+            }
+        }
+
+        async Task<LeaseMonitor.LeaseState> LeaseMonitor.ILeaseHandle.RenewOrValidateLeaseAsync(CancellationToken cancellationToken)
+        {
+            var filter = Builders<MongoLockDocument>.Filter.Eq(d => d.Id, this._lock.Key) & Builders<MongoLockDocument>.Filter.Eq(d => d.LockId, this._lockId);
+
+            // Use server time ($$NOW) for expiry to avoid client clock skew.
+            var newExpiresAt = new BsonDocument(
+                "$dateAdd",
+                new BsonDocument
+                {
+                    { "startDate", "$$NOW" },
+                    { "unit", "millisecond" },
+                    { "amount", this._lock._options.Expiry.InMilliseconds }
+                }
+            );
+            var update = new PipelineUpdateDefinition<MongoLockDocument>(
+                new[] { new BsonDocument("$set", new BsonDocument("expiresAt", newExpiresAt)) }
+            );
+
+            var result = await this._collection.UpdateOneAsync(filter, update, cancellationToken: cancellationToken).ConfigureAwait(false);
+            return result.MatchedCount > 0 ? LeaseMonitor.LeaseState.Renewed : LeaseMonitor.LeaseState.Lost;
         }
     }
 }
