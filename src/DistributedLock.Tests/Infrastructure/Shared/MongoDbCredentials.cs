@@ -1,5 +1,6 @@
 using MongoDB.Driver;
 using System.Collections.Concurrent;
+using System.IO;
 
 namespace Medallion.Threading.Tests.MongoDB;
 
