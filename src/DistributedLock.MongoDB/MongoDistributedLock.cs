@@ -3,7 +3,6 @@ using MongoDB.Bson;
 using MongoDB.Driver;
 using System.Collections.Concurrent;
 using System.Diagnostics;
-using System.Text;
 
 namespace Medallion.Threading.MongoDB;
 
@@ -13,18 +12,13 @@ namespace Medallion.Threading.MongoDB;
 public sealed partial class MongoDistributedLock : IInternalDistributedLock<MongoDistributedLockHandle>
 {
     internal const string DefaultCollectionName = "distributed.locks";
-    /// <summary>
-    /// MongoDB _id field maximum length in bytes.
-    /// See https://www.mongodb.com/docs/manual/reference/limits/#mongodb-limit-Index-Key-Limit
-    /// </summary>
-    private const int MaxKeyLength = 255;
 
     private static readonly DateTime EpochUtc = new(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
     /// <summary>
     /// ActivitySource for distributed tracing and diagnostics
     /// </summary>
-    private static readonly ActivitySource ActivitySource = new("DistributedLock.MongoDB", "1.0.0");
+    internal static readonly ActivitySource ActivitySource = new("DistributedLock.MongoDB", "1.0.0");
 
     // We want to ensure indexes are created at most once per process per (database, collection)
     private static readonly ConcurrentDictionary<string, Lazy<Task<bool>>> IndexInitializationTasks = new(StringComparer.Ordinal);
@@ -58,26 +52,24 @@ public sealed partial class MongoDistributedLock : IInternalDistributedLock<Mong
     {
         this._database = database ?? throw new ArgumentNullException(nameof(database));
         this._collectionName = collectionName ?? throw new ArgumentNullException(nameof(collectionName));
-
-        if (key == null) { throw new ArgumentNullException(nameof(key)); }
-        ValidateKey(key);
-        this.Key = key;
+        // From what I can tell, modern (and all supported) MongoDB versions have no limits on index keys or
+        // _id lengths other than the 16MB document limit. This is so high that providing "safe name" functionality as a fallback doesn't
+        // see worth it.
+        this.Key = key ?? throw new ArgumentNullException(nameof(key));
         this._options = MongoDistributedSynchronizationOptionsBuilder.GetOptions(options);
     }
 
-    ValueTask<MongoDistributedLockHandle?> IInternalDistributedLock<MongoDistributedLockHandle>.InternalTryAcquireAsync(TimeoutValue timeout, CancellationToken cancellationToken)
-    {
-        return BusyWaitHelper.WaitAsync(this,
+    ValueTask<MongoDistributedLockHandle?> IInternalDistributedLock<MongoDistributedLockHandle>.InternalTryAcquireAsync(TimeoutValue timeout, CancellationToken cancellationToken) =>
+        BusyWaitHelper.WaitAsync(this,
             (@this, ct) => @this.TryAcquireAsync(ct),
             timeout,
-            this._options.MinBusyWaitSleepTime,
-            this._options.MaxBusyWaitSleepTime,
+            minSleepTime: this._options.MinBusyWaitSleepTime,
+            maxSleepTime: this._options.MaxBusyWaitSleepTime,
             cancellationToken);
-    }
 
     private async ValueTask<MongoDistributedLockHandle?> TryAcquireAsync(CancellationToken cancellationToken)
     {
-        using var activity = ActivitySource.StartActivity("MongoDistributedLock.TryAcquire");
+        using var activity = ActivitySource.StartActivity(nameof(MongoDistributedLock) + ".TryAcquire");
         activity?.SetTag("lock.key", this.Key);
         activity?.SetTag("lock.collection", this._collectionName);
 
@@ -88,37 +80,30 @@ public sealed partial class MongoDistributedLock : IInternalDistributedLock<Mong
 
         // Use a unique token per acquisition attempt (like Redis' value token)
         var lockId = Guid.NewGuid().ToString("N");
-        var expiryMs = this._options.Expiry.InMilliseconds;
-
+        
         // We avoid exception-driven contention (DuplicateKey) by using a single upsert on {_id == Key}
         // and an update pipeline that only overwrites fields when the existing lock is expired.
         // This is conceptually similar to Redis: SET key value NX PX <expiry>.
         var filter = Builders<MongoLockDocument>.Filter.Eq(d => d.Id, this.Key);
-        var update = CreateAcquireUpdate(lockId, expiryMs);
+        var update = CreateAcquireUpdate(lockId, this._options.Expiry);
         var options = new FindOneAndUpdateOptions<MongoLockDocument>
         {
             IsUpsert = true,
             ReturnDocument = ReturnDocument.After
         };
 
-        MongoLockDocument? result;
-        if (SyncViaAsync.IsSynchronous)
-        {
-            result = collection.FindOneAndUpdate(filter, update, options, cancellationToken);
-        }
-        else
-        {
-            result = await collection.FindOneAndUpdateAsync(filter, update, options, cancellationToken).ConfigureAwait(false);
-        }
+        var result = SyncViaAsync.IsSynchronous
+            ? collection.FindOneAndUpdate(filter, update, options, cancellationToken)
+            : await collection.FindOneAndUpdateAsync(filter, update, options, cancellationToken).ConfigureAwait(false);
 
         // Verify we actually got the lock
-        if (result is not null && result.LockId == lockId)
+        if (result?.LockId == lockId)
         {
             activity?.SetTag("lock.acquired", true);
             activity?.SetTag("lock.fencing_token", result.FencingToken);
             return new(collection,
-                this.Key,
-                lockId,
+                key: this.Key,
+                lockId: lockId,
                 result.FencingToken,
                 this._options.Expiry,
                 this._options.ExtensionCadence);
@@ -127,8 +112,10 @@ public sealed partial class MongoDistributedLock : IInternalDistributedLock<Mong
         return null;
     }
 
-    private static UpdateDefinition<MongoLockDocument> CreateAcquireUpdate(string lockId, int expiryMs)
+    private static UpdateDefinition<MongoLockDocument> CreateAcquireUpdate(string lockId, TimeoutValue expiry)
     {
+        Invariant.Require(!expiry.IsInfinite);
+
         // expired := ifNull(expiresAt, epoch) <= $$NOW
         var expiredOrMissing = new BsonDocument(
             "$lte",
@@ -145,7 +132,7 @@ public sealed partial class MongoDistributedLock : IInternalDistributedLock<Mong
             {
                 { "startDate", "$$NOW" },
                 { "unit", "millisecond" },
-                { "amount", expiryMs }
+                { "amount", expiry.InMilliseconds }
             }
         );
 
@@ -188,8 +175,7 @@ public sealed partial class MongoDistributedLock : IInternalDistributedLock<Mong
 
         var lazy = IndexInitializationTasks.GetOrAdd(key, _ => new(() => CreateIndexesAsync(collection)));
 
-        var task = lazy.Value;
-        var success = await task.AwaitSyncOverAsync().ConfigureAwait(false);
+        var success = await lazy.Value.AwaitSyncOverAsync().ConfigureAwait(false);
         if (!success)
         {
             // If the task failed (returned false), we remove it so we can try again next time.
@@ -224,21 +210,6 @@ public sealed partial class MongoDistributedLock : IInternalDistributedLock<Mong
             // Other MongoDB errors (network, auth, etc.) - swallow to avoid blocking lock acquisition.
             // The lock will still work correctly; TTL cleanup is a best-effort optimization.
             return false;
-        }
-    }
-
-    /// <summary>
-    /// Validates that a key is valid for use as an exact MongoDB key.
-    /// </summary>
-    private static void ValidateKey(string key)
-    {
-        if (key == null) { throw new ArgumentNullException(nameof(key)); }
-        if (key.Length == 0) { throw new FormatException($"{nameof(key)}: must not be empty"); }
-
-        var byteCount = Encoding.UTF8.GetByteCount(key);
-        if (byteCount > MaxKeyLength)
-        {
-            throw new FormatException($"{nameof(key)}: must be at most {MaxKeyLength} bytes when encoded as UTF-8 (was {byteCount} bytes)");
         }
     }
 }

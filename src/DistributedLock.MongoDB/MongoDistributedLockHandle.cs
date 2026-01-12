@@ -32,7 +32,7 @@ public sealed class MongoDistributedLockHandle : IDistributedSynchronizationHand
         TimeoutValue extensionCadence)
     {
         this.FencingToken = fencingToken;
-        var innerHandle = new InnerHandle(collection, key, lockId, expiry, extensionCadence);
+        var innerHandle = new InnerHandle(collection, key: key, lockId: lockId, expiry, extensionCadence);
         this._innerHandle = innerHandle;
         // Register for managed finalization so the lock gets released if the handle is GC'd without being disposed
         this._finalizerRegistration = ManagedFinalizerQueue.Instance.Register(this, innerHandle);
@@ -58,14 +58,14 @@ public sealed class MongoDistributedLockHandle : IDistributedSynchronizationHand
     /// </summary>
     private sealed class InnerHandle : IAsyncDisposable
     {
-        private readonly CancellationTokenSource _cts;
+        private readonly CancellationTokenSource _handleLostSource;
         private readonly IMongoCollection<MongoLockDocument> _collection;
         private readonly Task _extensionTask;
         private readonly string _key;
         private readonly string _lockId;
         private int _disposed;
 
-        public CancellationToken HandleLostToken => this._cts.Token;
+        public CancellationToken HandleLostToken => this._handleLostSource.Token;
 
         public InnerHandle(
             IMongoCollection<MongoLockDocument> collection,
@@ -77,10 +77,10 @@ public sealed class MongoDistributedLockHandle : IDistributedSynchronizationHand
             this._collection = collection;
             this._key = key;
             this._lockId = lockId;
-            this._cts = new();
+            this._handleLostSource = new();
 
             // Start background task to extend the lock
-            this._extensionTask = this.ExtendLockAsync(expiry, extensionCadence, this._cts.Token);
+            this._extensionTask = this.ExtendLockAsync(expiry, extensionCadence, this._handleLostSource.Token);
         }
 
         public async ValueTask DisposeAsync()
@@ -90,7 +90,7 @@ public sealed class MongoDistributedLockHandle : IDistributedSynchronizationHand
                 return;
             }
 
-            this._cts.Cancel();
+            this._handleLostSource.Cancel();
             try
             {
                 await this._extensionTask.AwaitSyncOverAsync().ConfigureAwait(false);
@@ -101,7 +101,7 @@ public sealed class MongoDistributedLockHandle : IDistributedSynchronizationHand
             }
             finally
             {
-                this._cts.Dispose();
+                this._handleLostSource.Dispose();
                 await this.ReleaseLockAsync().ConfigureAwait(false);
             }
         }
@@ -178,9 +178,9 @@ public sealed class MongoDistributedLockHandle : IDistributedSynchronizationHand
         private async Task SignalLockLostAsync()
         {
 #if NET8_0_OR_GREATER
-            await this._cts.CancelAsync().ConfigureAwait(false);
+            await this._handleLostSource.CancelAsync().ConfigureAwait(false);
 #else
-            this._cts.Cancel();
+            this._handleLostSource.Cancel();
             await Task.CompletedTask.ConfigureAwait(false);
 #endif
         }
@@ -190,12 +190,10 @@ public sealed class MongoDistributedLockHandle : IDistributedSynchronizationHand
             var filter = Builders<MongoLockDocument>.Filter.Eq(d => d.Id, this._key) & Builders<MongoLockDocument>.Filter.Eq(d => d.LockId, this._lockId);
             if (SyncViaAsync.IsSynchronous)
             {
-                // ReSharper disable once MethodHasAsyncOverload
                 this._collection.DeleteOne(filter);
             }
             else
             {
-                // ReSharper disable once MethodSupportsCancellation
                 await this._collection.DeleteOneAsync(filter).ConfigureAwait(false);
             }
         }

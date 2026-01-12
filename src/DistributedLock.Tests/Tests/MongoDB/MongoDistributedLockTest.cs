@@ -164,6 +164,15 @@ public class MongoDistributedLockTest
     }
 
     [Test]
+    [Category("CI")]
+    public void TestActivitySourceNaming()
+    {
+        var assemblyName = typeof(MongoDistributedLock).Assembly.GetName()!;
+        Assert.That(MongoDistributedLock.ActivitySource.Name, Is.EqualTo(assemblyName.Name));
+        Assert.That(MongoDistributedLock.ActivitySource.Version, Is.EqualTo(assemblyName.Version!.ToString(3)));
+    }
+
+    [Test]
     public async Task TestIndexExistence()
     {
         var database = MongoDBCredentials.GetDefaultDatabase(Environment.CurrentDirectory);

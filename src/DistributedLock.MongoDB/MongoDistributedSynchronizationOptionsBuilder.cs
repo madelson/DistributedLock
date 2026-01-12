@@ -114,11 +114,8 @@ internal readonly struct MongoDistributedLockOptions(
     TimeoutValue minBusyWaitSleepTime,
     TimeoutValue maxBusyWaitSleepTime)
 {
-    public TimeoutValue Expiry { get; } = expiry;
-
-    public TimeoutValue ExtensionCadence { get; } = extensionCadence;
-
-    public TimeoutValue MinBusyWaitSleepTime { get; } = minBusyWaitSleepTime;
-
-    public TimeoutValue MaxBusyWaitSleepTime { get; } = maxBusyWaitSleepTime;
+    public TimeoutValue Expiry => expiry;
+    public TimeoutValue ExtensionCadence => extensionCadence;
+    public TimeoutValue MinBusyWaitSleepTime => minBusyWaitSleepTime;
+    public TimeoutValue MaxBusyWaitSleepTime => maxBusyWaitSleepTime;
 }
