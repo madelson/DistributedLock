@@ -2,6 +2,7 @@ using Medallion.Threading.MongoDB;
 using MongoDB.Driver;
 using Moq;
 using NUnit.Framework;
+using System.Text;
 
 namespace Medallion.Threading.Tests.MongoDB;
 
@@ -49,6 +50,40 @@ public class MongoDistributedLockTest
 
         // Cleanup
         await database.DropCollectionAsync(CustomCollectionName);
+    }
+
+    [Test]
+    public async Task TestLockNameSupport()
+    {
+        using var provider = new TestingMongoDistributedLockProvider();
+
+        var randomBytes = new byte[100_000];
+        new Random(12345).NextBytes(randomBytes);
+        var utf8 = Encoding.GetEncoding(
+            "utf-8",
+            new EncoderReplacementFallback("?"),
+            new DecoderReplacementFallback("?"));
+        var name = TestHelper.UniqueName + utf8.GetString(randomBytes);
+
+        var @lock = provider.CreateLockWithExactName(name);
+        await using var handle = await @lock.TryAcquireAsync();
+        Assert.IsNotNull(handle);
+
+        @lock = provider.CreateLockWithExactName(TestHelper.UniqueName + new string('z', 16_000_000));
+        await using var handle2 = await @lock.TryAcquireAsync();
+        Assert.IsNotNull(handle2);
+
+        @lock = provider.CreateLockWithExactName("");
+        await using var handle3 = await @lock.TryAcquireAsync();
+        Assert.IsNotNull(handle3);
+
+        @lock = provider.CreateLockWithExactName(" ");
+        await using var handle4 = await @lock.TryAcquireAsync();
+        Assert.IsNotNull(handle4);
+
+        @lock = provider.CreateLockWithExactName("\0");
+        await using var handle5 = await @lock.TryAcquireAsync();
+        Assert.IsNotNull(handle5);
     }
 
     [Test]
@@ -116,35 +151,6 @@ public class MongoDistributedLockTest
         var @lock = new MongoDistributedLock(Key, database);
         @lock.Key.ShouldEqual(Key);
         @lock.Name.ShouldEqual(Key);
-    }
-
-    [Test]
-    [Category("CI")]
-    public void TestValidatesEmptyKey()
-    {
-        var database = new Mock<IMongoDatabase>(MockBehavior.Strict).Object;
-        Assert.Throws<FormatException>(() => new MongoDistributedLock(string.Empty, database));
-    }
-
-    [Test]
-    [Category("CI")]
-    public void TestValidatesKeyTooLong()
-    {
-        var database = new Mock<IMongoDatabase>(MockBehavior.Strict).Object;
-        // Create a string that's exactly 256 bytes in UTF-8 (over the 255 limit)
-        var longKey = new string('a', 256);
-        Assert.Throws<FormatException>(() => new MongoDistributedLock(longKey, database));
-    }
-
-    [Test]
-    [Category("CI")]
-    public void TestValidatesMultibyteCharacters()
-    {
-        var database = new Mock<IMongoDatabase>(MockBehavior.Strict).Object;
-        // Chinese characters are 3 bytes each in UTF-8
-        // 86 characters * 3 bytes = 258 bytes (over 255 limit)
-        var multibyteLongKey = new string('汉', 86);
-        Assert.Throws<FormatException>(() => new MongoDistributedLock(multibyteLongKey, database));
     }
 
     [Test]
