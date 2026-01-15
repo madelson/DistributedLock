@@ -299,7 +299,7 @@ sequenceDiagram
     Note over PB,DB: expiresAt > now (held by A)
     DB->>PB: ❌ Lock Not Acquired
 
-    PB->>PB: Wait & Retry (exponential backoff)
+    PB->>PB: Wait & Retry
 
     PA->>PA: Background: ExtensionCadence timer
     PA->>DB: Update: Extend expiresAt += Expiry
@@ -410,59 +410,6 @@ This mechanism prevents the "split brain" scenario where two processes both beli
 - Lock extension happens in the background at `ExtensionCadence` intervals
 - Under contention, adaptive backoff reduces the load on MongoDB compared to fixed random intervals
 - The `expiresAt` TTL index keeps the collection clean without manual maintenance
-
-## Adaptive Backoff Strategy
-
-When contention is high, the adaptive backoff strategy exponentially increases the wait time between acquisition attempts:
-
-```mermaid
-graph TD
-    A["Attempt to Acquire"] --> B{"Lock Available?"}
-    B -->|Yes| C["✅ Acquired"]
-    B -->|No| D["Consecutive Failures: N"]
-
-    D --> E["Sleep Time = min * 1.5^N"]
-    E --> F["Add Random Jitter ±20%"]
-    F --> G["Wait: max(min, sleepTime + jitter)"]
-    G --> H["Retry"]
-    H --> A
-
-    C --> I["Reset Failure Counter"]
-
-    style C fill:#90EE90
-    style E fill:#FFD700
-    style F fill:#FFA500
-```
-
-### Backoff Comparison Chart
-
-#### Low Contention Scenario
-
-| Attempt # | Strategy | Sleep Duration | Notes              |
-| --------- | -------- | -------------- | ------------------ |
-| 1st       | Random   | 234ms          | Unpredictable      |
-| 2nd       | Random   | 567ms          | Unpredictable      |
-| 3rd       | Random   | 45ms           | Unpredictable      |
-| 4th       | Random   | 689ms          | Unpredictable      |
-| 1st       | Adaptive | 10ms           | Responsive         |
-| 2nd       | Adaptive | 15ms           | Exponential growth |
-| 3rd       | Adaptive | 22ms           | Controlled backoff |
-| 4th       | Adaptive | 33ms           | Still responsive   |
-
-#### High Contention Scenario
-
-| Attempt # | Strategy | Sleep Duration | Impact                     |
-| --------- | -------- | -------------- | -------------------------- |
-| 1st       | Random   | 234ms          | Constant high load         |
-| 2nd       | Random   | 567ms          | Constant high load         |
-| 3rd       | Random   | 45ms           | Constant high load         |
-| 4th       | Random   | 689ms          | Constant high load         |
-| 1st       | Adaptive | 10ms           | Starts responsive          |
-| 2nd       | Adaptive | 15ms           | Progressive backoff        |
-| 3rd       | Adaptive | 22ms           | Reduces MongoDB load       |
-| 4th       | Adaptive | 150ms          | Significantly reduces load |
-
-**Key Advantage**: Adaptive backoff automatically adjusts to contention level, providing better resource utilization
 
 ## Framework Support
 
