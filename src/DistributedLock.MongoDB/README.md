@@ -109,7 +109,7 @@ var @lock = new MongoDistributedLock(
 
 ### Custom Collection Name
 
-By default, locks are stored in a collection named `"distributed.locks"`. You can specify a custom collection name:
+By default, locks are stored in a collection named `"distributed_locks"`. You can specify a custom collection name:
 
 ```csharp
 // Direct lock creation with custom collection
@@ -190,7 +190,7 @@ graph TB
     Handle["MongoDistributedLockHandle"]
 
     MongoDB[("MongoDB Database")]
-    Collection["distributed.locks Collection"]
+    Collection["distributed_locks Collection"]
     TTLIndex["TTL Index on expiresAt"]
 
     Client -->|Creates| Lock

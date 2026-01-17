@@ -15,7 +15,7 @@
 		<AssemblyVersion>1.0.0.0</AssemblyVersion>
 		<Authors>Michael Adelson, joesdu</Authors>
 		<Description>Provides a distributed lock implementation based on MongoDB</Description>
-		<Copyright>Copyright © 2020 Michael Adelson</Copyright>
+		<Copyright>Copyright © 2026 Michael Adelson</Copyright>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<PackageTags>distributed lock async mongodb</PackageTags>
 		<PackageProjectUrl>https://github.com/madelson/DistributedLock</PackageProjectUrl>

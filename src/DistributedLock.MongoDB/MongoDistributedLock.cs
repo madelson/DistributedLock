@@ -11,17 +11,15 @@ namespace Medallion.Threading.MongoDB;
 /// </summary>
 public sealed partial class MongoDistributedLock : IInternalDistributedLock<MongoDistributedLockHandle>
 {
-    internal const string DefaultCollectionName = "distributed.locks";
+    internal const string DefaultCollectionName = "distributed_locks";
 
     private static readonly DateTime EpochUtc = new(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+    private static readonly MongoIndexInitializer IndexInitializer = new();
 
     /// <summary>
     /// ActivitySource for distributed tracing and diagnostics
     /// </summary>
     internal static readonly ActivitySource ActivitySource = new("DistributedLock.MongoDB", "1.0.0");
-
-    // We want to ensure indexes are created at most once per process per (database, collection)
-    private static readonly ConcurrentDictionary<string, Lazy<Task<bool>>> IndexInitializationTasks = new(StringComparer.Ordinal);
 
     private readonly string _collectionName;
     private readonly IMongoDatabase _database;
@@ -39,7 +37,7 @@ public sealed partial class MongoDistributedLock : IInternalDistributedLock<Mong
 
     /// <summary>
     /// Constructs a lock named <paramref name="key" /> using the provided <paramref name="database" /> and <paramref name="options" />.
-    /// The locks will be stored in a collection named "distributed.locks" by default.
+    /// The locks will be stored in a collection named "distributed_locks" by default.
     /// </summary>
     public MongoDistributedLock(string key, IMongoDatabase database, Action<MongoDistributedSynchronizationOptionsBuilder>? options = null)
         : this(key, database, DefaultCollectionName, options) { }
@@ -75,9 +73,6 @@ public sealed partial class MongoDistributedLock : IInternalDistributedLock<Mong
 
         var collection = this._database.GetCollection<MongoLockDocument>(this._collectionName);
 
-        // Ensure indexes exist (TTL cleanup); do this at most once per process per (db, collection)
-        await EnsureIndexesCreatedAsync(collection).ConfigureAwait(false);
-
         // Use a unique token per acquisition attempt (like Redis' value token)
         var lockId = Guid.NewGuid().ToString("N");
         
@@ -99,6 +94,7 @@ public sealed partial class MongoDistributedLock : IInternalDistributedLock<Mong
         // Verify we actually got the lock
         if (result?.LockId == lockId)
         {
+            _ = IndexInitializer.InitializeTtlIndex(collection);
             activity?.SetTag("lock.acquired", true);
             activity?.SetTag("lock.fencing_token", result.FencingToken);
             return new(new(this, lockId, collection), result.FencingToken);
@@ -156,58 +152,6 @@ public sealed partial class MongoDistributedLock : IInternalDistributedLock<Mong
         return new PipelineUpdateDefinition<MongoLockDocument>(new[] { setStage });
     }
 
-    private static async Task EnsureIndexesCreatedAsync(IMongoCollection<MongoLockDocument> collection)
-    {
-        // Best-effort TTL index to clean up expired rows over time.
-        // Note: TTL monitors run on a schedule; correctness MUST NOT depend on this.
-        var databaseName = collection.Database.DatabaseNamespace.DatabaseName;
-        // include the hash code of the settings to differentiate between different clusters/clients
-        // that happen to use the same database/collection names.
-        // While GetHashCode() isn't perfect, it should be sufficient to distinguish between different clients/settings
-        // in valid use-cases (e.g. diff connection strings).
-        var clientSettingsHash = collection.Database.Client.Settings.GetHashCode();
-        var key = clientSettingsHash + "|" + databaseName + "/" + collection.CollectionNamespace.CollectionName;
-
-        var lazy = IndexInitializationTasks.GetOrAdd(key, _ => new(() => CreateIndexesAsync(collection)));
-
-        var success = await lazy.Value.AwaitSyncOverAsync().ConfigureAwait(false);
-        if (!success)
-        {
-            // If the task failed (returned false), we remove it so we can try again next time.
-            // Note: worst case we remove a *new* valid task if a race happens, which is fine (just extra work).
-            IndexInitializationTasks.As<ICollection<KeyValuePair<string, Lazy<Task<bool>>>>>().Remove(new KeyValuePair<string, Lazy<Task<bool>>>(key, lazy));
-        }
-    }
-
-    private static async Task<bool> CreateIndexesAsync(IMongoCollection<MongoLockDocument> collection)
-    {
-        try
-        {
-            var indexKeys = Builders<MongoLockDocument>.IndexKeys.Ascending(d => d.ExpiresAt);
-            var indexOptions = new CreateIndexOptions
-            {
-                // TTL cleanup: remove documents once expiresAt < now
-                ExpireAfter = TimeSpan.Zero,
-                Name = "expiresAt_ttl"
-            };
-            var indexModel = new CreateIndexModel<MongoLockDocument>(indexKeys, indexOptions);
-            await collection.Indexes.CreateOneAsync(indexModel, cancellationToken: CancellationToken.None).ConfigureAwait(false);
-            return true;
-        }
-        catch (MongoCommandException ex) when (ex.CodeName is "IndexOptionsConflict" or "IndexKeySpecsConflict" or "IndexAlreadyExists")
-        {
-            // Index already exists with same or different options - this is acceptable.
-            // The existing index will still handle TTL cleanup.
-            return true;
-        }
-        catch (MongoException)
-        {
-            // Other MongoDB errors (network, auth, etc.) - swallow to avoid blocking lock acquisition.
-            // The lock will still work correctly; TTL cleanup is a best-effort optimization.
-            return false;
-        }
-    }
-
     /// <summary>
     /// Inner handle that performs actual lock management and release.
     /// Separated from the outer handle so it can be registered with ManagedFinalizerQueue.
@@ -222,17 +166,15 @@ public sealed partial class MongoDistributedLock : IInternalDistributedLock<Mong
         public CancellationToken HandleLostToken => this._monitor.HandleLostToken;
 
         TimeoutValue LeaseMonitor.ILeaseHandle.LeaseDuration => this._lock._options.Expiry;
-
-        // todo what if inf?
         TimeoutValue LeaseMonitor.ILeaseHandle.MonitoringCadence => this._lock._options.ExtensionCadence;
 
         public InnerHandle(MongoDistributedLock @lock, string lockId, IMongoCollection<MongoLockDocument> collection)
         {
             this._lock = @lock;
             this._lockId = lockId;
+            this._collection = collection;
             // important to set this last, since the monitor constructor will read other fields of this
             this._monitor = new(this);
-            this._collection = collection;
         }
 
         public async ValueTask DisposeAsync()

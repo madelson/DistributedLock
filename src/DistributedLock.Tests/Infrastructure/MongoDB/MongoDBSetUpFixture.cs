@@ -27,7 +27,7 @@ internal class MongoDBSetUpFixture
             if (IsMongoReady(settings, TimeSpan.FromSeconds(15))) { return; }
         }
 
-        throw new Exception("Failed to start Mongo!");
+        throw new Exception("Failed to start Mongo! Make sure Docker is started!");
 
         static bool DockerCommand(string[] args, bool throwOnError = false) =>
             Command.Run("docker", args, o => o.ThrowOnError(throwOnError))
