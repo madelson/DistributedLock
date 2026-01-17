@@ -81,14 +81,16 @@ You do not need it running as a service: the tests will start and stop instances
 
 ### MongoDB
 
-You can download the MongoDB Community Server from [here](https://www.mongodb.com/try/download/community).
-
-Alternatively, and recommended for quick testing, you can use Docker to spin up an instance without manual initialization.
-Run the following command:
+The recommended approach for MongoDB is to use Docker (e.g. Docker desktop on Windows). To spin up an instance without manual initialization. The test suite assumes docker is running and will try to start the container with:
 
 ```bat
-docker run -d -p 27017:27017 --name mongo mongo:latest
+docker run -d -p 27017:27017 --name distributed-lock-mong mongo:latest
 ```
+
+<details>
+<summary>Advanced setup options</summary>
+<p>
+You can download the MongoDB Community Server from [here](https://www.mongodb.com/try/download/community).
 
 Or use `docker compose` to start a replica set environment:
 
@@ -158,87 +160,7 @@ If you're using a replica set or sharded cluster, your connection string might l
 ```
 mongodb://yourUsername:yourPassword@host.docker.internal:27017,host.docker.internal:27018,host.docker.internal:27019/?replicaSet=rs0&authSource=admin&serverSelectionTimeoutMS=1000
 ```
-
-TODO cleanup
-<details>
-<summary style="font-size: 14px">中文说明</summary>
-
-对于 MongoDB,我们可以从他的官网下载社区版本来进行测试,下载地址:[MongoDB Community Server](https://www.mongodb.com/try/download/community).
-或者也可以使用 Docker 快速的启动一个测试环境.建议使用 Docker 来进行快速测试,而无需进行数据库服务初始化.以下是一个使用 Docker 启动 MongoDB 的命令:
-
-```bat
-docker run -d -p 27017:27017 --name mongo mongo:latest
-```
-
-或者使用 `docker compose` 来启动一个副本集环境:
-
-```yaml
-services:
-  mongo_primary:
-    image: bitnami/mongodb:latest
-    container_name: mongo_primary
-    environment:
-      - TZ=Asia/Chongqing
-      - MONGODB_ADVERTISED_HOSTNAME=host.docker.internal
-      - MONGODB_REPLICA_SET_MODE=primary
-      - MONGODB_REPLICA_SET_NAME=rs0
-      - MONGODB_ROOT_USER=yourUsername
-      - MONGODB_ROOT_PASSWORD=yourPassword
-      - MONGODB_REPLICA_SET_KEY=HxplckY2jXSwfDRE
-    ports:
-      - "27017:27017"
-    volumes:
-      - "mongodb_master_data:/bitnami/mongodb"
-
-  mongo_secondary:
-    image: bitnami/mongodb:latest
-    container_name: mongo_secondary
-    depends_on:
-      - mongo_primary
-    environment:
-      - TZ=Asia/Chongqing
-      - MONGODB_ADVERTISED_HOSTNAME=host.docker.internal
-      - MONGODB_REPLICA_SET_MODE=secondary
-      - MONGODB_REPLICA_SET_NAME=rs0
-      - MONGODB_INITIAL_PRIMARY_PORT_NUMBER=27017
-      - MONGODB_INITIAL_PRIMARY_HOST=host.docker.internal
-      - MONGODB_INITIAL_PRIMARY_ROOT_USER=yourUsername
-      - MONGODB_INITIAL_PRIMARY_ROOT_PASSWORD=yourPassword
-      - MONGODB_REPLICA_SET_KEY=HxplckY2jXSwfDRE
-    ports:
-      - "27018:27017"
-
-  mongo_arbiter:
-    image: bitnami/mongodb:latest
-    container_name: mongo_arbiter
-    depends_on:
-      - mongo_primary
-    environment:
-      - TZ=Asia/Chongqing
-      - MONGODB_ADVERTISED_HOSTNAME=host.docker.internal
-      - MONGODB_REPLICA_SET_MODE=arbiter
-      - MONGODB_REPLICA_SET_NAME=rs0
-      - MONGODB_INITIAL_PRIMARY_PORT_NUMBER=27017
-      - MONGODB_INITIAL_PRIMARY_HOST=host.docker.internal
-      - MONGODB_INITIAL_PRIMARY_ROOT_USER=yourUsername
-      - MONGODB_INITIAL_PRIMARY_ROOT_PASSWORD=yourPassword
-      - MONGODB_REPLICA_SET_KEY=HxplckY2jXSwfDRE
-    ports:
-      - "27019:27017"
-
-volumes:
-  mongodb_master_data:
-    driver: local
-```
-
-测试项目默认连接地址为 `mongodb://localhost:27017`. 如果需要配置用户名密码或者其他连接参数, 请在 `DistributedLock.Tests/credentials/mongodb.txt` 文件中填入完整的连接字符串.
-
-若是使用副本集或者分片集群模式,链接字符串可以填入类似如下格式:
-
-```
-mongodb://yourUsername:yourPassword@host.docker.internal:27017,host.docker.internal:27018,host.docker.internal:27019/?replicaSet=rs0&authSource=admin&serverSelectionTimeoutMS=1000
-```
-
+</p>
 </details>
 
 ### ZooKeeper
