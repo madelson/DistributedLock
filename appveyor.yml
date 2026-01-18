@@ -1,8 +1,5 @@
 version: 1.0.{build}
 
-environment:
-  CI: true
-
 image:
   # Ubuntu2204 needed for .NET 8 for now (see https://www.appveyor.com/docs/linux-images-software/)
   - Ubuntu2204

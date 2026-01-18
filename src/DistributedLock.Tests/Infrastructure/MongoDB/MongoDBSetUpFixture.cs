@@ -11,7 +11,7 @@ internal class MongoDBSetUpFixture
     [OneTimeSetUp]
     public void OneTimeSetUp()
     {
-        if (!TestHelper.IsCi) { return; }
+        if (TestHelper.IsCi) { return; } // currently we don't attempt integration tests on CI
 
         var settings = MongoClientSettings.FromConnectionString(MongoDBCredentials.GetConnectionString(Environment.CurrentDirectory));
         if (IsMongoReady(settings, TimeSpan.FromSeconds(3))) { return; }
