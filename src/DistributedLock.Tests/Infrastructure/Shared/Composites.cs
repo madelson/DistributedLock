@@ -51,7 +51,7 @@ public class TestingCompositeWaitHandleDistributedSemaphore(string name, int max
         this._provider.TryAcquireAllSemaphoresAsync(this._names, maxCount, timeout, cancellationToken);
 }
 
-public class TestingCompositePostgresReaderWriterLock(string name, string connectionString, Action<PostgresConnectionOptionsBuilder>? options) : IDistributedReaderWriterLock
+public class TestingCompositePostgresReaderWriterLock(string name, string connectionString, Action<PostgresConnectionOptionsBuilder>? options = null) : IDistributedReaderWriterLock
 {
     private readonly PostgresDistributedSynchronizationProvider _provider = new(connectionString, options);
     private readonly string[] _names = [name + "_1", name + "_2"];
