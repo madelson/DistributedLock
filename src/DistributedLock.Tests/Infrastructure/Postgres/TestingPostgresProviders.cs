@@ -1,5 +1,4 @@
-﻿using Medallion.Threading.Internal;
-using Medallion.Threading.Postgres;
+﻿using Medallion.Threading.Postgres;
 using Medallion.Threading.Tests.Data;
 
 namespace Medallion.Threading.Tests.Postgres;

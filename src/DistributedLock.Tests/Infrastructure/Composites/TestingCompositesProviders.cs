@@ -25,7 +25,14 @@ public sealed class TestingCompositeDistributedSemaphoreProvider : TestingSemaph
 public sealed class TestingCompositeReaderWriterLockProvider : TestingReaderWriterLockProvider<TestingConnectionMultiplexingSynchronizationStrategy<TestingPostgresDb>>
 {
     public override IDistributedReaderWriterLock CreateReaderWriterLockWithExactName(string name) =>
-        new TestingCompositePostgresReaderWriterLock(name, this.Strategy.GetConnectionOptions().ConnectionString!);
+        this.Strategy.GetConnectionOptions()
+            .Create(
+                fromConnectionString: (connectionString, options) => new TestingCompositePostgresReaderWriterLock(
+                    name,
+                    connectionString,
+                    TestingPostgresDistributedLockProvider<TestingConnectionMultiplexingSynchronizationStrategy<TestingPostgresDb>>.ToPostgresOptions(options)),
+                fromConnection: _ => throw new Exception(),
+                fromTransaction: _ => throw new Exception());
 
     public override string GetSafeName(string name) => name ?? throw new ArgumentNullException(nameof(name));
 }
