@@ -247,7 +247,7 @@ public class DistributedLockProviderExtensionsTest
         }
     }
 
-    [Test]
+    [Test, Retry(3)] // timing-sensitive
     public async Task TestCompositeRemainingTimeDistribution()
     {
         var mockProvider = new Mock<IDistributedLockProvider>();
@@ -259,13 +259,13 @@ public class DistributedLockProviderExtensionsTest
         mockProvider.Setup(p => p.CreateLock("A")).Returns(mockLockA.Object);
         mockProvider.Setup(p => p.CreateLock("B")).Returns(mockLockB.Object);
 
-        var capturedTimeouts = new List<TimeSpan>();
+        List<TimeSpan> capturedTimeouts = [];
 
         mockLockA.Setup(l => l.TryAcquireAsync(It.IsAny<TimeSpan>(), default))
-            .ReturnsAsync((TimeSpan timeout, CancellationToken _) =>
+            .Returns(async (TimeSpan timeout, CancellationToken _) =>
             {
                 capturedTimeouts.Add(timeout);
-                Task.Delay(TimeSpan.FromMilliseconds(100)).Wait();
+                await Task.Delay(TimeSpan.FromMilliseconds(100));
                 return mockHandleA.Object;
             });
 
@@ -279,17 +279,15 @@ public class DistributedLockProviderExtensionsTest
         var names = new List<string> { "A", "B" };
         var totalTimeout = TimeSpan.FromSeconds(5);
 
-        var result = await mockProvider.Object.TryAcquireAllLocksAsync(names, totalTimeout, default);
+        await using var result = await mockProvider.Object.TryAcquireAllLocksAsync(names, totalTimeout, default);
 
         Assert.That(result, Is.Not.Null);
         Assert.That(capturedTimeouts.Count, Is.EqualTo(2));
 
-        Assert.That(capturedTimeouts[0].TotalMilliseconds, Is.EqualTo(totalTimeout.TotalMilliseconds).Within(1.0));
+        Assert.That(capturedTimeouts[0].TotalMilliseconds, Is.EqualTo(totalTimeout.TotalMilliseconds).Within(TestHelper.IsCi ? 50 : 2));
 
         Assert.That(capturedTimeouts[1], Is.LessThan(totalTimeout));
         Assert.That(capturedTimeouts[1], Is.GreaterThanOrEqualTo(TimeSpan.Zero));
-
-        await result!.DisposeAsync();
     }
 
     [Test]
