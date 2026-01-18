@@ -26,7 +26,7 @@ static class SyncViaAsync
     public static void Run<TState>(Func<TState, ValueTask> action, TState state)
     {
         Run(
-            async s =>
+            static async s =>
             {
                 await s.action(s.state).ConfigureAwait(false);
                 return true;
@@ -40,8 +40,10 @@ static class SyncViaAsync
     /// </summary>
     public static TResult Run<TState, TResult>(Func<TState, ValueTask<TResult>> action, TState state)
     {
-        Invariant.Require(!_isSynchronous);
+        // Currently composites is the one place where we are reentrant wrt SyncViaAsync
+        Invariant.Require(!_isSynchronous || Environment.StackTrace.Contains(nameof(CompositeDistributedSynchronizationHandle)));
 
+        var wasSynchronous = _isSynchronous;
         try
         {
             _isSynchronous = true;
@@ -62,7 +64,7 @@ static class SyncViaAsync
         }
         finally
         {
-            _isSynchronous = false;
+            _isSynchronous = wasSynchronous;
         }
     }
 

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Medallion.Threading.SqlServer;
 using Medallion.Threading.WaitHandles;
 using Medallion.Threading.Postgres;
@@ -15,6 +15,8 @@ using System.Collections.Generic;
 using Medallion.Threading.ZooKeeper;
 using Medallion.Threading.MySql;
 using Medallion.Threading.Oracle;
+using Medallion.Threading.MongoDB;
+using Medallion.Threading.Tests.MongoDB;
 
 namespace DistributedLockTaker;
 
@@ -134,6 +136,21 @@ internal static class Program
                     ).AcquireAsync().Result;
                     break;
                 }
+            case nameof(MongoDistributedLock):
+                handle = new MongoDistributedLock(name, MongoDBCredentials.GetDefaultDatabase(Environment.CurrentDirectory), options => options.Expiry(TimeSpan.FromSeconds(2))).Acquire();
+                break;
+            case nameof(TestingCompositeFileDistributedLock):
+                handle = new TestingCompositeFileDistributedLock(name).Acquire();
+                break;
+            case nameof(TestingCompositeWaitHandleDistributedSemaphore) + "1AsMutex":
+                handle = new TestingCompositeWaitHandleDistributedSemaphore(name, maxCount: 1).Acquire();
+                break;
+            case nameof(TestingCompositeWaitHandleDistributedSemaphore) + "5AsMutex":
+                handle = new TestingCompositeWaitHandleDistributedSemaphore(name, maxCount: 5).Acquire();
+                break;
+            case "Write" + nameof(TestingCompositePostgresReaderWriterLock):
+                handle = new TestingCompositePostgresReaderWriterLock(name, PostgresCredentials.GetConnectionString(Environment.CurrentDirectory)).AcquireWriteLock();
+                break;
             default:
                 Console.Error.WriteLine($"type: {type}");
                 return 123;

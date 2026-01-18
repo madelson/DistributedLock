@@ -29,7 +29,8 @@ public class TestSetupTest
         var combinatorialTestsFile = Path.GetFullPath(Path.Combine(TestContext.CurrentContext.TestDirectory, "..", "..", "..", "Tests", "CombinatorialTests.cs"));
 
         var expectedTestContents =
-$@"using Medallion.Threading.Tests.Data;
+$@"// AUTO-GENERATED
+using Medallion.Threading.Tests.Data;
 using NUnit.Framework;
 
 {string.Join(
@@ -104,7 +105,7 @@ $@"namespace {g.Key}
             .Where(ns => ns.StartsWith(typeof(TestSetupTest).Namespace!))
             .ToList();
         if (namespaces.Count > 1) { namespaces.RemoveAll(ns => ns == typeof(TestSetupTest).Namespace); }
-        if (namespaces.Count > 1) { namespaces.RemoveAll(ns => ns.EndsWith(".Data")); }
+        if (namespaces.Count > 1) { namespaces.RemoveAll(ns => ns.EndsWith(".Data") || ns.EndsWith(".Composites")); }
         if (namespaces.Count > 1) { Assert.Fail(string.Join(", ", namespaces)); }
         return (declaration, namespaces.Single());
     }

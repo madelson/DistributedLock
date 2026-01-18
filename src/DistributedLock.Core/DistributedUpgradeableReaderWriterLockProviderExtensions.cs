@@ -1,5 +1,7 @@
 // AUTO-GENERATED
 
+using Medallion.Threading.Internal;
+
 namespace Medallion.Threading;
 
 /// <summary>
@@ -7,6 +9,8 @@ namespace Medallion.Threading;
 /// </summary>
 public static class DistributedUpgradeableReaderWriterLockProviderExtensions
 {
+    # region Single Lock Methods
+
     /// <summary>
     /// Equivalent to calling <see cref="IDistributedUpgradeableReaderWriterLockProvider.CreateUpgradeableReaderWriterLock(string)" /> and then
     /// <see cref="IDistributedUpgradeableReaderWriterLock.TryAcquireUpgradeableReadLock(TimeSpan, CancellationToken)" />.
@@ -34,4 +38,13 @@ public static class DistributedUpgradeableReaderWriterLockProviderExtensions
     /// </summary>
     public static ValueTask<IDistributedLockUpgradeableHandle> AcquireUpgradeableReadLockAsync(this IDistributedUpgradeableReaderWriterLockProvider provider, string name, TimeSpan? timeout = null, CancellationToken cancellationToken = default) =>
         (provider ?? throw new ArgumentNullException(nameof(provider))).CreateUpgradeableReaderWriterLock(name).AcquireUpgradeableReadLockAsync(timeout, cancellationToken);
+
+    # endregion
+
+    # region Composite Lock Methods
+
+    // Composite methods are not supported for IDistributedUpgradeableReaderWriterLock
+    // because a composite acquire operation must be able to roll back and upgrade does not support that.
+
+    # endregion
 }

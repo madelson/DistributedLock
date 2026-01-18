@@ -16,7 +16,7 @@ public abstract class ExternalConnectionOrTransactionStrategyTestCases<TLockProv
     [TearDown] public void TearDown() => this._lockProvider.Dispose();
 
     [Test]
-    [NonParallelizable, Retry(tryCount: 3)] // timing sensitive for SqlSemaphore (see comment in that file regarding the 32ms wait)
+    [NonParallelizable, Retry(tryCount: 3)] // timing sensitive for SqlSemaphore (see SQL_SEMAPHORE_ONE_WAIT)
     public async Task TestDeadlockDetection()
     {
         var timeout = TimeSpan.FromSeconds(20);

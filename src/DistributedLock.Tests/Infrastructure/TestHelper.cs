@@ -11,6 +11,8 @@ internal static class TestHelper
     /// </summary>
     public static string UniqueName => $"{TestContext.CurrentContext.Test.FullName}_{TargetFramework.Current}";
 
+    public static bool IsCi { get; } = Environment.GetEnvironmentVariable("CI")?.ToLowerInvariant() == "true";
+
     public static T ShouldEqual<T>(this T @this, T that, string? message = null)
     {
         Assert.That(@this, Is.EqualTo(that), message: message);

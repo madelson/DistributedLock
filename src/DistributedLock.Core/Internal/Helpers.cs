@@ -21,11 +21,6 @@ static class Helpers
         where TDerived : TBase =>
         await task.ConfigureAwait(false);
 
-    public readonly struct TaskConversion
-    {
-        public TaskConversion<TTo> To<TTo>() => throw new InvalidOperationException();
-    }
-
     public readonly struct TaskConversion<TTo> { }
 
     internal static async ValueTask ConvertToVoid<TResult>(this ValueTask<TResult> task) => await task.ConfigureAwait(false);
@@ -104,6 +99,7 @@ static class Helpers
         public void UnsafeOnCompleted(Action continuation) => this._taskAwaiter.UnsafeOnCompleted(continuation);
     }
 
+    [Obsolete("Will be removed in DistributedLock.Core 1.1")]
     public static bool TryGetValue<T>(this T? nullable, out T value)
         where T : struct
     {

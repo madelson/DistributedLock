@@ -30,6 +30,25 @@ However, in a large and complex system there is always risk that this doesn't ha
 
 To provide additional protection against the "leaking" of lock handles, DistributedLock's primitives are designed so that a handle being garbage collected without being disposed or a handle-holding process exiting unexpectedly **will not cause a lock to be held forever**. This helps ensure that systems built on distributed locking are robust to unexpected failures.
 
+## Composite locking
+
+Sometimes, you need to acquire multiple fine-grained locks in an all-or-nothing manner (e.g. acquiring 2 per-account locks before doing an operation that affects both). Since DistributedLock.Core 1.0.9, the library now supports this via provider extension methods. For example:
+
+```
+IDistributedLockProvider provider = ...
+await using (var handle = await provider.TryAcquireAllLocksAsync(new[] { "lockName1", "lockName2", ... }, timeout, cancellationToken))
+{
+    if (handle != null)
+    {
+        // all locks successfully acquired!
+    }
+}
+```
+
+An equivalent operation is supported for read locks, write locks, and semaphores.
+
+NOTE: the locks will be acquired in the order provided. It is up to the caller to ensure ordering consistency across operations to prevent deadlocks (e.g. you might sort the lock names before acquiring).
+
 ## Safety of distributed locking
 
 Distributed locking is one of the easiest ways to add robustness to a distributed system without overly-complex design. However, the nature of the approach means that for certain scenarios it may not always be the best fit.
@@ -41,4 +60,3 @@ In some cases, tying together the locking technology with the underlying resourc
 In other cases, this sort of unification isn't possible. If any violation of the locking guarantees is unacceptable, you may have to consider more complex approaches such as the techniques discussed in [this article](https://martin.kleppmann.com/2016/02/08/how-to-do-distributed-locking.html). In many cases, you simply won't be able to achieve true safety because of constraints driven by the resources you are trying to protect.
 
 As mentioned at the start, the distributed locking approaches offered by this library are, in my experience, good enough for a large number of real-life scenarios. Furthermore, they are easy to use correctly and easy to reason about. However, it is worth being aware of any technology's limitations!
-

@@ -38,7 +38,16 @@ public sealed class TestingRedisSynchronizationStrategy<TDatabaseProvider> : Tes
     {
         Invariant.Require(!this._preparedForHandleLost);
         this._preparedForHandleLost = true;
-        return new HandleLostScope(this);
+        return new ReleaseAction(() =>
+        {
+            Invariant.Require(this._preparedForHandleLost);
+            try { this._killHandleAction?.Invoke(); }
+            finally
+            {
+                this._killHandleAction = null;
+                this._preparedForHandleLost = false;
+            }
+        });
     }
 
     public override void PrepareForHandleAbandonment() => this._preparedForHandleAbandonment = true;
@@ -54,31 +63,6 @@ public sealed class TestingRedisSynchronizationStrategy<TDatabaseProvider> : Tes
         if (this._preparedForHandleLost)
         {
             this._killHandleAction += action;
-        }
-    }
-
-    private class HandleLostScope : IDisposable
-    {
-        private TestingRedisSynchronizationStrategy<TDatabaseProvider>? _strategy;
-
-        public HandleLostScope(TestingRedisSynchronizationStrategy<TDatabaseProvider> strategy)
-        {
-            this._strategy = strategy;
-        }
-
-        public void Dispose()
-        {
-            var strategy = Interlocked.Exchange(ref this._strategy, null);
-            if (strategy != null)
-            {
-                Invariant.Require(strategy._preparedForHandleLost);
-                try { strategy._killHandleAction?.Invoke(); }
-                finally
-                {
-                    strategy._killHandleAction = null;
-                    strategy._preparedForHandleLost = false;
-                }
-            }
         }
     }
 }
