@@ -19,12 +19,8 @@ public class MongoDistributedLockTest
         {
             Assert.That(handle, Is.Not.Null);
             // Use async TryAcquireAsync instead of synchronous IsHeld()
-            var handle2 = await @lock.TryAcquireAsync(TimeSpan.Zero);
+            await using var handle2 = await @lock.TryAcquireAsync(TimeSpan.Zero);
             Assert.That(handle2, Is.Null, "Lock should be held");
-            if (handle2 != null)
-            {
-                await handle2.DisposeAsync();
-            }
         }
         // Verify lock is released
         await using (var handle = await @lock.TryAcquireAsync(TimeSpan.FromSeconds(1)))
@@ -129,7 +125,7 @@ public class MongoDistributedLockTest
         await using (var handle1 = await lock1.AcquireAsync())
         {
             Assert.That(handle1, Is.Not.Null);
-            var handle2 = await lock2.TryAcquireAsync(TimeSpan.FromMilliseconds(100));
+            await using var handle2 = await lock2.TryAcquireAsync(TimeSpan.FromMilliseconds(100));
             Assert.That(handle2, Is.Null, "Should not acquire lock while held by another instance");
         }
 
@@ -239,7 +235,8 @@ public class MongoDistributedLockTest
             // First set it up so that acquire will fail
             collection.Setup(c => c.FindOneAndUpdateAsync(It.IsAny<FilterDefinition<MongoLockDocument>>(), It.IsAny<UpdateDefinition<MongoLockDocument>>(), It.IsAny<FindOneAndUpdateOptions<MongoLockDocument, MongoLockDocument>>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync((MongoLockDocument)null!);
-            await @lock.TryAcquireAsync();
+            await using var handle = await @lock.TryAcquireAsync();
+            Assert.IsNull(handle);
             index.Verify(i => i.CreateOneAsync(It.IsAny<CreateIndexModel<MongoLockDocument>>(), It.IsAny<CreateOneIndexOptions>(), It.IsAny<CancellationToken>()), Times.Never, "Failed acquire does not trigger index creation");
 
             // Allow FindOneAndUpdate
@@ -251,8 +248,10 @@ public class MongoDistributedLockTest
                     var lockId = pipeline.Documents[0]["$set"]["lockId"]["$cond"][1].AsString;
                     return new MongoLockDocument { Id = Guid.NewGuid().ToString(), LockId = lockId };
                 });
-            
-            await @lock.TryAcquireAsync();
+            collection.Setup(c => c.DeleteOneAsync(It.IsAny<FilterDefinition<MongoLockDocument>>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new DeleteResult.Acknowledged(1));
+
+            await (await @lock.AcquireAsync()).DisposeAsync();
         }
 
         // We want to verify ConfigureIndexes is called on BOTH.
@@ -303,14 +302,16 @@ public class MongoDistributedLockTest
                 var lockId = pipeline.Documents[0]["$set"]["lockId"]["$cond"][1].AsString;
                 return new MongoLockDocument { Id = Guid.NewGuid().ToString(), LockId = lockId };
             });
+        collection.Setup(c => c.DeleteOneAsync(It.IsAny<FilterDefinition<MongoLockDocument>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new DeleteResult.Acknowledged(1));
 
         var @lock = new MongoDistributedLock("k", db.Object, "locks");
         
         // First acquire: fails to create index (swallowed), acquires lock
-        await @lock.TryAcquireAsync();
+        await (await @lock.AcquireAsync()).DisposeAsync();
         
         // Second acquire: caches the failed task, so it won't retry.
-        await @lock.TryAcquireAsync();
+        await (await @lock.AcquireAsync()).DisposeAsync();
 
         // Verify CreateOneAsync was called ONCE (proving caching).
         index.Verify(i => i.CreateOneAsync(It.IsAny<CreateIndexModel<MongoLockDocument>>(), It.IsAny<CreateOneIndexOptions>(), It.IsAny<CancellationToken>()), Times.Once(), "Should retry index creation after failure");
