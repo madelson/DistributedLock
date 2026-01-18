@@ -131,6 +131,7 @@ public class SomeService
 - [Interfaces](docs/Other%20topics.md#interfaces)
 - [Detecting handle loss](docs/Other%20topics.md#detecting-handle-loss)
 - [Handle abandonment](docs/Other%20topics.md#handle-abandonment)
+- [Composite locks](docs/Other%20topics.md#composite-locking)
 - [Safety of distributed locking](docs/Other%20topics.md#safety-of-distributed-locking)
 
 ## Contributing
