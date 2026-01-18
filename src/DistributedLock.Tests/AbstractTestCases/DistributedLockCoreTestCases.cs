@@ -209,6 +209,29 @@ public abstract class DistributedLockCoreTestCases<TLockProvider, TStrategy>
     }
 
     [Test]
+    [NonParallelizable] // takes locks with known names
+    public void TestGetSafeName()
+    {
+        Assert.Catch<ArgumentNullException>(() => this._lockProvider.GetSafeName(null!));
+
+        foreach (var name in new[] { string.Empty, new string('a', 1000), @"\\\\\", new string('\\', 1000) })
+        {
+            var safeName = this._lockProvider.GetSafeName(name);
+            Assert.DoesNotThrow(() => this._lockProvider.CreateLockWithExactName(safeName).Acquire(TimeSpan.FromSeconds(10)).Dispose(), $"{this.GetType().Name}: could not acquire '{name}'");
+        }
+    }
+
+    [Test]
+    public void TestGetSafeLockNameIsCaseSensitive()
+    {
+        var longName1 = new string('a', 1000);
+        var longName2 = new string('a', longName1.Length - 1) + "A";
+        StringComparer.OrdinalIgnoreCase.Equals(longName1, longName2).ShouldEqual(true, "sanity check");
+
+        Assert.That(this._lockProvider.GetSafeName(longName2), Is.Not.EqualTo(this._lockProvider.GetSafeName(longName1)));
+    }
+
+    [Test]
     public async Task TestLockNamesAreCaseSensitive()
     {
         // the goal here is to construct 2 valid lock names that differ only by case. We start by generating a hash name

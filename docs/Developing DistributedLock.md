@@ -34,7 +34,7 @@ GRANT ALL PRIVILEGES ON distributed_lock.* TO 'DistributedLock'@'localhost';
 GRANT SELECT ON performance_schema.* TO 'DistributedLock'@'localhost';
 ```
 
-(Windows) If you don't want MySQL always running on your machine, set the Startup type to "Manual" for `MariaDB`.
+(Windows) If you don't want MariaDB always running on your machine, set the Startup type to "Manual" for `MariaDB`.
 
 Finally, add your username (DistributedLock) and password to `DistributedLock.Tests/credentials/mariadb.txt`, with the username on line 1 and the password on line 2.
 
@@ -100,13 +100,13 @@ services:
     image: bitnami/mongodb:latest
     container_name: mongo_primary
     environment:
-      - TZ=Asia/Chongqing
+      - TZ=UTC
       - MONGODB_ADVERTISED_HOSTNAME=host.docker.internal
       - MONGODB_REPLICA_SET_MODE=primary
       - MONGODB_REPLICA_SET_NAME=rs0
       - MONGODB_ROOT_USER=yourUsername
       - MONGODB_ROOT_PASSWORD=yourPassword
-      - MONGODB_REPLICA_SET_KEY=HxplckY2jXSwfDRE
+      - MONGODB_REPLICA_SET_KEY=yourKey
     ports:
       - "27017:27017"
     volumes:
@@ -118,7 +118,7 @@ services:
     depends_on:
       - mongo_primary
     environment:
-      - TZ=Asia/Chongqing
+      - TZ=UTC
       - MONGODB_ADVERTISED_HOSTNAME=host.docker.internal
       - MONGODB_REPLICA_SET_MODE=secondary
       - MONGODB_REPLICA_SET_NAME=rs0
@@ -126,7 +126,7 @@ services:
       - MONGODB_INITIAL_PRIMARY_HOST=host.docker.internal
       - MONGODB_INITIAL_PRIMARY_ROOT_USER=yourUsername
       - MONGODB_INITIAL_PRIMARY_ROOT_PASSWORD=yourPassword
-      - MONGODB_REPLICA_SET_KEY=HxplckY2jXSwfDRE
+      - MONGODB_REPLICA_SET_KEY=yourKey
     ports:
       - "27018:27017"
 
@@ -136,7 +136,7 @@ services:
     depends_on:
       - mongo_primary
     environment:
-      - TZ=Asia/Chongqing
+      - TZ=UTC
       - MONGODB_ADVERTISED_HOSTNAME=host.docker.internal
       - MONGODB_REPLICA_SET_MODE=arbiter
       - MONGODB_REPLICA_SET_NAME=rs0
@@ -144,7 +144,7 @@ services:
       - MONGODB_INITIAL_PRIMARY_HOST=host.docker.internal
       - MONGODB_INITIAL_PRIMARY_ROOT_USER=yourUsername
       - MONGODB_INITIAL_PRIMARY_ROOT_PASSWORD=yourPassword
-      - MONGODB_REPLICA_SET_KEY=HxplckY2jXSwfDRE
+      - MONGODB_REPLICA_SET_KEY=yourKey
     ports:
       - "27019:27017"
 

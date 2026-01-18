@@ -137,7 +137,7 @@ internal static class Program
                     break;
                 }
             case nameof(MongoDistributedLock):
-                handle = new MongoDistributedLock(name, MongoDBCredentials.GetDefaultDatabase(Environment.CurrentDirectory), options => options.Expiry(TimeSpan.FromSeconds(5))).Acquire();
+                handle = new MongoDistributedLock(name, MongoDBCredentials.GetDefaultDatabase(Environment.CurrentDirectory), options => options.Expiry(TimeSpan.FromSeconds(2))).Acquire();
                 break;
             case nameof(TestingCompositeFileDistributedLock):
                 handle = new TestingCompositeFileDistributedLock(name).Acquire();

@@ -37,6 +37,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DistributedLock.MySql", "Di
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DistributedLock.Oracle", "DistributedLock.Oracle\DistributedLock.Oracle.csproj", "{1CAB9A1D-0C02-459C-A90E-47819832BD58}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DistributedLock.MongoDB", "DistributedLock.MongoDB\DistributedLock.MongoDB.csproj", "{92074E6D-99D1-46B1-A0AE-442EA1FEA397}"
+EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{FC144BB6-BA58-41E6-BB7E-76069FCDD293}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
@@ -46,8 +48,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		FixDistributedLockCoreDependencyVersion.targets = FixDistributedLockCoreDependencyVersion.targets
 		package.readme.md = package.readme.md
 	EndProjectSection
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DistributedLock.MongoDB", "DistributedLock.MongoDB\DistributedLock.MongoDB.csproj", "{92074E6D-99D1-46B1-A0AE-442EA1FEA397}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
