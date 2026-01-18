@@ -141,6 +141,9 @@ Setup steps for working with the repository locally are documented [here](docs/D
 
 ## Release notes
 
+- 2.8.0
+  - Add MongoDB support! Thanks [@joesdu](https://github.com/joesdu) for implementing! ([#121](https://github.com/madelson/DistributedLock/issues/121), DistributedLock.MongoDB 1.0)
+  - Add composite lock support. Thanks [@moeen](https://github.com/moeen) for implementing! ([#236](https://github.com/madelson/DistributedLock/issues/236), DistributedLock.Core 1.0.9)
 - 2.7.1
   - Improve compatibility with Redis clusters that require keys in Lua scripts to be passed via the KEYS array. Thanks [@pengweiqhca](https://github.com/pengweiqhca) for reporting a identifying the fix! ([#254](https://github.com/madelson/DistributedLock/issues/254), DistributedLock.Redis 1.1.1)
 - 2.7

@@ -40,6 +40,7 @@ static class SyncViaAsync
     /// </summary>
     public static TResult Run<TState, TResult>(Func<TState, ValueTask<TResult>> action, TState state)
     {
+        // Currently composites is the one place where we are reentrant wrt SyncViaAsync
         Invariant.Require(!_isSynchronous || Environment.StackTrace.Contains(nameof(CompositeDistributedSynchronizationHandle)));
 
         var wasSynchronous = _isSynchronous;
