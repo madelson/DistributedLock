@@ -142,6 +142,10 @@ Setup steps for working with the repository locally are documented [here](docs/D
 
 ## Release notes
 
+- 2.8.1
+	- Fix connection monitoring query on Oracle. Thanks [@matthew-marston](https://github.com/matthew-marston) for implementing! ([#271](https://github.com/madelson/DistributedLock/issues/271), DistributedLock.Oracle 1.0.5)
+	- Bump Microsoft.Data.SqlClient version ([#273](https://github.com/madelson/DistributedLock/issues/273), DistributedLock.SqlServer 1.0.7)
+	- Improve `SqlDistributedSemaphore` deadlock detection ([#264](https://github.com/madelson/DistributedLock/issues/264), DistributedLock.SqlServer 1.0.7)
 - 2.8.0
   - Add MongoDB support! Thanks [@joesdu](https://github.com/joesdu) for implementing! ([#121](https://github.com/madelson/DistributedLock/issues/121), DistributedLock.MongoDB 1.0)
   - Add composite lock support. Thanks [@moeen](https://github.com/moeen) for implementing! ([#236](https://github.com/madelson/DistributedLock/issues/236), DistributedLock.Core 1.0.9)

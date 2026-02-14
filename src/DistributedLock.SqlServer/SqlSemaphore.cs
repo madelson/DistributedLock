@@ -331,7 +331,7 @@ internal sealed class SqlSemaphore(int maxCount) : IDbSynchronizationStrategy<Sq
                 {C/* Prefix search here is important since it uses an index. We don't need escaping because we bound the name to use a fixed character set */}
                 WHERE name LIKE '##' + @{SemaphoreNameParameter} + '%'
 
-                {C/* Create the marker table. This table is exists to give others a count of the number of waiting/holding processes.
+                {C/* Create the marker table. This table exists to give others a count of the number of waiting/holding processes.
                  we name our marker table using the form ##[sem name][spid][separator][value]. We use SPID over a random value since SPID values are typically small integers
                  that recycle over time; this means that we may be able to take advantage of SQL temp table caching. The reason we need SPID here at all is because if another
                  transaction creates and destroys a table of name X, we will be blocked if we try to create table X before the transaction ends. */}
@@ -443,11 +443,11 @@ internal sealed class SqlSemaphore(int maxCount) : IDbSynchronizationStrategy<Sq
                         AND (@{LockScopeVariable} = 'Session' OR APPLOCK_MODE('public', @{TicketLockNameParameter}, 'Session') = 'NoLock')
                     BEGIN
                         {C/* "allowOneWait" will be specified when we are in a busy wait loop. To avoid burning CPU we pick the first unheld ticket we come
-                         across and allow that wait to be 32ms instead of 0. This is preferable to doing WAITFOR since the wait will be broken if that ticket
+                         across and allow that wait to be > 0. This is preferable to doing WAITFOR since the wait will be broken if that ticket
                          becomes available. Note that we used to wait just 1ms here. However, in testing that proved flaky in detecting
-                         deadlocks; empirically, 32ms seems to be sufficient to work reliably. The longer wait should also reduce the
+                         deadlocks; empirically, 64ms seems to be sufficient to work reliably. The longer wait should also reduce the
                          CPU load without meaningfully adding delay overhead (SQL_SEMAPHORE_ONE_WAIT) */}
-                        {(allowOneWait ? "DECLARE @lockTimeoutMillis INT = CASE @anyNotHeld WHEN 0 THEN 32 ELSE 0 END" : null)}
+                        {(allowOneWait ? "DECLARE @lockTimeoutMillis INT = CASE @anyNotHeld WHEN 0 THEN 64 ELSE 0 END" : null)}
                         SET @anyNotHeld = 1
 
                         {(
@@ -458,7 +458,7 @@ internal sealed class SqlSemaphore(int maxCount) : IDbSynchronizationStrategy<Sq
                                      DECLARE @createIntentMarkerTableSql NVARCHAR(MAX) = 'CREATE TABLE ' + @intentMarkerTableName + ' (_ BIT)'
                                      EXEC sp_executeSql @createIntentMarkerTableSql"
                             : null
-                    )}
+                        )}
 
                         EXEC @{LockResultVariable} = sys.sp_getapplock @{TicketLockNameParameter}, 'Exclusive', @{LockScopeVariable}, {(allowOneWait ? "@lockTimeoutMillis" : "0")}
                         IF @{LockResultVariable} >= 0
@@ -473,7 +473,7 @@ internal sealed class SqlSemaphore(int maxCount) : IDbSynchronizationStrategy<Sq
                             ? $@"DECLARE @dropIntentMarkerTableSql NVARCHAR(MAX) = 'DROP TABLE ' + @intentMarkerTableName
                                      EXEC sp_executeSql @dropIntentMarkerTableSql"
                             : null
-                    )}
+                        )}
 
                         {C/* on any unexpected lock failure, quit */}
                         IF @{LockResultVariable} < -1 GOTO CODA

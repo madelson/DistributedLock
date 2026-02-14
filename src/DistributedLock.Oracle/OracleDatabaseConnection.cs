@@ -36,7 +36,7 @@ internal class OracleDatabaseConnection : DatabaseConnection
     // from https://docs.oracle.com/html/E10927_01/OracleCommandClass.htm "this method is a no-op" wrt "Prepare()"
     public override bool ShouldPrepareCommands => false;
 
-    public override bool IsCommandCancellationException(Exception exception) => 
+    public override bool IsCommandCancellationException(Exception exception) =>
         exception is OracleException oracleException
             // based on https://docs.oracle.com/cd/E85694_01/ODPNT/CommandCancel.htm
             && (oracleException.Number == 01013 || oracleException.Number == 00936 || oracleException.Number == 00604);
@@ -44,7 +44,7 @@ internal class OracleDatabaseConnection : DatabaseConnection
     public override async Task SleepAsync(TimeSpan sleepTime, CancellationToken cancellationToken, Func<DatabaseCommand, CancellationToken, ValueTask<int>> executor)
     {
         using var sleepCommand = this.CreateCommand();
-        sleepCommand.SetCommandText("BEGIN sys.DBMS_SESSION.SLEEP(:seconds) END;");
+        sleepCommand.SetCommandText("BEGIN sys.DBMS_SESSION.SLEEP(:seconds); END;");
         sleepCommand.AddParameter("seconds", sleepTime.TotalSeconds);
 
         try
