@@ -14,9 +14,11 @@
     <NoWarn>1591</NoWarn>
     <!-- AOT compatibility is not needed in the CI pipeline, so override the value set in Directory.Build.props to use reflections freely -->
     <IsAotCompatible>false</IsAotCompatible>
+    <TargetFrameworks>net8.0</TargetFrameworks>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="GeneralData.GBase8s.DataProvider" />
     <PackageReference Include="nunit" />
     <PackageReference Include="NUnit.Analyzers">
       <PrivateAssets>all</PrivateAssets>

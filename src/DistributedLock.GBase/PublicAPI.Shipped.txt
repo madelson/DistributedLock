@@ -1,0 +1,48 @@
+﻿#nullable enable
+abstract Medallion.Threading.GBase.GBaseDistributedReaderWriterLockHandle.DisposeAsync() -> System.Threading.Tasks.ValueTask
+abstract Medallion.Threading.GBase.GBaseDistributedReaderWriterLockHandle.HandleLostToken.get -> System.Threading.CancellationToken
+Medallion.Threading.GBase.GBaseConnectionOptionsBuilder
+Medallion.Threading.GBase.GBaseConnectionOptionsBuilder.KeepaliveCadence(System.TimeSpan keepaliveCadence) -> Medallion.Threading.GBase.GBaseConnectionOptionsBuilder!
+Medallion.Threading.GBase.GBaseConnectionOptionsBuilder.UseMultiplexing(bool useMultiplexing = true) -> Medallion.Threading.GBase.GBaseConnectionOptionsBuilder!
+Medallion.Threading.GBase.GBaseDistributedLock
+Medallion.Threading.GBase.GBaseDistributedLock.Acquire(System.TimeSpan? timeout = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> Medallion.Threading.GBase.GBaseDistributedLockHandle!
+Medallion.Threading.GBase.GBaseDistributedLock.AcquireAsync(System.TimeSpan? timeout = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<Medallion.Threading.GBase.GBaseDistributedLockHandle!>
+Medallion.Threading.GBase.GBaseDistributedLock.Name.get -> string!
+Medallion.Threading.GBase.GBaseDistributedLock.GBaseDistributedLock(string! name, string! connectionString, System.Action<Medallion.Threading.GBase.GBaseConnectionOptionsBuilder!>? options = null, bool exactName = false) -> void
+Medallion.Threading.GBase.GBaseDistributedLock.GBaseDistributedLock(string! name, System.Data.IDbConnection! connection, bool exactName = false) -> void
+Medallion.Threading.GBase.GBaseDistributedLock.TryAcquire(System.TimeSpan timeout = default(System.TimeSpan), System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> Medallion.Threading.GBase.GBaseDistributedLockHandle?
+Medallion.Threading.GBase.GBaseDistributedLock.TryAcquireAsync(System.TimeSpan timeout = default(System.TimeSpan), System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<Medallion.Threading.GBase.GBaseDistributedLockHandle?>
+Medallion.Threading.GBase.GBaseDistributedLockHandle
+Medallion.Threading.GBase.GBaseDistributedLockHandle.Dispose() -> void
+Medallion.Threading.GBase.GBaseDistributedLockHandle.DisposeAsync() -> System.Threading.Tasks.ValueTask
+Medallion.Threading.GBase.GBaseDistributedLockHandle.HandleLostToken.get -> System.Threading.CancellationToken
+Medallion.Threading.GBase.GBaseDistributedReaderWriterLock
+Medallion.Threading.GBase.GBaseDistributedReaderWriterLock.AcquireReadLock(System.TimeSpan? timeout = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> Medallion.Threading.GBase.GBaseDistributedReaderWriterLockHandle!
+Medallion.Threading.GBase.GBaseDistributedReaderWriterLock.AcquireReadLockAsync(System.TimeSpan? timeout = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<Medallion.Threading.GBase.GBaseDistributedReaderWriterLockHandle!>
+Medallion.Threading.GBase.GBaseDistributedReaderWriterLock.AcquireUpgradeableReadLock(System.TimeSpan? timeout = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> Medallion.Threading.GBase.GBaseDistributedReaderWriterLockUpgradeableHandle!
+Medallion.Threading.GBase.GBaseDistributedReaderWriterLock.AcquireUpgradeableReadLockAsync(System.TimeSpan? timeout = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<Medallion.Threading.GBase.GBaseDistributedReaderWriterLockUpgradeableHandle!>
+Medallion.Threading.GBase.GBaseDistributedReaderWriterLock.AcquireWriteLock(System.TimeSpan? timeout = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> Medallion.Threading.GBase.GBaseDistributedReaderWriterLockHandle!
+Medallion.Threading.GBase.GBaseDistributedReaderWriterLock.AcquireWriteLockAsync(System.TimeSpan? timeout = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<Medallion.Threading.GBase.GBaseDistributedReaderWriterLockHandle!>
+Medallion.Threading.GBase.GBaseDistributedReaderWriterLock.Name.get -> string!
+Medallion.Threading.GBase.GBaseDistributedReaderWriterLock.GBaseDistributedReaderWriterLock(string! name, string! connectionString, System.Action<Medallion.Threading.GBase.GBaseConnectionOptionsBuilder!>? options = null, bool exactName = false) -> void
+Medallion.Threading.GBase.GBaseDistributedReaderWriterLock.GBaseDistributedReaderWriterLock(string! name, System.Data.IDbConnection! connection, bool exactName = false) -> void
+Medallion.Threading.GBase.GBaseDistributedReaderWriterLock.TryAcquireReadLock(System.TimeSpan timeout = default(System.TimeSpan), System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> Medallion.Threading.GBase.GBaseDistributedReaderWriterLockHandle?
+Medallion.Threading.GBase.GBaseDistributedReaderWriterLock.TryAcquireReadLockAsync(System.TimeSpan timeout = default(System.TimeSpan), System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<Medallion.Threading.GBase.GBaseDistributedReaderWriterLockHandle?>
+Medallion.Threading.GBase.GBaseDistributedReaderWriterLock.TryAcquireUpgradeableReadLock(System.TimeSpan timeout = default(System.TimeSpan), System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> Medallion.Threading.GBase.GBaseDistributedReaderWriterLockUpgradeableHandle?
+Medallion.Threading.GBase.GBaseDistributedReaderWriterLock.TryAcquireUpgradeableReadLockAsync(System.TimeSpan timeout = default(System.TimeSpan), System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<Medallion.Threading.GBase.GBaseDistributedReaderWriterLockUpgradeableHandle?>
+Medallion.Threading.GBase.GBaseDistributedReaderWriterLock.TryAcquireWriteLock(System.TimeSpan timeout = default(System.TimeSpan), System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> Medallion.Threading.GBase.GBaseDistributedReaderWriterLockHandle?
+Medallion.Threading.GBase.GBaseDistributedReaderWriterLock.TryAcquireWriteLockAsync(System.TimeSpan timeout = default(System.TimeSpan), System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<Medallion.Threading.GBase.GBaseDistributedReaderWriterLockHandle?>
+Medallion.Threading.GBase.GBaseDistributedReaderWriterLockHandle
+Medallion.Threading.GBase.GBaseDistributedReaderWriterLockHandle.Dispose() -> void
+Medallion.Threading.GBase.GBaseDistributedReaderWriterLockUpgradeableHandle
+Medallion.Threading.GBase.GBaseDistributedReaderWriterLockUpgradeableHandle.TryUpgradeToWriteLock(System.TimeSpan timeout = default(System.TimeSpan), System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> bool
+Medallion.Threading.GBase.GBaseDistributedReaderWriterLockUpgradeableHandle.TryUpgradeToWriteLockAsync(System.TimeSpan timeout = default(System.TimeSpan), System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<bool>
+Medallion.Threading.GBase.GBaseDistributedReaderWriterLockUpgradeableHandle.UpgradeToWriteLock(System.TimeSpan? timeout = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> void
+Medallion.Threading.GBase.GBaseDistributedReaderWriterLockUpgradeableHandle.UpgradeToWriteLockAsync(System.TimeSpan? timeout = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+Medallion.Threading.GBase.GBaseDistributedSynchronizationProvider
+Medallion.Threading.GBase.GBaseDistributedSynchronizationProvider.CreateLock(string! name, bool exactName = false) -> Medallion.Threading.GBase.GBaseDistributedLock!
+Medallion.Threading.GBase.GBaseDistributedSynchronizationProvider.CreateReaderWriterLock(string! name, bool exactName = false) -> Medallion.Threading.GBase.GBaseDistributedReaderWriterLock!
+Medallion.Threading.GBase.GBaseDistributedSynchronizationProvider.GBaseDistributedSynchronizationProvider(string! connectionString, System.Action<Medallion.Threading.GBase.GBaseConnectionOptionsBuilder!>? options = null) -> void
+Medallion.Threading.GBase.GBaseDistributedSynchronizationProvider.GBaseDistributedSynchronizationProvider(System.Data.IDbConnection! connection) -> void
+override Medallion.Threading.GBase.GBaseDistributedReaderWriterLockUpgradeableHandle.DisposeAsync() -> System.Threading.Tasks.ValueTask
+override Medallion.Threading.GBase.GBaseDistributedReaderWriterLockUpgradeableHandle.HandleLostToken.get -> System.Threading.CancellationToken
