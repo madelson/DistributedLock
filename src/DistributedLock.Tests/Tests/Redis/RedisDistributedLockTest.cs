@@ -29,6 +29,109 @@ public class RedisDistributedLockTest
         Assert.Throws<ArgumentException>(() => new RedisDistributedLock("key", Enumerable.Empty<IDatabase>()));
     }
 
+    [Test, Category("CI")]
+    public void TestDisconnectedSingleDatabaseCausesTryAcquireAsyncToThrow()
+    {
+        var pendingAcquire = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var database = new Mock<IDatabase>(MockBehavior.Strict);
+        database
+            .Setup(d => d.StringSetAsync(
+                It.IsAny<RedisKey>(),
+                It.IsAny<RedisValue>(),
+                It.IsAny<TimeSpan?>(),
+                It.IsAny<When>(),
+                It.IsAny<CommandFlags>()))
+            .Returns(pendingAcquire.Task);
+        database
+            .Setup(d => d.IsConnected(It.IsAny<RedisKey>(), It.IsAny<CommandFlags>()))
+            .Returns(false);
+
+        var @lock = new RedisDistributedLock(
+            "key",
+            database.Object,
+            options => options
+                .Expiry(TimeSpan.FromMilliseconds(200))
+                .MinValidityTime(TimeSpan.FromMilliseconds(100))
+        );
+
+        Assert.ThrowsAsync<RedisException>(() => @lock.TryAcquireAsync().AsTask());
+    }
+
+    [Test, Category("CI")]
+    public void TestSyntheticDisconnectedFaultDoesNotMaskRealFault()
+    {
+        var expectedException = new TimeZoneNotFoundException();
+        var faultedDatabase = new Mock<IDatabase>(MockBehavior.Strict);
+        faultedDatabase
+            .Setup(d => d.StringSetAsync(
+                It.IsAny<RedisKey>(),
+                It.IsAny<RedisValue>(),
+                It.IsAny<TimeSpan?>(),
+                It.IsAny<When>(),
+                It.IsAny<CommandFlags>()))
+            .Returns(Task.FromException<bool>(expectedException));
+        faultedDatabase
+            .Setup(d => d.ScriptEvaluateAsync(
+                It.IsAny<string>(),
+                It.IsAny<RedisKey[]>(),
+                It.IsAny<RedisValue[]>(),
+                It.IsAny<CommandFlags>()))
+            .ReturnsAsync(RedisResult.Create(false));
+
+        var connectedPendingAcquire = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var connectedDatabase = new Mock<IDatabase>(MockBehavior.Strict);
+        connectedDatabase
+            .Setup(d => d.StringSetAsync(
+                It.IsAny<RedisKey>(),
+                It.IsAny<RedisValue>(),
+                It.IsAny<TimeSpan?>(),
+                It.IsAny<When>(),
+                It.IsAny<CommandFlags>()))
+            .Returns(connectedPendingAcquire.Task);
+        connectedDatabase
+            .Setup(d => d.IsConnected(It.IsAny<RedisKey>(), It.IsAny<CommandFlags>()))
+            .Returns(true);
+
+        var disconnectedPendingAcquire = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var disconnectedDatabase = new Mock<IDatabase>(MockBehavior.Strict);
+        disconnectedDatabase
+            .Setup(d => d.StringSetAsync(
+                It.IsAny<RedisKey>(),
+                It.IsAny<RedisValue>(),
+                It.IsAny<TimeSpan?>(),
+                It.IsAny<When>(),
+                It.IsAny<CommandFlags>()))
+            .Returns(disconnectedPendingAcquire.Task);
+        disconnectedDatabase
+            .Setup(d => d.IsConnected(It.IsAny<RedisKey>(), It.IsAny<CommandFlags>()))
+            .Returns(false);
+
+        var @lock = new RedisDistributedLock(
+            "key",
+            new[] { faultedDatabase.Object, connectedDatabase.Object, disconnectedDatabase.Object }
+        );
+
+        Assert.ThrowsAsync<TimeZoneNotFoundException>(() => @lock.TryAcquireAsync().AsTask());
+    }
+
+    [Test, Category("CI")]
+    public async Task TestSingleDatabaseContentionCausesTryAcquireAsyncToReturnNull()
+    {
+        var database = new Mock<IDatabase>(MockBehavior.Strict);
+        database
+            .Setup(d => d.StringSetAsync(
+                It.IsAny<RedisKey>(),
+                It.IsAny<RedisValue>(),
+                It.IsAny<TimeSpan?>(),
+                It.IsAny<When>(),
+                It.IsAny<CommandFlags>()))
+            .ReturnsAsync(false);
+
+        var @lock = new RedisDistributedLock("key", database.Object);
+
+        Assert.That(await @lock.TryAcquireAsync(), Is.Null);
+    }
+
     /// <summary>
     /// Reproduces the bug in https://github.com/madelson/DistributedLock/issues/162
     /// where a Redis lock couldn't be acquired if the current CultureInfo was tr-TR,
