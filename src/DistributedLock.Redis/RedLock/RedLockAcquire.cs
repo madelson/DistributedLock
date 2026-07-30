@@ -138,7 +138,9 @@ internal readonly struct RedLockAcquire
                         .ToArray();
                     if (faultingTasks.Length == 0)
                     {
-                        await completed.ConfigureAwait(false); // propagate a synthetic disconnected fault
+                        // The original Redis task is still pending, so propagate the
+                        // disconnected-database exception created separately above.
+                        await completed.ConfigureAwait(false);
                     }
                     if (faultingTasks.Length == 1)
                     {
