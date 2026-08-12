@@ -107,7 +107,7 @@ internal
         }
 
         // offload cancel to a background thread to avoid hangs or errors
-        void OnHandleLost() => monitor._cancellationTask = Task.Run(() => monitor._handleLostSource.Cancel());
+        void OnHandleLost() => monitor._cancellationTask = monitor._handleLostSource.CancelAsync();
     }
 
     private async Task<LeaseState> CheckLeaseAsync()
