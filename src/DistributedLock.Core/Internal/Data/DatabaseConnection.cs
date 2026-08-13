@@ -171,4 +171,19 @@ internal
     public abstract bool IsCommandCancellationException(Exception exception);
 
     public abstract Task SleepAsync(TimeSpan sleepTime, CancellationToken cancellationToken, Func<DatabaseCommand, CancellationToken, ValueTask<int>> executor);
+
+    /// <summary>
+    /// Whether this connection supports monitoring via <see cref="PassiveMonitorAsync"/> instead of
+    /// parking a long-running sleep query on the connection (<see cref="SleepAsync"/>).
+    /// </summary>
+    public virtual bool SupportsPassiveMonitoring => false;
+
+    /// <summary>
+    /// Passively waits for connection activity/failure without executing a query. Returns true if
+    /// <paramref name="maxWaitTime"/> elapsed with the connection still healthy. Throws
+    /// <see cref="OperationCanceledException"/> on cancellation and a provider exception on connection
+    /// loss (which must also cause the underlying <see cref="DbConnection.StateChange"/> event to fire).
+    /// </summary>
+    public virtual Task<bool> PassiveMonitorAsync(TimeSpan maxWaitTime, CancellationToken cancellationToken) =>
+        throw new NotSupportedException();
 }

@@ -2,14 +2,19 @@
 using Medallion.Threading.Internal.Data;
 using Npgsql;
 using System.Data;
-#if NET7_0_OR_GREATER
 using System.Data.Common;
-#endif
 
 namespace Medallion.Threading.Postgres;
 
 internal sealed class PostgresDatabaseConnection : DatabaseConnection
 {
+    /// <summary>
+    /// Set only for connections we own and can therefore run passive monitoring on
+    /// (the monitor never runs background work on externally-owned connections)
+    /// </summary>
+    private readonly NpgsqlConnection? _ownedNpgsqlConnection;
+    private bool? _supportsPassiveMonitoring;
+
     public PostgresDatabaseConnection(IDbConnection connection)
         : base(connection, isExternallyOwned: true)
     {
@@ -22,14 +27,20 @@ internal sealed class PostgresDatabaseConnection : DatabaseConnection
 
 #if NET7_0_OR_GREATER
     public PostgresDatabaseConnection(DbDataSource dbDataSource)
-        : base(dbDataSource.CreateConnection(), isExternallyOwned: false)
+        : this(dbDataSource.CreateConnection())
     {
     }
 #endif
 
     public PostgresDatabaseConnection(string connectionString)
-        : base(new NpgsqlConnection(connectionString), isExternallyOwned: false)
+        : this(new NpgsqlConnection(connectionString))
     {
+    }
+
+    private PostgresDatabaseConnection(DbConnection ownedConnection)
+        : base(ownedConnection, isExternallyOwned: false)
+    {
+        this._ownedNpgsqlConnection = ownedConnection as NpgsqlConnection;
     }
 
     // see https://www.npgsql.org/doc/prepare.html
@@ -39,6 +50,19 @@ internal sealed class PostgresDatabaseConnection : DatabaseConnection
         exception is PostgresException postgresException
             // cancellation error code from https://www.postgresql.org/docs/10/errcodes-appendix.html
             && postgresException.SqlState == "57014";
+
+    // NpgsqlConnection.Wait is unsupported with Npgsql multiplexing, and unsafe to cancel when Npgsql
+    // KeepAlive is enabled (cancellation mid-keepalive-exchange breaks the connection) — monitoring
+    // falls back to the pg_sleep query in those cases
+    public override bool SupportsPassiveMonitoring =>
+        this._supportsPassiveMonitoring ??=
+            this._ownedNpgsqlConnection != null
+            && new NpgsqlConnectionStringBuilder(this._ownedNpgsqlConnection.ConnectionString) is { Multiplexing: false, KeepAlive: 0 };
+
+    public override async Task<bool> PassiveMonitorAsync(TimeSpan maxWaitTime, CancellationToken cancellationToken) =>
+        // WaitAsync returns true if an async message (e.g. a notification) arrived; we never LISTEN, so
+        // treat that as "still healthy but not a timeout" and let the monitoring loop continue
+        !await this._ownedNpgsqlConnection!.WaitAsync(maxWaitTime, cancellationToken).ConfigureAwait(false);
 
     public override async Task SleepAsync(TimeSpan sleepTime, CancellationToken cancellationToken, Func<DatabaseCommand, CancellationToken, ValueTask<int>> executor)
     {
