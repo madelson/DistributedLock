@@ -51,18 +51,40 @@ internal sealed class PostgresDatabaseConnection : DatabaseConnection
             // cancellation error code from https://www.postgresql.org/docs/10/errcodes-appendix.html
             && postgresException.SqlState == "57014";
 
+    public override async Task MonitorAsync(
+        TimeoutValue monitoringCadence,
+        TimeoutValue keepaliveCadence,
+        CancellationToken cancellationToken,
+        Func<DatabaseCommand, CancellationToken, ValueTask<int>> executor)
+    {
+        if (!this.SupportsPassiveMonitoring)
+        {
+            await base.MonitorAsync(monitoringCadence, keepaliveCadence, cancellationToken, executor).ConfigureAwait(false);
+            return;
+        }
+
+        // Passively wait for connection activity/failure without executing a query, leaving the
+        // session idle server-side. Cap the wait at the keepalive cadence so the session is never
+        // seen as idle for longer than that.
+        var maxWaitTime = !keepaliveCadence.IsInfinite && keepaliveCadence.CompareTo(monitoringCadence) < 0
+            ? keepaliveCadence
+            : monitoringCadence;
+        await this._ownedNpgsqlConnection!.WaitAsync(maxWaitTime.TimeSpan, cancellationToken).ConfigureAwait(false);
+
+        // the passive wait left the session idle; run the keepalive query to prevent idle session killing
+        if (!keepaliveCadence.IsInfinite && !cancellationToken.IsCancellationRequested)
+        {
+            await this.ExecuteKeepaliveQueryAsync().ConfigureAwait(false);
+        }
+    }
+
     // NpgsqlConnection.Wait is unsupported with Npgsql multiplexing, and unsafe to cancel when Npgsql
     // KeepAlive is enabled (cancellation mid-keepalive-exchange breaks the connection) — monitoring
     // falls back to the pg_sleep query in those cases
-    public override bool SupportsPassiveMonitoring =>
+    private bool SupportsPassiveMonitoring =>
         this._supportsPassiveMonitoring ??=
             this._ownedNpgsqlConnection != null
             && new NpgsqlConnectionStringBuilder(this._ownedNpgsqlConnection.ConnectionString) is { Multiplexing: false, KeepAlive: 0 };
-
-    public override async Task<bool> PassiveMonitorAsync(TimeSpan maxWaitTime, CancellationToken cancellationToken) =>
-        // WaitAsync returns true if an async message (e.g. a notification) arrived; we never LISTEN, so
-        // treat that as "still healthy but not a timeout" and let the monitoring loop continue
-        !await this._ownedNpgsqlConnection!.WaitAsync(maxWaitTime, cancellationToken).ConfigureAwait(false);
 
     public override async Task SleepAsync(TimeSpan sleepTime, CancellationToken cancellationToken, Func<DatabaseCommand, CancellationToken, ValueTask<int>> executor)
     {
