@@ -329,15 +329,8 @@ internal sealed class ConnectionMonitor : IAsyncDisposable
     private static async Task CancelAndDisposeAsync(
         CancellationTokenSource cancellationTokenSource)
     {
-        try
-        {
-            await cancellationTokenSource.CancelAsync()
-                .ConfigureAwait(false);
-        }
-        finally
-        {
-            cancellationTokenSource.Dispose();
-        }
+        try { await cancellationTokenSource.CancelAsync().ConfigureAwait(false); }
+        finally { cancellationTokenSource.Dispose(); }
     }
 
     private async Task MonitorWorkerLoop()
