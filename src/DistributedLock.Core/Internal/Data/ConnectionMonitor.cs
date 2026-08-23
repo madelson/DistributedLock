@@ -277,11 +277,7 @@ internal sealed class ConnectionMonitor : IAsyncDisposable
             if (isCancel)
             {
                 // cancel in a background thread in case we have hangs or errors
-                Task.Run(() =>
-                {
-                    try { cancellationTokenSource.Cancel(); }
-                    finally { cancellationTokenSource.Dispose(); }
-                });
+                _ = CancelAndDisposeAsync(cancellationTokenSource);
             }
             else
             {
@@ -327,11 +323,14 @@ internal sealed class ConnectionMonitor : IAsyncDisposable
         // it is still safer and easier to reason about not to have that happen. This also ensures
         // that FireStateChangedNoLock() always returns quickly, even if the monitoring loop
         // were to do some synchronous work on the continuation thread.
-        Task.Run(() =>
-        {
-            try { monitorStateChangedTokenSource.Cancel(); }
-            finally { monitorStateChangedTokenSource.Dispose(); }
-        });
+        _ = CancelAndDisposeAsync(monitorStateChangedTokenSource);
+    }
+
+    private static async Task CancelAndDisposeAsync(
+        CancellationTokenSource cancellationTokenSource)
+    {
+        try { await cancellationTokenSource.CancelAsync().ConfigureAwait(false); }
+        finally { cancellationTokenSource.Dispose(); }
     }
 
     private async Task MonitorWorkerLoop()

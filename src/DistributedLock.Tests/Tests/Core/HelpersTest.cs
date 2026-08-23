@@ -77,4 +77,33 @@ public class HelpersTest
             await task.TryAwait();
         }
     }
+
+    [Test]
+    public async Task TestCancelAsyncDoesNotBlockOnCallbacks()
+    {
+        using var cts = new CancellationTokenSource();
+
+        var callbackStarted = new TaskCompletionSource<bool>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+
+        var releaseCallback = new TaskCompletionSource<bool>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+
+        using var registration = cts.Token.Register(() =>
+        {
+            callbackStarted.SetResult(true);
+
+            releaseCallback.Task.GetAwaiter().GetResult();
+        });
+
+        var cancellationTask = cts.CancelAsync();
+
+        await callbackStarted.Task;
+
+        Assert.That(cancellationTask.IsCompleted, Is.False);
+
+        releaseCallback.SetResult(true);
+
+        await cancellationTask;
+    }
 }
