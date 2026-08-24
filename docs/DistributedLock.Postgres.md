@@ -43,10 +43,10 @@ In addition to specifying the `key`, Postgres-based locks allow you to specify e
 
 ### Connection monitoring (`HandleLostToken`)
 
-When `HandleLostToken` is used on a lock backed by a library-owned connection, the library monitors the connection passively using `NpgsqlConnection.WaitAsync`, which uses a blocking socket read that detects connection loss (e.g. a database restart or `pg_terminate_backend`) as soon as the socket breaks, without executing any query. The monitored session therefore shows as `idle` in `pg_stat_activity`.
+When `HandleLostToken` is used on a lock backed by a library-owned connection, the library monitors the connection passively using `NpgsqlConnection.WaitAsync`, which uses a blocking socket read that detects connection loss (e.g. a database restart or `pg_terminate_backend`) as soon as the socket breaks, without executing any query. A cheap keepalive query is executed once per passive wait, which happens every `KeepaliveCadence` or every minute, whichever is shorter. Between keepalives the monitored session shows as `idle` in `pg_stat_activity`.
 
 Two things to be aware of:
-- Because the monitored session is idle, server-side idle-session reapers (`idle_session_timeout`, `idle_in_transaction_session_timeout`, or aggressive gateways) can kill it. If any of these are in play, set `KeepaliveCadence`, as when monitoring is active, the keepalive query will be interleaved with the passive wait.
+- Because the monitored session is idle between keepalives, server-side idle-session reapers (`idle_session_timeout`, `idle_in_transaction_session_timeout`, or aggressive gateways) configured with a timeout under one minute can kill it. If any of these are in play, set `KeepaliveCadence` below the reaper timeout.
 - If the connection string enables Npgsql `Multiplexing` (where `Wait` is unsupported) or Npgsql `KeepAlive` (where interrupting `Wait` is not safe), monitoring falls back to parking a `pg_sleep` query on the connection, which shows as an active long-running query.
 
 ## Options

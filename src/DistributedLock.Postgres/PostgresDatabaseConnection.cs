@@ -1,19 +1,19 @@
-﻿using Medallion.Threading.Internal;
+using Medallion.Threading.Internal;
 using Medallion.Threading.Internal.Data;
 using Npgsql;
 using System.Data;
 using System.Data.Common;
+using System.Diagnostics;
 
 namespace Medallion.Threading.Postgres;
 
 internal sealed class PostgresDatabaseConnection : DatabaseConnection
 {
     /// <summary>
-    /// Set only for connections we own and can therefore run passive monitoring on
-    /// (the monitor never runs background work on externally-owned connections)
+    /// Only safe to use inside <see cref="SleepAsync"/>, where the connection monitor holds the connection lock.
+    /// Non-default only for connections we own (passive monitoring never touches externally-owned connections).
     /// </summary>
-    private readonly NpgsqlConnection? _ownedNpgsqlConnection;
-    private bool? _supportsPassiveMonitoring;
+    private readonly WaitAsyncWrapper _unsafeWaitAsyncWrapper;
 
     public PostgresDatabaseConnection(IDbConnection connection)
         : base(connection, isExternallyOwned: true)
@@ -40,7 +40,7 @@ internal sealed class PostgresDatabaseConnection : DatabaseConnection
     private PostgresDatabaseConnection(DbConnection ownedConnection)
         : base(ownedConnection, isExternallyOwned: false)
     {
-        this._ownedNpgsqlConnection = ownedConnection as NpgsqlConnection;
+        this._unsafeWaitAsyncWrapper = new(ownedConnection);
     }
 
     // see https://www.npgsql.org/doc/prepare.html
@@ -51,44 +51,21 @@ internal sealed class PostgresDatabaseConnection : DatabaseConnection
             // cancellation error code from https://www.postgresql.org/docs/10/errcodes-appendix.html
             && postgresException.SqlState == "57014";
 
-    public override async Task MonitorAsync(
-        TimeoutValue monitoringCadence,
-        TimeoutValue keepaliveCadence,
-        CancellationToken cancellationToken,
-        Func<DatabaseCommand, CancellationToken, ValueTask<int>> executor)
-    {
-        if (!this.SupportsPassiveMonitoring)
-        {
-            await base.MonitorAsync(monitoringCadence, keepaliveCadence, cancellationToken, executor).ConfigureAwait(false);
-            return;
-        }
-
-        // Passively wait for connection activity/failure without executing a query, leaving the
-        // session idle server-side. Cap the wait at the keepalive cadence so the session is never
-        // seen as idle for longer than that.
-        var maxWaitTime = !keepaliveCadence.IsInfinite && keepaliveCadence.CompareTo(monitoringCadence) < 0
-            ? keepaliveCadence
-            : monitoringCadence;
-        await this._ownedNpgsqlConnection!.WaitAsync(maxWaitTime.TimeSpan, cancellationToken).ConfigureAwait(false);
-
-        // the passive wait left the session idle; run the keepalive query to prevent idle session killing
-        if (!keepaliveCadence.IsInfinite && !cancellationToken.IsCancellationRequested)
-        {
-            await this.ExecuteKeepaliveQueryAsync().ConfigureAwait(false);
-        }
-    }
-
-    // NpgsqlConnection.Wait is unsupported with Npgsql multiplexing, and unsafe to cancel when Npgsql
-    // KeepAlive is enabled (cancellation mid-keepalive-exchange breaks the connection) — monitoring
-    // falls back to the pg_sleep query in those cases
-    private bool SupportsPassiveMonitoring =>
-        this._supportsPassiveMonitoring ??=
-            this._ownedNpgsqlConnection != null
-            && new NpgsqlConnectionStringBuilder(this._ownedNpgsqlConnection.ConnectionString) is { Multiplexing: false, KeepAlive: 0 };
-
     public override async Task SleepAsync(TimeSpan sleepTime, CancellationToken cancellationToken, Func<DatabaseCommand, CancellationToken, ValueTask<int>> executor)
     {
         Invariant.Require(sleepTime >= TimeSpan.Zero);
+
+        // Where supported, "sleep" by passively waiting for connection activity/failure without executing a
+        // query. This detects connection loss as soon as the socket breaks rather than when the sleep query
+        // errors, and leaves the session idle server-side.
+        if (await this._unsafeWaitAsyncWrapper.TryWaitAsync(sleepTime, cancellationToken).ConfigureAwait(false))
+        {
+            // the passive wait left the session idle; run a keepalive query to prevent idle session reaping
+            using var keepaliveCommand = this.CreateCommand();
+            keepaliveCommand.SetCommandText("SELECT 0 /* DistributedLock connection keepalive */");
+            await executor(keepaliveCommand, cancellationToken).ConfigureAwait(false);
+            return;
+        }
 
         // if we're in a transaction, we need to establish a savepoint so that we can roll back if we
         // get canceled without the whole transaction being aborted
@@ -118,6 +95,42 @@ internal sealed class PostgresDatabaseConnection : DatabaseConnection
                 rollBackSavePointCommand.SetCommandText("ROLLBACK TO SAVEPOINT " + SavePointName);
                 await executor(rollBackSavePointCommand, CancellationToken.None).ConfigureAwait(false);
             }
+        }
+    }
+
+    /// <summary>
+    /// Exposes only <see cref="NpgsqlConnection.WaitAsync(TimeSpan, CancellationToken)"/> from the wrapped
+    /// connection, keeping the rest of the (non-thread-safe) connection surface inaccessible.
+    /// </summary>
+    private readonly struct WaitAsyncWrapper(DbConnection dbConnection)
+    {
+        // Null when passive waiting is unsupported: non-Npgsql connection, Npgsql multiplexing (Wait is
+        // unsupported), or Npgsql KeepAlive (cancellation mid-keepalive-exchange breaks the connection)
+        private readonly NpgsqlConnection? _connection =
+            dbConnection is NpgsqlConnection npgsqlConnection
+                && new NpgsqlConnectionStringBuilder(npgsqlConnection.ConnectionString) is { Multiplexing: false, KeepAlive: 0 }
+                ? npgsqlConnection
+                : null;
+
+        public async ValueTask<bool> TryWaitAsync(TimeSpan timeout, CancellationToken cancellationToken)
+        {
+            if (this._connection is null) { return false; }
+
+            // WaitAsync completes when ANY message arrives (e.g. a notification), not just on timeout,
+            // so loop until the full timeout has elapsed
+            var startTimestamp = Stopwatch.GetTimestamp();
+            var remaining = timeout;
+            while (await this._connection.WaitAsync(remaining, cancellationToken).ConfigureAwait(false))
+            {
+#if NET7_0_OR_GREATER
+                var elapsed = Stopwatch.GetElapsedTime(startTimestamp);
+#else
+                var elapsed = TimeSpan.FromSeconds((Stopwatch.GetTimestamp() - startTimestamp) / (double)Stopwatch.Frequency);
+#endif
+                remaining = timeout - elapsed;
+                if (remaining <= TimeSpan.Zero) { break; }
+            }
+            return true;
         }
     }
 }

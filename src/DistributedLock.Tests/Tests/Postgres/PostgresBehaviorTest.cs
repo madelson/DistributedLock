@@ -192,6 +192,36 @@ public class PostgresBehaviorTest
     }
 
     /// <summary>
+    /// Demonstrates that <see cref="NpgsqlConnection.WaitAsync(TimeSpan, CancellationToken)"/> returns true
+    /// as soon as any message (e.g. a notification) arrives, before the timeout elapses. Passive connection
+    /// monitoring accounts for this by looping until its full wait time has elapsed.
+    /// </summary>
+    [Test]
+    public async Task TestWaitAsyncReturnsTrueWhenMessageArrives()
+    {
+        var channelName = $"wait_test_{Guid.NewGuid():N}";
+
+        using var connection = new NpgsqlConnection(TestingPostgresDb.DefaultConnectionString);
+        await connection.OpenAsync();
+        using (var listenCommand = connection.CreateCommand())
+        {
+            listenCommand.CommandText = $"LISTEN {channelName}";
+            await listenCommand.ExecuteNonQueryAsync();
+        }
+
+        var waitTask = connection.WaitAsync(TimeSpan.FromSeconds(30), CancellationToken.None);
+
+        using var notifyingConnection = new NpgsqlConnection(TestingPostgresDb.DefaultConnectionString);
+        await notifyingConnection.OpenAsync();
+        using var notifyCommand = notifyingConnection.CreateCommand();
+        notifyCommand.CommandText = $"NOTIFY {channelName}";
+        await notifyCommand.ExecuteNonQueryAsync();
+
+        Assert.That(await Task.WhenAny(waitTask, Task.Delay(TimeSpan.FromSeconds(10))), Is.SameAs(waitTask), "wait should complete when the notification arrives");
+        Assert.That(await waitTask, Is.True);
+    }
+
+    /// <summary>
     /// Demonstrates that a connection killed during <see cref="NpgsqlConnection.WaitAsync(TimeSpan, CancellationToken)"/>
     /// throws and fires <see cref="System.Data.Common.DbConnection.StateChange"/>, which is what drives
     /// <see cref="IDistributedSynchronizationHandle.HandleLostToken"/> under passive monitoring.

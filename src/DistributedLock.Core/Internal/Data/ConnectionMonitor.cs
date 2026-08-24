@@ -362,22 +362,19 @@ internal sealed class ConnectionMonitor : IAsyncDisposable
 
     private async Task<bool> DoMonitoringAsync(TimeoutValue keepaliveCadence, CancellationToken cancellationToken)
     {
-        // 1-min increments is kind of an arbitrary choice. We want to avoid this being too short since each time
-        // we "come up to breathe" that's a waste of resources. We also want to avoid this being too long since
-        // in case people have some kind of monitoring set up for hanging queries. Coming up to breathe also
-        // re-resolves the weak connection reference so that this loop never roots an abandoned connection for long.
-        TimeoutValue monitoringCadence = TimeSpan.FromMinutes(1);
-
         if (!this._weakConnection.TryGetTarget(out var connection)) { return false; }
 
         // don't pass token here: this should finish quickly and we don't want to throw
         using var _ = await this._connectionLock.AcquireAsync(CancellationToken.None).ConfigureAwait(false);
 
-        // on cancellation (the connection is wanted for a real query) or connection loss, loop around and re-evaluate state
-        await connection.MonitorAsync(
-                monitoringCadence,
-                keepaliveCadence,
-                cancellationToken,
+        await connection.SleepAsync(
+                // 1-min increments is kind of an arbitrary choice. We want to avoid this being too short since each time
+                // we "come up to breathe" that's a waste of resources. We also want to avoid this being too long since
+                // in case people have some kind of monitoring set up for hanging queries. Coming up to breathe also
+                // re-resolves the weak connection reference so that this loop never roots an abandoned connection for long.
+                // Capped at keepaliveCadence so that keepalive queries keep firing on cadence while monitoring.
+                sleepTime: (keepaliveCadence.CompareTo(TimeSpan.FromMinutes(1)) < 0 ? keepaliveCadence : TimeSpan.FromMinutes(1)).TimeSpan,
+                cancellationToken: cancellationToken,
                 executor: (command, token) => command.ExecuteNonQueryAsync(token, disallowAsyncCancellation: false, isConnectionMonitoringQuery: true)
             ).TryAwait();
 
@@ -398,7 +395,11 @@ internal sealed class ConnectionMonitor : IAsyncDisposable
         using var connectionLockHandle = await this._connectionLock.TryAcquireAsync(TimeSpan.Zero, CancellationToken.None).ConfigureAwait(false);
         if (connectionLockHandle != null)
         {
-            await connection.ExecuteKeepaliveQueryAsync().ConfigureAwait(false);
+            using var command = connection.CreateCommand();
+            command.SetCommandText("SELECT 0 /* DistributedLock connection keepalive */");
+            // Since this query is very fast and non-blocking, we don't bother trying to cancel it. This avoids having 
+            // to deal with the overhead of throwing exceptions within ExecuteNonQueryAsync()
+            await command.ExecuteNonQueryAsync(CancellationToken.None, disallowAsyncCancellation: false, isConnectionMonitoringQuery: true).AsTask().TryAwait();
         }
 
         return true;

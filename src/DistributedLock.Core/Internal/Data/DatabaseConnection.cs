@@ -171,20 +171,4 @@ internal
     public abstract bool IsCommandCancellationException(Exception exception);
 
     public abstract Task SleepAsync(TimeSpan sleepTime, CancellationToken cancellationToken, Func<DatabaseCommand, CancellationToken, ValueTask<int>> executor);
-    
-    public virtual Task MonitorAsync(
-        TimeoutValue monitoringCadence,
-        TimeoutValue keepaliveCadence,
-        CancellationToken cancellationToken,
-        Func<DatabaseCommand, CancellationToken, ValueTask<int>> executor) =>
-        this.SleepAsync(monitoringCadence.TimeSpan, cancellationToken, executor);
-    
-    public async Task ExecuteKeepaliveQueryAsync()
-    {
-        using var command = this.CreateCommand();
-        command.SetCommandText("SELECT 0 /* DistributedLock connection keepalive */");
-        // Since this query is very fast and non-blocking, we don't bother trying to cancel it. This avoids having
-        // to deal with the overhead of throwing exceptions within ExecuteNonQueryAsync()
-        await command.ExecuteNonQueryAsync(CancellationToken.None, disallowAsyncCancellation: false, isConnectionMonitoringQuery: true).AsTask().TryAwait();
-    }
 }
