@@ -357,21 +357,23 @@ internal sealed class ConnectionMonitor : IAsyncDisposable
             stateChangedToken = this._monitorStateChangedTokenSource!.Token;
         }
 
-        return await (isMonitoring ? this.DoMonitoringAsync(stateChangedToken) : this.DoKeepaliveAsync(keepaliveCadence, stateChangedToken)).ConfigureAwait(false);
+        return await (isMonitoring ? this.DoMonitoringAsync(keepaliveCadence, stateChangedToken) : this.DoKeepaliveAsync(keepaliveCadence, stateChangedToken)).ConfigureAwait(false);
     }
 
-    private async Task<bool> DoMonitoringAsync(CancellationToken cancellationToken)
+    private async Task<bool> DoMonitoringAsync(TimeoutValue keepaliveCadence, CancellationToken cancellationToken)
     {
         if (!this._weakConnection.TryGetTarget(out var connection)) { return false; }
 
         // don't pass token here: this should finish quickly and we don't want to throw
         using var _ = await this._connectionLock.AcquireAsync(CancellationToken.None).ConfigureAwait(false);
 
-        // 1-min increments is kind of an arbitrary choice. We want to avoid this being too short since each time
-        // we "come up to breathe" that's a waste of resources. We also want to avoid this being too long since
-        // in case people have some kind of monitoring set up for hanging queries
         await connection.SleepAsync(
-                sleepTime: TimeSpan.FromMinutes(1),
+                // 1-min increments is kind of an arbitrary choice. We want to avoid this being too short since each time
+                // we "come up to breathe" that's a waste of resources. We also want to avoid this being too long since
+                // in case people have some kind of monitoring set up for hanging queries. Coming up to breathe also
+                // re-resolves the weak connection reference so that this loop never roots an abandoned connection for long.
+                // Capped at keepaliveCadence so that keepalive queries keep firing on cadence while monitoring.
+                sleepTime: (keepaliveCadence.CompareTo(TimeSpan.FromMinutes(1)) < 0 ? keepaliveCadence : TimeSpan.FromMinutes(1)).TimeSpan,
                 cancellationToken: cancellationToken,
                 executor: (command, token) => command.ExecuteNonQueryAsync(token, disallowAsyncCancellation: false, isConnectionMonitoringQuery: true)
             ).TryAwait();

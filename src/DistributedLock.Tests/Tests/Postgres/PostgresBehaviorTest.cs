@@ -1,4 +1,4 @@
-﻿using Npgsql;
+using Npgsql;
 using NUnit.Framework;
 using System.Data;
 
@@ -135,7 +135,121 @@ public class PostgresBehaviorTest
 
         Assert.That(stateChangedEvent.Wait(TimeSpan.FromSeconds(.1)), Is.False);
 
-        Assert.Throws<NpgsqlException>(() => getPidCommand.ExecuteScalar());
+        // Catch rather than Throws because whether this surfaces as NpgsqlException (broken connection)
+        // or the derived PostgresException (the server's 57P01 error message was read first) is timing-dependent
+        Assert.Catch<NpgsqlException>(() => getPidCommand.ExecuteScalar());
+        Assert.That(stateChangedEvent.Wait(TimeSpan.FromSeconds(5)), Is.True);
+    }
+
+    /// <summary>
+    /// Demonstrates that a timed-out <see cref="NpgsqlConnection.WaitAsync(TimeSpan, CancellationToken)"/> is
+    /// non-destructive: it returns false and the connection (including an open transaction) remains usable.
+    /// Passive connection monitoring relies on this.
+    /// </summary>
+    [Test]
+    public async Task TestWaitAsyncTimeoutDoesNotBreakConnection()
+    {
+        using var connection = new NpgsqlConnection(TestingPostgresDb.DefaultConnectionString);
+        await connection.OpenAsync();
+
+        Assert.That(await connection.WaitAsync(TimeSpan.FromMilliseconds(100), CancellationToken.None), Is.False);
+
+        using var command = connection.CreateCommand();
+        command.CommandText = "SELECT 1";
+        (await command.ExecuteScalarAsync()).ShouldEqual(1);
+
+        using (var transaction = connection.BeginTransaction())
+        {
+            Assert.That(await connection.WaitAsync(TimeSpan.FromMilliseconds(100), CancellationToken.None), Is.False);
+
+            // the transaction was not aborted by the timed-out wait
+            command.Transaction = transaction;
+            command.CommandText = "SELECT 2";
+            (await command.ExecuteScalarAsync()).ShouldEqual(2);
+        }
+    }
+
+    /// <summary>
+    /// Demonstrates that canceling <see cref="NpgsqlConnection.WaitAsync(TimeSpan, CancellationToken)"/> is
+    /// non-destructive: it throws <see cref="OperationCanceledException"/> and the connection remains usable.
+    /// Passive connection monitoring relies on this because the monitor's wait is canceled whenever the
+    /// connection is needed for a real query.
+    /// </summary>
+    [Test]
+    public async Task TestWaitAsyncCancellationDoesNotBreakConnection()
+    {
+        using var connection = new NpgsqlConnection(TestingPostgresDb.DefaultConnectionString);
+        await connection.OpenAsync();
+
+        using var cancellationTokenSource = new CancellationTokenSource();
+        cancellationTokenSource.CancelAfter(TimeSpan.FromSeconds(.5));
+        Assert.CatchAsync<OperationCanceledException>(() => connection.WaitAsync(TimeSpan.FromSeconds(30), cancellationTokenSource.Token));
+
+        Assert.That(connection.State, Is.EqualTo(ConnectionState.Open));
+        using var command = connection.CreateCommand();
+        command.CommandText = "SELECT 1";
+        (await command.ExecuteScalarAsync()).ShouldEqual(1);
+    }
+
+    /// <summary>
+    /// Demonstrates that <see cref="NpgsqlConnection.WaitAsync(TimeSpan, CancellationToken)"/> returns true
+    /// as soon as any message (e.g. a notification) arrives, before the timeout elapses. Passive connection
+    /// monitoring accounts for this by looping until its full wait time has elapsed.
+    /// </summary>
+    [Test]
+    public async Task TestWaitAsyncReturnsTrueWhenMessageArrives()
+    {
+        var channelName = $"wait_test_{Guid.NewGuid():N}";
+
+        using var connection = new NpgsqlConnection(TestingPostgresDb.DefaultConnectionString);
+        await connection.OpenAsync();
+        using (var listenCommand = connection.CreateCommand())
+        {
+            listenCommand.CommandText = $"LISTEN {channelName}";
+            await listenCommand.ExecuteNonQueryAsync();
+        }
+
+        var waitTask = connection.WaitAsync(TimeSpan.FromSeconds(30), CancellationToken.None);
+
+        using var notifyingConnection = new NpgsqlConnection(TestingPostgresDb.DefaultConnectionString);
+        await notifyingConnection.OpenAsync();
+        using var notifyCommand = notifyingConnection.CreateCommand();
+        notifyCommand.CommandText = $"NOTIFY {channelName}";
+        await notifyCommand.ExecuteNonQueryAsync();
+
+        Assert.That(await Task.WhenAny(waitTask, Task.Delay(TimeSpan.FromSeconds(10))), Is.SameAs(waitTask), "wait should complete when the notification arrives");
+        Assert.That(await waitTask, Is.True);
+    }
+
+    /// <summary>
+    /// Demonstrates that a connection killed during <see cref="NpgsqlConnection.WaitAsync(TimeSpan, CancellationToken)"/>
+    /// throws and fires <see cref="System.Data.Common.DbConnection.StateChange"/>, which is what drives
+    /// <see cref="IDistributedSynchronizationHandle.HandleLostToken"/> under passive monitoring.
+    /// </summary>
+    [Test]
+    public async Task TestWaitAsyncOnKilledConnectionFiresStateChanged()
+    {
+        using var stateChangedEvent = new ManualResetEventSlim(initialState: false);
+
+        using var connection = new NpgsqlConnection(TestingPostgresDb.DefaultConnectionString);
+        await connection.OpenAsync();
+        connection.StateChange += (o, e) => stateChangedEvent.Set();
+
+        using var getPidCommand = connection.CreateCommand();
+        getPidCommand.CommandText = "SELECT pg_backend_pid()";
+        var pid = (int)(await getPidCommand.ExecuteScalarAsync())!;
+
+        var waitTask = connection.WaitAsync(TimeSpan.FromSeconds(30), CancellationToken.None);
+
+        // kill the connection from the back end
+        using var killingConnection = new NpgsqlConnection(TestingPostgresDb.DefaultConnectionString);
+        await killingConnection.OpenAsync();
+        using var killCommand = killingConnection.CreateCommand();
+        killCommand.CommandText = $"SELECT pg_terminate_backend({pid})";
+        await killCommand.ExecuteNonQueryAsync();
+
+        Assert.CatchAsync<NpgsqlException>(() => waitTask);
+        Assert.That(connection.State, Is.Not.EqualTo(ConnectionState.Open));
         Assert.That(stateChangedEvent.Wait(TimeSpan.FromSeconds(5)), Is.True);
     }
 
