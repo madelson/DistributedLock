@@ -2,6 +2,9 @@
 using Medallion.Threading.Tests.Data;
 using NUnit.Framework;
 using System.Data;
+#if NET7_0_OR_GREATER
+using System.Data.Common;
+#endif
 
 namespace Medallion.Threading.Tests.MySql;
 
@@ -13,6 +16,9 @@ public class MySqlDistributedSynchronizationProviderTest
         Assert.Throws<ArgumentNullException>(() => new MySqlDistributedSynchronizationProvider(default(string)!));
         Assert.Throws<ArgumentNullException>(() => new MySqlDistributedSynchronizationProvider(default(IDbConnection)!));
         Assert.Throws<ArgumentNullException>(() => new MySqlDistributedSynchronizationProvider(default(IDbTransaction)!));
+#if NET7_0_OR_GREATER
+        Assert.Throws<ArgumentNullException>(() => new MySqlDistributedSynchronizationProvider(default(DbDataSource)!));
+#endif
     }
 
     [Test]
