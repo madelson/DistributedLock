@@ -8,26 +8,28 @@ public
 #else
 internal 
 #endif
-sealed class OptimisticConnectionMultiplexingDbDistributedLock : IDbDistributedLock
+sealed class OptimisticConnectionMultiplexingDbDistributedLock<TConnectionSource> : IDbDistributedLock
+    where TConnectionSource : notnull
 {
-    private readonly string _name, _connectionString;
-    private readonly MultiplexedConnectionLockPool _multiplexedConnectionLockPool;
+    private readonly string _name;
+    private readonly TConnectionSource _connectionSource;
+    private readonly MultiplexedConnectionLockPool<TConnectionSource> _multiplexedConnectionLockPool;
     private readonly TimeoutValue _keepaliveCadence;
     private readonly IDbDistributedLock _fallbackLock;
 
     public OptimisticConnectionMultiplexingDbDistributedLock(
-        string name, 
-        string connectionString, 
-        MultiplexedConnectionLockPool multiplexedConnectionLockPool,
+        string name,
+        TConnectionSource connectionSource,
+        MultiplexedConnectionLockPool<TConnectionSource> multiplexedConnectionLockPool,
         TimeoutValue keepaliveCadence)
     {
         this._name = name;
-        this._connectionString = connectionString;
+        this._connectionSource = connectionSource;
         this._multiplexedConnectionLockPool = multiplexedConnectionLockPool;
         this._keepaliveCadence = keepaliveCadence;
         this._fallbackLock = new DedicatedConnectionOrTransactionDbDistributedLock(
-            name, 
-            () => this._multiplexedConnectionLockPool.ConnectionFactory(this._connectionString),
+            name,
+            () => this._multiplexedConnectionLockPool.ConnectionFactory(this._connectionSource),
             useTransaction: false,
             keepaliveCadence: keepaliveCadence
         );
@@ -44,7 +46,7 @@ sealed class OptimisticConnectionMultiplexingDbDistributedLock : IDbDistributedL
         // to an exclusive lock which asks for a long timeout
         if (!strategy.IsUpgradeable && contextHandle == null)
         {
-            return this._multiplexedConnectionLockPool.TryAcquireAsync(this._connectionString, this._name, timeout, strategy, keepaliveCadence: this._keepaliveCadence, cancellationToken);
+            return this._multiplexedConnectionLockPool.TryAcquireAsync(this._connectionSource, this._name, timeout, strategy, keepaliveCadence: this._keepaliveCadence, cancellationToken);
         }
 
         // otherwise, fall back to our fallback lock

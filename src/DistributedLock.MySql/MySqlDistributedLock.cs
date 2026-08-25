@@ -154,7 +154,7 @@ public sealed partial class MySqlDistributedLock : IInternalDistributedLock<MySq
 
         if (useMultiplexing)
         {
-            return new OptimisticConnectionMultiplexingDbDistributedLock(name, connectionString, MySqlMultiplexedConnectionLockPool.Instance, keepaliveCadence);
+            return new OptimisticConnectionMultiplexingDbDistributedLock<string>(name, connectionString, MySqlMultiplexedConnectionLockPool.Instance, keepaliveCadence);
         }
 
         return new DedicatedConnectionOrTransactionDbDistributedLock(name, () => new MySqlDatabaseConnection(connectionString), useTransaction: false, keepaliveCadence);

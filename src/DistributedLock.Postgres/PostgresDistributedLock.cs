@@ -36,8 +36,6 @@ public sealed partial class PostgresDistributedLock : IInternalDistributedLock<P
     /// <summary>
     /// Constructs a lock with the given <paramref name="key"/> (effectively the lock name) and <paramref name="dbDataSource"/>,
     /// and <paramref name="options"/>.
-    /// 
-    /// Not compatible with connection multiplexing.
     /// </summary>
     public PostgresDistributedLock(PostgresAdvisoryLockKey key, DbDataSource dbDataSource, Action<PostgresConnectionOptionsBuilder>? options = null)
         : this(key, CreateInternalLock(key, dbDataSource, options))
@@ -68,7 +66,7 @@ public sealed partial class PostgresDistributedLock : IInternalDistributedLock<P
         var (keepaliveCadence, useTransaction, useMultiplexing) = PostgresConnectionOptionsBuilder.GetOptions(options);
 
         return useMultiplexing
-            ? new OptimisticConnectionMultiplexingDbDistributedLock(key.ToString(), connectionString, PostgresMultiplexedConnectionLockPool.Instance, keepaliveCadence)
+            ? new OptimisticConnectionMultiplexingDbDistributedLock<string>(key.ToString(), connectionString, PostgresMultiplexedConnectionLockPool.Instance, keepaliveCadence)
             : new DedicatedConnectionOrTransactionDbDistributedLock(key.ToString(), () => new PostgresDatabaseConnection(connectionString), useTransaction: useTransaction, keepaliveCadence);
     }
 
@@ -83,14 +81,10 @@ public sealed partial class PostgresDistributedLock : IInternalDistributedLock<P
     {
         if (dbDataSource == null) { throw new ArgumentNullException(nameof(dbDataSource)); }
 
-        // Multiplexing is currently incompatible with DbDataSource (see #238), so default it to false
-        var originalOptions = options;
-        options = o => { o.UseMultiplexing(false); originalOptions?.Invoke(o); };
-
         var (keepaliveCadence, useTransaction, useMultiplexing) = PostgresConnectionOptionsBuilder.GetOptions(options);
 
         return useMultiplexing
-            ? throw new NotSupportedException("Multiplexing is current incompatible with DbDataSource.")
+            ? new OptimisticConnectionMultiplexingDbDistributedLock<DbDataSource>(key.ToString(), dbDataSource, PostgresMultiplexedConnectionLockPool.DataSourceInstance, keepaliveCadence)
             : new DedicatedConnectionOrTransactionDbDistributedLock(key.ToString(), () => new PostgresDatabaseConnection(dbDataSource), useTransaction: useTransaction, keepaliveCadence);
     }
 #endif

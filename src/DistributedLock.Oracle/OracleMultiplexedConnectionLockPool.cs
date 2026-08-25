@@ -4,5 +4,5 @@ namespace Medallion.Threading.Oracle;
 
 internal static class OracleMultiplexedConnectionLockPool
 {
-    public static readonly MultiplexedConnectionLockPool Instance = new(s => new OracleDatabaseConnection(s));
+    public static readonly MultiplexedConnectionLockPool<string> Instance = new(s => new OracleDatabaseConnection(s));
 }

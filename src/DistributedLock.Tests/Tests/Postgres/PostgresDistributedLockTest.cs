@@ -22,14 +22,57 @@ public class PostgresDistributedLockTest
 
 #if NET7_0_OR_GREATER
     [Test]
-    public void TestMultiplexingWithDbDataSourceThrowNotSupportedException()
+    public async Task TestMultiplexingWithDbDataSourceUsesASharedConnection()
     {
-        using var dataSource = new NpgsqlDataSourceBuilder(TestingPostgresDb.DefaultConnectionString).Build();
-        Assert.Throws<NotSupportedException>(() => new PostgresDistributedLock(new(0), dataSource, opt => opt.UseMultiplexing()));
+        var applicationName = UniqueApplicationName();
+        await using var dataSource = CreateDataSource(applicationName);
+
+        var lock1 = new PostgresDistributedLock(new(Guid.NewGuid().ToString(), allowHashing: true), dataSource);
+        var lock2 = new PostgresDistributedLock(new(Guid.NewGuid().ToString(), allowHashing: true), dataSource);
+        await using var handle1 = await lock1.AcquireAsync();
+        await using var handle2 = await lock2.AcquireAsync();
+
+        Assert.That(await CountSessionsAsync(applicationName), Is.EqualTo(1), "both locks should share one multiplexed connection");
     }
 
-    // DbDataSource just calls through to the IDbConnection flow so we don't need exhaustive testing, but we want to
-    // see it at least work once
+    [Test]
+    public async Task TestDbDataSourcePoolIsKeyedByReference()
+    {
+        var applicationName = UniqueApplicationName();
+        await using var dataSource1 = CreateDataSource(applicationName);
+        await using var dataSource2 = CreateDataSource(applicationName);
+
+        var lock1 = new PostgresDistributedLock(new(Guid.NewGuid().ToString(), allowHashing: true), dataSource1);
+        var lock2 = new PostgresDistributedLock(new(Guid.NewGuid().ToString(), allowHashing: true), dataSource2);
+        await using var handle1 = await lock1.AcquireAsync();
+        await using var handle2 = await lock2.AcquireAsync();
+
+        Assert.That(await CountSessionsAsync(applicationName), Is.EqualTo(2), "distinct DbDataSource instances with the same connection string should not share connections");
+    }
+
+    [Test]
+    public async Task TestHandleLostTokenWorksWithDbDataSourceMultiplexing()
+    {
+        var applicationName = UniqueApplicationName();
+        await using var dataSource = CreateDataSource(applicationName);
+
+        var @lock = new PostgresDistributedLock(new(Guid.NewGuid().ToString(), allowHashing: true), dataSource);
+        var handle = await @lock.AcquireAsync();
+
+        using var handleLostEvent = new ManualResetEventSlim(initialState: false);
+        Assert.That(handle.HandleLostToken.CanBeCanceled, Is.True); // starts monitoring on the multiplexed connection
+        using var registration = handle.HandleLostToken.Register(handleLostEvent.Set);
+
+        await new TestingPostgresDb().KillSessionsAsync(applicationName, idleSince: null);
+
+        Assert.That(handleLostEvent.Wait(TimeSpan.FromSeconds(10)), Is.True);
+
+        // dispose may throw since the underlying connection is broken
+        try { handle.Dispose(); } catch { }
+    }
+
+    // DbDataSource uses the same multiplexing flow as connection strings so we don't need exhaustive testing, but we
+    // want to see mutual exclusion work at least once
     [Test]
     public async Task TestDbDataSourceConstructorWorks()
     {
@@ -40,6 +83,24 @@ public class PostgresDistributedLockTest
             await using var handle = await @lock.TryAcquireAsync();
             Assert.IsNull(handle);
         }
+    }
+
+    private static string UniqueApplicationName() => $"dbds_test_{Guid.NewGuid():N}";
+
+    private static NpgsqlDataSource CreateDataSource(string applicationName)
+    {
+        var connectionStringBuilder = new NpgsqlConnectionStringBuilder(TestingPostgresDb.DefaultConnectionString) { ApplicationName = applicationName };
+        return new NpgsqlDataSourceBuilder(connectionStringBuilder.ConnectionString).Build();
+    }
+
+    private static async Task<int> CountSessionsAsync(string applicationName)
+    {
+        using var connection = new NpgsqlConnection(TestingPostgresDb.DefaultConnectionString);
+        await connection.OpenAsync();
+        using var command = connection.CreateCommand();
+        command.CommandText = "SELECT COUNT(*)::int FROM pg_stat_activity WHERE application_name = @applicationName";
+        command.Parameters.AddWithValue("applicationName", applicationName);
+        return (int)(await command.ExecuteScalarAsync())!;
     }
 #endif
 
