@@ -18,6 +18,9 @@ public class MySqlDistributedLockTest
         Assert.Catch<ArgumentNullException>(() => new MySqlDistributedLock("a", default(string)!));
         Assert.Catch<ArgumentNullException>(() => new MySqlDistributedLock("a", default(IDbTransaction)!));
         Assert.Catch<ArgumentNullException>(() => new MySqlDistributedLock("a", default(IDbConnection)!));
+#if NET7_0_OR_GREATER
+        Assert.Catch<ArgumentNullException>(() => new MySqlDistributedLock("a", default(System.Data.Common.DbDataSource)!));
+#endif
         Assert.Catch<FormatException>(() => new MySqlDistributedLock(new string('a', MySqlDistributedLock.MaxNameLength + 1), ConnectionString, exactName: true));
         Assert.DoesNotThrow(() => new MySqlDistributedLock(new string('a', MySqlDistributedLock.MaxNameLength), ConnectionString, exactName: true));
     }
@@ -69,4 +72,57 @@ public class MySqlDistributedLockTest
         commandInTransaction.CommandText = "SELECT COUNT(*) FROM distributed_lock.temp";
         (await commandInTransaction.ExecuteScalarAsync()).ShouldEqual(2);
     }
+
+#if NET7_0_OR_GREATER
+    [Test]
+    public async Task TestMultiplexingWithDbDataSourceUsesASharedConnection()
+    {
+        var applicationName = UniqueApplicationName();
+        await using var dataSource = CreateDataSource(applicationName);
+
+        var lock1 = new MySqlDistributedLock(Guid.NewGuid().ToString(), dataSource);
+        var lock2 = new MySqlDistributedLock(Guid.NewGuid().ToString(), dataSource);
+        await using var handle1 = await lock1.AcquireAsync();
+        await using var handle2 = await lock2.AcquireAsync();
+
+        Assert.That(new TestingMySqlDb().CountActiveSessions(applicationName), Is.EqualTo(1), "both locks should share one multiplexed connection");
+    }
+
+    [Test]
+    public async Task TestDbDataSourcePoolIsKeyedByReference()
+    {
+        var applicationName = UniqueApplicationName();
+        await using var dataSource1 = CreateDataSource(applicationName);
+        await using var dataSource2 = CreateDataSource(applicationName);
+
+        var lock1 = new MySqlDistributedLock(Guid.NewGuid().ToString(), dataSource1);
+        var lock2 = new MySqlDistributedLock(Guid.NewGuid().ToString(), dataSource2);
+        await using var handle1 = await lock1.AcquireAsync();
+        await using var handle2 = await lock2.AcquireAsync();
+
+        Assert.That(new TestingMySqlDb().CountActiveSessions(applicationName), Is.EqualTo(2), "distinct DbDataSource instances with the same connection string should not share connections");
+    }
+
+    // DbDataSource uses the same multiplexing flow as connection strings so we don't need exhaustive testing, but we
+    // want to see mutual exclusion work at least once
+    [Test]
+    public async Task TestDbDataSourceConstructorWorks()
+    {
+        await using var dataSource = new MySqlDataSource(ConnectionString);
+        var @lock = new MySqlDistributedLock(Guid.NewGuid().ToString(), dataSource);
+        await using (await @lock.AcquireAsync())
+        {
+            await using var handle = await @lock.TryAcquireAsync();
+            Assert.That(handle, Is.Null);
+        }
+    }
+
+    private static string UniqueApplicationName() => $"dbds_test_{Guid.NewGuid():N}";
+
+    private static MySqlDataSource CreateDataSource(string applicationName)
+    {
+        var connectionStringBuilder = new MySqlConnectionStringBuilder(ConnectionString) { ApplicationName = applicationName };
+        return new MySqlDataSource(connectionStringBuilder.ConnectionString);
+    }
+#endif
 }

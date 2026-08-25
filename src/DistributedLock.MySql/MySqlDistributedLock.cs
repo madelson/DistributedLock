@@ -1,6 +1,9 @@
 ﻿using Medallion.Threading.Internal;
 using Medallion.Threading.Internal.Data;
 using System.Data;
+#if NET7_0_OR_GREATER
+using System.Data.Common;
+#endif
 using System.Security.Cryptography;
 using System.Text;
 
@@ -29,9 +32,22 @@ public sealed partial class MySqlDistributedLock : IInternalDistributedLock<MySq
     {
     }
 
+#if NET7_0_OR_GREATER
+    /// <summary>
+    /// Constructs a lock with the given <paramref name="name"/> that connects using the provided <paramref name="dbDataSource"/> and
+    /// <paramref name="options"/>.
+    ///
+    /// Unless <paramref name="exactName"/> is specified, <paramref name="name"/> will be escaped/hashed to ensure name validity.
+    /// </summary>
+    public MySqlDistributedLock(string name, DbDataSource dbDataSource, Action<MySqlConnectionOptionsBuilder>? options = null, bool exactName = false)
+        : this(name, exactName, n => CreateInternalLock(n, dbDataSource, options))
+    {
+    }
+#endif
+
     /// <summary>
     /// Constructs a lock with the given <paramref name="name"/> that connects using the provided <paramref name="connection" />.
-    /// 
+    ///
     /// Unless <paramref name="exactName"/> is specified, <paramref name="name"/> will be escaped/hashed to ensure name validity.
     /// </summary>
     public MySqlDistributedLock(string name, IDbConnection connection, bool exactName = false)
@@ -159,6 +175,22 @@ public sealed partial class MySqlDistributedLock : IInternalDistributedLock<MySq
 
         return new DedicatedConnectionOrTransactionDbDistributedLock(name, () => new MySqlDatabaseConnection(connectionString), useTransaction: false, keepaliveCadence);
     }
+
+#if NET7_0_OR_GREATER
+    private static IDbDistributedLock CreateInternalLock(string name, DbDataSource dbDataSource, Action<MySqlConnectionOptionsBuilder>? options)
+    {
+        if (dbDataSource == null) { throw new ArgumentNullException(nameof(dbDataSource)); }
+
+        var (keepaliveCadence, useMultiplexing) = MySqlConnectionOptionsBuilder.GetOptions(options);
+
+        if (useMultiplexing)
+        {
+            return new OptimisticConnectionMultiplexingDbDistributedLock<DbDataSource>(name, dbDataSource, MySqlMultiplexedConnectionLockPool.DataSourceInstance, keepaliveCadence);
+        }
+
+        return new DedicatedConnectionOrTransactionDbDistributedLock(name, () => new MySqlDatabaseConnection(dbDataSource), useTransaction: false, keepaliveCadence);
+    }
+#endif
 
     private static IDbDistributedLock CreateInternalLock(string name, IDbConnection connection)
     {
