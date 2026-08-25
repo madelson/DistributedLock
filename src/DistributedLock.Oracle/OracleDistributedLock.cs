@@ -71,7 +71,7 @@ public sealed partial class OracleDistributedLock : IInternalDistributedLock<Ora
 
         if (useMultiplexing)
         {
-            return new OptimisticConnectionMultiplexingDbDistributedLock(name, connectionString, OracleMultiplexedConnectionLockPool.Instance, keepaliveCadence);
+            return new OptimisticConnectionMultiplexingDbDistributedLock<string>(name, connectionString, OracleMultiplexedConnectionLockPool.Instance, keepaliveCadence);
         }
 
         return new DedicatedConnectionOrTransactionDbDistributedLock(name, () => new OracleDatabaseConnection(connectionString), useTransaction: false, keepaliveCadence);

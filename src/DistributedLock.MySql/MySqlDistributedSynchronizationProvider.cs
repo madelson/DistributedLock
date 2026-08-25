@@ -1,4 +1,7 @@
 ﻿using System.Data;
+#if NET7_0_OR_GREATER
+using System.Data.Common;
+#endif
 
 namespace Medallion.Threading.MySql;
 
@@ -18,6 +21,18 @@ public sealed class MySqlDistributedSynchronizationProvider : IDistributedLockPr
 
         this._lockFactory = (name, exactName) => new MySqlDistributedLock(name, connectionString, options, exactName);
     }
+
+#if NET7_0_OR_GREATER
+    /// <summary>
+    /// Constructs a provider that connects with <paramref name="dbDataSource"/> and <paramref name="options"/>.
+    /// </summary>
+    public MySqlDistributedSynchronizationProvider(DbDataSource dbDataSource, Action<MySqlConnectionOptionsBuilder>? options = null)
+    {
+        if (dbDataSource == null) { throw new ArgumentNullException(nameof(dbDataSource)); }
+
+        this._lockFactory = (name, exactName) => new MySqlDistributedLock(name, dbDataSource, options, exactName);
+    }
+#endif
 
     /// <summary>
     /// Constructs a provider that connects with <paramref name="connection"/>.
