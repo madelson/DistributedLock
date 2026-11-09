@@ -20,9 +20,10 @@ internal class ConcurrentWeakReferenceDictionary<TKey, TValue>
         var result = GetOrAddCore();
 
         // Opportunistic cleanup
-        if (Interlocked.Increment(ref this._operationCount) >= CleanupThreshold)
+        if (Interlocked.Increment(ref this._operationCount) >= CleanupThreshold
+         // only run cleanup if we won the race in resetting the op count
+         && Interlocked.Exchange(ref this._operationCount, 0) >= CleanupThreshold)
         {
-            Interlocked.Exchange(ref this._operationCount, 0);
             this.RemoveDeadEntries();
         }
 
@@ -74,20 +75,10 @@ internal class ConcurrentWeakReferenceDictionary<TKey, TValue>
             // a subsequent GetOrAdd to hand out a second primitive for a name that is already in use.
             if (!kvp.Value.TryGetTarget(out _))
             {
-                this._dictionary.AsCollection().Remove(kvp);
+                Remove(this._dictionary, kvp);
             }
         }
     }
-}
 
-internal static class ConcurrentDictionaryExtensions
-{
-    /// <summary>
-    /// Exposes the explicitly-implemented <see cref="ICollection{T}.Remove(T)"/>, which removes only if both the
-    /// key AND the value match. <see cref="ConcurrentDictionary{TKey, TValue}"/> has a public TryRemove overload
-    /// with these semantics, but not on all of the frameworks we target.
-    /// </summary>
-    public static ICollection<KeyValuePair<TKey, TValue>> AsCollection<TKey, TValue>(
-        this ConcurrentDictionary<TKey, TValue> dictionary)
-        where TKey : notnull => dictionary;
+    private static void Remove<T>(ICollection<T> collection, T value) => collection.Remove(value);
 }
