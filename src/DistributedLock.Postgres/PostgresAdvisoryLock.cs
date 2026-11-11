@@ -54,8 +54,8 @@ internal class PostgresAdvisoryLock : IDbSynchronizationStrategy<object>
         // the transaction or the save point are rolled back.
         var capturedTimeoutSettings = await CaptureTimeoutSettingsIfNeededAsync(connection, cancellationToken).ConfigureAwait(false);
 
-        // Our acquire command will use SET LOCAL to set up statement timeouts. This lasts until the end
-        // of the current transaction instead of just the current batch if we're in a transaction. To make sure
+        // Our acquire command will use set_config(..., is_local: true), which behaves like SET LOCAL, to set up statement timeouts.
+        // This lasts until the end of the current transaction instead of just the current batch if we're in a transaction. To make sure
         // we don't leak those settings, in the case of a transaction, we first set up a save point which we can
         // later roll back (only in cases where we don't acquire a transaction scoped lock - taking the settings changes with it but NOT the lock).
         // Because we can't confidently roll back a save point without knowing that it has been set up, we start the save point in its own
@@ -176,10 +176,13 @@ internal class PostgresAdvisoryLock : IDbSynchronizationStrategy<object>
         var commandText = new StringBuilder();
 
         // We set the statement_timeout to 0 (inf) because we want everything to be driven by the lock_timeout.
-        commandText.AppendLine("SET LOCAL statement_timeout = 0;");
         // We set the lock timeout to our timeout, with the exception that if our timeout is zero we set it to inf because
         // we'll be using the pg_try_advisory_lock function which doesn't block in that case.
-        commandText.AppendLine($"SET LOCAL lock_timeout = {(timeout.IsZero || timeout.IsInfinite ? 0 : timeout.InMilliseconds)};");
+        // We use set_config(..., is_local: true) rather than SET LOCAL: it behaves the same (see PostgresBehaviorTest), but SET LOCAL
+        // logs "SET LOCAL can only be used in transaction blocks" when we're not in a transaction. See https://github.com/madelson/DistributedLock/issues/90
+        // The calls are wrapped in a DO block so that they don't return a result set, since we read the result of this command with ExecuteScalar.
+        var lockTimeout = timeout.IsZero || timeout.IsInfinite ? 0 : timeout.InMilliseconds;
+        commandText.AppendLine($"DO $$BEGIN PERFORM pg_catalog.set_config('statement_timeout', '0', true); PERFORM pg_catalog.set_config('lock_timeout', '{lockTimeout}', true); END$$;");
 
         commandText.Append("SELECT ");
         var isTry = timeout.IsZero;
