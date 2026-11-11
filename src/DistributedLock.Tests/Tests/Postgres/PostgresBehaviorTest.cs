@@ -48,6 +48,43 @@ public class PostgresBehaviorTest
         (await commandInTransaction.ExecuteScalarAsync()).ShouldEqual("2020ms");
     }
 
+    /// <summary>
+    /// Demonstrates that outside of a transaction set_config(..., is_local: true) behaves like SET LOCAL: the setting applies
+    /// to the rest of the multi-statement command and does not leak into later commands (unlike SET). This is why we
+    /// can use set_config instead of SET LOCAL when acquiring locks. Unlike SET LOCAL, set_config does not log
+    /// "SET LOCAL can only be used in transaction blocks" (see https://github.com/madelson/DistributedLock/issues/90).
+    /// </summary>
+    [TestCase(false)]
+    [TestCase(true)]
+    public async Task TestSetConfigIsLocalBehavesLikeSetLocalOutsideOfTransaction(bool useSetConfig)
+    {
+        using var connection = new NpgsqlConnection(TestingPostgresDb.DefaultConnectionString);
+        await connection.OpenAsync();
+        List<string> notices = [];
+        connection.Notice += (_, e) => notices.Add(e.Notice.MessageText);
+
+        // set_config is wrapped in a DO block so that it does not return a result set, like SET LOCAL
+        string SetLockTimeout(int milliseconds) => useSetConfig
+            ? $"DO $$BEGIN PERFORM pg_catalog.set_config('lock_timeout', '{milliseconds}', true); END$$;"
+            : $"SET LOCAL lock_timeout = {milliseconds};";
+
+        (await ExecuteAsync($"{SetLockTimeout(12345)} CREATE TEMPORARY TABLE temp_table_{useSetConfig} (id INT); SHOW lock_timeout;")).ShouldEqual("12345ms");
+        (await ExecuteAsync("SHOW lock_timeout;")).ShouldEqual("0");
+        (await ExecuteAsync($"{SetLockTimeout(456)} SELECT 'x'")).ShouldEqual("x");
+        (await ExecuteAsync("SHOW lock_timeout")).ShouldEqual("0");
+
+        const string SetLocalWarning = "SET LOCAL can only be used in transaction blocks";
+        if (useSetConfig) { Assert.That(notices, Has.None.Contains(SetLocalWarning)); }
+        else { Assert.That(notices, Has.Some.Contains(SetLocalWarning)); }
+
+        async Task<string?> ExecuteAsync(string sql)
+        {
+            using var command = connection.CreateCommand();
+            command.CommandText = sql;
+            return (string?)await command.ExecuteScalarAsync();
+        }
+    }
+
     [Test]
     public Task TestTransactionCancellationRecovery() =>
         this.TestTransactionCancellationOrTimeoutRecovery(useTimeout: false);
