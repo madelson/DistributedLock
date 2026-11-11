@@ -142,6 +142,9 @@ Setup steps for working with the repository locally are documented [here](docs/D
 
 ## Release notes
 
+- 2.8.4
+  - Use `set_config` instead of `SET LOCAL` to avoid Postgres warnings ([#294⁠](https://github.com/madelson/DistributedLock/pull/294), DistributedLock.Postgres 1.3.2). Thanks [behruzsaifov](https://github.com/behruzsaifov) for implementing!
+  - Patch MySqlConnector ([#296](https://github.com/madelson/DistributedLock/issues/296), DistributedLock.MySql 1.0.3)
 - 2.8.3
   - Bump MongoDB.Driver to avoid pulling in vulnerable packages ([#281](https://github.com/madelson/DistributedLock/pull/281), DistributedLock.MongoDB 1.0.2). Thanks [@Thynix](https://github.com/Thynix) for implementing!
 - 2.8.2
