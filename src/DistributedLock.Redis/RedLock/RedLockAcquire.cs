@@ -133,8 +133,15 @@ internal readonly struct RedLockAcquire
                 ++faultCount;
                 if (RedLockHelper.HasTooManyFailuresOrFaults(faultCount, this._databases.Count))
                 {
-                    var faultingTasks = tryAcquireTasks.Values.Where(t => t.IsCanceled || t.IsFaulted)
+                    var faultingTasks = tryAcquireTasks.Values
+                        .Where(t => t.IsCanceled || t.IsFaulted)
                         .ToArray();
+                    if (faultingTasks.Length == 0)
+                    {
+                        // The original Redis task is still pending, so propagate the
+                        // disconnected-database exception created separately above.
+                        await completed.ConfigureAwait(false);
+                    }
                     if (faultingTasks.Length == 1)
                     {
                         await faultingTasks[0].ConfigureAwait(false); // propagate the error
@@ -167,7 +174,7 @@ internal readonly struct RedLockAcquire
         //
         // The fix I've implemented is to bypass the backlog via a connectivity check when it comes to the server casting the "deciding vote" in a multi-server
         // scenario. That way, the case above is resolved quickly because both proceses will see that C is disconnected and fail the current acquire without
-        // waiting. Note that this is always a no-op in the single-server scenario.
+        // waiting. In a single-server scenario, a disconnected server is immediately decisive because there are no other operations to complete first.
         //
         // The current approach DOES NOT handle the case where the deciding vote is down to multiple servers all of which are down. We could implement this
         // at the cost of additional complexity, but currently I don't see that as worthwhile since the scenario should be much less common and more problematic
@@ -181,8 +188,10 @@ internal readonly struct RedLockAcquire
         // https://github.com/StackExchange/StackExchange.Redis/issues/2645
         Task? TryResolveDisconnectedDatabaseAsFaulted(RedLockAcquire @this)
         {
-            // First, check to see if (a) we have at least 1 success/failure and (b) one more would be decisive. If not, bail.
-            if (!((successCount > 0 && RedLockHelper.HasSufficientSuccesses(successCount + 1, @this._databases.Count))
+            // For multiple databases, first check to see if (a) we have at least 1 success/failure and (b) one more would be decisive.
+            // A disconnected single database is always decisive.
+            if (@this._databases.Count != 1
+                && !((successCount > 0 && RedLockHelper.HasSufficientSuccesses(successCount + 1, @this._databases.Count))
                 || (failCount > 0 && RedLockHelper.HasTooManyFailuresOrFaults(failCount + 1, @this._databases.Count))))
             {
                 return null;
