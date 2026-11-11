@@ -4,6 +4,7 @@ using Medallion.Threading.WaitHandles;
 using Medallion.Threading.Postgres;
 using Medallion.Threading.Tests;
 using Medallion.Threading.Azure;
+using Azure.Data.Tables;
 using Azure.Storage.Blobs;
 using Medallion.Threading.FileSystem;
 using System.IO;
@@ -72,6 +73,16 @@ internal static class Program
                 handle = new AzureBlobLeaseDistributedLock(
                         new BlobClient(AzureCredentials.ConnectionString, AzureCredentials.DefaultBlobContainerName, name),
                         o => o.Duration(TimeSpan.FromSeconds(15))
+                    )
+                    .Acquire();
+                break;
+            case nameof(AzureTableDistributedLock):
+                handle = new AzureTableDistributedLock(
+                        new TableClient(AzureCredentials.ConnectionString, AzureCredentials.DefaultTableName),
+                        name,
+                        o => o.Duration(TimeSpan.FromSeconds(15))
+                            .RowKey(AzureTableKeySelector.FromFunc(n => n))
+                            .CreateTableIfNotExists()
                     )
                     .Acquire();
                 break;

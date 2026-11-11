@@ -1,4 +1,5 @@
-﻿using Azure.Storage.Blobs;
+﻿using Azure.Data.Tables;
+using Azure.Storage.Blobs;
 using Medallion.Shell;
 using NUnit.Framework;
 using System.Diagnostics;
@@ -48,12 +49,14 @@ public class AzureSetUpFixture
         }
 
         new BlobContainerClient(AzureCredentials.ConnectionString, AzureCredentials.DefaultBlobContainerName).CreateIfNotExists();
+        new TableClient(AzureCredentials.ConnectionString, AzureCredentials.DefaultTableName).CreateIfNotExists();
     }
 
     [OneTimeTearDown]
     public void OneTimeTearDown()
     {
         new BlobContainerClient(AzureCredentials.ConnectionString, AzureCredentials.DefaultBlobContainerName).DeleteIfExists();
+        new TableClient(AzureCredentials.ConnectionString, AzureCredentials.DefaultTableName).Delete();
 
         if (this._startedEmulator)
         {

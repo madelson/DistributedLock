@@ -5,6 +5,7 @@ using NUnit.Framework;
 namespace Medallion.Threading.Tests.Azure
 {
     public class Core_AzureBlobLease_AzureBlobLeaseSynchronizationStrategyTest : DistributedLockCoreTestCases<TestingAzureBlobLeaseDistributedLockProvider, TestingAzureBlobLeaseSynchronizationStrategy> { }
+    public class Core_AzureTable_AzureTableSynchronizationStrategyTest : DistributedLockCoreTestCases<TestingAzureTableDistributedLockProvider, TestingAzureTableSynchronizationStrategy> { }
 }
 
 namespace Medallion.Threading.Tests.FileSystem

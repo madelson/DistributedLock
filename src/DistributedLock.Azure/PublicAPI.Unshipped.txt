@@ -1,1 +1,53 @@
-﻿
+#nullable enable
+Medallion.Threading.Azure.AzureTableAcquireContext
+Medallion.Threading.Azure.AzureTableAcquireContext.AttemptNumber.get -> int
+Medallion.Threading.Azure.AzureTableAcquireContext.AzureTableAcquireContext() -> void
+Medallion.Threading.Azure.AzureTableAcquireContext.Equals(Medallion.Threading.Azure.AzureTableAcquireContext that) -> bool
+Medallion.Threading.Azure.AzureTableAcquireContext.Name.get -> string!
+Medallion.Threading.Azure.AzureTableAcquireContext.PartitionKey.get -> string!
+Medallion.Threading.Azure.AzureTableAcquireContext.RowExists.get -> bool?
+Medallion.Threading.Azure.AzureTableAcquireContext.RowKey.get -> string!
+Medallion.Threading.Azure.AzureTableAcquireStrategy
+Medallion.Threading.Azure.AzureTableAcquireStrategy.InsertFirst = 0 -> Medallion.Threading.Azure.AzureTableAcquireStrategy
+Medallion.Threading.Azure.AzureTableAcquireStrategy.ReadFirst = 1 -> Medallion.Threading.Azure.AzureTableAcquireStrategy
+Medallion.Threading.Azure.AzureTableAcquireStrategySelector
+Medallion.Threading.Azure.AzureTableDistributedLock
+Medallion.Threading.Azure.AzureTableDistributedLock.Acquire(System.TimeSpan? timeout = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> Medallion.Threading.Azure.AzureTableDistributedLockHandle!
+Medallion.Threading.Azure.AzureTableDistributedLock.AcquireAsync(System.TimeSpan? timeout = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<Medallion.Threading.Azure.AzureTableDistributedLockHandle!>
+Medallion.Threading.Azure.AzureTableDistributedLock.AzureTableDistributedLock(Azure.Data.Tables.TableClient! tableClient, string! name, System.Action<Medallion.Threading.Azure.AzureTableOptionsBuilder!>? options = null) -> void
+Medallion.Threading.Azure.AzureTableDistributedLock.Name.get -> string!
+Medallion.Threading.Azure.AzureTableDistributedLock.PartitionKey.get -> string!
+Medallion.Threading.Azure.AzureTableDistributedLock.RowKey.get -> string!
+Medallion.Threading.Azure.AzureTableDistributedLock.TryAcquire(System.TimeSpan timeout = default(System.TimeSpan), System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> Medallion.Threading.Azure.AzureTableDistributedLockHandle?
+Medallion.Threading.Azure.AzureTableDistributedLock.TryAcquireAsync(System.TimeSpan timeout = default(System.TimeSpan), System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<Medallion.Threading.Azure.AzureTableDistributedLockHandle?>
+Medallion.Threading.Azure.AzureTableDistributedLockHandle
+Medallion.Threading.Azure.AzureTableDistributedLockHandle.Dispose() -> void
+Medallion.Threading.Azure.AzureTableDistributedLockHandle.DisposeAsync() -> System.Threading.Tasks.ValueTask
+Medallion.Threading.Azure.AzureTableDistributedLockHandle.HandleLostToken.get -> System.Threading.CancellationToken
+Medallion.Threading.Azure.AzureTableDistributedLockHandle.LockId.get -> string!
+Medallion.Threading.Azure.AzureTableDistributedSynchronizationProvider
+Medallion.Threading.Azure.AzureTableDistributedSynchronizationProvider.AzureTableDistributedSynchronizationProvider(Azure.Data.Tables.TableClient! tableClient, System.Action<Medallion.Threading.Azure.AzureTableOptionsBuilder!>? options = null) -> void
+Medallion.Threading.Azure.AzureTableDistributedSynchronizationProvider.CreateLock(string! name) -> Medallion.Threading.Azure.AzureTableDistributedLock!
+Medallion.Threading.Azure.AzureTableKeySelector
+Medallion.Threading.Azure.AzureTableOptionsBuilder
+Medallion.Threading.Azure.AzureTableOptionsBuilder.AcquireStrategy(Medallion.Threading.Azure.AzureTableAcquireStrategySelector! acquireStrategy) -> Medallion.Threading.Azure.AzureTableOptionsBuilder!
+Medallion.Threading.Azure.AzureTableOptionsBuilder.BusyWaitSleepTime(System.TimeSpan min, System.TimeSpan max) -> Medallion.Threading.Azure.AzureTableOptionsBuilder!
+Medallion.Threading.Azure.AzureTableOptionsBuilder.CreateTableIfNotExists(bool createTableIfNotExists = true) -> Medallion.Threading.Azure.AzureTableOptionsBuilder!
+Medallion.Threading.Azure.AzureTableOptionsBuilder.Duration(System.TimeSpan duration) -> Medallion.Threading.Azure.AzureTableOptionsBuilder!
+Medallion.Threading.Azure.AzureTableOptionsBuilder.PartitionKey(Medallion.Threading.Azure.AzureTableKeySelector! partitionKey) -> Medallion.Threading.Azure.AzureTableOptionsBuilder!
+Medallion.Threading.Azure.AzureTableOptionsBuilder.RenewalCadence(System.TimeSpan renewalCadence) -> Medallion.Threading.Azure.AzureTableOptionsBuilder!
+Medallion.Threading.Azure.AzureTableOptionsBuilder.RowKey(Medallion.Threading.Azure.AzureTableKeySelector! rowKey) -> Medallion.Threading.Azure.AzureTableOptionsBuilder!
+const Medallion.Threading.Azure.AzureTableKeySelector.NamePlaceholder = "{name}" -> string!
+override Medallion.Threading.Azure.AzureTableAcquireContext.Equals(object? obj) -> bool
+override Medallion.Threading.Azure.AzureTableAcquireContext.GetHashCode() -> int
+static Medallion.Threading.Azure.AzureTableAcquireContext.operator !=(Medallion.Threading.Azure.AzureTableAcquireContext a, Medallion.Threading.Azure.AzureTableAcquireContext b) -> bool
+static Medallion.Threading.Azure.AzureTableAcquireContext.operator ==(Medallion.Threading.Azure.AzureTableAcquireContext a, Medallion.Threading.Azure.AzureTableAcquireContext b) -> bool
+static Medallion.Threading.Azure.AzureTableAcquireStrategySelector.Adaptive.get -> Medallion.Threading.Azure.AzureTableAcquireStrategySelector!
+static Medallion.Threading.Azure.AzureTableAcquireStrategySelector.FromConstant(Medallion.Threading.Azure.AzureTableAcquireStrategy strategy) -> Medallion.Threading.Azure.AzureTableAcquireStrategySelector!
+static Medallion.Threading.Azure.AzureTableAcquireStrategySelector.FromFunc(System.Func<Medallion.Threading.Azure.AzureTableAcquireContext, Medallion.Threading.Azure.AzureTableAcquireStrategy>! selector) -> Medallion.Threading.Azure.AzureTableAcquireStrategySelector!
+static Medallion.Threading.Azure.AzureTableAcquireStrategySelector.implicit operator Medallion.Threading.Azure.AzureTableAcquireStrategySelector!(Medallion.Threading.Azure.AzureTableAcquireStrategy strategy) -> Medallion.Threading.Azure.AzureTableAcquireStrategySelector!
+static Medallion.Threading.Azure.AzureTableAcquireStrategySelector.implicit operator Medallion.Threading.Azure.AzureTableAcquireStrategySelector!(System.Func<Medallion.Threading.Azure.AzureTableAcquireContext, Medallion.Threading.Azure.AzureTableAcquireStrategy>! selector) -> Medallion.Threading.Azure.AzureTableAcquireStrategySelector!
+static Medallion.Threading.Azure.AzureTableKeySelector.FromFunc(System.Func<string!, string!>! selector) -> Medallion.Threading.Azure.AzureTableKeySelector!
+static Medallion.Threading.Azure.AzureTableKeySelector.FromTemplate(string! template) -> Medallion.Threading.Azure.AzureTableKeySelector!
+static Medallion.Threading.Azure.AzureTableKeySelector.implicit operator Medallion.Threading.Azure.AzureTableKeySelector!(string! template) -> Medallion.Threading.Azure.AzureTableKeySelector!
+static Medallion.Threading.Azure.AzureTableKeySelector.implicit operator Medallion.Threading.Azure.AzureTableKeySelector!(System.Func<string!, string!>! selector) -> Medallion.Threading.Azure.AzureTableKeySelector!
