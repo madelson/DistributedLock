@@ -108,8 +108,7 @@ static class Helpers
     }
 
 #if !NET8_0_OR_GREATER
-    public static Task CancelAsync(
-        this CancellationTokenSource cancellationTokenSource)
+    public static Task CancelAsync(this CancellationTokenSource cancellationTokenSource)
     {
         return Task.Run(cancellationTokenSource.Cancel);
     }
