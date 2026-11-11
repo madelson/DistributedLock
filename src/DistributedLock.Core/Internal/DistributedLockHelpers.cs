@@ -133,7 +133,7 @@ static class DistributedLockHelpers
         SyncViaAsync.Run(t => t.handle.TryUpgradeToWriteLockAsync(t.timeout, t.cancellationToken), (handle, timeout, cancellationToken));
     #endregion
 
-    private static Exception LockTimeout(string? @object = null) => new TimeoutException($"Timeout exceeded when trying to acquire the {@object ?? "lock"}");
+    internal static Exception LockTimeout(string? @object = null) => new TimeoutException($"Timeout exceeded when trying to acquire the {@object ?? "lock"}");
 
     public static async ValueTask<T> ThrowTimeoutIfNull<T>(this ValueTask<T?> task, string? @object = null) where T : class =>
         await task.ConfigureAwait(false) ?? throw LockTimeout(@object);

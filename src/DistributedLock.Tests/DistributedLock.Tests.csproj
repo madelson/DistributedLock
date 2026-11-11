@@ -15,6 +15,12 @@
     <!-- AOT compatibility is not needed in the CI pipeline, so override the value set in Directory.Build.props to use reflections freely -->
     <IsAotCompatible>false</IsAotCompatible>
   </PropertyGroup>
+  
+  <ItemGroup>
+    <Compile Remove="Tests\Composite\**" />
+    <EmbeddedResource Remove="Tests\Composite\**" />
+    <None Remove="Tests\Composite\**" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="nunit" />

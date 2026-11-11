@@ -54,10 +54,10 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All" />
-    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" PrivateAssets="All" Condition="'$(Configuration)' == 'Release'"/>
+    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" PrivateAssets="All" Condition="'$(Configuration)' == 'Release'" />
   </ItemGroup>
 
   <ItemGroup>
-    <Using Remove="System.Net.Http"/>
+    <Using Remove="System.Net.Http" />
   </ItemGroup>
 </Project>

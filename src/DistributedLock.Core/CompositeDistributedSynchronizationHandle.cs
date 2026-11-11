@@ -4,11 +4,11 @@ namespace Medallion.Threading;
 
 internal sealed class CompositeDistributedSynchronizationHandle : IDistributedSynchronizationHandle
 {
-    private RefBox<(IReadOnlyList<IDistributedSynchronizationHandle> Handles, CancellationTokenSource? HandleLostSource)>? _box;
+    private RefBox<(IReadOnlyList<IDistributedSynchronizationHandle> Handles, CancellationTokenSource? HandleLostSource, bool HandleLostSourceCreated)>? _box;
 
     private CompositeDistributedSynchronizationHandle(IReadOnlyList<IDistributedSynchronizationHandle> handles)
     {
-        this._box = RefBox.Create((handles, default(CancellationTokenSource)));
+        this._box = RefBox.Create((handles, default(CancellationTokenSource), false));
     }
 
     public CancellationToken HandleLostToken
@@ -17,18 +17,26 @@ internal sealed class CompositeDistributedSynchronizationHandle : IDistributedSy
         {
             var currentBox = Volatile.Read(ref this._box);
 
-            if (currentBox != null
-                && currentBox.Value.HandleLostSource is null
-                && CreateLinkedCancellationTokenSource(currentBox.Value.Handles) is { } newHandleLostSource)
+            // HandleLostToken can be expensive to obtain on some providers, so we don't touch the underlying
+            // handles until we're asked for the token, and we only ever do so once. We track that with a
+            // separate flag rather than a null check because a null source is itself a valid memoized result
+            // (it means no underlying handle has a cancelable token), which we must not recompute on each read.
+            if (currentBox is { Value.HandleLostSourceCreated: false })
             {
-                var newBox = RefBox.Create(currentBox.Value with { HandleLostSource = newHandleLostSource });
+                var newHandleLostSource = CreateLinkedCancellationTokenSource(currentBox.Value.Handles);
+                var newBox = RefBox.Create(currentBox.Value with { HandleLostSource = newHandleLostSource, HandleLostSourceCreated = true });
                 var result = Interlocked.CompareExchange(ref this._box, newBox, comparand: currentBox);
                 if (result == currentBox) { currentBox = newBox; }
-                else { newHandleLostSource.Dispose(); } // lost the race
+                else
+                {
+                    // lost the race to another caller or to disposal
+                    newHandleLostSource?.Dispose();
+                    currentBox = result;
+                }
             }
 
             return currentBox is null
-                ? throw this.ObjectDisposed() 
+                ? throw this.ObjectDisposed()
                 : (currentBox.Value.HandleLostSource?.Token ?? CancellationToken.None);
         }
     }
@@ -53,6 +61,12 @@ internal sealed class CompositeDistributedSynchronizationHandle : IDistributedSy
         return names.Select(n => create(state, n)).ToArray();
     }
 
+    /// <summary>
+    /// Acquires all <paramref name="primitives"/> one at a time, in order, returning a composite handle on success
+    /// or the first primitive which could not be acquired on failure. All primitives share the
+    /// <paramref name="timeout"/> as a single overall deadline, and any primitives that were acquired are released
+    /// (in reverse order of acquisition) if the operation fails.
+    /// </summary>
     public static async ValueTask<AcquireResult> TryAcquireAllAsync<TPrimitive>(
         IReadOnlyList<TPrimitive> primitives,
         Func<TPrimitive, TimeSpan, CancellationToken, ValueTask<IDistributedSynchronizationHandle?>> acquireFunc,
