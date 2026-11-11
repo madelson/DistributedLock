@@ -60,7 +60,7 @@ public class PostgresBehaviorTest
     {
         using var connection = new NpgsqlConnection(TestingPostgresDb.DefaultConnectionString);
         await connection.OpenAsync();
-        var notices = new List<string>();
+        List<string> notices = [];
         connection.Notice += (_, e) => notices.Add(e.Notice.MessageText);
 
         // set_config is wrapped in a DO block so that it does not return a result set, like SET LOCAL

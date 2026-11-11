@@ -117,6 +117,22 @@ public class PostgresDistributedLockTest
         (await GetTimeoutAsync("statement_timeout", connectionCommand)).ShouldEqual("0");
     }
 
+    // Reproduces https://github.com/madelson/DistributedLock/issues/289
+    [Test]
+    public async Task TestLockAcquisitionDoesNotEmitNotices()
+    {
+        using var connection = new NpgsqlConnection(TestingPostgresDb.DefaultConnectionString);
+        List<string> notices = [];
+        connection.Notice += (_, e) => notices.Add(e.Notice.MessageText);
+
+        await connection.OpenAsync();
+
+        var @lock = new PostgresDistributedLock(new PostgresAdvisoryLockKey(TestHelper.UniqueName, allowHashing: true), connection);
+        await (await @lock.AcquireAsync()).DisposeAsync();
+
+        Assert.IsEmpty(notices);
+    }
+
     private static Task<object> GetTimeoutAsync(string timeoutName, NpgsqlCommand command)
     {
         command.CommandText = $"SHOW {timeoutName}";
