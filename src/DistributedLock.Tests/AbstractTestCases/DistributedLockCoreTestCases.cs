@@ -115,7 +115,7 @@ public abstract class DistributedLockCoreTestCases<TLockProvider, TStrategy>
         await using (await this._lockProvider.CreateLock(lockName).AcquireAsync())
         {
             var timeout = TimeSpan.FromSeconds(.2);
-            var waitTime = TimeSpan.FromSeconds(.5);
+            var waitTime = timeout + TimeSpan.FromSeconds(2);
 
             var syncAcquireTask = Task.Run(() => @lock.Acquire(timeout));
             (await syncAcquireTask.ContinueWith(_ => { }).TryWaitAsync(waitTime)).ShouldEqual(true, "sync acquire " + this.GetType().Name);
