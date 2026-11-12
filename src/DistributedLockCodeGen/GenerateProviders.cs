@@ -1,4 +1,4 @@
-﻿using NUnit.Framework;
+using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -86,18 +86,55 @@ public class GenerateProviders
                             + "s"
                             + (isAsync ? "Async" : "");
                         var isSemaphore = interfaceName.Contains("Semaphore");
+                        var isReaderWriterLock = interfaceName.Contains("ReaderWriterLock");
+                        var primitiveNoun = isSemaphore ? "semaphore" : isReaderWriterLock ? "reader-writer lock" : "lock";
+                        var acquiredNoun = isReaderWriterLock ? (m.Groups["name"].Value.Contains("Read") ? "read locks" : "write locks") : primitiveNoun + "s";
                         string MaxCountArg(string prefix = "") => isSemaphore ? prefix + "maxCount, " : "";
-
-                        return $"""
+                        var internalMethodName = $"Try{extensionMethodName.Replace("Try", "").Replace("Async", "InternalAsync")}";
+                        var getHandleMethodName = $"GetHandleOr{(isTry ? "Default" : "Timeout")}";
+                        var timeoutType = m.Groups["parameterType"].Captures[0].Value;
+                        var summary = $"""
                                 /// <summary>
                                 /// Equivalent to calling <see cref="{providerInterfaceName}.{createMethodName}(string{(isSemaphore ? ", int" : string.Empty)})" /> for each name in <paramref name="names" /> and then
                                 /// <see cref="{interfaceName}.{m.Groups["name"].Value}({string.Join(", ", m.Groups["parameterType"].Captures.Select(c => c.Value))})" /> on each created instance, combining the results into a composite handle.
                                 /// </summary>
+                            """;
+                        var leadingParamDocs = $"""
+                                /// <param name="provider">The provider used to create each {primitiveNoun}.</param>
+                                /// <param name="names">{(isReaderWriterLock ? $"The names of the reader-writer locks on which to acquire {acquiredNoun}." : $"The names of the {acquiredNoun} to acquire.")}</param>{(isSemaphore ? """
+
+                                /// <param name="maxCount">The max count of each semaphore.</param>
+                            """ : string.Empty)}
+                                /// <param name="timeout">The total time to wait for all {acquiredNoun} to be acquired.</param>
+                            """;
+                        var cancellationTokenParamDoc = """
+                                /// <param name="cancellationToken">Specifies a token by which the wait can be canceled.</param>
+                            """;
+
+                        return $"""
+                            {summary}
+                            {leadingParamDocs}
+                            {cancellationTokenParamDoc}
                                 public static {m.Groups["returnType"].Value} {extensionMethodName}(this {providerInterfaceName} provider, IReadOnlyList<string> names{(isSemaphore ? ", int maxCount" : string.Empty)}, {m.Groups["parameters"].Value}) =>
                                     {(
                                         isAsync
-                                            ? $"provider.Try{extensionMethodName.Replace("Try", "").Replace("Async", "InternalAsync")}(names, {MaxCountArg()}timeout, cancellationToken).GetHandleOr{(isTry ? "Default" : "Timeout")}();"
+                                            ? $"provider.{internalMethodName}(names, {MaxCountArg()}timeout, observeLockLostToken: false, cancellationToken).{getHandleMethodName}();"
                                             : $"SyncViaAsync.Run(static s => s.provider.{extensionMethodName}Async(s.names, {MaxCountArg("s.")}s.timeout, s.cancellationToken), (provider, names, {MaxCountArg()}timeout, cancellationToken));"
+                                    )}
+
+                            {summary}
+                            {leadingParamDocs}
+                                /// <param name="observeLockLostToken">
+                                /// Whether to observe the <see cref="IDistributedSynchronizationHandle.HandleLostToken"/> of already-acquired handles while acquiring the remaining ones.
+                                /// If a handle is lost mid-acquisition, all acquired handles are released and {(isTry ? "null is returned" : "a <see cref=\"DistributedLockLostException\"/> is thrown")}.
+                                /// Has no effect when only one name is given. Note that accessing the token may start background monitoring for some providers.
+                                /// </param>
+                            {cancellationTokenParamDoc}
+                                public static {m.Groups["returnType"].Value} {extensionMethodName}(this {providerInterfaceName} provider, IReadOnlyList<string> names{(isSemaphore ? ", int maxCount" : string.Empty)}, {timeoutType} timeout, bool observeLockLostToken, CancellationToken cancellationToken) =>
+                                    {(
+                                        isAsync
+                                            ? $"provider.{internalMethodName}(names, {MaxCountArg()}timeout, observeLockLostToken, cancellationToken).{getHandleMethodName}();"
+                                            : $"SyncViaAsync.Run(static s => s.provider.{extensionMethodName}Async(s.names, {MaxCountArg("s.")}s.timeout, s.observeLockLostToken, s.cancellationToken), (provider, names, {MaxCountArg()}timeout, observeLockLostToken, cancellationToken));"
                                     )}
                             """;
                     }

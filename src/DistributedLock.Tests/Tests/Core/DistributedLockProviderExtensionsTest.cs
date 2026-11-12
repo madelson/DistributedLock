@@ -328,4 +328,218 @@ public class DistributedLockProviderExtensionsTest
         ctsA.Dispose();
         ctsB.Dispose();
     }
+
+    [Test, Combinatorial]
+    public async Task TestCompositeObserveLockLostTokenPassesLinkedTokenToSubsequentAcquires([Values] bool observe, [Values] bool isAsync)
+    {
+        using var ctsA = new CancellationTokenSource();
+        var handleA = CreateHandle(ctsA.Token);
+        var handleB = CreateHandle(CancellationToken.None);
+        bool? tokenBCanceledByLoss = null;
+        var provider = CreateProvider(
+            isAsync,
+            ("A", (_, _) => handleA.Object),
+            ("B", (_, c) =>
+            {
+                ctsA.Cancel();
+                tokenBCanceledByLoss = c.IsCancellationRequested;
+                return handleB.Object;
+            }));
+
+        await using var result = await AcquireAllAsync(provider, ["A", "B"], isTry: true, isAsync, observe, default);
+
+        Assert.That(tokenBCanceledByLoss, Is.EqualTo(observe));
+        Assert.That(result, observe ? Is.Null : Is.Not.Null);
+    }
+
+    [Test, Combinatorial]
+    public async Task TestCompositeLockLostDuringAcquisition([Values] bool isTry, [Values] bool isAsync)
+    {
+        using var ctsA = new CancellationTokenSource();
+        var handleA = CreateHandle(ctsA.Token);
+        var provider = CreateProvider(
+            isAsync,
+            ("A", (_, _) => handleA.Object),
+            ("B", (_, c) =>
+            {
+                ctsA.Cancel();
+                c.ThrowIfCancellationRequested();
+                throw new AssertionException("should have been canceled");
+            }));
+
+        await AssertLostAsync(provider, ["A", "B"], isTry, isAsync);
+        VerifyDisposedOnce(handleA, isAsync);
+    }
+
+    [Test, Combinatorial]
+    public async Task TestCompositeLockLostAfterLastAcquireReleasesHandles([Values] bool isTry, [Values] bool isAsync)
+    {
+        using var ctsA = new CancellationTokenSource();
+        var handleA = CreateHandle(ctsA.Token);
+        var handleB = CreateHandle(CancellationToken.None);
+        var provider = CreateProvider(
+            isAsync,
+            ("A", (_, _) => handleA.Object),
+            ("B", (_, _) => { ctsA.Cancel(); return handleB.Object; }));
+
+        await AssertLostAsync(provider, ["A", "B"], isTry, isAsync);
+        VerifyDisposedOnce(handleA, isAsync);
+        VerifyDisposedOnce(handleB, isAsync);
+    }
+
+    [Test, Combinatorial]
+    public void TestCompositeCallerCancellationStillThrowsOperationCanceled([Values] bool isTry, [Values] bool isAsync)
+    {
+        using var callerCts = new CancellationTokenSource();
+        var handleA = CreateHandle(CancellationToken.None);
+        var provider = CreateProvider(
+            isAsync,
+            ("A", (_, _) => handleA.Object),
+            ("B", (_, c) =>
+            {
+                callerCts.Cancel();
+                c.ThrowIfCancellationRequested();
+                throw new AssertionException("should have been canceled");
+            }));
+
+        var ex = Assert.CatchAsync<OperationCanceledException>(
+            () => AcquireAllAsync(provider, ["A", "B"], isTry, isAsync, observeLockLostToken: true, callerCts.Token).AsTask());
+        Assert.That(ex!.CancellationToken.IsCancellationRequested, Is.True);
+        VerifyDisposedOnce(handleA, isAsync);
+    }
+
+    [Test, Combinatorial]
+    public async Task TestCompositeLockLostWhenAlreadyCancelledHandleToken([Values] bool isTry, [Values] bool isAsync)
+    {
+        var handleA = CreateHandle(new CancellationToken(canceled: true));
+        var bInvoked = false;
+        var provider = CreateProvider(
+            isAsync,
+            ("A", (_, _) => handleA.Object),
+            ("B", (_, _) => { bInvoked = true; return CreateHandle(CancellationToken.None).Object; }));
+
+        await AssertLostAsync(provider, ["A", "B"], isTry, isAsync);
+        Assert.That(bInvoked, Is.False);
+        VerifyDisposedOnce(handleA, isAsync);
+    }
+
+    [Test, Combinatorial]
+    public async Task TestCompositeObserveLockLostTokenIgnoresNonCancelableTokens([Values] bool isTry, [Values] bool isAsync)
+    {
+        var handleA = CreateHandle(CancellationToken.None);
+        var handleB = CreateHandle(CancellationToken.None);
+        var provider = CreateProvider(
+            isAsync,
+            ("A", (_, _) => handleA.Object),
+            ("B", (_, _) => handleB.Object));
+
+        await using var result = await AcquireAllAsync(provider, ["A", "B"], isTry, isAsync, observeLockLostToken: true, default);
+        Assert.That(result, Is.Not.Null);
+    }
+
+    [Test, Combinatorial]
+    public async Task TestCompositeObserveLockLostTokenSingleName([Values] bool isAsync)
+    {
+        using var callerCts = new CancellationTokenSource();
+        var handleA = CreateHandle(CancellationToken.None);
+        CancellationToken tokenA = default;
+        var provider = CreateProvider(isAsync, ("A", (_, c) => { tokenA = c; return handleA.Object; }));
+
+        var result = await AcquireAllAsync(provider, ["A"], isTry: true, isAsync, observeLockLostToken: true, callerCts.Token);
+
+        Assert.That(result, Is.SameAs(handleA.Object));
+        Assert.That(tokenA, Is.EqualTo(callerCts.Token));
+    }
+
+    [Test, Combinatorial]
+    public async Task TestCompositeObserveLockLostTokenNotObservedWhenDisabled([Values] bool isTry, [Values] bool isAsync)
+    {
+        using var ctsA = new CancellationTokenSource();
+        var handleA = CreateHandle(ctsA.Token);
+        var handleB = CreateHandle(CancellationToken.None);
+        var provider = CreateProvider(
+            isAsync,
+            ("A", (_, _) => handleA.Object),
+            ("B", (_, c) =>
+            {
+                ctsA.Cancel();
+                c.ThrowIfCancellationRequested();
+                return handleB.Object;
+            }));
+
+        await using var result = await AcquireAllAsync(provider, ["A", "B"], isTry, isAsync, observeLockLostToken: false, default);
+        Assert.That(result, Is.Not.Null);
+        handleA.Verify(h => h.Dispose(), Times.Never);
+        handleA.Verify(h => h.DisposeAsync(), Times.Never);
+    }
+
+    private static Mock<IDistributedSynchronizationHandle> CreateHandle(CancellationToken handleLostToken)
+    {
+        var handle = new Mock<IDistributedSynchronizationHandle>();
+        handle.Setup(h => h.HandleLostToken).Returns(handleLostToken);
+        return handle;
+    }
+
+    private static IDistributedLockProvider CreateProvider(
+        bool isAsync,
+        params (string Name, Func<TimeSpan, CancellationToken, IDistributedSynchronizationHandle?> Acquire)[] locks)
+    {
+        var provider = new Mock<IDistributedLockProvider>(MockBehavior.Strict);
+        foreach (var (name, acquire) in locks)
+        {
+            var @lock = new Mock<IDistributedLock>(MockBehavior.Strict);
+            @lock.Setup(l => l.Name).Returns(name);
+            if (isAsync)
+            {
+                @lock.Setup(l => l.TryAcquireAsync(It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
+                    .Returns((TimeSpan t, CancellationToken c) =>
+                    {
+                        try { return new ValueTask<IDistributedSynchronizationHandle?>(acquire(t, c)); }
+                        catch (Exception ex) { return new ValueTask<IDistributedSynchronizationHandle?>(Task.FromException<IDistributedSynchronizationHandle?>(ex)); }
+                    });
+            }
+            else
+            {
+                @lock.Setup(l => l.TryAcquire(It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
+                    .Returns((TimeSpan t, CancellationToken c) => acquire(t, c));
+            }
+            provider.Setup(p => p.CreateLock(name)).Returns(@lock.Object);
+        }
+        return provider.Object;
+    }
+
+    private static async ValueTask<IDistributedSynchronizationHandle?> AcquireAllAsync(
+        IDistributedLockProvider provider,
+        IReadOnlyList<string> names,
+        bool isTry,
+        bool isAsync,
+        bool observeLockLostToken,
+        CancellationToken cancellationToken) =>
+        (isTry, isAsync) switch
+        {
+            (true, true) => await provider.TryAcquireAllLocksAsync(names, TimeSpan.FromSeconds(10), observeLockLostToken, cancellationToken),
+            (true, false) => provider.TryAcquireAllLocks(names, TimeSpan.FromSeconds(10), observeLockLostToken, cancellationToken),
+            (false, true) => await provider.AcquireAllLocksAsync(names, TimeSpan.FromSeconds(10), observeLockLostToken, cancellationToken),
+            (false, false) => provider.AcquireAllLocks(names, TimeSpan.FromSeconds(10), observeLockLostToken, cancellationToken),
+        };
+
+    private static async Task AssertLostAsync(IDistributedLockProvider provider, IReadOnlyList<string> names, bool isTry, bool isAsync)
+    {
+        if (isTry)
+        {
+            Assert.That(await AcquireAllAsync(provider, names, isTry, isAsync, observeLockLostToken: true, default), Is.Null);
+        }
+        else
+        {
+            var ex = Assert.ThrowsAsync<DistributedLockLostException>(
+                () => AcquireAllAsync(provider, names, isTry, isAsync, observeLockLostToken: true, default).AsTask());
+            Assert.That(ex!.Message, Does.Contain("'A'"));
+        }
+    }
+
+    private static void VerifyDisposedOnce(Mock<IDistributedSynchronizationHandle> handle, bool isAsync)
+    {
+        if (isAsync) { handle.Verify(h => h.DisposeAsync(), Times.Once); }
+        else { handle.Verify(h => h.Dispose(), Times.Once); }
+    }
 }
