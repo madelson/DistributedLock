@@ -16,7 +16,7 @@ public class GenerateIDistributedLockImplementations
     {
         var files = CodeGenHelpers.EnumerateSolutionFiles()
             .Where(f => !f.Contains($"Distributed{name}.Core", StringComparison.OrdinalIgnoreCase))
-            .Where(f => f.EndsWith($"Distributed{name}.cs", StringComparison.OrdinalIgnoreCase) && Path.GetFileName(f)[0] != 'I');
+            .Where(f => f.EndsWith($"Distributed{name}.cs", StringComparison.OrdinalIgnoreCase) && !Regex.IsMatch(Path.GetFileName(f), "^I[A-Z]"));
         
         var errors = new List<string>();
         foreach (var file in files)

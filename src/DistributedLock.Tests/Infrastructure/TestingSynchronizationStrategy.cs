@@ -12,6 +12,12 @@ public abstract class TestingSynchronizationStrategy : IDisposable
     /// </summary>
     public virtual bool SupportsCrossProcessSingleSemaphoreTicketAbandonment => true;
 
+    /// <summary>
+    /// Whether or not synchronization is observed across processes. When false, test cases which
+    /// coordinate with the DistributedLockTaker process are skipped
+    /// </summary>
+    public virtual bool SupportsCrossProcess => true;
+
     public virtual void PrepareForHandleAbandonment() { }
     public virtual void PerformAdditionalCleanupForHandleAbandonment() { }
     public virtual IDisposable? PrepareForHandleLost() => null;

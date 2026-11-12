@@ -13,6 +13,17 @@ namespace Medallion.Threading.Tests.FileSystem
     [Category("CI")] public class Core_File_FileSynchronizationStrategyTest : DistributedLockCoreTestCases<TestingFileDistributedLockProvider, TestingLockFileSynchronizationStrategy> { }
 }
 
+namespace Medallion.Threading.Tests.InProcess
+{
+    [Category("CI")] public class Core_InProcess_InProcessSynchronizationStrategyTest : DistributedLockCoreTestCases<TestingInProcessDistributedLockProvider, TestingInProcessSynchronizationStrategy> { }
+    [Category("CI")] public class Core_Semaphore1AsMutex_InProcessSemaphore_InProcessSynchronizationStrategy_InProcessSynchronizationStrategyTest : DistributedLockCoreTestCases<TestingSemaphore1AsMutexProvider<TestingInProcessDistributedSemaphoreProvider, TestingInProcessSynchronizationStrategy>, TestingInProcessSynchronizationStrategy> { }
+    [Category("CI")] public class Core_Semaphore5AsMutex_InProcessSemaphore_InProcessSynchronizationStrategy_InProcessSynchronizationStrategyTest : DistributedLockCoreTestCases<TestingSemaphore5AsMutexProvider<TestingInProcessDistributedSemaphoreProvider, TestingInProcessSynchronizationStrategy>, TestingInProcessSynchronizationStrategy> { }
+    [Category("CI")] public class ReaderWriterCore_InProcessReaderWriter_InProcessSynchronizationStrategyTest : DistributedReaderWriterLockCoreTestCases<TestingInProcessDistributedReaderWriterLockProvider, TestingInProcessSynchronizationStrategy> { }
+    [Category("CI")] public class SemaphoreCore_InProcessSemaphore_InProcessSynchronizationStrategyTest : DistributedSemaphoreCoreTestCases<TestingInProcessDistributedSemaphoreProvider, TestingInProcessSynchronizationStrategy> { }
+    [Category("CI")] public class UpgradeableReaderWriterCore_InProcessReaderWriter_InProcessSynchronizationStrategyTest : DistributedUpgradeableReaderWriterLockCoreTestCases<TestingInProcessDistributedReaderWriterLockProvider, TestingInProcessSynchronizationStrategy> { }
+    public class Core_ReaderWriterAsMutex_InProcessReaderWriter_InProcessSynchronizationStrategy_InProcessSynchronizationStrategyTest : DistributedLockCoreTestCases<TestingReaderWriterLockAsMutexProvider<TestingInProcessDistributedReaderWriterLockProvider, TestingInProcessSynchronizationStrategy>, TestingInProcessSynchronizationStrategy> { }
+}
+
 namespace Medallion.Threading.Tests.MongoDB
 {
     public class Core_Mongo_MongoDbSynchronizationStrategyTest : DistributedLockCoreTestCases<TestingMongoDistributedLockProvider, TestingMongoDbSynchronizationStrategy> { }

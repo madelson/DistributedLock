@@ -149,20 +149,6 @@ internal sealed class CompositeDistributedSynchronizationHandle : IDistributedSy
             throw new AggregateException(exceptions);
         }
     }
-
-    private readonly struct TimeoutTracker(TimeoutValue timeout)
-    {
-        private readonly System.Diagnostics.Stopwatch? _stopwatch = timeout.IsInfinite
-            ? null
-            : System.Diagnostics.Stopwatch.StartNew();
-
-        public TimeSpan Remaining =>
-            this._stopwatch is { Elapsed: var elapsed }
-                ? elapsed >= timeout.TimeSpan
-                    ? TimeSpan.Zero
-                    : timeout.TimeSpan - elapsed
-                : Timeout.InfiniteTimeSpan;
-    }
 }
 
 internal static class CompositeDistributedLockHandleExtensions

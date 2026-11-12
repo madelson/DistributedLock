@@ -397,6 +397,8 @@ public abstract class DistributedLockCoreTestCases<TLockProvider, TStrategy>
     [Test]
     public void TestCrossProcess()
     {
+        this.SkipIfCrossProcessIsNotSupported();
+
         var lockName = this._lockProvider.GetUniqueSafeName();
         var command = this.RunLockTaker(this._lockProvider, this._lockProvider.GetCrossProcessLockType(), lockName);
         Assert.That(command.StandardOutput.ReadLineAsync().Wait(TimeSpan.FromSeconds(10)), Is.True);
@@ -428,6 +430,8 @@ public abstract class DistributedLockCoreTestCases<TLockProvider, TStrategy>
 
     private void CrossProcessAbandonmentHelper(bool asyncWait, bool kill)
     {
+        this.SkipIfCrossProcessIsNotSupported();
+
         var name = this._lockProvider.GetUniqueSafeName($"cpl-{asyncWait}-{kill}");
         var command = this.RunLockTaker(this._lockProvider, this._lockProvider.GetCrossProcessLockType(), name);
         Assert.That(command.StandardOutput.ReadLineAsync().Wait(TimeSpan.FromSeconds(10)), Is.True);
@@ -461,6 +465,14 @@ public abstract class DistributedLockCoreTestCases<TLockProvider, TStrategy>
         else
         {
             Assert.That(acquireTask.Wait(TimeSpan.FromSeconds(1)), Is.False);
+        }
+    }
+
+    private void SkipIfCrossProcessIsNotSupported()
+    {
+        if (!this._lockProvider.Strategy.SupportsCrossProcess)
+        {
+            Assert.Pass($"{this.GetType().Name}: provider does not support cross-process synchronization");
         }
     }
 

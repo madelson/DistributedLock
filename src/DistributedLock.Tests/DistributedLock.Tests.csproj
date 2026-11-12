@@ -30,6 +30,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\DistributedLock.InProcess\DistributedLock.InProcess.csproj" />
     <ProjectReference Include="..\DistributedLock\DistributedLock.csproj" />
   </ItemGroup>
   
