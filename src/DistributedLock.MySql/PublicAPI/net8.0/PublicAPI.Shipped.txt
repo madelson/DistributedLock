@@ -1,0 +1,3 @@
+#nullable enable
+Medallion.Threading.MySql.MySqlDistributedLock.MySqlDistributedLock(string! name, System.Data.Common.DbDataSource! dbDataSource, System.Action<Medallion.Threading.MySql.MySqlConnectionOptionsBuilder!>? options = null, bool exactName = false) -> void
+Medallion.Threading.MySql.MySqlDistributedSynchronizationProvider.MySqlDistributedSynchronizationProvider(System.Data.Common.DbDataSource! dbDataSource, System.Action<Medallion.Threading.MySql.MySqlConnectionOptionsBuilder!>? options = null) -> void

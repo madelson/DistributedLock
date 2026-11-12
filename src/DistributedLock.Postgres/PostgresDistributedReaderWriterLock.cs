@@ -36,8 +36,6 @@ public sealed partial class PostgresDistributedReaderWriterLock : IInternalDistr
     /// <summary>
     /// Constructs a lock with the given <paramref name="key"/> (effectively the lock name) and <paramref name="dbDataSource"/>,
     /// and <paramref name="options"/>.
-    /// 
-    /// Not compatible with connection multiplexing.
     /// </summary>
     public PostgresDistributedReaderWriterLock(PostgresAdvisoryLockKey key, DbDataSource dbDataSource, Action<PostgresConnectionOptionsBuilder>? options = null)
         : this(key, PostgresDistributedLock.CreateInternalLock(key, dbDataSource, options))
