@@ -1,0 +1,8 @@
+Medallion.Threading.NamePrefix.DistributedLockProviderExtensions
+Medallion.Threading.NamePrefix.DistributedReaderWriterLockProviderExtensions
+Medallion.Threading.NamePrefix.DistributedSemaphoreProviderExtensions
+Medallion.Threading.NamePrefix.DistributedUpgradeableReaderWriterLockProviderExtensions
+static Medallion.Threading.NamePrefix.DistributedLockProviderExtensions.WithNamePrefix(this Medallion.Threading.IDistributedLockProvider! provider, string! namePrefix) -> Medallion.Threading.IDistributedLockProvider!
+static Medallion.Threading.NamePrefix.DistributedReaderWriterLockProviderExtensions.WithNamePrefix(this Medallion.Threading.IDistributedReaderWriterLockProvider! provider, string! namePrefix) -> Medallion.Threading.IDistributedReaderWriterLockProvider!
+static Medallion.Threading.NamePrefix.DistributedSemaphoreProviderExtensions.WithNamePrefix(this Medallion.Threading.IDistributedSemaphoreProvider! provider, string! namePrefix) -> Medallion.Threading.IDistributedSemaphoreProvider!
+static Medallion.Threading.NamePrefix.DistributedUpgradeableReaderWriterLockProviderExtensions.WithNamePrefix(this Medallion.Threading.IDistributedUpgradeableReaderWriterLockProvider! provider, string! namePrefix) -> Medallion.Threading.IDistributedUpgradeableReaderWriterLockProvider!
