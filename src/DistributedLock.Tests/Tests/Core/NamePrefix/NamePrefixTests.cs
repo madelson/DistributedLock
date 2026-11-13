@@ -1,10 +1,10 @@
 ﻿using Moq;
-using Medallion.Threading.KeyPrefix;
+using Medallion.Threading.NamePrefix;
 using NUnit.Framework;
 
-namespace Medallion.Threading.Tests.Tests.Core.KeyPrefix;
+namespace Medallion.Threading.Tests.Tests.Core.NamePrefix;
 
-internal class KeyPrefixTests
+internal class NamePrefixTests
 {
     [TestCase("prefix1", "prefix1")]
     [TestCase("prefix1,prefix2", "prefix1prefix2")]
@@ -24,7 +24,7 @@ internal class KeyPrefixTests
             {
                 intermediateProviders.Add(sut);
             }
-            sut = sut.WithKeyPrefix(prefix);
+            sut = sut.WithNamePrefix(prefix);
         }
 
         _ = sut.CreateLock("my-lock");
@@ -34,10 +34,10 @@ internal class KeyPrefixTests
         rootProvider.VerifyNoOtherCalls();
 
         // The final provider wraps the root directly, so no intermediate provider takes part in the call
-        var prefixed = sut as KeyPrefixedDistributedLockProvider;
+        var prefixed = sut as NamePrefixedDistributedLockProvider;
         Assert.That(prefixed, Is.Not.Null);
         Assert.That(prefixed!.Inner, Is.SameAs(rootProvider.Object));
-        Assert.That(prefixed.KeyPrefix, Is.EqualTo(expectedPrefix));
+        Assert.That(prefixed.NamePrefix, Is.EqualTo(expectedPrefix));
         foreach (var intermediate in intermediateProviders)
         {
             Assert.That(prefixed.Inner, Is.Not.SameAs(intermediate));
@@ -62,7 +62,7 @@ internal class KeyPrefixTests
             {
                 intermediateProviders.Add(sut);
             }
-            sut = sut.WithKeyPrefix(prefix);
+            sut = sut.WithNamePrefix(prefix);
         }
 
         _ = sut.CreateReaderWriterLock("my-lock");
@@ -72,10 +72,10 @@ internal class KeyPrefixTests
         rootProvider.VerifyNoOtherCalls();
 
         // The final provider wraps the root directly, so no intermediate provider takes part in the call
-        var prefixed = sut as KeyPrefixedDistributedReaderWriterLockProvider;
+        var prefixed = sut as NamePrefixedDistributedReaderWriterLockProvider;
         Assert.That(prefixed, Is.Not.Null);
         Assert.That(prefixed!.Inner, Is.SameAs(rootProvider.Object));
-        Assert.That(prefixed.KeyPrefix, Is.EqualTo(expectedPrefix));
+        Assert.That(prefixed.NamePrefix, Is.EqualTo(expectedPrefix));
         foreach (var intermediate in intermediateProviders)
         {
             Assert.That(prefixed.Inner, Is.Not.SameAs(intermediate));
@@ -100,7 +100,7 @@ internal class KeyPrefixTests
             {
                 intermediateProviders.Add(sut);
             }
-            sut = sut.WithKeyPrefix(prefix);
+            sut = sut.WithNamePrefix(prefix);
         }
 
         _ = sut.CreateUpgradeableReaderWriterLock("my-lock");
@@ -110,10 +110,10 @@ internal class KeyPrefixTests
         rootProvider.VerifyNoOtherCalls();
 
         // The final provider wraps the root directly, so no intermediate provider takes part in the call
-        var prefixed = sut as KeyPrefixedDistributedUpgradeableReaderWriterLockProvider;
+        var prefixed = sut as NamePrefixedDistributedUpgradeableReaderWriterLockProvider;
         Assert.That(prefixed, Is.Not.Null);
         Assert.That(prefixed!.Inner, Is.SameAs(rootProvider.Object));
-        Assert.That(prefixed.KeyPrefix, Is.EqualTo(expectedPrefix));
+        Assert.That(prefixed.NamePrefix, Is.EqualTo(expectedPrefix));
         foreach (var intermediate in intermediateProviders)
         {
             Assert.That(prefixed.Inner, Is.Not.SameAs(intermediate));
@@ -138,7 +138,7 @@ internal class KeyPrefixTests
             {
                 intermediateProviders.Add(sut);
             }
-            sut = sut.WithKeyPrefix(prefix);
+            sut = sut.WithNamePrefix(prefix);
         }
 
         _ = sut.CreateSemaphore("my-semaphore", 3);
@@ -148,10 +148,10 @@ internal class KeyPrefixTests
         rootProvider.VerifyNoOtherCalls();
 
         // The final provider wraps the root directly, so no intermediate provider takes part in the call
-        var prefixed = sut as KeyPrefixedDistributedSemaphoreProvider;
+        var prefixed = sut as NamePrefixedDistributedSemaphoreProvider;
         Assert.That(prefixed, Is.Not.Null);
         Assert.That(prefixed!.Inner, Is.SameAs(rootProvider.Object));
-        Assert.That(prefixed.KeyPrefix, Is.EqualTo(expectedPrefix));
+        Assert.That(prefixed.NamePrefix, Is.EqualTo(expectedPrefix));
         foreach (var intermediate in intermediateProviders)
         {
             Assert.That(prefixed.Inner, Is.Not.SameAs(intermediate));
