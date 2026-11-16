@@ -31,7 +31,7 @@ public static class DistributedReaderWriterLockProviderExtensions
 
         if (provider is NamePrefixedDistributedReaderWriterLockProvider prefixed)
         {
-            // combine the key in advance to minimize indirection
+            // combine the prefixes in advance to minimize indirection
             namePrefix = prefixed.NamePrefix + namePrefix;
             provider = prefixed.Inner;
         }

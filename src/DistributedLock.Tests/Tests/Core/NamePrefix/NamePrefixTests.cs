@@ -9,7 +9,7 @@ internal class NamePrefixTests
     [TestCase("prefix1", "prefix1")]
     [TestCase("prefix1,prefix2", "prefix1prefix2")]
     [TestCase("prefix1,prefix2,prefix3", "prefix1prefix2prefix3")]
-    public void CreateLock_ShouldPrefixKey(string prefixes, string expectedPrefix)
+    public void CreateLock_ShouldPrefixName(string prefixes, string expectedPrefix)
     {
         var rootProvider = new Mock<IDistributedLockProvider>(MockBehavior.Strict);
         rootProvider
@@ -47,7 +47,7 @@ internal class NamePrefixTests
     [TestCase("prefix1", "prefix1")]
     [TestCase("prefix1,prefix2", "prefix1prefix2")]
     [TestCase("prefix1,prefix2,prefix3", "prefix1prefix2prefix3")]
-    public void CreateReaderWriterLock_ShouldPrefixKey(string prefixes, string expectedPrefix)
+    public void CreateReaderWriterLock_ShouldPrefixName(string prefixes, string expectedPrefix)
     {
         var rootProvider = new Mock<IDistributedReaderWriterLockProvider>(MockBehavior.Strict);
         rootProvider
@@ -85,7 +85,7 @@ internal class NamePrefixTests
     [TestCase("prefix1", "prefix1")]
     [TestCase("prefix1,prefix2", "prefix1prefix2")]
     [TestCase("prefix1,prefix2,prefix3", "prefix1prefix2prefix3")]
-    public void CreateUpgradeableReaderWriterLock_ShouldPrefixKey(string prefixes, string expectedPrefix)
+    public void CreateUpgradeableReaderWriterLock_ShouldPrefixName(string prefixes, string expectedPrefix)
     {
         var rootProvider = new Mock<IDistributedUpgradeableReaderWriterLockProvider>(MockBehavior.Strict);
         rootProvider
@@ -123,7 +123,7 @@ internal class NamePrefixTests
     [TestCase("prefix1", "prefix1")]
     [TestCase("prefix1,prefix2", "prefix1prefix2")]
     [TestCase("prefix1,prefix2,prefix3", "prefix1prefix2prefix3")]
-    public void CreateSemaphore_ShouldPrefixKey(string prefixes, string expectedPrefix)
+    public void CreateSemaphore_ShouldPrefixName(string prefixes, string expectedPrefix)
     {
         var rootProvider = new Mock<IDistributedSemaphoreProvider>(MockBehavior.Strict);
         rootProvider
