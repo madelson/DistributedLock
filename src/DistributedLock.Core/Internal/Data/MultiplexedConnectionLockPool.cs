@@ -8,31 +8,33 @@ public
 #else
 internal 
 #endif
-    sealed class MultiplexedConnectionLockPool
+    sealed class MultiplexedConnectionLockPool<TConnectionSource>
+    where TConnectionSource : notnull
 {
     private readonly AsyncLock _lock = AsyncLock.Create();
 
-    private readonly Dictionary<string, Queue<MultiplexedConnectionLock>> _poolsByConnectionString = [];
+    private readonly Dictionary<TConnectionSource, Queue<MultiplexedConnectionLock>> _poolsByConnectionSource;
 
     /// <summary>
-    /// The number of times we've called <see cref="StoreOrDisposeLockAsync(string, MultiplexedConnectionLock, bool)"/>
+    /// The number of times we've called <see cref="StoreOrDisposeLockAsync(TConnectionSource, MultiplexedConnectionLock, bool)"/>
     /// since we last called <see cref="PrunePoolsNoLockAsync"/>
     /// </summary>
     private uint _storeCountSinceLastPrune;
     /// <summary>
-    /// The number of <see cref="MultiplexedConnectionLock"/>s stored in <see cref="_poolsByConnectionString"/>
+    /// The number of <see cref="MultiplexedConnectionLock"/>s stored in <see cref="_poolsByConnectionSource"/>
     /// </summary>
     private uint _pooledLockCount;
 
-    public MultiplexedConnectionLockPool(Func<string, DatabaseConnection> connectionFactory) 
+    public MultiplexedConnectionLockPool(Func<TConnectionSource, DatabaseConnection> connectionFactory, IEqualityComparer<TConnectionSource>? comparer = null)
     {
         this.ConnectionFactory = connectionFactory;
+        this._poolsByConnectionSource = new(comparer);
     }
 
-    internal Func<string, DatabaseConnection> ConnectionFactory { get; }
+    internal Func<TConnectionSource, DatabaseConnection> ConnectionFactory { get; }
 
     public async ValueTask<IDistributedSynchronizationHandle?> TryAcquireAsync<TLockCookie>(
-        string connectionString,
+        TConnectionSource connectionSource,
         string name,
         TimeoutValue timeout,
         IDbSynchronizationStrategy<TLockCookie> strategy,
@@ -42,7 +44,7 @@ internal
     {
         // opportunistic phase: see if we can use a connection that is already holding a lock
         // to acquire the current lock
-        var existingLock = await this.GetExistingLockOrDefaultAsync(connectionString).ConfigureAwait(false);
+        var existingLock = await this.GetExistingLockOrDefaultAsync(connectionSource).ConfigureAwait(false);
         if (existingLock != null)
         {
             var canSafelyDisposeExistingLock = false;
@@ -70,12 +72,12 @@ internal
             finally
             {
                 // since we took this lock from the pool, always return it to the pool
-                await this.StoreOrDisposeLockAsync(connectionString, existingLock, shouldDispose: canSafelyDisposeExistingLock).ConfigureAwait(false);
+                await this.StoreOrDisposeLockAsync(connectionSource, existingLock, shouldDispose: canSafelyDisposeExistingLock).ConfigureAwait(false);
             }
         }
 
         // normal phase: if we were not able to be opportunistic, ensure that we have a lock
-        var @lock = new MultiplexedConnectionLock(this.ConnectionFactory(connectionString));
+        var @lock = new MultiplexedConnectionLock(this.ConnectionFactory(connectionSource));
         MultiplexedConnectionLock.Result? result = null;
         try
         {
@@ -85,7 +87,7 @@ internal
         finally
         {
             // if we failed to even acquire a result on a brand new lock, then there's definitely no reason to store it
-            await this.StoreOrDisposeLockAsync(connectionString, @lock, shouldDispose: result?.CanSafelyDispose ?? true).ConfigureAwait(false);
+            await this.StoreOrDisposeLockAsync(connectionSource, @lock, shouldDispose: result?.CanSafelyDispose ?? true).ConfigureAwait(false);
         }
         return result.Value.Handle;
 
@@ -93,11 +95,11 @@ internal
             @lock.TryAcquireAsync(name, timeout, strategy, keepaliveCadence, cancellationToken, opportunistic);
     }
 
-    private async ValueTask<MultiplexedConnectionLock?> GetExistingLockOrDefaultAsync(string connectionString)
+    private async ValueTask<MultiplexedConnectionLock?> GetExistingLockOrDefaultAsync(TConnectionSource connectionSource)
     {
         using var _ = await this._lock.AcquireAsync(CancellationToken.None).ConfigureAwait(false);
 
-        if (this._poolsByConnectionString.TryGetValue(connectionString, out var pool) && pool.Count != 0)
+        if (this._poolsByConnectionSource.TryGetValue(connectionSource, out var pool) && pool.Count != 0)
         {
             --this._pooledLockCount;
             return pool.Dequeue();
@@ -106,7 +108,7 @@ internal
         return null;
     }
 
-    private async ValueTask StoreOrDisposeLockAsync(string connectionString, MultiplexedConnectionLock @lock, bool shouldDispose)
+    private async ValueTask StoreOrDisposeLockAsync(TConnectionSource connectionSource, MultiplexedConnectionLock @lock, bool shouldDispose)
     {
         if (shouldDispose)
         {
@@ -121,18 +123,18 @@ internal
             if (shouldDispose)
             {
                 // If we're about to dispose the lock, check if it has an empty pool that can be removed from our dictionary.
-                // By itself this doesn't guarantee cleanup: after a successful acquire we'll have an empty lock left over that won't 
-                // go away unless we use THAT connection string again. To help with this, we have pruning
-                if (this._poolsByConnectionString.TryGetValue(connectionString, out var pool) && pool.Count == 0)
+                // By itself this doesn't guarantee cleanup: after a successful acquire we'll have an empty lock left over that won't
+                // go away unless we use THAT connection source again. To help with this, we have pruning
+                if (this._poolsByConnectionSource.TryGetValue(connectionSource, out var pool) && pool.Count == 0)
                 {
-                    this._poolsByConnectionString.Remove(connectionString);
+                    this._poolsByConnectionSource.Remove(connectionSource);
                 }
             }
             else // otherwise, store the lock
             {
                 ++this._pooledLockCount;
 
-                if (this._poolsByConnectionString.TryGetValue(connectionString, out var existing))
+                if (this._poolsByConnectionSource.TryGetValue(connectionSource, out var existing))
                 {
                     existing.Enqueue(@lock);
                 }
@@ -140,7 +142,7 @@ internal
                 {
                     var newPool = new Queue<MultiplexedConnectionLock>();
                     newPool.Enqueue(@lock);
-                    this._poolsByConnectionString.Add(connectionString, newPool);
+                    this._poolsByConnectionSource.Add(connectionSource, newPool);
                 }
             }
 
@@ -160,7 +162,7 @@ internal
         // The whole reason to prune is to avoid memory bloat (connection bloat isn't an issue since we only keep connections
         // open when needed). So, we don't even consider pruning below a certain storage threshold
 
-        var pruningCost = this._pooledLockCount + this._poolsByConnectionString.Count;
+        var pruningCost = this._pooledLockCount + this._poolsByConnectionSource.Count;
         return pruningCost > 64 && this._storeCountSinceLastPrune >= pruningCost;
     }
 
@@ -168,8 +170,8 @@ internal
     {
         this._storeCountSinceLastPrune = 0; // reset
 
-        List<string>? connectionStringsToRemove = null; 
-        foreach (var kvp in this._poolsByConnectionString)
+        List<TConnectionSource>? connectionSourcesToRemove = null;
+        foreach (var kvp in this._poolsByConnectionSource)
         {
             var pool = kvp.Value;
             MultiplexedConnectionLock? firstRetainedLock = null;
@@ -191,15 +193,15 @@ internal
 
             if (pool.Count == 0)
             {
-                (connectionStringsToRemove ??= new List<string>()).Add(kvp.Key);
+                (connectionSourcesToRemove ??= new List<TConnectionSource>()).Add(kvp.Key);
             }
         }
 
-        if (connectionStringsToRemove != null)
+        if (connectionSourcesToRemove != null)
         {
-            foreach (var connectionStringToRemove in connectionStringsToRemove)
+            foreach (var connectionSourceToRemove in connectionSourcesToRemove)
             {
-                this._poolsByConnectionString.Remove(connectionStringToRemove);
+                this._poolsByConnectionSource.Remove(connectionSourceToRemove);
             }
         }
     }

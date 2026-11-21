@@ -1,6 +1,9 @@
 ﻿using Medallion.Threading.Internal.Data;
 using MySqlConnector;
 using System.Data;
+#if NET7_0_OR_GREATER
+using System.Data.Common;
+#endif
 
 namespace Medallion.Threading.MySql;
 
@@ -15,6 +18,13 @@ internal class MySqlDatabaseConnection : DatabaseConnection
         : base(transaction, isExternallyOwned: true)
     {
     }
+
+#if NET7_0_OR_GREATER
+    public MySqlDatabaseConnection(DbDataSource dbDataSource)
+        : base(dbDataSource.CreateConnection(), isExternallyOwned: false)
+    {
+    }
+#endif
 
     public MySqlDatabaseConnection(string connectionString)
         : base(new MySqlConnection(connectionString), isExternallyOwned: false)

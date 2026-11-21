@@ -89,7 +89,7 @@ public sealed partial class SqlDistributedLock : IInternalDistributedLock<SqlDis
         var (keepaliveCadence, useTransaction, useMultiplexing) = SqlConnectionOptionsBuilder.GetOptions(optionsBuilder);
 
         return useMultiplexing
-            ? new OptimisticConnectionMultiplexingDbDistributedLock(name, connectionString, SqlMultiplexedConnectionLockPool.Instance, keepaliveCadence)
+            ? new OptimisticConnectionMultiplexingDbDistributedLock<string>(name, connectionString, SqlMultiplexedConnectionLockPool.Instance, keepaliveCadence)
             : new DedicatedConnectionOrTransactionDbDistributedLock(name, () => new SqlDatabaseConnection(connectionString), useTransaction: useTransaction, keepaliveCadence);
     }
 
