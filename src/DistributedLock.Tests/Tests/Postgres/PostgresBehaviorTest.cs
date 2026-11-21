@@ -1,3 +1,4 @@
+using Medallion.Threading.Postgres;
 using Npgsql;
 using NUnit.Framework;
 using System.Data;
@@ -186,6 +187,11 @@ public class PostgresBehaviorTest
     [Test]
     public async Task TestWaitAsyncTimeoutDoesNotBreakConnection()
     {
+        if (!PostgresDatabaseConnection.PassiveSleepHelper.Supported)
+        {
+            Assert.Pass("This behavior is not supported in .NET Framework");
+        }
+
         using var connection = new NpgsqlConnection(TestingPostgresDb.DefaultConnectionString);
         await connection.OpenAsync();
 
@@ -215,6 +221,11 @@ public class PostgresBehaviorTest
     [Test]
     public async Task TestWaitAsyncCancellationDoesNotBreakConnection()
     {
+        if (!PostgresDatabaseConnection.PassiveSleepHelper.Supported)
+        {
+            Assert.Pass("This behavior is not supported in .NET Framework");
+        }
+
         using var connection = new NpgsqlConnection(TestingPostgresDb.DefaultConnectionString);
         await connection.OpenAsync();
 

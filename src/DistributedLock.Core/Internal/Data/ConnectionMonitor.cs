@@ -315,7 +315,7 @@ internal sealed class ConnectionMonitor : IAsyncDisposable
     private void FireStateChangedNoLock()
     {
         var monitorStateChangedTokenSource = this._monitorStateChangedTokenSource!;
-        this._monitorStateChangedTokenSource = new CancellationTokenSource();
+        this._monitorStateChangedTokenSource = new();
         // Canceling asynchronously is important because the Cancel() thread can end up
         // running continuations inside the monitoring loop (e. g. see
         // https://github.com/madelson/DistributedLock/issues/85). Now that we set the new
@@ -366,16 +366,19 @@ internal sealed class ConnectionMonitor : IAsyncDisposable
         // don't pass token here: this should finish quickly and we don't want to throw
         using var _ = await this._connectionLock.AcquireAsync(CancellationToken.None).ConfigureAwait(false);
 
+        // 1-min increments is kind of an arbitrary choice. We want to avoid this being too short since each time
+        // we "come up to breathe" that's a waste of resources. We also want to avoid this being too long since
+        // in case people have some kind of monitoring set up for hanging queries. Coming up to breathe also
+        // re-resolves the weak connection reference so that this loop never roots an abandoned connection for long.
+        // Capped at keepaliveCadence so that keepalive queries keep firing on cadence while monitoring.
+        var sleepTime = TimeSpan.FromMinutes(1);
+        if (keepaliveCadence.CompareTo(sleepTime) < 0) { sleepTime = keepaliveCadence.TimeSpan; }
+
         await connection.SleepAsync(
-                // 1-min increments is kind of an arbitrary choice. We want to avoid this being too short since each time
-                // we "come up to breathe" that's a waste of resources. We also want to avoid this being too long since
-                // in case people have some kind of monitoring set up for hanging queries. Coming up to breathe also
-                // re-resolves the weak connection reference so that this loop never roots an abandoned connection for long.
-                // Capped at keepaliveCadence so that keepalive queries keep firing on cadence while monitoring.
-                sleepTime: (keepaliveCadence.CompareTo(TimeSpan.FromMinutes(1)) < 0 ? keepaliveCadence : TimeSpan.FromMinutes(1)).TimeSpan,
-                cancellationToken: cancellationToken,
-                executor: (command, token) => command.ExecuteNonQueryAsync(token, disallowAsyncCancellation: false, isConnectionMonitoringQuery: true)
-            ).TryAwait();
+            sleepTime: sleepTime,
+            cancellationToken: cancellationToken,
+            executor: (command, token) => command.ExecuteNonQueryAsync(token, disallowAsyncCancellation: false, isConnectionMonitoringQuery: true))
+            .TryAwait();
 
         return true;
     }

@@ -43,7 +43,7 @@ In addition to specifying the `key`, Postgres-based locks allow you to specify e
 
 ### Connection monitoring (`HandleLostToken`)
 
-When `HandleLostToken` is used on a lock backed by a library-owned connection, the library monitors the connection passively using `NpgsqlConnection.WaitAsync`, which uses a blocking socket read that detects connection loss (e.g. a database restart or `pg_terminate_backend`) as soon as the socket breaks, without executing any query. A cheap keepalive query is executed once per passive wait, which happens every `KeepaliveCadence` or every minute, whichever is shorter. Between keepalives the monitored session shows as `idle` in `pg_stat_activity`.
+In .NET 8+ when `HandleLostToken` is used on a lock backed by a library-owned connection, the library monitors the connection passively using `NpgsqlConnection.WaitAsync`, which uses a blocking socket read that detects connection loss (e.g. a database restart or `pg_terminate_backend`) as soon as the socket breaks, without executing any query. A cheap keepalive query is executed once per passive wait, which happens every `KeepaliveCadence` or every minute, whichever is shorter. Between keepalives the monitored session shows as `idle` in `pg_stat_activity`.
 
 Two things to be aware of:
 - Because the monitored session is idle between keepalives, server-side idle-session reapers (`idle_session_timeout`, `idle_in_transaction_session_timeout`, or aggressive gateways) configured with a timeout under one minute can kill it. If any of these are in play, set `KeepaliveCadence` below the reaper timeout.

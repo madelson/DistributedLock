@@ -48,8 +48,16 @@ public class PostgresConnectionMonitoringTest
         }
 
         Assert.That(sessions, Is.Not.Empty);
-        Assert.That(sessions, Has.All.Matches<(string State, string Query)>(s => s.State == "idle"), "monitored sessions should not be running a query");
-        Assert.That(sessions, Has.None.Matches<(string State, string Query)>(s => s.Query.Contains("pg_sleep")), "monitoring should not use pg_sleep");
+        if (PostgresDatabaseConnection.PassiveSleepHelper.Supported)
+        {
+            Assert.That(sessions, Has.All.Matches<(string State, string Query)>(s => s.State == "idle"), "monitored sessions should not be running a query");
+            Assert.That(sessions, Has.None.Matches<(string State, string Query)>(s => s.Query.Contains("pg_sleep")), "monitoring should not use pg_sleep");
+        }
+        else
+        {
+            Assert.That(sessions, Has.All.Matches<(string State, string Query)>(s => s.State == "active"), "monitored session is running a query");
+            Assert.That(sessions, Has.Some.Matches<(string State, string Query)>(s => s.Query.Contains("pg_sleep")), "monitoring is using pg_sleep");
+        }
     }
 
     [Test]

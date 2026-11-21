@@ -13,7 +13,7 @@ internal sealed class PostgresDatabaseConnection : DatabaseConnection
     /// Only safe to use inside <see cref="SleepAsync"/>, where the connection monitor holds the connection lock.
     /// Non-default only for connections we own (passive monitoring never touches externally-owned connections).
     /// </summary>
-    private readonly WaitAsyncWrapper _unsafeWaitAsyncWrapper;
+    private readonly PassiveSleepHelper _sleepHelper;
 
     public PostgresDatabaseConnection(IDbConnection connection)
         : base(connection, isExternallyOwned: true)
@@ -40,7 +40,9 @@ internal sealed class PostgresDatabaseConnection : DatabaseConnection
     private PostgresDatabaseConnection(DbConnection ownedConnection)
         : base(ownedConnection, isExternallyOwned: false)
     {
-        this._unsafeWaitAsyncWrapper = new(ownedConnection);
+        // Note: we only set this for internally-owned connections because those are the only
+        // ones where we monitor and do SleepAsync()
+        this._sleepHelper = new(ownedConnection);
     }
 
     // see https://www.npgsql.org/doc/prepare.html
@@ -57,8 +59,8 @@ internal sealed class PostgresDatabaseConnection : DatabaseConnection
 
         // Where supported, "sleep" by passively waiting for connection activity/failure without executing a
         // query. This detects connection loss as soon as the socket breaks rather than when the sleep query
-        // errors, and leaves the session idle server-side.
-        if (await this._unsafeWaitAsyncWrapper.TryWaitAsync(sleepTime, cancellationToken).ConfigureAwait(false))
+        // errors, and leaves the session idle server-side. See https://github.com/madelson/DistributedLock/pull/285
+        if (await this._sleepHelper.TrySleepAsync(sleepTime, cancellationToken).ConfigureAwait(false))
         {
             // the passive wait left the session idle; run a keepalive query to prevent idle session reaping
             using var keepaliveCommand = this.CreateCommand();
@@ -102,19 +104,31 @@ internal sealed class PostgresDatabaseConnection : DatabaseConnection
     /// Exposes only <see cref="NpgsqlConnection.WaitAsync(TimeSpan, CancellationToken)"/> from the wrapped
     /// connection, keeping the rest of the (non-thread-safe) connection surface inaccessible.
     /// </summary>
-    private readonly struct WaitAsyncWrapper(DbConnection dbConnection)
+    internal readonly struct PassiveSleepHelper(DbConnection dbConnection)
     {
-        // Null when passive waiting is unsupported: non-Npgsql connection, Npgsql multiplexing (Wait is
-        // unsupported), or Npgsql KeepAlive (cancellation mid-keepalive-exchange breaks the connection)
-        private readonly NpgsqlConnection? _connection =
-            dbConnection is NpgsqlConnection npgsqlConnection
-                && new NpgsqlConnectionStringBuilder(npgsqlConnection.ConnectionString) is { Multiplexing: false, KeepAlive: 0 }
-                ? npgsqlConnection
-                : null;
+        private readonly NpgsqlConnection? _connection = dbConnection as NpgsqlConnection;
 
-        public async ValueTask<bool> TryWaitAsync(TimeSpan timeout, CancellationToken cancellationToken)
+        public static bool Supported =>
+#if NET8_0_OR_GREATER
+            // For now, use a switch to support disabling the new behavior if it causes issues
+            AppContext.TryGetSwitch("DistributedLock.Postgres.PassiveSleep", out var enabled) ? enabled : true;
+#else
+            // In .NET framework canceling WaitAsync() doesn't seem to work consistently; I see this when running
+            // multiple instances of the TestAccessingHandleLostTokenWhileKeepaliveActiveDoesNotBlock() test in the same
+            // run. Therefore, we don't support this on older .NET versions for now
+            false;
+#endif
+
+        public async ValueTask<bool> TrySleepAsync(TimeSpan timeout, CancellationToken cancellationToken)
         {
-            if (this._connection is null) { return false; }
+            if (!Supported || this._connection is null) { return false; }
+
+            // Passive waiting is unsupported when: Npgsql multiplexing (Wait is unsupported) or Npgsql KeepAlive
+            // (cancellation mid-keepalive-exchange breaks the connection)
+            if (new NpgsqlConnectionStringBuilder(this._connection.ConnectionString) is not { Multiplexing: false, KeepAlive: 0 })
+            {
+                return false;
+            }
 
             // WaitAsync completes when ANY message arrives (e.g. a notification), not just on timeout,
             // so loop until the full timeout has elapsed
@@ -130,6 +144,7 @@ internal sealed class PostgresDatabaseConnection : DatabaseConnection
                 remaining = timeout - elapsed;
                 if (remaining <= TimeSpan.Zero) { break; }
             }
+
             return true;
         }
     }
