@@ -277,11 +277,7 @@ internal sealed class ConnectionMonitor : IAsyncDisposable
             if (isCancel)
             {
                 // cancel in a background thread in case we have hangs or errors
-                Task.Run(() =>
-                {
-                    try { cancellationTokenSource.Cancel(); }
-                    finally { cancellationTokenSource.Dispose(); }
-                });
+                _ = CancelAndDisposeAsync(cancellationTokenSource);
             }
             else
             {
@@ -319,7 +315,7 @@ internal sealed class ConnectionMonitor : IAsyncDisposable
     private void FireStateChangedNoLock()
     {
         var monitorStateChangedTokenSource = this._monitorStateChangedTokenSource!;
-        this._monitorStateChangedTokenSource = new CancellationTokenSource();
+        this._monitorStateChangedTokenSource = new();
         // Canceling asynchronously is important because the Cancel() thread can end up
         // running continuations inside the monitoring loop (e. g. see
         // https://github.com/madelson/DistributedLock/issues/85). Now that we set the new
@@ -327,11 +323,14 @@ internal sealed class ConnectionMonitor : IAsyncDisposable
         // it is still safer and easier to reason about not to have that happen. This also ensures
         // that FireStateChangedNoLock() always returns quickly, even if the monitoring loop
         // were to do some synchronous work on the continuation thread.
-        Task.Run(() =>
-        {
-            try { monitorStateChangedTokenSource.Cancel(); }
-            finally { monitorStateChangedTokenSource.Dispose(); }
-        });
+        _ = CancelAndDisposeAsync(monitorStateChangedTokenSource);
+    }
+
+    private static async Task CancelAndDisposeAsync(
+        CancellationTokenSource cancellationTokenSource)
+    {
+        try { await cancellationTokenSource.CancelAsync().ConfigureAwait(false); }
+        finally { cancellationTokenSource.Dispose(); }
     }
 
     private async Task MonitorWorkerLoop()
@@ -357,10 +356,10 @@ internal sealed class ConnectionMonitor : IAsyncDisposable
             stateChangedToken = this._monitorStateChangedTokenSource!.Token;
         }
 
-        return await (isMonitoring ? this.DoMonitoringAsync(stateChangedToken) : this.DoKeepaliveAsync(keepaliveCadence, stateChangedToken)).ConfigureAwait(false);
+        return await (isMonitoring ? this.DoMonitoringAsync(keepaliveCadence, stateChangedToken) : this.DoKeepaliveAsync(keepaliveCadence, stateChangedToken)).ConfigureAwait(false);
     }
 
-    private async Task<bool> DoMonitoringAsync(CancellationToken cancellationToken)
+    private async Task<bool> DoMonitoringAsync(TimeoutValue keepaliveCadence, CancellationToken cancellationToken)
     {
         if (!this._weakConnection.TryGetTarget(out var connection)) { return false; }
 
@@ -369,12 +368,17 @@ internal sealed class ConnectionMonitor : IAsyncDisposable
 
         // 1-min increments is kind of an arbitrary choice. We want to avoid this being too short since each time
         // we "come up to breathe" that's a waste of resources. We also want to avoid this being too long since
-        // in case people have some kind of monitoring set up for hanging queries
+        // in case people have some kind of monitoring set up for hanging queries. Coming up to breathe also
+        // re-resolves the weak connection reference so that this loop never roots an abandoned connection for long.
+        // Capped at keepaliveCadence so that keepalive queries keep firing on cadence while monitoring.
+        var sleepTime = TimeSpan.FromMinutes(1);
+        if (keepaliveCadence.CompareTo(sleepTime) < 0) { sleepTime = keepaliveCadence.TimeSpan; }
+
         await connection.SleepAsync(
-                sleepTime: TimeSpan.FromMinutes(1),
-                cancellationToken: cancellationToken,
-                executor: (command, token) => command.ExecuteNonQueryAsync(token, disallowAsyncCancellation: false, isConnectionMonitoringQuery: true)
-            ).TryAwait();
+            sleepTime: sleepTime,
+            cancellationToken: cancellationToken,
+            executor: (command, token) => command.ExecuteNonQueryAsync(token, disallowAsyncCancellation: false, isConnectionMonitoringQuery: true))
+            .TryAwait();
 
         return true;
     }

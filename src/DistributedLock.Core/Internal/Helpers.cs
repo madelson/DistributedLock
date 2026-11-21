@@ -106,6 +106,13 @@ static class Helpers
         value = nullable.GetValueOrDefault();
         return nullable.HasValue;
     }
+
+#if !NET8_0_OR_GREATER
+    public static Task CancelAsync(this CancellationTokenSource cancellationTokenSource)
+    {
+        return Task.Run(cancellationTokenSource.Cancel);
+    }
+#endif
 }
 
 /// <summary>
