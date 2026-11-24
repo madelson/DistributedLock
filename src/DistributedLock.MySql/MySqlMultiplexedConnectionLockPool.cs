@@ -1,8 +1,16 @@
-﻿using Medallion.Threading.Internal.Data;
+using Medallion.Threading.Internal.Data;
 
 namespace Medallion.Threading.MySql;
 
 internal static class MySqlMultiplexedConnectionLockPool
 {
-    public static readonly MultiplexedConnectionLockPool Instance = new(s => new MySqlDatabaseConnection(s));
+    public static readonly MultiplexedConnectionLockPool<string> Instance = new(s => new MySqlDatabaseConnection(s));
 }
+
+#if NET7_0_OR_GREATER
+internal static class MySqlDataSourceMultiplexedConnectionLockPool
+{
+    public static readonly MultiplexedConnectionLockPool<System.Data.Common.DbDataSource> Instance =
+        new(dataSource => new MySqlDatabaseConnection(dataSource), ReferenceEqualityComparer.Instance);
+}
+#endif

@@ -187,7 +187,7 @@ public class PostgresBehaviorTest
     [Test]
     public async Task TestWaitAsyncTimeoutDoesNotBreakConnection()
     {
-        if (!PostgresDatabaseConnection.PassiveSleepHelper.Supported)
+        if (!PostgresDatabaseConnection.PassiveSleepSupported)
         {
             Assert.Pass("This behavior is not supported in .NET Framework");
         }
@@ -221,7 +221,7 @@ public class PostgresBehaviorTest
     [Test]
     public async Task TestWaitAsyncCancellationDoesNotBreakConnection()
     {
-        if (!PostgresDatabaseConnection.PassiveSleepHelper.Supported)
+        if (!PostgresDatabaseConnection.PassiveSleepSupported)
         {
             Assert.Pass("This behavior is not supported in .NET Framework");
         }

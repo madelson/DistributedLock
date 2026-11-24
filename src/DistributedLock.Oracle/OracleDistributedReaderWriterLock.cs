@@ -23,6 +23,19 @@ public sealed partial class OracleDistributedReaderWriterLock : IInternalDistrib
     {
     }
 
+#if NET7_0_OR_GREATER
+    /// <summary>
+    /// Constructs a lock with the given <paramref name="name"/> that connects using the provided <paramref name="dbDataSource"/> and
+    /// <paramref name="options"/>.
+    ///
+    /// Unless <paramref name="exactName"/> is specified, <paramref name="name"/> will be escaped/hashed to ensure name validity.
+    /// </summary>
+    public OracleDistributedReaderWriterLock(string name, System.Data.Common.DbDataSource dbDataSource, Action<OracleConnectionOptionsBuilder>? options = null, bool exactName = false)
+        : this(name, exactName, n => OracleDistributedLock.CreateInternalLock(n, dbDataSource, options))
+    {
+    }
+#endif
+
     /// <summary>
     /// Constructs a new lock using the provided <paramref name="name"/>.
     /// 

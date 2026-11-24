@@ -24,6 +24,19 @@ public sealed partial class OracleDistributedLock : IInternalDistributedLock<Ora
     {
     }
 
+#if NET7_0_OR_GREATER
+    /// <summary>
+    /// Constructs a lock with the given <paramref name="name"/> that connects using the provided <paramref name="dbDataSource"/> and
+    /// <paramref name="options"/>.
+    ///
+    /// Unless <paramref name="exactName"/> is specified, <paramref name="name"/> will be escaped/hashed to ensure name validity.
+    /// </summary>
+    public OracleDistributedLock(string name, System.Data.Common.DbDataSource dbDataSource, Action<OracleConnectionOptionsBuilder>? options = null, bool exactName = false)
+        : this(name, exactName, n => CreateInternalLock(n, dbDataSource, options))
+    {
+    }
+#endif
+
     /// <summary>
     /// Constructs a lock with the given <paramref name="name"/> that connects using the provided <paramref name="connection" />.
     /// 
@@ -71,11 +84,27 @@ public sealed partial class OracleDistributedLock : IInternalDistributedLock<Ora
 
         if (useMultiplexing)
         {
-            return new OptimisticConnectionMultiplexingDbDistributedLock(name, connectionString, OracleMultiplexedConnectionLockPool.Instance, keepaliveCadence);
+            return new OptimisticConnectionMultiplexingDbDistributedLock<string>(name, connectionString, OracleMultiplexedConnectionLockPool.Instance, keepaliveCadence);
         }
 
         return new DedicatedConnectionOrTransactionDbDistributedLock(name, () => new OracleDatabaseConnection(connectionString), useTransaction: false, keepaliveCadence);
     }
+
+#if NET7_0_OR_GREATER
+    internal static IDbDistributedLock CreateInternalLock(string name, System.Data.Common.DbDataSource dbDataSource, Action<OracleConnectionOptionsBuilder>? options)
+    {
+        if (dbDataSource == null) { throw new ArgumentNullException(nameof(dbDataSource)); }
+
+        var (keepaliveCadence, useMultiplexing) = OracleConnectionOptionsBuilder.GetOptions(options);
+
+        if (useMultiplexing)
+        {
+            return new OptimisticConnectionMultiplexingDbDistributedLock<System.Data.Common.DbDataSource>(name, dbDataSource, OracleDataSourceMultiplexedConnectionLockPool.Instance, keepaliveCadence);
+        }
+
+        return new DedicatedConnectionOrTransactionDbDistributedLock(name, () => new OracleDatabaseConnection(dbDataSource), useTransaction: false, keepaliveCadence);
+    }
+#endif
 
     internal static IDbDistributedLock CreateInternalLock(string name, IDbConnection connection)
     {

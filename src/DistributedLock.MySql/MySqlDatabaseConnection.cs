@@ -16,6 +16,13 @@ internal class MySqlDatabaseConnection : DatabaseConnection
     {
     }
 
+#if NET7_0_OR_GREATER
+    public MySqlDatabaseConnection(System.Data.Common.DbDataSource dbDataSource)
+        : base(dbDataSource)
+    {
+    }
+#endif
+
     public MySqlDatabaseConnection(string connectionString)
         : base(new MySqlConnection(connectionString), isExternallyOwned: false)
     {
@@ -31,13 +38,13 @@ internal class MySqlDatabaseConnection : DatabaseConnection
         return exception is MySqlException ex && ex.ErrorCode == MySqlErrorCode.QueryInterrupted;
     }
 
-    public override async Task SleepAsync(TimeSpan sleepTime, CancellationToken cancellationToken, Func<DatabaseCommand, CancellationToken, ValueTask<int>> executor)
+    public override async Task SleepAsync(TimeSpan sleepTime, SleepContext context)
     {
         using var sleepCommand = this.CreateCommand();
         sleepCommand.SetCommandText("SELECT SLEEP(@durationSeconds)");
         sleepCommand.AddParameter("durationSeconds", sleepTime.TotalSeconds);
         sleepCommand.SetTimeout(sleepTime);
 
-        await executor(sleepCommand, cancellationToken).ConfigureAwait(false);
+        await context.ExecuteAsync(sleepCommand).ConfigureAwait(false);
     }
 }

@@ -58,14 +58,14 @@ internal sealed class SqlApplicationLock : IDbSynchronizationStrategy<object>
     {
         using var command = this.CreateAcquireCommand(connection, lockName, timeout, out var returnValue);
         await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
-        return await ParseExitCodeAsync((int)returnValue.Value, timeout, cancellationToken).ConfigureAwait(false);
+        return await ParseExitCodeAsync((int)returnValue.Value!, timeout, cancellationToken).ConfigureAwait(false);
     }
 
     private static async ValueTask ExecuteReleaseCommandAsync(DatabaseConnection connection, string lockName, bool isTry)
     {
         using var command = CreateReleaseCommand(connection, lockName, isTry, out var returnValue);
         await command.ExecuteNonQueryAsync(CancellationToken.None).ConfigureAwait(false);
-        await ParseExitCodeAsync((int)returnValue.Value, TimeSpan.Zero, CancellationToken.None).ConfigureAwait(false);
+        await ParseExitCodeAsync((int)returnValue.Value!, TimeSpan.Zero, CancellationToken.None).ConfigureAwait(false);
     }
 
     private DatabaseCommand CreateAcquireCommand(

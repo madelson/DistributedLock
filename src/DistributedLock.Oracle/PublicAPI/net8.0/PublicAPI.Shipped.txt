@@ -1,0 +1,3 @@
+#nullable enable
+Medallion.Threading.Oracle.OracleDistributedLock.OracleDistributedLock(string! name, System.Data.Common.DbDataSource! dbDataSource, System.Action<Medallion.Threading.Oracle.OracleConnectionOptionsBuilder!>? options = null, bool exactName = false) -> void
+Medallion.Threading.Oracle.OracleDistributedReaderWriterLock.OracleDistributedReaderWriterLock(string! name, System.Data.Common.DbDataSource! dbDataSource, System.Action<Medallion.Threading.Oracle.OracleConnectionOptionsBuilder!>? options = null, bool exactName = false) -> void

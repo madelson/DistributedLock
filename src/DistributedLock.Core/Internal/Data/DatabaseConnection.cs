@@ -29,6 +29,13 @@ internal
         this._transaction = transaction;
     }
 
+#if NET7_0_OR_GREATER
+    protected DatabaseConnection(DbDataSource dbDataSource)
+        : this(dbDataSource.CreateConnection(), isExternallyOwned: false)
+    {
+    }
+#endif
+
     internal ConnectionMonitor ConnectionMonitor { get; }
     internal IDbConnection InnerConnection { get; }
 
@@ -170,5 +177,35 @@ internal
 
     public abstract bool IsCommandCancellationException(Exception exception);
 
-    public abstract Task SleepAsync(TimeSpan sleepTime, CancellationToken cancellationToken, Func<DatabaseCommand, CancellationToken, ValueTask<int>> executor);
+    public abstract Task SleepAsync(TimeSpan sleepTime, SleepContext context);
+
+    public struct SleepContext : IDisposable
+    {
+        private DatabaseConnection? _connection;
+
+        internal SleepContext(DatabaseConnection connection, CancellationToken cancellationToken)
+        {
+            this._connection = connection;
+            this.CancellationToken = cancellationToken;
+        }
+
+        public CancellationToken CancellationToken { get; }
+
+        /// <summary>
+        /// Provides access to the underlying connection. This is "dangerous" since accessing the connection outside the
+        /// context of the sleep could lead to thread safety issues
+        /// </summary>
+        public IDbConnection DangerousGetInnerConnection() => this.CheckDisposedAndGetConnection().InnerConnection;
+
+        public ValueTask<int> ExecuteAsync(DatabaseCommand command, CancellationToken? cancellationToken = null)
+        {
+            this.CheckDisposedAndGetConnection();
+            return command.ExecuteNonQueryAsync(cancellationToken ?? this.CancellationToken, disallowAsyncCancellation: false, isConnectionMonitoringQuery: true);
+        }
+
+        public void Dispose() => this._connection = null;
+
+        private DatabaseConnection CheckDisposedAndGetConnection() =>
+            this._connection ?? throw new ObjectDisposedException(nameof(SleepContext));
+    }
 }
