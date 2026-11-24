@@ -37,7 +37,7 @@ internal sealed class PostgresDatabaseConnection : DatabaseConnection
 #endif
 
     public PostgresDatabaseConnection(string connectionString)
-        : this(new NpgsqlConnection(connectionString))
+        : base(new NpgsqlConnection(connectionString), isExternallyOwned: false)
     {
     }
 
