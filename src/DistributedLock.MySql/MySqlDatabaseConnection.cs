@@ -1,9 +1,6 @@
 ﻿using Medallion.Threading.Internal.Data;
 using MySqlConnector;
 using System.Data;
-#if NET7_0_OR_GREATER
-using System.Data.Common;
-#endif
 
 namespace Medallion.Threading.MySql;
 
@@ -20,8 +17,8 @@ internal class MySqlDatabaseConnection : DatabaseConnection
     }
 
 #if NET7_0_OR_GREATER
-    public MySqlDatabaseConnection(DbDataSource dbDataSource)
-        : base(dbDataSource.CreateConnection(), isExternallyOwned: false)
+    public MySqlDatabaseConnection(System.Data.Common.DbDataSource dbDataSource)
+        : base(dbDataSource)
     {
     }
 #endif
@@ -41,13 +38,13 @@ internal class MySqlDatabaseConnection : DatabaseConnection
         return exception is MySqlException ex && ex.ErrorCode == MySqlErrorCode.QueryInterrupted;
     }
 
-    public override async Task SleepAsync(TimeSpan sleepTime, CancellationToken cancellationToken, Func<DatabaseCommand, CancellationToken, ValueTask<int>> executor)
+    public override async Task SleepAsync(TimeSpan sleepTime, SleepContext context)
     {
         using var sleepCommand = this.CreateCommand();
         sleepCommand.SetCommandText("SELECT SLEEP(@durationSeconds)");
         sleepCommand.AddParameter("durationSeconds", sleepTime.TotalSeconds);
         sleepCommand.SetTimeout(sleepTime);
 
-        await executor(sleepCommand, cancellationToken).ConfigureAwait(false);
+        await context.ExecuteAsync(sleepCommand).ConfigureAwait(false);
     }
 }

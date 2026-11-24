@@ -68,7 +68,7 @@ internal class OracleDbmsLock : IDbSynchronizationStrategy<object>
         var returnValueParameter = command.AddParameter("returnValue", type: DbType.Int32, direction: ParameterDirection.Output);
         await command.ExecuteNonQueryAsync(CancellationToken.None).ConfigureAwait(false);
 
-        var returnValue = (int)returnValueParameter.Value;
+        var returnValue = (int)returnValueParameter.Value!;
         if (returnValue != 0)
         {
             // we don't enumerate the error codes here because release shouldn't ever fail unless the user really messes things up
@@ -101,7 +101,7 @@ internal class OracleDbmsLock : IDbSynchronizationStrategy<object>
         );
         await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
 
-        var returnValue = (int)returnValueParameter.Value;
+        var returnValue = (int)returnValueParameter.Value!;
         return returnValue switch
         {
             0 => Cookie, // success

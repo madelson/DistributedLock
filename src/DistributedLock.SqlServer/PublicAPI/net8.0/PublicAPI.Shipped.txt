@@ -1,0 +1,4 @@
+#nullable enable
+Medallion.Threading.SqlServer.SqlDistributedLock.SqlDistributedLock(string! name, System.Data.Common.DbDataSource! dbDataSource, System.Action<Medallion.Threading.SqlServer.SqlConnectionOptionsBuilder!>? options = null, bool exactName = false) -> void
+Medallion.Threading.SqlServer.SqlDistributedReaderWriterLock.SqlDistributedReaderWriterLock(string! name, System.Data.Common.DbDataSource! dbDataSource, System.Action<Medallion.Threading.SqlServer.SqlConnectionOptionsBuilder!>? options = null, bool exactName = false) -> void
+Medallion.Threading.SqlServer.SqlDistributedSemaphore.SqlDistributedSemaphore(string! name, int maxCount, System.Data.Common.DbDataSource! dbDataSource, System.Action<Medallion.Threading.SqlServer.SqlConnectionOptionsBuilder!>? options = null) -> void

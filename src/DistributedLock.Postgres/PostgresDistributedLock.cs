@@ -84,7 +84,7 @@ public sealed partial class PostgresDistributedLock : IInternalDistributedLock<P
         var (keepaliveCadence, useTransaction, useMultiplexing) = PostgresConnectionOptionsBuilder.GetOptions(options);
 
         return useMultiplexing
-            ? new OptimisticConnectionMultiplexingDbDistributedLock<DbDataSource>(key.ToString(), dbDataSource, PostgresMultiplexedConnectionLockPool.DataSourceInstance, keepaliveCadence)
+            ? new OptimisticConnectionMultiplexingDbDistributedLock<DbDataSource>(key.ToString(), dbDataSource, PostgresDataSourceMultiplexedConnectionLockPool.Instance, keepaliveCadence)
             : new DedicatedConnectionOrTransactionDbDistributedLock(key.ToString(), () => new PostgresDatabaseConnection(dbDataSource), useTransaction: useTransaction, keepaliveCadence);
     }
 #endif

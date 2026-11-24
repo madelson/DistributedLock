@@ -99,11 +99,7 @@ public sealed partial class MySqlDistributedLock : IInternalDistributedLock<MySq
         ToSafeName(
             name,
             MaxNameLength,
-            convertToValidName: s =>
-            {
-                if (s.Length == 0) { return "__empty__"; }
-                return s.ToLowerInvariant();
-            },
+            convertToValidName: s => s.Length == 0 ? "__empty__" : s.ToLowerInvariant(),
             hash: ComputeHash
         );
 
@@ -185,7 +181,7 @@ public sealed partial class MySqlDistributedLock : IInternalDistributedLock<MySq
 
         if (useMultiplexing)
         {
-            return new OptimisticConnectionMultiplexingDbDistributedLock<DbDataSource>(name, dbDataSource, MySqlMultiplexedConnectionLockPool.DataSourceInstance, keepaliveCadence);
+            return new OptimisticConnectionMultiplexingDbDistributedLock<DbDataSource>(name, dbDataSource, MySqlDataSourceMultiplexedConnectionLockPool.Instance, keepaliveCadence);
         }
 
         return new DedicatedConnectionOrTransactionDbDistributedLock(name, () => new MySqlDatabaseConnection(dbDataSource), useTransaction: false, keepaliveCadence);

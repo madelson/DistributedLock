@@ -24,6 +24,19 @@ public sealed partial class SqlDistributedLock : IInternalDistributedLock<SqlDis
     {
     }
 
+#if NET7_0_OR_GREATER
+    /// <summary>
+    /// Constructs a lock with the given <paramref name="name"/> that connects using the provided <paramref name="dbDataSource"/> and
+    /// <paramref name="options"/>.
+    ///
+    /// Unless <paramref name="exactName"/> is specified, <paramref name="name"/> will be escaped/hashed to ensure name validity.
+    /// </summary>
+    public SqlDistributedLock(string name, System.Data.Common.DbDataSource dbDataSource, Action<SqlConnectionOptionsBuilder>? options = null, bool exactName = false)
+        : this(name, exactName, n => CreateInternalLock(n, dbDataSource, options))
+    {
+    }
+#endif
+
     /// <summary>
     /// Constructs a new lock using the provided <paramref name="name"/>.
     /// 
@@ -106,4 +119,17 @@ public sealed partial class SqlDistributedLock : IInternalDistributedLock<SqlDis
             ? throw new ArgumentNullException(nameof(transaction))
             : new DedicatedConnectionOrTransactionDbDistributedLock(name, () => new SqlDatabaseConnection(transaction));
     }
+
+#if NET7_0_OR_GREATER
+    internal static IDbDistributedLock CreateInternalLock(string name, System.Data.Common.DbDataSource dbDataSource, Action<SqlConnectionOptionsBuilder>? options)
+    {
+        if (dbDataSource == null) { throw new ArgumentNullException(nameof(dbDataSource)); }
+
+        var (keepaliveCadence, useTransaction, useMultiplexing) = SqlConnectionOptionsBuilder.GetOptions(options);
+        
+        return useMultiplexing
+            ? new OptimisticConnectionMultiplexingDbDistributedLock<System.Data.Common.DbDataSource>(name, dbDataSource, SqlDataSourceMultiplexedConnectionLockPool.Instance, keepaliveCadence)
+            : new DedicatedConnectionOrTransactionDbDistributedLock(name, () => new SqlDatabaseConnection(dbDataSource), useTransaction: useTransaction, keepaliveCadence);
+    }
+#endif
 }

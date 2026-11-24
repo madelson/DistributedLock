@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.1;net472</TargetFrameworks>
+    <TargetFrameworks>net8.0;netstandard2.1;net472</TargetFrameworks>
     <RootNamespace>Medallion.Threading.Oracle</RootNamespace>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
     <WarningLevel>4</WarningLevel>
@@ -45,7 +45,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Oracle.ManagedDataAccess.Core" Condition="'$(TargetFramework)' == 'netstandard2.1'" />
+    <PackageReference Include="Oracle.ManagedDataAccess.Core" Condition="'$(TargetFramework)' != 'net472'" />
     <PackageReference Include="Oracle.ManagedDataAccess" Condition="'$(TargetFramework)' == 'net472'"/>
     <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All" />
     <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" PrivateAssets="All" />
@@ -53,6 +53,11 @@
 
   <ItemGroup>
     <ProjectReference Include="..\DistributedLock.Core\DistributedLock.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
+    <AdditionalFiles Include="PublicAPI/$(TargetFramework)/PublicAPI.Shipped.txt" />
+    <AdditionalFiles Include="PublicAPI/$(TargetFramework)/PublicAPI.Unshipped.txt" />
   </ItemGroup>
 
   <ItemGroup>

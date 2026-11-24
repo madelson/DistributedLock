@@ -4,9 +4,9 @@
     ".NETFramework,Version=v4.6.2": {
       "Microsoft.CodeAnalysis.PublicApiAnalyzers": {
         "type": "Direct",
-        "requested": "[3.3.4, )",
-        "resolved": "3.3.4",
-        "contentHash": "kNLTfXtXUWDHVt5iaPkkiPuyHYlMgLI6SOFT4w88bfeI2vqSeGgHunFkdvlaCM8RDfcY0t2+jnesQtidRJJ/DA=="
+        "requested": "[5.6.0, )",
+        "resolved": "5.6.0",
+        "contentHash": "W4kJGezNIKLzo0Ak5FAQDFvkMf2U7DtGL4THmHyRSApfKsKt5V+eX/bU0ZLKAt/uf9Bb2o1bi0YDKj/GRB/vYQ=="
       },
       "Microsoft.NETFramework.ReferenceAssemblies": {
         "type": "Direct",
@@ -563,9 +563,9 @@
     ".NETFramework,Version=v4.7.2": {
       "Microsoft.CodeAnalysis.PublicApiAnalyzers": {
         "type": "Direct",
-        "requested": "[3.3.4, )",
-        "resolved": "3.3.4",
-        "contentHash": "kNLTfXtXUWDHVt5iaPkkiPuyHYlMgLI6SOFT4w88bfeI2vqSeGgHunFkdvlaCM8RDfcY0t2+jnesQtidRJJ/DA=="
+        "requested": "[5.6.0, )",
+        "resolved": "5.6.0",
+        "contentHash": "W4kJGezNIKLzo0Ak5FAQDFvkMf2U7DtGL4THmHyRSApfKsKt5V+eX/bU0ZLKAt/uf9Bb2o1bi0YDKj/GRB/vYQ=="
       },
       "Microsoft.SourceLink.GitHub": {
         "type": "Direct",
@@ -1119,7 +1119,7 @@
         "type": "Project",
         "dependencies": {
           "DistributedLock.Core": "[1.0.9, )",
-          "Oracle.ManagedDataAccess": "[23.6.1, )"
+          "Oracle.ManagedDataAccess": "[23.26.100, )"
         }
       },
       "distributedlock.postgres": {
@@ -1236,14 +1236,15 @@
       },
       "Oracle.ManagedDataAccess": {
         "type": "CentralTransitive",
-        "requested": "[23.6.1, )",
-        "resolved": "23.6.1",
-        "contentHash": "EZi+mahzUwQFWs9Is8ed94eTzWOlfCLMd+DDWukf/h/brTz1wB9Qk3fsxBrjw9+fEXrxDgx4uXNiPHNPRS3BeQ==",
+        "requested": "[23.26.100, )",
+        "resolved": "23.26.100",
+        "contentHash": "potobRAY74YeuNcsRfexE79muqBNbXtraYK0OJvo28bkBpx6pzMTABoCvpsunfSIqjkL9LOJvfqdIzeEdL6L4A==",
         "dependencies": {
-          "System.Diagnostics.DiagnosticSource": "6.0.1",
+          "System.Diagnostics.DiagnosticSource": "6.0.2",
           "System.Formats.Asn1": "8.0.1",
+          "System.Memory": "4.6.0",
           "System.Text.Json": "8.0.5",
-          "System.Threading.Tasks.Extensions": "4.5.4"
+          "System.Threading.Tasks.Extensions": "4.6.0"
         }
       },
       "StackExchange.Redis": {
@@ -1279,9 +1280,9 @@
     ".NETStandard,Version=v2.0": {
       "Microsoft.CodeAnalysis.PublicApiAnalyzers": {
         "type": "Direct",
-        "requested": "[3.3.4, )",
-        "resolved": "3.3.4",
-        "contentHash": "kNLTfXtXUWDHVt5iaPkkiPuyHYlMgLI6SOFT4w88bfeI2vqSeGgHunFkdvlaCM8RDfcY0t2+jnesQtidRJJ/DA=="
+        "requested": "[5.6.0, )",
+        "resolved": "5.6.0",
+        "contentHash": "W4kJGezNIKLzo0Ak5FAQDFvkMf2U7DtGL4THmHyRSApfKsKt5V+eX/bU0ZLKAt/uf9Bb2o1bi0YDKj/GRB/vYQ=="
       },
       "Microsoft.SourceLink.GitHub": {
         "type": "Direct",
@@ -1880,9 +1881,9 @@
     ".NETStandard,Version=v2.1": {
       "Microsoft.CodeAnalysis.PublicApiAnalyzers": {
         "type": "Direct",
-        "requested": "[3.3.4, )",
-        "resolved": "3.3.4",
-        "contentHash": "kNLTfXtXUWDHVt5iaPkkiPuyHYlMgLI6SOFT4w88bfeI2vqSeGgHunFkdvlaCM8RDfcY0t2+jnesQtidRJJ/DA=="
+        "requested": "[5.6.0, )",
+        "resolved": "5.6.0",
+        "contentHash": "W4kJGezNIKLzo0Ak5FAQDFvkMf2U7DtGL4THmHyRSApfKsKt5V+eX/bU0ZLKAt/uf9Bb2o1bi0YDKj/GRB/vYQ=="
       },
       "Microsoft.SourceLink.GitHub": {
         "type": "Direct",
@@ -2183,13 +2184,13 @@
       },
       "System.Diagnostics.PerformanceCounter": {
         "type": "Transitive",
-        "resolved": "6.0.1",
-        "contentHash": "dDl7Gx3bmSrM2k2ZIm+ucEJnLloZRyvfQF1DvfvATcGF3jtaUBiPvChma+6ZcZzxWMirN3kCywkW7PILphXyMQ=="
+        "resolved": "6.0.2",
+        "contentHash": "4SLKj8/YJ+uA7YxmKmTfk6Pnn89nxIDipfNaApe1E3I2SI+f1+INj75ysTAtKwIWj7yQK8iiUjlRcJfiINwFUQ=="
       },
       "System.DirectoryServices.Protocols": {
         "type": "Transitive",
-        "resolved": "6.0.2",
-        "contentHash": "vDDPWwHn3/DNZ+kPkdXHoada+tKPEC9bVqDOr4hK6HBSP7hGCUTA0Zw6WU5qpGaqa5M1/V+axHMIv+DNEbIf6g==",
+        "resolved": "8.0.2",
+        "contentHash": "7pSU+qkmdkwbikAvn4kpvClfyffaR7dYJw7ucBtO5d6m/7wgKZIULOZAGFLMIMOFFmg7xC67TYKptHxcbqQm+Q==",
         "dependencies": {
           "System.Security.Principal.Windows": "5.0.0"
         }
@@ -2394,7 +2395,7 @@
         "type": "Project",
         "dependencies": {
           "DistributedLock.Core": "[1.0.9, )",
-          "Oracle.ManagedDataAccess.Core": "[23.6.1, )"
+          "Oracle.ManagedDataAccess.Core": "[23.26.100, )"
         }
       },
       "distributedlock.postgres": {
@@ -2506,16 +2507,17 @@
       },
       "Oracle.ManagedDataAccess.Core": {
         "type": "CentralTransitive",
-        "requested": "[23.6.1, )",
-        "resolved": "23.6.1",
-        "contentHash": "Oc8AX7xme05xrp4/aCxKBH4+bpWgMCFafXI7LbLO/7OBMJLZRXhMtejDgIb8aYvIVyV7vSdAy3LkCYcJorxn1A==",
+        "requested": "[23.26.100, )",
+        "resolved": "23.26.100",
+        "contentHash": "ObLgWXTEm1oy40uCVw6eBXSXbQHgpY+BNQN0lzO2GibSpIiCdvVi85DPmNLndprBC4fv2L+YV/xepzLXmv23eA==",
         "dependencies": {
-          "System.Diagnostics.DiagnosticSource": "6.0.1",
-          "System.Diagnostics.PerformanceCounter": "6.0.1",
-          "System.DirectoryServices.Protocols": "6.0.2",
+          "System.Diagnostics.DiagnosticSource": "6.0.2",
+          "System.Diagnostics.PerformanceCounter": "6.0.2",
+          "System.DirectoryServices.Protocols": "8.0.2",
           "System.Formats.Asn1": "6.0.1",
+          "System.Memory": "4.6.0",
           "System.Security.Cryptography.Pkcs": "6.0.4",
-          "System.Text.Json": "6.0.10"
+          "System.Text.Json": "6.0.11"
         }
       },
       "StackExchange.Redis": {

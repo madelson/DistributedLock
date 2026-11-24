@@ -18,6 +18,13 @@ internal sealed class SqlDatabaseConnection : DatabaseConnection
     {
     }
 
+#if NET7_0_OR_GREATER
+    public SqlDatabaseConnection(System.Data.Common.DbDataSource dbDataSource)
+        : base(dbDataSource)
+    {
+    }
+#endif
+
     public SqlDatabaseConnection(string connectionString)
         : this(new SqlConnection(connectionString), isExternallyOwned: false)
     {
@@ -40,8 +47,13 @@ internal sealed class SqlDatabaseConnection : DatabaseConnection
         // since SqlException is sealed (as of 2020-01-26)
         if (exceptionType.ToString() == "System.Data.SqlClient.SqlException")
         {
+            // Note: we can't use DynamicDependency here because we don't take a reference to System.Data.SqlClient.
+            // If someone is using that and the property gets trimmed, Invariant check will skip (debug only) and
+            // then numberProperty will just be null
+#pragma warning disable IL2075 // argument does not satisfy 'DynamicallyAccessedMemberTypes.PublicProperties'
             var numberProperty = exceptionType
                 .GetProperty(nameof(SqlException.Number), BindingFlags.Public | BindingFlags.Instance);
+#pragma warning restore IL2075
             Invariant.Require(numberProperty != null);
             if (numberProperty != null)
             {
@@ -53,7 +65,7 @@ internal sealed class SqlDatabaseConnection : DatabaseConnection
         return exception is InvalidOperationException;
     }
 
-    public override async Task SleepAsync(TimeSpan sleepTime, CancellationToken cancellationToken, Func<DatabaseCommand, CancellationToken, ValueTask<int>> executor)
+    public override async Task SleepAsync(TimeSpan sleepTime, SleepContext context)
     {
         Invariant.Require(sleepTime >= TimeSpan.Zero && sleepTime < TimeSpan.FromDays(1));
 
@@ -62,6 +74,6 @@ internal sealed class SqlDatabaseConnection : DatabaseConnection
         command.AddParameter("delay", sleepTime.ToString(@"hh\:mm\:ss\.fff"), DbType.AnsiStringFixedLength);
         command.SetTimeout(sleepTime);
 
-        await executor(command, cancellationToken).ConfigureAwait(false);
+        await context.ExecuteAsync(command).ConfigureAwait(false);
     }
 }

@@ -22,6 +22,17 @@ public sealed partial class SqlDistributedSemaphore : IInternalDistributedSemaph
     {
     }
 
+#if NET7_0_OR_GREATER
+    /// <summary>
+    /// Creates a semaphore with name <paramref name="name"/> that can be acquired up to <paramref name="maxCount"/> 
+    /// times concurrently. The provided <paramref name="dbDataSource"/> will be used to connect to the database.
+    /// </summary>
+    public SqlDistributedSemaphore(string name, int maxCount, System.Data.Common.DbDataSource dbDataSource, Action<SqlConnectionOptionsBuilder>? options = null)
+        : this(name, maxCount, n => SqlDistributedLock.CreateInternalLock(n, dbDataSource, options))
+    {
+    }
+#endif
+
     /// <summary>
     /// Creates a semaphore with name <paramref name="name"/> that can be acquired up to <paramref name="maxCount"/> 
     /// times concurrently. When acquired, the semaphore will be scoped to the given <paramref name="connection"/>. 

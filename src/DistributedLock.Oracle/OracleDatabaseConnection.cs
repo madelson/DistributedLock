@@ -8,9 +8,6 @@ internal class OracleDatabaseConnection : DatabaseConnection
 {
     public const string ApplicationNameIndicatorPrefix = "__DistributedLock.ApplicationName=";
 
-    // see SleepAsync() for why we need this
-    private readonly IDbConnection _innerConnection;
-
     public OracleDatabaseConnection(IDbConnection connection)
         : this(connection, isExternallyOwned: true)
     {
@@ -19,8 +16,14 @@ internal class OracleDatabaseConnection : DatabaseConnection
     public OracleDatabaseConnection(IDbTransaction transaction)
         : base(transaction, isExternallyOwned: true)
     {
-        this._innerConnection = transaction.Connection;
     }
+
+#if NET7_0_OR_GREATER
+    public OracleDatabaseConnection(System.Data.Common.DbDataSource dbDataSource)
+        : base(dbDataSource)
+    {
+    }
+#endif
 
     public OracleDatabaseConnection(string connectionString)
         : this(CreateConnection(connectionString), isExternallyOwned: false)
@@ -30,7 +33,6 @@ internal class OracleDatabaseConnection : DatabaseConnection
     private OracleDatabaseConnection(IDbConnection connection, bool isExternallyOwned)
         : base(connection, isExternallyOwned)
     {
-        this._innerConnection = connection;
     }
 
     // from https://docs.oracle.com/html/E10927_01/OracleCommandClass.htm "this method is a no-op" wrt "Prepare()"
@@ -41,7 +43,7 @@ internal class OracleDatabaseConnection : DatabaseConnection
             // based on https://docs.oracle.com/cd/E85694_01/ODPNT/CommandCancel.htm
             && (oracleException.Number == 01013 || oracleException.Number == 00936 || oracleException.Number == 00604);
 
-    public override async Task SleepAsync(TimeSpan sleepTime, CancellationToken cancellationToken, Func<DatabaseCommand, CancellationToken, ValueTask<int>> executor)
+    public override async Task SleepAsync(TimeSpan sleepTime, SleepContext context)
     {
         using var sleepCommand = this.CreateCommand();
         sleepCommand.SetCommandText("BEGIN sys.DBMS_SESSION.SLEEP(:seconds); END;");
@@ -49,13 +51,13 @@ internal class OracleDatabaseConnection : DatabaseConnection
 
         try
         {
-            await executor(sleepCommand, cancellationToken).ConfigureAwait(false);
+            await context.ExecuteAsync(sleepCommand);
         }
-        catch when (!cancellationToken.IsCancellationRequested)
+        catch when (!context.CancellationToken.IsCancellationRequested)
         {
             // Oracle doesn't fire StateChange unless the State is observed or the connection is explicitly opened/closed. Therefore, we observe
             // the state on seeing any exception in order to for the event to fire. See https://github.com/oracle/dotnet-db-samples/issues/226
-            _ = this._innerConnection.State;
+            _ = context.DangerousGetInnerConnection().State;
             throw;
         }
     }

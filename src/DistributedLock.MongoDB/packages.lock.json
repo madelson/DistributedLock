@@ -4,9 +4,9 @@
     ".NETFramework,Version=v4.7.2": {
       "Microsoft.CodeAnalysis.PublicApiAnalyzers": {
         "type": "Direct",
-        "requested": "[3.3.4, )",
-        "resolved": "3.3.4",
-        "contentHash": "kNLTfXtXUWDHVt5iaPkkiPuyHYlMgLI6SOFT4w88bfeI2vqSeGgHunFkdvlaCM8RDfcY0t2+jnesQtidRJJ/DA=="
+        "requested": "[5.6.0, )",
+        "resolved": "5.6.0",
+        "contentHash": "W4kJGezNIKLzo0Ak5FAQDFvkMf2U7DtGL4THmHyRSApfKsKt5V+eX/bU0ZLKAt/uf9Bb2o1bi0YDKj/GRB/vYQ=="
       },
       "Microsoft.SourceLink.GitHub": {
         "type": "Direct",
@@ -259,9 +259,9 @@
     ".NETStandard,Version=v2.1": {
       "Microsoft.CodeAnalysis.PublicApiAnalyzers": {
         "type": "Direct",
-        "requested": "[3.3.4, )",
-        "resolved": "3.3.4",
-        "contentHash": "kNLTfXtXUWDHVt5iaPkkiPuyHYlMgLI6SOFT4w88bfeI2vqSeGgHunFkdvlaCM8RDfcY0t2+jnesQtidRJJ/DA=="
+        "requested": "[5.6.0, )",
+        "resolved": "5.6.0",
+        "contentHash": "W4kJGezNIKLzo0Ak5FAQDFvkMf2U7DtGL4THmHyRSApfKsKt5V+eX/bU0ZLKAt/uf9Bb2o1bi0YDKj/GRB/vYQ=="
       },
       "Microsoft.SourceLink.GitHub": {
         "type": "Direct",
@@ -430,15 +430,15 @@
     "net8.0": {
       "Microsoft.CodeAnalysis.PublicApiAnalyzers": {
         "type": "Direct",
-        "requested": "[3.3.4, )",
-        "resolved": "3.3.4",
-        "contentHash": "kNLTfXtXUWDHVt5iaPkkiPuyHYlMgLI6SOFT4w88bfeI2vqSeGgHunFkdvlaCM8RDfcY0t2+jnesQtidRJJ/DA=="
+        "requested": "[5.6.0, )",
+        "resolved": "5.6.0",
+        "contentHash": "W4kJGezNIKLzo0Ak5FAQDFvkMf2U7DtGL4THmHyRSApfKsKt5V+eX/bU0ZLKAt/uf9Bb2o1bi0YDKj/GRB/vYQ=="
       },
       "Microsoft.NET.ILLink.Tasks": {
         "type": "Direct",
-        "requested": "[8.0.34, )",
-        "resolved": "8.0.34",
-        "contentHash": "AoMGwI/388svzARQ2NYC25vFOQGcf13FgQWv61TwPAdPUMOejXpQxBQHrQpXfqM7vqxxj1E3SAkX/OkE2cuChw=="
+        "requested": "[8.0.26, )",
+        "resolved": "8.0.26",
+        "contentHash": "o7/yVssM2r9Wyln2s9edBd5ANZXqdSdBI+g7JqXkyJmXrhs2WsJp25K5yPnYrTgdKBCjKB8bg+O2oew4sgzFaA=="
       },
       "Microsoft.SourceLink.GitHub": {
         "type": "Direct",

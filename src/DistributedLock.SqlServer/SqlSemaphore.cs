@@ -97,16 +97,16 @@ internal sealed class SqlSemaphore(int maxCount) : IDbSynchronizationStrategy<Sq
         out string? markerTableName, 
         out string? ticketLockName)
     {
-        var resultCode = (int)((IDbDataParameter)parameters[ResultCodeParameter]).Value;
+        var resultCode = (int)((IDbDataParameter)parameters[ResultCodeParameter]).Value!;
         switch (resultCode)
         {
             case SuccessCode:
-                ticketLockName = (string)((IDbDataParameter)parameters[TicketLockNameParameter]).Value;
-                markerTableName = (string)((IDbDataParameter)parameters[MarkerTableNameParameter]).Value;
+                ticketLockName = (string)((IDbDataParameter)parameters[TicketLockNameParameter]).Value!;
+                markerTableName = (string)((IDbDataParameter)parameters[MarkerTableNameParameter]).Value!;
                 return true.AsValueTask();
             case FinishedPreambleWithoutAcquiringCode:
                 ticketLockName = null;
-                markerTableName = (string)((IDbDataParameter)parameters[MarkerTableNameParameter]).Value;
+                markerTableName = (string)((IDbDataParameter)parameters[MarkerTableNameParameter]).Value!;
                 return false.AsValueTask();
             case FailedToAcquireWithSpaceRemainingCode:
                 throw new InvalidOperationException($"An internal semaphore algorithm error ({resultCode}) occurred: failed to acquire a ticket despite indication that tickets are available");
