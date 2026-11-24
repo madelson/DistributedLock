@@ -191,6 +191,10 @@ internal
 
         public CancellationToken CancellationToken { get; }
 
+        /// <summary>
+        /// Provides access to the underlying connection. This is "dangerous" since accessing the connection outside the
+        /// context of the sleep could lead to thread safety issues
+        /// </summary>
         public IDbConnection DangerousGetInnerConnection() => this.CheckDisposedAndGetConnection().InnerConnection;
 
         public ValueTask<int> ExecuteAsync(DatabaseCommand command, CancellationToken? cancellationToken = null)

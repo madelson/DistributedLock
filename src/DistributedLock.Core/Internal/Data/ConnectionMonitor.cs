@@ -375,7 +375,7 @@ internal sealed class ConnectionMonitor : IAsyncDisposable
         if (keepaliveCadence.CompareTo(sleepTime) < 0) { sleepTime = keepaliveCadence.TimeSpan; }
 
         using DatabaseConnection.SleepContext context = new(connection, cancellationToken);
-        await connection.SleepAsync(TimeSpan.FromMinutes(1), context).TryAwait();
+        await connection.SleepAsync(sleepTime, context).TryAwait();
 
         return true;
     }
